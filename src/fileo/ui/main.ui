@@ -348,7 +348,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Settings</string>
+            <string>Menu</string>
            </property>
            <property name="styleSheet">
             <string notr="true"/>

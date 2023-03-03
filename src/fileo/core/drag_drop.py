@@ -83,7 +83,6 @@ def dir_mime_data(indexes) -> QMimeData:
 
 @pyqtSlot(Qt.DropAction)
 def start_drag_dirs(dummy):
-    logger.info("<<<<<<<<<<< DD >>>>>>>>>>")
     drag = QDrag(ag.app)
 
     mime_data = get_dir_mime_data()
@@ -98,7 +97,6 @@ def start_drag_dirs(dummy):
 
 @pyqtSlot(Qt.DropAction)
 def start_drag_files(dummy):
-    logger.info("<<<<<<<<<<< DD >>>>>>>>>>")
     drag = QDrag(ag.app)
 
     mime_data = get_files_mime_data()
@@ -116,7 +114,6 @@ def drag_enter_event(event: QDragEnterEvent):
     set DropAction depending on pressed MouseButton:
     LeftButton -> CopyAction; RightButton -> MoveAction
     """
-    logger.info("<<<<<<<<<<< DD >>>>>>>>>>")
     if event.buttons() is Qt.MouseButton.RightButton:
         ag.drop_action = Qt.DropAction.MoveAction
         event.setDropAction(ag.drop_action)
@@ -182,7 +179,6 @@ def drop_event(event: QDropEvent):
         event.ignore()
 
 def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    logger.info(f"{data.hasFormat('text/uri-list')=}")
     if data.hasFormat('text/uri-list'):
         return drop_uri_list(data, target)
 
@@ -199,7 +195,6 @@ def drop_uri_list(data: QMimeData, target: int) -> bool:
     load.set_files_iter(
         (it.toLocalFile() for it in data.urls())
     )
-    logger.info(f"Dir ID: {target=}")
     load.load_to_dir(target)
     return True
 
@@ -272,8 +267,4 @@ def move_folder(index: QModelIndex, target: int) -> bool:
 
     if db_ut.move_dir(target, u_dat.parent_id, u_dat.id):
         return True
-    ag.signals_.show_message.emit(0,
-        (f"can't move {index.data(Qt.ItemDataRole.DisplayRole)[0]} "
-        # f"to {parent.data(Qt.ItemDataRole.DisplayRole)[0]}"
-        "\nalready exists"))
     return False

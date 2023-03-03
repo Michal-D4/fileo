@@ -321,5 +321,5 @@ class Ui_Sho(object):
         self.btnFilterSetup.setToolTip(_translate("Sho", "Setup file list filter"))
         self.btnScan.setToolTip(_translate("Sho", "Scan file system for files and add them into DB"))
         self.btnToggleBar.setToolTip(_translate("Sho", "Toggle Navigator bar"))
-        self.btnSetup.setToolTip(_translate("Sho", "Settings"))
+        self.btnSetup.setToolTip(_translate("Sho", "Menu"))
         self.field_menu.setToolTip(_translate("Sho", "Show/Hide fields"))

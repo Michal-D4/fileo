@@ -13,6 +13,7 @@ tests/
 *.lock
 
 *.log
+*.db*
 # *.xml
 *.back
 

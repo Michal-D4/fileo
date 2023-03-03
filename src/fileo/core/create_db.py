@@ -128,7 +128,7 @@ def adjust_user_schema(db_name: str) -> int:
                     'alter table parentdir add column hide integer '
                     'not null default 0; pragma user_version=2;'
                 )
-                v[0] = 2
+                v = (2,)
             if v[0] == 2:
                 conn.cursor().execute(
                     'insert into settings (key) values (?)',

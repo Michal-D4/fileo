@@ -85,7 +85,7 @@ def _collect_toolbar_icons():
     )
 
     toolbar_icons["btnSetup"] = (
-        qta.icon('mdi.cog-outline', color=ag.qss_params["$ToolButtonColor"],
+        qta.icon('mdi.menu', color=ag.qss_params["$ToolButtonColor"],
             color_active=ag.qss_params["$ToolButtonActiveColor"]),
     )
 

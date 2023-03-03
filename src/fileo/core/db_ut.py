@@ -1,6 +1,7 @@
 from loguru import logger
 import apsw
 from collections import deque
+from pathlib import PurePath
 
 from PyQt6.QtCore import Qt
 
@@ -86,6 +87,7 @@ def get_ext_list():
     )
     return ag.db['Conn'].cursor().execute(sql)
 
+#region files
 def get_files(did: int, parent: int):
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '
@@ -142,6 +144,120 @@ def lost_files() -> bool:
             return show_lost_dir()
     except:
         return False
+
+def registered_file_id(path: str, filename: str):
+    sql = (
+        'select f.id from files f join paths p on p.id = f.path '
+        'where f.filename = ? and p.path = ?'
+    )
+    res = ag.db['Conn'].cursor().execute(sql, (filename, path)).fetchone()
+    return res[0] if res else 0
+
+def insert_file(file_: list):
+    sql = (
+        'insert into files (path, extid, hash, filename, '
+        'modified, opened, created, rating, nopen, size, '
+        'pages, published) values (?,?,?,?,?,?,?,?,?,?,?,?)'
+    )
+
+    def get_path_id(conn: apsw.Connection) -> int:
+        sql1 = 'select id from paths where path = ?'
+        sql2 = 'insert into paths (path) values (?)'
+        curs = conn.cursor()
+        res = curs.execute(sql1, (file_[-1],)).fetchone()
+        if res:
+            return res[0]
+        curs.execute(sql2, (file_[-1],)).fetchone()
+        return conn.last_insert_rowid()
+
+    def get_ext_id(conn: apsw.Connection) -> int:
+        sql1 = 'select id from extensions where extension = ?'
+        sql2 = 'insert into extensions (extension) values (?)'
+        ext = PurePath(file_[1]).suffix.strip('.')
+        curs = conn.cursor()
+        res = curs.execute(sql1, (ext,)).fetchone()
+        if res:
+            return res[0]
+        curs.execute(sql2, (ext,)).fetchone()
+        return conn.last_insert_rowid()
+
+    with ag.db['Conn'] as conn:
+        path_id = get_path_id(conn)
+        ext_id = get_ext_id(conn)
+        conn.cursor().execute(sql, (path_id, ext_id, *file_[:-1]))
+        return conn.last_insert_rowid()
+
+def insert_tags(id, tags: list):
+    """
+    id - file id
+    """
+    sqls = [
+        'select id from tags where tag = ?',
+        'insert into tags (tag) values (?)',
+        'insert into filetag values (?,?)',
+    ]
+    with ag.db['Conn'] as conn:
+        for tag in tags:
+            tag_author_insert(conn, sqls, tag)
+
+def insert_authors(id: int, authors: list):
+    """
+    id - file id
+    """
+    sqls = [
+        'select id from authors where author = ?',
+        'insert into authors (author) values (?)',
+        'insert into fileauthor values (?,?)',
+    ]
+    with ag.db['Conn'] as conn:
+        for author in authors:
+            tag_author_insert(conn, sqls, author)
+
+def tag_author_insert(conn: apsw.Connection, sqls: list, item: str):
+    cursor = conn.cursor()
+    tt = cursor.execute(sqls[0], (item,)).fetchone()
+    if tt:
+        try:
+            cursor.execute(sqls[2], (id, tt[0]))
+        except apsw.ConstraintError:
+            pass
+    else:
+        cursor.execute(sqls[1], (item,))
+        t_id = conn.last_insert_rowid()
+        cursor.execute(sqls[2], (id, t_id))
+
+def insert_comments(id: int, comments: list):
+    """
+    id - file id
+    """
+    sql3 = (
+        'insert into comments values (?,?,?,?,?)'
+    )
+
+    def get_max_comment_id(cursor: apsw.Cursor) -> int:
+        sql = 'select max(id) from comments where fileid = ?'
+
+        tt = cursor.execute(sql, (id,)).fetchone()
+        return tt[0] if tt[0] else 0
+
+    def comment_already_exists(cursor: apsw.Cursor, rec: list) -> bool:
+        sql = (
+            'select 1 from comments where fileid = ? '
+            'and created = ? and modified = ?'
+        )
+        tt = cursor.execute(sql, (id, rec[2], rec[3])).fetchone()
+        return bool(tt)
+
+    with ag.db['Conn'] as conn:
+        curs = conn.cursor()
+        max_comment_id = get_max_comment_id(curs)
+
+        for rec in comments:
+            logger.info(rec)
+            if comment_already_exists(curs, rec):
+                continue
+            max_comment_id += 1
+            curs.execute(sql3, (id, max_comment_id, *rec[1:]))
 
 def recent_loaded_files():
     sql = (
@@ -348,19 +464,73 @@ def update_files_field(id: int, field: str, val):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (val, id))
 
+def get_export_data(fileid: int):
+    sql1 = (
+        'select f.hash, f.filename, f.modified, f.opened, '
+        'f.created, f.rating, f.nopen, f.size, f.pages, '
+        'f.published, p.path from files f join paths p '
+        'on p.id = f.path where f.id = ?'
+    )
+    sql2 = (
+        'select id, comment, created, modified '
+        'from comments where fileid = ?'
+    )
+    sql3 = (
+        'select t.tag from tags t join filetag f on '
+        'f.tagid = t.id where f.fileid = ?'
+    )
+    sql4 = (
+        'select a.author from authors a join fileauthor f on '
+        'f.aid = a.id where f.fileid = ?'
+    )
+
+    res = {}
+    with ag.db['Conn'] as conn:
+        cursor = conn.cursor()
+        tt = cursor.execute(sql1, (fileid,)).fetchone()
+        if not tt:
+            return None
+        res['file'] = tt
+
+        tt = []
+        for cc in cursor.execute(sql2, (fileid,)):
+            tt.append(cc)
+        res['comments'] = tt
+
+        tt = []
+        for cc in cursor.execute(sql3, (fileid,)):
+            tt.append(cc[0])
+        res['tags'] = tt
+
+        tt = []
+        for cc in cursor.execute(sql4, (fileid,)):
+            tt.append(cc[0])
+        res['authors'] = tt
+
+    return res
+#endregion
+
 def update_dir_name(name: str, id: int):
     sql = 'update dirs set name = ? where id = ?'
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (name, id))
 
 def insert_dir(dir_name: str, parent: int) -> int:
-    sql1 = 'insert into dirs (name) values (?);'
-    sql2 = 'insert into parentdir values (?, ?, 0, 0);'
+    sql1 = (
+        'select d.id from dirs d join parentdir p on '
+        'p.id = d.id where p.parent = ? and d.name = ?'
+    )
+    sql2 = 'insert into dirs (name) values (?);'
+    sql3 = 'insert into parentdir values (?, ?, 0, 0);'
 
     with ag.db['Conn'] as conn:
-        conn.cursor().execute(sql1, (dir_name,))
+        curs = conn.cursor()
+        id = curs.execute(sql1, (parent, dir_name)).fetchone()
+        if id:
+            return id[0]
+        curs.execute(sql2, (dir_name,))
         id = conn.last_insert_rowid()
-        conn.cursor().execute(sql2, (parent, id))
+        curs.execute(sql3, (parent, id))
     return id
 
 def toggle_hidden_dir_state(id: int, parent: int, hidden: bool):
@@ -508,7 +678,10 @@ def insert_tag(tag: str) -> int:
 
 def insert_tag_file(tag: int, file: int):
     sql = 'insert into filetag (tagid, fileid) values (:tag_id, :file_id);'
-    ag.db['Conn'].cursor().execute(sql, {'tag_id': tag, 'file_id': file})
+    try:
+        ag.db['Conn'].cursor().execute(sql, {'tag_id': tag, 'file_id': file})
+    except apsw.ConstraintError:
+        pass
 
 def update_file_tag_links(file: int, tags: list[int]):
     """

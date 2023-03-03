@@ -163,7 +163,7 @@ class loadFiles(QObject):
             {'pid': path_id, 'name': file_name}
         ).fetchone()
 
-        return id
+        return id[0] if id else 0
 
     def get_dir_id(self, path: Path) -> int:
         if str(path) in self.paths:

@@ -1,6 +1,6 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QUrl, QRect, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import Qt, QUrl, QRect, pyqtSignal, pyqtSlot, QPoint
 from PyQt6.QtGui import (QGuiApplication, QKeySequence, QShortcut,
     QTextCursor,
 )
@@ -33,12 +33,14 @@ class editTag(QWidget):
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.cancel)
 
+    @pyqtSlot()
     def finish_edit(self):
         txt = self.editor.text()
         self.parent().edit_item.emit(txt)
         self.parent().browser.setFocus()
         self.close()
 
+    @pyqtSlot()
     def cancel(self):
         self.parent().browser.setFocus()
         self.close()
@@ -80,6 +82,7 @@ class aBrowser(QWidget):
             f2.setContext(Qt.ShortcutContext.WidgetShortcut)
             f2.activated.connect(self.rename_tag)
 
+    @pyqtSlot()
     def rename_tag(self):
         """
         edit last selected tag - current tag
@@ -87,20 +90,14 @@ class aBrowser(QWidget):
         if not self.selected_idx:
             return
         c_rect = self.get_edit_rect()
-        self.browser.selectionChanged.connect(self.selection_changed)
         if c_rect:
             ed = editTag(self.get_current(), self)
             ed.setGeometry(c_rect)
             ed.show()
 
     def get_edit_rect(self):
-        if not self.select_tag():
-            return None
-
-        self.browser.verticalScrollBar().setValue(self.scroll_pos)
         start, end = self.get_start_end()
 
-        self.browser.selectionChanged.connect(self.selection_changed)
         if start.y() < end.y():   # two line selection
             w = self.browser.width()
             return QRect(
@@ -115,25 +112,19 @@ class aBrowser(QWidget):
             end.height()
         )
 
-    def select_tag(self) -> bool:
-        tag = self.get_current()
-        curs = self.browser.textCursor()
-        curs.setPosition(0)
-        self.browser.setTextCursor(curs)
-        self.browser.selectionChanged.disconnect(self.selection_changed)
-        return self.browser.find(tag)
-
     def get_start_end(self):
         curs = self.browser.textCursor()
-        start = curs.selectionStart()
-        end = curs.selectionEnd()
 
-        curs.setPosition(start)
-        start = self.browser.cursorRect(curs)
-        curs.setPosition(end)
+        # curs.setPosition(pos)
         end = self.browser.cursorRect(curs)
+
+        pos = curs.position()
+        tag = self.get_current()
+        curs.setPosition(pos - len(tag))
+        start = self.browser.cursorRect(curs)
         return start, end
 
+    @pyqtSlot(QPoint)
     def custom_menu(self, pos):
         self.scroll_pos = self.browser.verticalScrollBar().value()
         menu = QMenu(self)
@@ -159,7 +150,7 @@ class aBrowser(QWidget):
 
     def copy_selected(self):
         tags = self.get_selected()
-        QApplication.clipboard().setText(','.join(tags))
+        QApplication.clipboard().setText(';'.join(tags))
 
     def set_list(self, items: list):
         self.tags.clear()
@@ -170,6 +161,7 @@ class aBrowser(QWidget):
             self.tag_ids.append(it[1])
         self.show_in_bpowser()
 
+    @pyqtSlot()
     def selection_changed(self):
         """
         I need not to show selection as text, but selection as keywords,

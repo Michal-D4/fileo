@@ -1,5 +1,6 @@
 import apsw
 from collections import defaultdict
+import json
 from loguru import logger
 from pathlib import Path
 import pickle
@@ -8,7 +9,7 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
     )
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QApplication, QMessageBox, QAbstractItemView
+from PyQt6.QtWidgets import QApplication, QMessageBox, QAbstractItemView, QFileDialog
 
 from core import db_ut, app_globals as ag
 from core.table_model import TableModel, ProxyModel2
@@ -25,6 +26,7 @@ def exec_user_actions():
         "Dirs Create folder as child": create_child_dir,
         "Dirs Delete folder": delete_folder,
         "Dirs Toggle hidden state": toggle_hidden_state,
+        "Dirs Import files": import_files,
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
         "author inserted": populate_author_list,
@@ -34,6 +36,7 @@ def exec_user_actions():
         "Files Remove file from folder": remove_file,
         "Files Delete file from DB": delete_file,
         "Files Reveal in explorer": open_folder,
+        "Files Export selected files": export_files,
         "filter_changed": filter_changed,
       }
 
@@ -400,6 +403,61 @@ def post_delete_file(idx: QModelIndex):
     set_current_file(row)
 #endregion
 
+#region  export-import
+def export_files():
+    file_name, ok = QFileDialog.getSaveFileName(ag.app, "Open file to save list of selected files",
+        str(Path(ag.db["Path"]).parent), "File list (*.file_list *.json *.txt)")
+
+    if ok:
+        logger.info(file_name)
+        _export_files(file_name)
+
+def _export_files(filename: str):
+    with open(filename, "w") as out:
+        logger.info(f"{filename}")
+        res = []
+        for idx in ag.file_list.selectionModel().selectedRows(0):
+            try:
+                id = idx.data(Qt.ItemDataRole.UserRole).id
+                file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
+            except TypeError:
+                continue
+            logger.info(f"{id=}, {file_data['file'][2]}")
+            out.write(f"{json.dumps(file_data)}\n")
+
+def import_files():
+    file_name, ok = QFileDialog.getOpenFileName(ag.app, "Open file to import list of files",
+        str(Path.home()), "File list (*.file_list *.json *.txt)")
+    if ok:
+        logger.info(file_name)
+        _import_files(file_name)
+
+def _import_files(filename):
+    with open(filename, "r") as fp:
+        for line in fp:
+            load_file(json.loads(line))
+
+def load_file(fl: dict):
+    file_ = fl['file']
+    f_path: Path = Path(file_[-1]) / file_[1]
+    if not f_path.is_file():
+        return
+
+    dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+
+    id = db_ut.registered_file_id(file_[-1], file_[1])
+    if id:
+        dir_2 = db_ut.insert_dir('Existed', dir_id)
+        db_ut.copy_file(id, dir_2)
+    else:
+        id = db_ut.insert_file(file_)
+        db_ut.copy_file(id, dir_id)
+
+    db_ut.insert_tags(id, fl['tags'])
+    db_ut.insert_comments(id, fl['comments'])
+    db_ut.insert_authors(id, fl['authors'])
+#endregion
+
 #region  Files - Dirs
 def open_file_or_folder(path: str) -> bool:
     """
@@ -506,6 +564,7 @@ def tag_selection() -> list:
 
 def tag_changed(new_tag: str):
     if new_tag == ag.tag_list.get_current():
+        # edit finished, but tag wasn't changed
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()
@@ -525,13 +584,6 @@ def populate_ext_list():
     sel = get_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
-def _ext_sel_changed():
-    """
-    there were saving of selected extensions
-    really needs insert selected extensions into filter
-    """
-    pass
-
 def _ext_selection() -> list:
     return ag.ext_list.get_selected_ids()
 #endregion
@@ -541,13 +593,6 @@ def populate_author_list():
     ag.author_list.set_list(db_ut.get_authors())
     sel = get_setting("AUTHOR_SEL_LIST", [])
     ag.author_list.set_selection(sel)
-
-def _author_sel_changed():
-    """
-    there were saving of selected extensions
-    really needs insert selected extensions into filter
-    """
-    pass
 
 def author_selection() -> list:
     return ag.author_list.get_selected_ids()

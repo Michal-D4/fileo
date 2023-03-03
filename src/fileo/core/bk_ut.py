@@ -63,7 +63,6 @@ def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize
     ag.signals_.user_action_signal.connect(low_bk.exec_user_actions())
     ag.signals_.start_file_search.connect(file_searching)
-    ag.signals_.show_message.connect(show_err_message)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
@@ -198,6 +197,8 @@ def dir_menu(pos):
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
+        menu.addAction("Import files")
+        menu.addSeparator()
         menu.addAction("Create folder")
         menu.addAction("Create folder as child")
     else:
@@ -215,6 +216,8 @@ def file_menu(pos):
         menu.addAction("Copy full file name")
         menu.addAction("Open file")
         menu.addAction("Reveal in explorer")
+        menu.addSeparator()
+        menu.addAction("Export selected files")
         menu.addSeparator()
         menu.addAction("Remove file from folder")
         menu.addAction("Delete file from DB")
@@ -251,10 +254,6 @@ def finish_loading(has_new_ext: bool):
     if has_new_ext:
         ag.signals_.user_action_signal.emit("ext inserted")
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
-
-@pyqtSlot(int, str)
-def show_err_message(errno: int, msg: str):
-    print(f"{errno=}: {msg}")
 
 @pyqtSlot()
 def show_lost_files():
