@@ -266,9 +266,6 @@ class Ui_filterSetup(object):
         _translate = QtCore.QCoreApplication.translate
         filterSetup.setWindowTitle(_translate("filterSetup", "Form"))
         self.hdr_lbl.setText(_translate("filterSetup", "Filter setup"))
-        self.selected_dir.setText(_translate("filterSetup", "directories"))
-        self.selected_ext.setText(_translate("filterSetup", "file extensions"))
-        self.selected_author.setText(_translate("filterSetup", "authors"))
         self.open_sel.setText(_translate("filterSetup", "file open number"))
         self.open_cond.setItemText(0, _translate("filterSetup", "less or equal"))
         self.open_cond.setItemText(1, _translate("filterSetup", "greate then"))
@@ -283,7 +280,6 @@ class Ui_filterSetup(object):
         self.date_type.setItemText(3, _translate("filterSetup", "commented"))
         self.after.setText(_translate("filterSetup", "after"))
         self.before.setText(_translate("filterSetup", "before"))
-        self.selected_tag.setText(_translate("filterSetup", "tags:"))
         self.all_btn.setText(_translate("filterSetup", "all"))
         self.any_btn.setText(_translate("filterSetup", "any"))
         self.btnApply.setText(_translate("filterSetup", "Apply"))

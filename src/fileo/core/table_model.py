@@ -90,6 +90,8 @@ class TableModel(QAbstractTableModel):
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if index.isValid():
             col = index.column()
+            if col == 0 and role == Qt.ItemDataRole.ToolTipRole:
+                return self.rows[index.row()][col]
             if role == Qt.ItemDataRole.DisplayRole:
                 # row length > current column
                 if len(self.rows[index.row()]) > col:

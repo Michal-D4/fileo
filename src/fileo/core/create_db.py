@@ -131,6 +131,7 @@ def adjust_user_schema(db_name: str) -> int:
                 v = (2,)
             if v[0] == 2:
                 conn.cursor().execute(
+                    'PRAGMA user_version=3;'
                     'insert into settings (key) values (?)',
                     ('SHOW_HIDDEN',)
                 )

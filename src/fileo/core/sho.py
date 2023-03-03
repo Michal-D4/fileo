@@ -48,6 +48,7 @@ class shoWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.start_pos = None
+        self.start_move_pos = QPoint(0, 0)
         self.window_maximized: bool = False
         self.mode = ag.appMode.DIR
         self.open_db: OpenDB = None
@@ -60,7 +61,7 @@ class shoWindow(QMainWindow):
 
         self.setup_global_widgets()
         self.restote_settings()
-        self.create_filter_setup()
+        self.init_filter_setup()
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.is_busy = False
@@ -249,6 +250,7 @@ class shoWindow(QMainWindow):
     def hsplit_move_event(self, e: QMouseEvent):
         cur_pos = e.globalPosition().toPoint()
         if not self.start_pos:
+            self.start_pos = self.mapFromGlobal(cur_pos)
             return
         cur_pos = self.mapFromGlobal(cur_pos)
 
@@ -285,6 +287,7 @@ class shoWindow(QMainWindow):
     def vsplit_move_event(self, e: QMouseEvent):
         cur_pos = e.globalPosition().toPoint()
         if not self.start_pos:
+            self.start_pos = self.mapFromGlobal(cur_pos)
             return
         cur_pos = self.mapFromGlobal(cur_pos)
 
@@ -355,7 +358,7 @@ class shoWindow(QMainWindow):
         elif self.filter_setup:
             self.filter_setup.hide()
 
-    def create_filter_setup(self):
+    def init_filter_setup(self):
         self.filter_setup = FilterSetup()
         self.filter_setup.setParent(self)
         ag.tag_list.change_selection.connect(self.filter_setup.tag_selection_changed)

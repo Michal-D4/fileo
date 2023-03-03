@@ -11,12 +11,7 @@ from core import icons, app_globals as ag
 from widgets.foldable import Foldable
 from widgets.ui_fold_container import Ui_Foldings
 
-__all__ = ['FoldContainer', 'set_button', 'get_tree_views',
-           'set_qss_fold' 'save_state', 'restore_state',
-]
-
 MIN_HEIGHT = 62
-TITLES = ("Directories", "Tags", "File Extensions", "Authors",)
 
 
 class MouseEventFilter(QObject):
@@ -173,7 +168,7 @@ class FoldContainer(QWidget):
     def set_menu_more(self):
         self.ui.more.setIcon(icons.get_other_icon("more"))
         menu = QMenu(self)
-        for i,item in enumerate(TITLES):
+        for i,item in enumerate(ag.qss_params['$FoldTitles'].split(',')):
             act = QAction(item, self, checkable=True)
             act.setChecked(True)
             act.triggered.connect(
@@ -196,8 +191,9 @@ class FoldContainer(QWidget):
         return sum((1 for ff in self.widgets if not (ff.is_hidden or ff.is_collapsed)))
 
     def _set_titles(self):
+        ttls = ag.qss_params['$FoldTitles'].split(',')
         for i,ff in enumerate(self.widgets):
-            ff.wid.set_title(TITLES[i])
+            ff.wid.set_title(ttls[i])
 
     def add_widget(self, w: QWidget, index: int) -> None:
         self.widgets[index].wid.add_widget(w)

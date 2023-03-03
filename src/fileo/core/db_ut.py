@@ -198,7 +198,7 @@ def insert_tags(id, tags: list):
     ]
     with ag.db['Conn'] as conn:
         for tag in tags:
-            tag_author_insert(conn, sqls, tag)
+            tag_author_insert(conn, sqls, tag, id)
 
 def insert_authors(id: int, authors: list):
     """
@@ -211,9 +211,9 @@ def insert_authors(id: int, authors: list):
     ]
     with ag.db['Conn'] as conn:
         for author in authors:
-            tag_author_insert(conn, sqls, author)
+            tag_author_insert(conn, sqls, author, id)
 
-def tag_author_insert(conn: apsw.Connection, sqls: list, item: str):
+def tag_author_insert(conn: apsw.Connection, sqls: list, item: str, id: int):
     cursor = conn.cursor()
     tt = cursor.execute(sqls[0], (item,)).fetchone()
     if tt:
@@ -224,6 +224,7 @@ def tag_author_insert(conn: apsw.Connection, sqls: list, item: str):
     else:
         cursor.execute(sqls[1], (item,))
         t_id = conn.last_insert_rowid()
+        logger.info(f"{sqls[2]}, {id=}, {t_id}")
         cursor.execute(sqls[2], (id, t_id))
 
 def insert_comments(id: int, comments: list):
@@ -414,6 +415,15 @@ def clear_temp():
 def save_to_temp(key: str, val: int):
     ag.db['Conn'].cursor().execute("insert into aux values (?, ?)", (key, val))
 
+def save_branch_in_temp(path: str):
+    sql = 'update aux set val = ? where key = ?'
+    ag.db['Conn'].cursor().execute(sql, (path, 'TREE_PATH'))
+
+def get_branch_from_temp() -> str:
+    sql = 'select val from aux where key = ?'
+    res = ag.db['Conn'].cursor().execute(sql, ('TREE_PATH',)).fetchone()
+    return res[0] if res else ''
+
 def get_file_path(id: int) -> str:
     sql = 'select path from paths where id = ?'
     path = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
@@ -422,7 +432,7 @@ def get_file_path(id: int) -> str:
 def get_file_info(id: int):
     sql = (
         'select f.filename, p.path, f.opened, f.modified, f.created, '
-        'f.published, f.nopen, f.size, f.pages from files f '
+        'f.published, f.nopen, f.rating, f.size, f.pages from files f '
         'join paths p on p.id = f.path where f.id = ?'
     )
     return ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
@@ -724,24 +734,14 @@ def create_connection(path: str):
 
     create_db.adjust_user_schema(path)
     conn: apsw.Connection = apsw.Connection(path)
-    cursor = conn.cursor()
 
+    ag.db['Path'] = path
+    ag.db['Conn'] = conn
+
+    cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')
     cursor.execute('pragma temp_store = MEMORY;')
     cursor.execute('pragma busy_timeout=1000')
 
     cursor.execute('create temp table if not exists aux (key, val)')
-
-    ag.db['Path'] = path
-    ag.db['Conn'] = conn
-
-    # sql0 = 'update settings set value = null where key = :key'
-    # for name in ag.setting_names:
-    #     cursor.execute(sql0, {'key': name})
-    ## the lines below need only when additional setting appeared (like with filter_setup)
-    # sql1 = 'select 1 from settings where key = :key'
-    # sql2 = 'insert into settings (key) values (:key) '
-    # for name in ag.setting_names:
-    #     res = cursor.execute(sql1, {'key': name}).fetchone()
-    #     if not res:
-    #         cursor.execute(sql2, {'key': name})
+    save_to_temp("TREE_PATH", '')

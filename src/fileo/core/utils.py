@@ -66,7 +66,8 @@ def setup_ui(self):
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            self.move(self.pos() + pos_ - self.start_move_pos)
+            if (pos_ - self.start_move_pos).manhattanLength() < 100:
+                self.move(self.pos() + pos_ - self.start_move_pos)
             self.start_move_pos = pos_
             e.accept()
 

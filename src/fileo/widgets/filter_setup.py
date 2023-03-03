@@ -17,6 +17,13 @@ class FilterSetup(QWidget):
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        ttls = ag.qss_params['$FoldTitles'].lower()
+        titles = ttls.split(',')
+        self.ui.selected_dir.setText(titles[0])
+        self.ui.selected_tag.setText(titles[1])
+        self.ui.selected_ext.setText(titles[2])
+        self.ui.selected_author.setText(titles[3])
+
         self.setStyleSheet(ag.dyn_qss["dialog"][0])
         self.ui.hrdFrame.setStyleSheet(ag.dyn_qss["dialog_hdr"][0])
 

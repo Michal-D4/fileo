@@ -62,9 +62,6 @@ def save_settings(**kwargs):
     for key, val in kwargs.items():
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
 
-def save_path():
-    save_settings(TREE_PATH=current_dir_path())
-
 def get_setting(key: str, default=None):
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql = "select value from settings where key = :key;"
@@ -94,23 +91,45 @@ def get_tmp_setting(key: str, default=None):
 
     return vv if vv else default
 
-def get_id_parent_path(index: QModelIndex):
+def save_branch():
+    logger.info('<----------->')
+    save_settings(TREE_PATH=get_branch(ag.dir_list.currentIndex()))
+
+def restore_branch() -> QModelIndex:
+    logger.info('<----------->')
+    return expand_branch(get_setting('TREE_PATH', []))
+
+def save_branch_in_temp(index: QModelIndex):
+    branch = get_branch(index)
+    db_ut.save_branch_in_temp(pickle.dumps(branch))
+
+def restore_branch_from_temp() -> QModelIndex:
+    val = db_ut.get_branch_from_temp()
+    return expand_branch(pickle.loads(val) if val else [])
+
+def get_branch(index: QModelIndex) -> list[int]:
+    """
+    return branch - a list of node ids from root to index
+    """
+    if not index.isValid():
+        return []
     item: TreeItem = index.internalPointer()
-    path = []
+    branch = []
     while 1:
         u_dat = item.user_data()
-        path.append(u_dat.id)
+        branch.append(u_dat.id)
         item = item.parent()
         if u_dat.parent_id == 0:
             break
-    path.reverse()
-    return path
+    branch.reverse()
+    logger.info(f'{branch=}')
+    return branch
 
-def expand_index_path(id_parent_path: list) -> QModelIndex:
+def expand_branch(branch: list) -> QModelIndex:
     model = ag.dir_list.model()
     parent = QModelIndex()
     item: TreeItem = model.rootItem
-    for it in id_parent_path:
+    for it in branch:
         if parent.isValid():
             if not ag.dir_list.isExpanded(parent):
                 ag.dir_list.setExpanded(parent, True)
@@ -125,7 +144,6 @@ def expand_index_path(id_parent_path: list) -> QModelIndex:
             break
 
     return parent
-
 #endregion
 
 #region  Dirs
@@ -150,7 +168,9 @@ def cur_dir_changed(curr_idx: QModelIndex):
         set_current_file(0)
 
 def current_dir_path():
-    return get_index_path(ag.dir_list.currentIndex())
+    logger.info(f'branch: {get_branch(ag.dir_list.currentIndex())}')
+    return get_branch(ag.dir_list.currentIndex())
+    # return get_index_path(ag.dir_list.currentIndex())
 
 def restore_path(path: list) -> QModelIndex:
     """
@@ -526,10 +546,11 @@ def delete_folder():
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
     if index.isValid():
-        path = get_id_parent_path(index)
+        branch = get_branch(index)
         if last_id:
-            path.append(last_id)
-        idx = expand_index_path(path)
+            branch.append(last_id)
+        logger.info(f'{branch=}')
+        idx = expand_branch(branch)
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.selectionModel().selectedRows(idx.row())

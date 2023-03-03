@@ -9,9 +9,21 @@ from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 
 
 from . import app_globals as ag, low_bk, load_files, db_ut
-from .edit_tree_model2 import get_index_path, TreeItem
+from .edit_tree_model2 import TreeItem
 
 dragged_ids = None
+
+def get_index_path(index: QModelIndex) -> list[int]:
+    """
+    for index returns the full path from root to this index
+    """
+    idx = index
+    path = []
+    while idx.isValid():
+        path.append(idx.row())
+        idx = idx.parent()
+    path.reverse()
+    return path
 
 def get_files_mime_data() -> QMimeData:
     indexes = ag.file_list.selectionModel().selectedRows()

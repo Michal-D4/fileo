@@ -12,22 +12,6 @@ from PyQt6.QtCore import (QAbstractItemModel, QModelIndex, Qt, QMimeData,
 from . import db_ut, app_globals as ag, icons, load_files
 
 
-def get_index_path(index: QModelIndex) -> list[int]:
-    """
-    for index returns the full path from root to this index
-    this path may be used to restore dir's expantion/selection
-    but only if no change was done in the model between saving
-    path and restoring
-    """
-    idx = index
-    path = []
-    while idx.isValid():
-        path.append(idx.row())
-        idx = idx.parent()
-    path.reverse()
-    return path
-
-
 class TreeItem(object):
     def __init__(self, data, user_data: ag.DirData=None, parent=None):
         self.parentItem: TreeItem = parent
@@ -122,7 +106,9 @@ class TreeModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
-        if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+        if (role == Qt.ItemDataRole.DisplayRole or
+            role == Qt.ItemDataRole.ToolTipRole or
+            role == Qt.ItemDataRole.EditRole):
             item = self.getItem(index)
             return item.data(index.column())
         elif role == Qt.ItemDataRole.UserRole:

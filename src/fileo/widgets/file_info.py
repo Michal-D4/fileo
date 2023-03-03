@@ -1,3 +1,5 @@
+from loguru import logger
+
 from PyQt6.QtCore import Qt, QPoint, QSize, QDateTime, pyqtSignal
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut, QTextCursor
 from PyQt6.QtWidgets import (QWidget, QFrame, QFormLayout, QLabel,
@@ -28,6 +30,8 @@ class fileInfo(QWidget):
         self.form_layout = QFormLayout()
         self.form = QFrame(self)
         self.file_authors = QPlainTextEdit()
+        self.rating = QLineEdit()
+        self.pages = QLineEdit()
         self.combo = QComboBox()
 
         self.form_setup()
@@ -41,6 +45,9 @@ class fileInfo(QWidget):
         self.start_move_pos = QPoint(0,0)
         self.mouseMoveEvent = self.move_self
 
+        self.rating.editingFinished.connect(self.rating_changed)
+        self.pages.editingFinished.connect(self.pages_changed)
+
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.to_close)
 
@@ -52,7 +59,14 @@ class fileInfo(QWidget):
 
         self.file_authors.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.file_authors.customContextMenuRequested.connect(self.custom_menu)
-        # self.file_authors.setOpenLinks(False)
+
+    def rating_changed(self):
+        logger.info(f"{self.rating.text()=}")
+        db_ut.update_files_field(self.id, 'rating', self.rating.text())
+
+    def pages_changed(self):
+        logger.info(f"{self.pages.text()=}")
+        db_ut.update_files_field(self.id, 'pages', self.pages.text())
 
     def to_close(self):
         self.file_info_close.emit()
@@ -63,37 +77,42 @@ class fileInfo(QWidget):
         menu.addAction("Delete selected")
         menu.addAction("Copy selected")
         menu.addSeparator()
-        menu.addAction("Copy all")
+        menu.addAction("Select all")
         action = menu.exec(self.file_authors.mapToGlobal(pos))
         if action:
             {'Delete selected': self.delete_link,
              'Copy selected': self.copy_selected,
-             'Copy all': self.copy_all
+             'Select all': self.select_all
             }[action.text()]()
 
     def copy_selected(self):
         curs = self.file_authors.textCursor()
         QApplication.clipboard().setText(curs.selectedText())
 
-    def copy_all(self):
-        QApplication.clipboard().setText(self.file_authors.toPlainText())
+    def select_all(self):
+        self.file_authors.selectAll()
 
     def delete_link(self):
         curs = self.file_authors.textCursor()
         if curs.hasSelection():
-            txt = curs.selectedText()
-            i = self.combo.findText(txt, Qt.MatchFlag.MatchExactly)
-            if i == -1:
-                return
-            id = self.combo.itemData(i, Qt.ItemDataRole.UserRole)
-            db_ut.break_file_authors_link(self.id, id)
+            sel_txt = curs.selectedText()
+            for txt in sel_txt.split(', '):
+                i = self.combo.findText(txt, Qt.MatchFlag.MatchExactly)
+                if i == -1:
+                    continue
+                id = self.combo.itemData(i, Qt.ItemDataRole.UserRole)
+                db_ut.break_file_authors_link(self.id, id)
             self.populate_file_authors()
 
     def select_on_click(self, e: QMouseEvent):
         pos = e.pos()
+        sel = self.file_authors.textCursor().selectedText()
+        if sel and e.button() == Qt.MouseButton.RightButton:
+            return
         txt_curs_at_click = self.file_authors.cursorForPosition(pos)
         self.file_authors.setTextCursor(txt_curs_at_click)
         text_pos = self.file_authors.textCursor().position()
+
         self.select_author_under_pos(text_pos)
 
     def select_author_under_pos(self, pos: int):
@@ -147,12 +166,13 @@ class fileInfo(QWidget):
         self.form_layout.addRow(QLabel("Modified date:"), QLabel())
         self.form_layout.addRow(QLabel("Created date:"), QLabel())
         self.form_layout.addRow(QLabel("Publication date(book):"), QLabel())
-        self.form_layout.addRow(QLabel("Number of file openings:"), QLabel())
+        self.form_layout.addRow(QLabel("File opened (times):"), QLabel())
+        self.form_layout.addRow(QLabel("File rating:"), self.rating)
         self.form_layout.addRow(QLabel("Size of file:"), QLabel())
-        self.form_layout.addRow(QLabel("Pages(book):"), QLineEdit())
+        self.form_layout.addRow(QLabel("Pages(book):"), self.pages)
 
         self.file_authors.setPlaceholderText(
-            "The author(s) will appear here if entered or chosen in the combobox below"
+            "The author(s) will appear here if entered or picked in the combobox below"
         )
         self.file_authors.setReadOnly(True)
         self.file_authors.setMaximumSize(QSize(16777215, 50))

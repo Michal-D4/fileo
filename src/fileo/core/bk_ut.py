@@ -37,13 +37,13 @@ def save_bk_settings():
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
     if collapse:
-        low_bk.save_path()
+        low_bk.save_branch_in_temp(ag.dir_list.currentIndex())
         ag.dir_list.collapseAll()
     else:
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
-        path = low_bk.get_setting("TREE_PATH", [])
-        low_bk.restore_path(path)
+        idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+        ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
     col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
@@ -170,13 +170,16 @@ def fill_dir_list():
     populating directory tree
     """
     low_bk.set_dir_model()
-    path = low_bk.get_setting("TREE_PATH", [])
-    _ = low_bk.restore_path(path)
+    idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+    ag.dir_list.setCurrentIndex(idx)
 
-@pyqtSlot(int)
-def show_hidden_dirs(state: int):
-    low_bk.save_settings(TREE_PATH=low_bk.current_dir_path())
+@pyqtSlot(Qt.CheckState)
+def show_hidden_dirs(state: Qt.CheckState):
+    """
+    QCheckBox stateChanged signal handler
+    """
+    low_bk.save_branch()
     fill_dir_list()
 
 def set_context_menu():
