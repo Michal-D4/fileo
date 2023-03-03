@@ -445,22 +445,29 @@ def import_files():
         _import_files(file_name)
 
 def _import_files(filename):
+    branch = get_branch(ag.dir_list.currentIndex())
+    exist_dir = -1
     with open(filename, "r") as fp:
         for line in fp:
-            load_file(json.loads(line))
+            exist_dir = load_file(json.loads(line))
+    if exist_dir >= 0:
+        branch.append(exist_dir)
+        set_dir_model()
+        idx = expand_branch(branch)
+        ag.dir_list.setCurrentIndex(idx)
 
-def load_file(fl: dict):
+def load_file(fl: dict) -> int:
     file_ = fl['file']
     f_path: Path = Path(file_[-1]) / file_[1]
     if not f_path.is_file():
         return
 
     dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+    existed = -1
 
     id = db_ut.registered_file_id(file_[-1], file_[1])
     if id:
-        dir_2 = db_ut.insert_dir('Existed', dir_id)
-        db_ut.copy_file(id, dir_2)
+        existed = db_ut.copy_existed(id, dir_id)
     else:
         id = db_ut.insert_file(file_)
         db_ut.copy_file(id, dir_id)
@@ -468,6 +475,7 @@ def load_file(fl: dict):
     db_ut.insert_tags(id, fl['tags'])
     db_ut.insert_comments(id, fl['comments'])
     db_ut.insert_authors(id, fl['authors'])
+    return existed
 #endregion
 
 #region  Files - Dirs
@@ -568,7 +576,6 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
         idx = expand_branch(branch)
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)
-            ag.dir_list.selectionModel().selectedRows(idx.row())
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
 

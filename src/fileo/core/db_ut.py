@@ -524,21 +524,27 @@ def update_dir_name(name: str, id: int):
         conn.cursor().execute(sql, (name, id))
 
 def insert_dir(dir_name: str, parent: int) -> int:
-    sql1 = (
-        'select d.id from dirs d join parentdir p on '
-        'p.id = d.id where p.parent = ? and d.name = ?'
-    )
     sql2 = 'insert into dirs (name) values (?);'
     sql3 = 'insert into parentdir values (?, ?, 0, 0);'
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
-        id = curs.execute(sql1, (parent, dir_name)).fetchone()
-        if id:
-            return id[0]
         curs.execute(sql2, (dir_name,))
         id = conn.last_insert_rowid()
         curs.execute(sql3, (parent, id))
     return id
+
+def copy_existed(file_id: int, parent_dir: int) -> int:
+    """
+    make copy of existed file while import from file
+    """
+    sql = (  # the "Existed" folder id in the current folder if any
+        'select d.id from dirs d join parentdir p on '
+        'p.id = d.id where p.parent = ? and d.name = ?'
+    )
+    id = ag.db['Conn'].cursor().execute(sql, (parent_dir, 'Existed')).fetchone()
+    exist_id = id[0] if id else insert_dir('Existed', parent_dir)
+    copy_file(file_id, exist_id)
+    return exist_id
 
 def toggle_hidden_dir_state(id: int, parent: int, hidden: bool):
     sql = 'update parentdir set hide = :hide where (id,parent) = (:id,:parent)'
