@@ -162,9 +162,6 @@ class FilterSetup(QWidget):
             db_ut.save_to_temp('author', id)
         self.checks['author'] = (len(authors) > 0)
 
-    def save_filter_setting(self):
-        print(self.geometry())
-
     def dir_selection_changed(self):
         indexes = ag.dir_list.selectedIndexes()
         dirs = []

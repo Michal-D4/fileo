@@ -1,15 +1,10 @@
-#!/usr/bin/env python
 from loguru import logger
 
 from collections import defaultdict
 
-from PyQt6.QtCore import (QAbstractItemModel, QModelIndex, Qt, QPersistentModelIndex,
-    )
-from PyQt6.QtCore import (QAbstractItemModel, QModelIndex, Qt, QMimeData,
-    QDataStream, QIODevice,
-    )
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
 
-from . import db_ut, app_globals as ag, icons, load_files
+from . import db_ut, app_globals as ag, icons
 
 
 class TreeItem(object):

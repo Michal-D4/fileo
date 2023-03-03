@@ -222,7 +222,7 @@
             </item>
             <item>
              <property name="text">
-              <string>greate then</string>
+              <string>greater than</string>
              </property>
             </item>
            </widget>
@@ -284,7 +284,7 @@
             </item>
             <item>
              <property name="text">
-              <string>great than</string>
+              <string>greater than</string>
              </property>
             </item>
            </widget>

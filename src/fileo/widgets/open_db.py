@@ -90,7 +90,7 @@ class OpenDB(QWidget):
             QApplication.clipboard().setText(self.ui.input_path.placeholderText())
 
     def restore_db_list(self):
-        self.db_list = utils.get_setting("DB_List", None)
+        self.db_list = utils.get_setting("DB_List", [])
         for it in self.db_list:
             self.add_item_widget(it)
         self.ui.listDB.setCurrentRow(0)
@@ -162,8 +162,8 @@ class OpenDB(QWidget):
         self.ui.input_path.setText(str(file_))
         if file_.exists():
             if file_.is_file():
-                if create_db.is_app_schema(str(file_)) == create_db.APP_ID:
-                    u_ver = create_db.user_schema_number(str(file_))
+                if create_db.is_app_schema(str(file_)):
+                    u_ver = create_db.adjust_user_schema(str(file_))
                     if u_ver == create_db.USER_VER:
                         return True
                     else:

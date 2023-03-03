@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox, QAbstractItemView, QFileD
 
 from core import db_ut, app_globals as ag
 from core.table_model import TableModel, ProxyModel2
-from core.edit_tree_model2 import TreeModel, get_index_path, TreeItem
+from core.edit_tree_model2 import TreeModel, TreeItem
 
 def exec_user_actions():
     """
@@ -56,6 +56,8 @@ def exec_user_actions():
 
 #region Common
 def save_settings(**kwargs):
+    if not ag.db["Conn"]:
+        return
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql = "update settings set value = :value where key = :key;"
 
@@ -63,12 +65,12 @@ def save_settings(**kwargs):
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
 
 def get_setting(key: str, default=None):
+    if not ag.db["Conn"]:
+        return default
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql = "select value from settings where key = :key;"
 
     val = cursor.execute(sql, {"key": key}).fetchone()[0]
-    # in case of "TypeError: 'NoneType' object is not subscriptable"
-    # execute ("insert into settings (key) values (?), (key,)")
     vv = pickle.loads(val) if val else None
 
     return vv if vv else default
@@ -170,7 +172,6 @@ def cur_dir_changed(curr_idx: QModelIndex):
 def current_dir_path():
     logger.info(f'branch: {get_branch(ag.dir_list.currentIndex())}')
     return get_branch(ag.dir_list.currentIndex())
-    # return get_index_path(ag.dir_list.currentIndex())
 
 def restore_path(path: list) -> QModelIndex:
     """

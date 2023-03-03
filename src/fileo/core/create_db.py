@@ -17,7 +17,7 @@ extid integer NOT NULL,
 path integer NOT NULL,
 filename text NOT NULL,
 modified date not null default -62135596800,
-opened date not null default -62135596800,   -- 0001-01-01 00:00:00 : time in seconds since `1970-01-01 00:00:00 UTC`
+opened date not null default -62135596800,
 created date not null default -62135596800,
 rating integer not null default 0,
 nopen integer not null default 0,

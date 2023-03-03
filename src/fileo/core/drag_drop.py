@@ -204,7 +204,7 @@ def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
-    load.set_files_iter(
+    load.set_files_iterator(
         (it.toLocalFile() for it in data.urls())
     )
     load.load_to_dir(target)

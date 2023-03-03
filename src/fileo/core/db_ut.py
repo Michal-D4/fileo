@@ -727,10 +727,10 @@ def get_files_tag(tag: int) -> set[int]:
         files.append(id[0])
     return set(files)
 
-def create_connection(path: str):
+def create_connection(path: str) -> bool:
     print(f"create_connection: {path=}, {ag.db['Path']=}")
     if not path:
-        return
+        return False
 
     create_db.adjust_user_schema(path)
     conn: apsw.Connection = apsw.Connection(path)
@@ -745,3 +745,5 @@ def create_connection(path: str):
 
     cursor.execute('create temp table if not exists aux (key, val)')
     save_to_temp("TREE_PATH", '')
+
+    return True

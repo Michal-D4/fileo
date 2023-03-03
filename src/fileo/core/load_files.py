@@ -11,7 +11,6 @@ from . import app_globals as ag
 class PathDir():
     pathId: int
     dirId: int
-    is_new: bool
 
 def yield_files(root: str, ext: list[str]):
     """
@@ -49,9 +48,9 @@ class loadFiles(QObject):
         for row in cursor:
             if Path(row[-1]).is_dir():  # skip not dirs
                 logger.info(f"Path: {row[-1]}, pathId: {row}")
-                self.paths[row[-1]] = PathDir(row[0], 0, False)
+                self.paths[row[-1]] = PathDir(row[0], 0)
 
-    def set_files_iter(self, files):
+    def set_files_iterator(self, files):
         """
         files should be iterable
         I do not check if it is iterable
@@ -61,8 +60,8 @@ class loadFiles(QObject):
         self.files = files
 
     def load_to_dir(self, dir_id):
-        logger.info(f"{dir_id=}")
         self.load_id = dir_id
+        logger.info(f"{self.load_id=}")
         for line in self.files:
             logger.info(line)
             file = Path(line)
@@ -73,6 +72,7 @@ class loadFiles(QObject):
     def drop_file(self, filename: Path):
         path_id = self.get_path_id(str(filename.parent))
 
+        logger.info(f'{path_id=}, {filename}')
         id = (
             self.find_file(path_id, filename.name) or
             self._drop_file(path_id, filename)
@@ -116,9 +116,8 @@ class loadFiles(QObject):
     def create_load_dir(self):
         load_dir = f'Load {datetime.now().strftime("%b %d %H:%M")}'
         self.load_id = self._insert_dir(load_dir)
+        logger.info(f'{self.load_id=}')
         self.add_parent_dir(0, self.load_id)
-
-        return id_dir
 
     def insert_file(self, full_file_name: Path) -> int:
         """
@@ -139,7 +138,7 @@ class loadFiles(QObject):
         INSERT_FILE = ('insert into files (filename, extid, path) '
             'values (:file, :ext_id, :path);')
 
-        dir_id = self.get_dir_id(path_id, file_name.parent)
+        dir_id = self.get_dir_id(file_name.parent, path_id)
 
         ext_id = self.insert_extension(file_name)
 
@@ -153,30 +152,35 @@ class loadFiles(QObject):
 
     def set_file_dir_link(self, id: int, dir_id: int):
         INSERT_FILEDIR = 'insert into filedir values (:file, :dir);'
-
+        logger.info(f'{id=}, {dir_id=}')
         self.conn.cursor().execute(INSERT_FILEDIR, {'file': id, 'dir': dir_id})
 
     def find_file(self, path_id: int, file_name: str) -> int:
         FIND_FILE = ('select id from files where path = :pid and filename = :name')
 
+        logger.info(f'{path_id=}, {file_name}')
         id = self.conn.cursor().execute(FIND_FILE,
             {'pid': path_id, 'name': file_name}
         ).fetchone()
 
         return id[0] if id else 0
 
-    def get_dir_id(self, path: Path) -> int:
+    def get_dir_id(self, path: Path, path_id: int) -> int:
         if str(path) in self.paths:
-            return self.paths[str(path)].dirId
+            logger.info(f'{self.paths[str(path)]}, {str(path)}')
+            id = self.paths[str(path)].dirId
+            if id:
+                return id
 
-        p_id = self.find_closest_parent(path) or self.load_id
-        id = self._new_dir(path, p_id)
-        self.paths[str(path)] = PathDir(p_id, id)
-
+        parent_id = self.find_closest_parent(path)
+        id = self._new_dir(path, parent_id)
+        self.paths[str(path)] = PathDir(path_id, id)
+        logger.info(f'{self.paths[str(path)]}, {str(path)}')
         return id
 
     def _new_dir(self, path: Path, parent_id: int):
         id = self._insert_dir(path.name)
+        logger.info(f'{id=}, {parent_id=}')
         self.add_parent_dir(parent_id, id)
         return id
 
@@ -196,15 +200,10 @@ class loadFiles(QObject):
 
         self.conn.cursor().execute(INSERT_PATH, {'path': path})
         path_id = self.conn.last_insert_rowid()
-        self.paths[path] =PathDir(path_id, 0, True)
+        self.paths[path] = PathDir(path_id, 0)
         return path_id
 
     def insert_extension(self, file: Path) -> int:
-        """
-        insert or find extension in DB
-        :param file - file name
-        returns (ext_id, extension_of_file)
-        """
         FIND_EXT = 'select id from extensions where extension = ?;'
         INSERT_EXT = 'insert into extensions (extension) values (:ext);'
 
@@ -224,77 +223,24 @@ class loadFiles(QObject):
             'values (:p_id, :id)'
         )
 
+        logger.info(f'{parent=}, {id_dir=}')
         self.conn.cursor().execute(
             INSERT_PARENT, {'p_id': parent, 'id': id_dir}
         )
 
-        id_dir, id_path = self._insert_dir(p_id, new_path)
-
-        self.change_parent(id_dir, p_id, new_path)
-
-        logger.info(f"Path: {str(new_path)}, {id_path=}, {id_dir=}")
-        self.paths[str(new_path)] = PathDir(id_path, id_dir, True)
-
-        return id_dir, id_path
-
-    def _insert_dir(self, parent: int, new_path: Path) -> tuple[int, int]:
-        INSERT_DIR = 'insert into dirs (name) values (:name)'
-        INSERT_PATH = 'insert into paths (path) values (:path)'
-        INSERT_PARENT = 'insert into parentdir (parent, id) values (:p_id, :id)'
-        logger.info(f"parent id: {parent}, ")
-
-        cursor = self.conn.cursor()
-
-        cursor.execute(INSERT_DIR, {'name': new_path.name})
-        id_dir = self.conn.last_insert_rowid()
-
-        cursor.execute(INSERT_PATH, {'path': str(new_path)})
-        id_path = self.conn.last_insert_rowid()
-        logger.info(f"{id_path=}, {str(new_path)=}")
-
-        cursor.execute(INSERT_PARENT, {'p_id': parent, 'id': id_dir})
-
-        return id_dir, id_path
-
-    def change_parent(self, id: int, p_id: int, path: Path):
-        """
-        Change parent id of dirs that must be children of new dir
-        :param id: id of new dir
-        :param p_id: parent id of new dir
-        :param path: path of new dir
-        """
-        UPDATE_PARENT = (
-            'update PARENTDIR set parent = :new_id '
-            'where id = :dir and parent = :old_id'
-        )
-        logger.info(f"{id=}, {p_id=}, {str(path)}")
-        cursor = self.conn.cursor()
-        for key, it in self.paths.items():
-            logger.info(f"{key=}, {id=}, {it.dirId=}")
-            if Path(key) in path.parents and it.dirId != id:
-                cursor.execute(UPDATE_PARENT,
-                    {'dir': it.dirId, 'old_id': p_id, 'new_id': id}
-                )
-
-    def find_closest_parent(self, new_path: Path) -> tuple[int, int, Path]:
+    def find_closest_parent(self, new_path: Path) -> int:
         """
         Search parent directory in DB
         :param new_path:  new file path
-        :return: parent_id, path_id, parent_path
-             or  0,         0,       None
+        :return: parent_id, parent_path
+             or  0,         None
         """
-        # WORKAROUND: the parents of path "new_path / '@'"
-        # the first parent is a new_path itself
+        # the first parent of "new_path / '@'" is a new_path itself
         logger.info(f"{str(new_path)=}")
         for parent_path in (new_path / '@').parents:
             str_parent = str(parent_path)
+            logger.info(f'parent:{str_parent}')
             if str_parent in self.paths:
-                item: PathDir = self.paths[str_parent]
-                path_id = item.pathId
-                parent_id = item.dirId
-                logger.info(f"{path_id=}, {parent_id=}, {str_parent}")
-                if not parent_id:
-                    item.dirId = parent_id = self.get_dir_id(path_id, parent_path)
-                return parent_id, path_id, parent_path
+                return self.paths[str_parent].dirId or self.load_id
 
-        return 0, 0, None
+        return self.load_id

@@ -50,7 +50,7 @@ class Ui_FileNotes(object):
     def retranslateUi(self, FileNotes):
         _translate = QtCore.QCoreApplication.translate
         FileNotes.setWindowTitle(_translate("FileNotes", "Form"))
-        self.tagEdit.setPlaceholderText(_translate("FileNotes", "input file tags here (separated by commas), or doubleclick to select in the appeared list"))
+        self.tagEdit.setPlaceholderText(_translate("FileNotes", "enter file tags here (comma separated) or double click to select from list"))
         self.plus.setToolTip(_translate("FileNotes", "add note"))
         self.plus.setText(_translate("FileNotes", "..."))
         self.info.setToolTip(_translate("FileNotes", "Show file info"))

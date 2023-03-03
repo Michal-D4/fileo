@@ -24,7 +24,7 @@ def get_setting(key: str, default: Optional[Any]=None) -> QVariant:
     global settings
     if not settings:
         settings = QSettings(MAKER, APP_NAME)
-    return settings.value(key, default)
+    return settings.value(key, default) or default
 
 def save_setting(**kwargs):
     if not kwargs:
@@ -74,6 +74,7 @@ def setup_ui(self):
     self.ui.topBar.mouseMoveEvent = move_window
     self.ui.status.mouseMoveEvent = move_window
     self.ui.toolBar.mouseMoveEvent = move_window
+    self.container.ui.navi_header.mouseMoveEvent = move_window
 
     def double_click_maximize_restore(e: QMouseEvent):
         if e.type() == QEvent.Type.MouseButtonDblClick:

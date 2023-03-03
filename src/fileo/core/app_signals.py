@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, QObject, QModelIndex
+from PyQt6.QtCore import pyqtSignal, QObject
 
 class AppSignals(QObject):
 

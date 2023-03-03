@@ -17,10 +17,13 @@ if TYPE_CHECKING:
 self: 'shoWindow' = None
 
 def save_bk_settings():
+    if not ag.db['Conn']:
+        return
+
     actions = ag.field_menu.menu().actions()
 
     settings = {
-        "TREE_PATH": low_bk.current_dir_path(),
+        "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
         "FILE_ID": ag.file_list.currentIndex().row(),
         "FIELDS_STATE": [int(a.isChecked()) for a in actions],
         "COLUMN_WIDTH": low_bk.get_columns_width(),
@@ -108,7 +111,6 @@ def field_list_changed():
     low_bk.set_current_file(idx.row())
 
 def set_drag_drop_handlers():
-    logger.info("<<<<<<< KU-KU >>>>>>>>>>>>>")
     ag.dir_list.startDrag = dd.start_drag_dirs
     ag.file_list.startDrag = dd.start_drag_files
     ag.dir_list.dragMoveEvent = dd.drag_move_event
@@ -133,10 +135,13 @@ def file_list_resize(e: QResizeEvent):
     super(QTreeView, ag.file_list).resizeEvent(e)
 
 def resize_columns(delta: int):
+    if not (model := ag.file_list.model()):
+        return
+
     sw = sum(  # sum of field widths
         (
             ag.file_list.columnWidth(i) for i in
-            range(ag.file_list.model().columnCount())
+            range(model.columnCount())
         )
     ) + 21   # left margin 12 + scroll bar 9
 
@@ -234,12 +239,12 @@ def file_searching(root_path: str, ext: list[str]):
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if self.is_busy:
+    if self.is_busy or not ag.db['Conn']:
         return
     self.thread = QThread(self)
 
     self.worker = load_files.loadFiles()
-    self.worker.set_files_iter(load_files.yield_files(root_path, ext))
+    self.worker.set_files_iterator(load_files.yield_files(root_path, ext))
     self.worker.moveToThread(self.thread)
 
     self.thread.started.connect(self.worker.load_data)
@@ -286,7 +291,7 @@ def run_update_pdf_files():
 
 def run_worker(func):
     print(f'run_worker - function: {func.__name__}')
-    if self.is_busy:
+    if self.is_busy or not ag.db['Conn']:
         return
     self.thread = QThread(self)
 

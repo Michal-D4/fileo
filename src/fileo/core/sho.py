@@ -22,8 +22,8 @@ from . import app_globals as ag
 
 
 MIN_COMMENT_HEIGHT = 75
-MIN_NAVI_WIDTH = 135
-DEFAULT_NAVI_WIDTH = 170
+MIN_CONTAINER_WIDTH = 135
+DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400
 
 def add_widget_into_frame(frame: QFrame, widget: QWidget):
@@ -61,7 +61,6 @@ class shoWindow(QMainWindow):
 
         self.setup_global_widgets()
         self.restote_settings()
-        self.init_filter_setup()
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.is_busy = False
@@ -86,23 +85,23 @@ class shoWindow(QMainWindow):
         self.ui.busy.setPixmap(icons.get_other_icon("busy")[val])
 
     def connect_db(self, path: str):
-        db_ut.create_connection(path)
-        self.ui.db_name.setText(Path(path).name)
+        if db_ut.create_connection(path):
+            self.ui.db_name.setText(Path(path).name)
+            self.init_filter_setup()
 
     def restore_container(self):
-        state = utils.get_setting("container", (DEFAULT_NAVI_WIDTH, None))
+        state = utils.get_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
-            self.ui.container.setMinimumWidth(state[0])
+            self.ui.container.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
         self.mode = utils.get_setting("appMode", ag.appMode.DIR)
         self.click_checkable_button(True, self.mode)
 
     def restore_comment_height(self):
-        self.ui.noteHolder.setMinimumHeight(
-            utils.get_setting("commentHeight", MIN_COMMENT_HEIGHT)
-        )
+        hh = utils.get_setting("commentHeight", MIN_COMMENT_HEIGHT)
+        self.ui.noteHolder.setMinimumHeight(int(hh))
 
     def restore_geometry(self):
         geometry = utils.get_setting("MainWindowGeometry")
@@ -111,7 +110,7 @@ class shoWindow(QMainWindow):
             self.restoreGeometry(geometry)
 
         maximize_restore = utils.setup_ui(self)
-        is_maximized = utils.get_setting("maximizedWindow", False)
+        is_maximized = int(utils.get_setting("maximizedWindow", False))
         if is_maximized:
             maximize_restore()
 
@@ -302,7 +301,7 @@ class shoWindow(QMainWindow):
         x0 = self.start_pos.x()
         delta = x - x0
         cur_width = self.ui.container.width()
-        w = max(cur_width + delta, MIN_NAVI_WIDTH)
+        w = max(cur_width + delta, MIN_CONTAINER_WIDTH)
         w = min(w, (self.ui.fileFrame.width() + cur_width) // 2)
 
         self.ui.container.setMinimumWidth(w)

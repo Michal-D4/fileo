@@ -53,7 +53,7 @@
          <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string>input file tags here (separated by commas), or doubleclick to select in the appeared list</string>
+         <string>enter file tags here (comma separated) or double click to select from list</string>
         </property>
        </widget>
       </item>

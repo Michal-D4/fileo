@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\fileo\widgets\fold_container.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\tmp\src\widgets\fold_container.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.0
 #

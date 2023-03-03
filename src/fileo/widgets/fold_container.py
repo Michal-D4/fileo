@@ -297,11 +297,11 @@ class FoldContainer(QWidget):
           - if it is hidden
           - its height
         """
-        self.first_visible = state[0] if state[0] else 0
         if state[0] is None:
             return
-        # breakpoint()
-        self.height_ = state[1]
+
+        self.first_visible = int(state[0])
+        self.height_ = int(state[1])
         st1 = state[2:]
 
         menu = self.ui.more.menu()
