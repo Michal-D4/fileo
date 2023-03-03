@@ -80,8 +80,6 @@ class TableModel(QAbstractTableModel):
         self.user_data = []
 
     def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
         return len(self.rows)
 
     def columnCount(self, parent=None):

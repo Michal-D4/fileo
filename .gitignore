@@ -10,7 +10,7 @@ tests/
 .venv/
 .vscode/
 *.egg-info/
-*.lock
+#*.lock
 
 *.log
 *.db*

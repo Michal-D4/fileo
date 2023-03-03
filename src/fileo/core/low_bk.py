@@ -33,8 +33,8 @@ def exec_user_actions():
         "Files Copy full file name": copy_file_name,
         "Files Open file": open_file,
         "double click file": double_click_file,
-        "Files Remove file from folder": remove_file,
-        "Files Delete file from DB": delete_file,
+        "Files Remove file from folder": remove_files,
+        "Files Delete file from DB": delete_files,
         "Files Reveal in explorer": open_folder,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
@@ -369,36 +369,36 @@ def open_file0(index: QModelIndex):
         if ts > 0:
             ag.file_list.model().update_opened(ts, index)
 
-def delete_file():
+def delete_files():
     """
     delete file from DB
     """
-    idx = ag.file_list.currentIndex()
+    if not ag.file_list.selectionModel().hasSelection():
+        return
 
     dlg = QMessageBox(ag.app)
     dlg.setWindowTitle('delete file from DB')
-    dlg.setText(f'confirm file "{file_name(idx)}" deletion')
+    dlg.setText(f'Selected files will be deleted. Please confirm')
     dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
         QMessageBox.StandardButton.Cancel)
     dlg.setIcon(QMessageBox.Icon.Question)
     res = dlg.exec()
 
     if res == QMessageBox.StandardButton.Ok:
-        db_ut.delete_file(idx.data(Qt.ItemDataRole.UserRole).id)
-        post_delete_file(idx)
+        row = ag.file_list.model().rowCount()
+        for idx in ag.file_list.selectionModel().selectedRows(0):
+            row = min(row, idx.row())
+            db_ut.delete_file(idx.data(Qt.ItemDataRole.UserRole).id)
+        post_delete_file(row)
 
-def remove_file():
-    """
-    remove file from folder
-    """
-    idx = ag.file_list.currentIndex()
-    id = idx.data(Qt.ItemDataRole.UserRole).id
-
-    dir_id = get_dir_id(id)
-
-    if dir_id:
+def remove_files():
+    row = ag.file_list.model().rowCount()
+    for idx in ag.file_list.selectionModel().selectedRows(0):
+        row = min(row, idx.row())
+        id = idx.data(Qt.ItemDataRole.UserRole).id
+        dir_id = get_dir_id(id)
         db_ut.delete_file_dir_link(id, dir_id)
-        post_delete_file(idx)
+    post_delete_file(row)
 
 def get_dir_id(file: int) -> int:
     """
@@ -412,8 +412,7 @@ def get_dir_id(file: int) -> int:
 
     return db_ut.get_dir_id_for_file(file)
 
-def post_delete_file(idx: QModelIndex):
-    row = idx.row()
+def post_delete_file(row: int):
     populate_file_list()
     model = ag.file_list.model()
     if row >= model.rowCount():
