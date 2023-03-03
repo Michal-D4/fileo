@@ -195,21 +195,21 @@ QTreeView::branch:selected:!active {
  background: $itemSelectNoActive;
 }
 QTreeView::branch:!adjoins-item {
- border-image: url(src/qss/vline3.svg) 0;
+ border-image: url($VLINE) 0;
 }
 QTreeView::branch:adjoins-item {
- border-image: url(src/qss/vline3.svg) 0;
+ border-image: url($VLINE) 0;
 }
 QTreeView::branch:!has-children:!has-siblings:adjoins-item {
- border-image: url(src/qss/vline3.svg) 0;
+ border-image: url($VLINE) 0;
 }
 QTreeView::branch:closed:has-children {
  border-image: none;
- image: url(src/qss/angle_right.svg);
+ image: url($angleRight);
 }
 QTreeView::branch:open:has-children {
  border-image: none;
- image: url(src/qss/angle_down.svg);
+ image: url($angleDown);
 }
 /* QTreeView::item:selected{background-color: #bedcf0;}
 QTreeView::item:hover:selected{background-color: #94c8ea;}

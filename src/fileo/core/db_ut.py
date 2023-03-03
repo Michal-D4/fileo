@@ -112,6 +112,8 @@ def lost_files() -> bool:
     sql2 = 'insert into parentdir values (0, 1, 0, 0)'
     sql3 = 'select file from filedir where dir = 1'
     sql4 = 'delete from parentdir where (parent,id) = (0,1)'
+    sql5 = "select 1 from dirs where id = 1"
+    sql6 = "insert into dirs values (1, '@@Lost')"
     def hide_lost_dir() -> bool:
         res = conn.cursor().execute(sql3).fetchone()
         if not res:
@@ -126,6 +128,10 @@ def lost_files() -> bool:
 
     try:
         with ag.db['Conn'] as conn:
+            id1 = conn.cursor().execute(sql5).fetchone()
+            if not id1:
+                conn.cursor().execute(sql6).fetchone()
+
             before = conn.last_insert_rowid()
             conn.cursor().execute(sql0)
             after = conn.last_insert_rowid()
@@ -308,7 +314,12 @@ def get_file_info(id: int):
 def move_file(new_dir: int, old_dir: int, file: int):
     sql ='update filedir set dir = :new where dir = :old and file = :id;'
     with ag.db['Conn'] as conn:
-        conn.cursor().execute(sql, {'new': new_dir, 'old': old_dir, 'id': file})
+        try:
+            conn.cursor().execute(
+                sql, {'new': new_dir, 'old': old_dir, 'id': file}
+            )
+        except apsw.ConstraintError:
+            pass         # re-copy, duplication
 
 def copy_file(id: int, dir: int):
     sql = 'insert into filedir (file, dir) values (?, ?);'

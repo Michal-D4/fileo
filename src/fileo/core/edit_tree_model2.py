@@ -9,7 +9,7 @@ from PyQt6.QtCore import (QAbstractItemModel, QModelIndex, Qt, QMimeData,
     QDataStream, QIODevice,
     )
 
-from . import db_ut, app_globals as ag, icons
+from . import db_ut, app_globals as ag, icons, load_files
 
 
 def get_index_path(index: QModelIndex) -> list[int]:
@@ -258,112 +258,6 @@ class TreeModel(QAbstractItemModel):
 
     def supportedDropActions(self) -> Qt.DropAction:
         return Qt.DropAction.CopyAction | Qt.DropAction.MoveAction
-
-    def dropMimeData(self, data: QMimeData, act:Qt.DropAction, index: QModelIndex) -> bool:
-        """
-        index - target folder index
-        """
-        if data.hasFormat(ag.mimeType.files.value):
-            return self.drop_files(data, act, index)
-        if data.hasFormat(ag.mimeType.folders.value):
-            return self.drop_folders(data, act, index)
-        return False
-
-    def drop_files(self, data: QMimeData, act: Qt.DropAction, index: QModelIndex) -> bool:
-        """
-        drop files into current folder (index)
-        """
-        if act is Qt.DropAction.CopyAction:
-            return self.copy_files(data, index)
-        if act is Qt.DropAction.MoveAction:
-            return self.move_files(data, index)
-        return False
-
-    def copy_files(self, data: QMimeData, index: QModelIndex) -> bool:
-        # breakpoint()
-        target_dir_id = self.data(index, role=Qt.UserRole).id
-        files_data = data.data(ag.mimeType.files.value)
-        stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
-
-        count = stream.readInt()
-
-        for _ in range(count):
-            id = stream.readInt()
-            _ = stream.readInt()   # dir_id; don't use here
-            db_ut.copy_file(id, target_dir_id)
-
-        return True
-
-    def move_files(self, data: QMimeData, index: QModelIndex) -> bool:
-        # breakpoint()
-        target_dir_id = self.data(index, role=Qt.UserRole).id
-        files_data = data.data(ag.mimeType.files.value)
-        stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
-
-        count = stream.readInt()
-
-        for _ in range(count):
-            id = stream.readInt()
-            dir_id = stream.readInt()
-            if not dir_id:
-                dir_id = db_ut.get_dir_id_for_file(id)
-            if dir_id:
-                db_ut.move_file(target_dir_id, dir_id, id)
-            else:
-                db_ut.copy_file(id, target_dir_id)
-        return True
-
-    def move_in_file_system(self, data: QMimeData, index: QModelIndex) -> bool:
-        return False
-
-    def drop_folders(self, data: QMimeData, act: Qt.DropAction, parent: QModelIndex) -> bool:
-        """
-        insert/append folder(s) into the parent
-        """
-        ag.drop_target = parent
-        ag.dropped_ids.clear()
-        copy_move = (self.move_folder if act is Qt.DropAction.MoveAction
-            else self.copy_folder)
-
-        folders_data = data.data(ag.mimeType.folders.value)
-        stream = QDataStream(folders_data, QIODevice.ReadOnly)
-        idx_count = stream.readInt()
-        for _ in range(idx_count):
-            tmp_str = stream.readQString()
-            id_list = (int(i) for i in tmp_str.split(','))
-            idx = self.restore_index(id_list)
-            if not copy_move(idx, parent):
-                return False
-        return True
-
-    def move_folder(self, idx: QModelIndex, parent: QModelIndex) -> bool:
-        """
-        index  - moved dir index
-        parent - target
-        """
-        u_dat = idx.data(Qt.ItemDataRole.UserRole)
-        ag.dropped_ids.append(u_dat.id)
-        new_parent = parent.data(Qt.ItemDataRole.UserRole).id
-
-        if db_ut.move_dir(new_parent, u_dat.parent_id, u_dat.id):
-            return True
-        ag.signals_.show_message.emit(0,
-            (f"can't move {idx.data(Qt.ItemDataRole.DisplayRole)[0]} "
-            f"to {parent.data(Qt.ItemDataRole.DisplayRole)[0]}"
-            "\nalready exists"))
-        return False
-
-    def copy_folder(self, index: QModelIndex, parent: QModelIndex) -> bool:
-        """
-        index  - copied dir index
-        parent - target
-        """
-        parent_id = parent.data(Qt.ItemDataRole.UserRole).id
-        dir_id = index.data(Qt.ItemDataRole.UserRole).id
-        ag.dropped_ids.append(dir_id)
-
-        db_ut.copy_dir(parent_id, dir_id)
-        return True
 
     def neighbor_idx(self, index: QModelIndex) -> QModelIndex:
         row = index.row()

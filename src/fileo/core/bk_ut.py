@@ -1,16 +1,14 @@
 from loguru import logger
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QMimeData, QThread,
+from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer,
 )
-from PyQt6.QtGui import (QAction, QDrag, QDragMoveEvent, QDropEvent,
-    QDragEnterEvent, QResizeEvent,
+from PyQt6.QtGui import (QAction, QResizeEvent,
 )
 from PyQt6.QtWidgets import QMenu, QTreeView
 
-from . import app_globals as ag, low_bk, drag_drop as dd
-from .load_files import loadFiles
+from . import app_globals as ag, low_bk, load_files, drag_drop as dd
 from widgets import workers
 
 if TYPE_CHECKING:
@@ -111,101 +109,12 @@ def field_list_changed():
     low_bk.set_current_file(idx.row())
 
 def set_drag_drop_handlers():
-    ag.dir_list.startDrag = start_drag_dirs
-    ag.file_list.startDrag = start_drag_files
-    ag.dir_list.dragMoveEvent = drag_move_event
-    ag.dir_list.dragEnterEvent = drag_enter_event
-    ag.dir_list.dropEvent = drop_event
-
-@pyqtSlot(Qt.DropAction)
-def start_drag_dirs(dummy):
-    drag = QDrag(self)
-
-    mime_data = dd.get_dir_mime_data()
-    drag.setMimeData(mime_data)
-    bb = drag.exec(
-        Qt.DropAction.CopyAction | Qt.DropAction.MoveAction
-        if ag.mode is ag.appMode.DIR else Qt.DropAction.CopyAction,
-        Qt.DropAction.CopyAction)
-
-    if bb is not Qt.DropAction.IgnoreAction:
-        low_bk.reload_dirs_changed(ag.drop_target, ag.dropped_ids[0])
-
-@pyqtSlot(Qt.DropAction)
-def start_drag_files(dummy):
-    drag = QDrag(self)
-
-    mime_data = dd.get_files_mime_data()
-    drag.setMimeData(mime_data)
-    drag.exec(
-        Qt.DropAction.CopyAction | Qt.DropAction.MoveAction,
-        Qt.DropAction.CopyAction)
-
-    if ag.drop_action is Qt.DropAction.MoveAction:
-        low_bk.files_from_folder()
-
-@pyqtSlot(QDragEnterEvent)
-def drag_enter_event(event: QDragEnterEvent):
-    """
-    set DropAction depending on pressed MouseButton:
-    LeftButton -> CopyAction; RightButton -> MoveAction
-    """
-    if event.buttons() is Qt.MouseButton.RightButton:
-        ag.drop_action = Qt.DropAction.MoveAction
-        event.setDropAction(ag.drop_action)
-    elif event.buttons() is Qt.MouseButton.LeftButton:
-        ag.drop_action = Qt.DropAction.CopyAction
-    event.accept()
-
-@pyqtSlot(QDragMoveEvent)
-def drag_move_event(event: QDragMoveEvent):
-    mime_data: QMimeData = event.mimeData()
-    if event.dropAction() is Qt.DropAction.IgnoreAction:
-        event.ignore()
-        return
-    if mime_data.hasFormat(ag.mimeType.folders.value):
-        can_drag_dir(event)
-    else:
-        event.accept()
-
-def can_drag_dir(event: QDropEvent):
-    # doesn't matter if Qt.DropAction.MoveAction
-    #                or Qt.DropAction.CopyAction:
-    # source can't be child of target
-    index = ag.dir_list.indexAt(event.position().toPoint())
-    if is_descendant(index):
-        event.ignore()
-    else:
-        event.accept()
-
-def is_descendant(idx: QModelIndex) -> bool:
-    parent_idx = idx
-    while parent_idx.isValid():
-        p_id = parent_idx.data(role=Qt.ItemDataRole.UserRole).id
-        if p_id in dd.dragged_ids:
-            return True
-        parent_idx = parent_idx.parent()
-    return False
-
-@pyqtSlot(QDropEvent)
-def drop_event(event: QDropEvent):
-    mime_data: QMimeData = event.mimeData()
-    pos = event.position().toPoint()
-    index = ag.dir_list.indexAt(pos)
-    if ag.mode is ag.appMode.DIR and index == ag.dir_list.currentIndex():
-        # source and target folder can't be the same
-        ag.drop_action = Qt.DropAction.IgnoreAction
-        event.ignore()
-        return
-
-    res = ag.dir_list.model().dropMimeData(
-        mime_data, ag.drop_action, index)
-
-    if res:
-        event.accept()
-    else:
-        ag.drop_action = Qt.DropAction.IgnoreAction
-        event.ignore()
+    logger.info("<<<<<<< KU-KU >>>>>>>>>>>>>")
+    ag.dir_list.startDrag = dd.start_drag_dirs
+    ag.file_list.startDrag = dd.start_drag_files
+    ag.dir_list.dragMoveEvent = dd.drag_move_event
+    ag.dir_list.dragEnterEvent = dd.drag_enter_event
+    ag.dir_list.dropEvent = dd.drop_event
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -323,7 +232,8 @@ def file_searching(root_path: str, ext: list[str]):
         return
     self.thread = QThread(self)
 
-    self.worker = loadFiles(root_path, ext)
+    self.worker = load_files.loadFiles()
+    self.worker.set_files_iter(load_files.yield_files(root_path, ext))
     self.worker.moveToThread(self.thread)
 
     self.thread.started.connect(self.worker.load_data)
@@ -353,14 +263,23 @@ def show_lost_files():
 
 @pyqtSlot()
 def run_update0_files():
+    """
+    collect data about recently loaded files
+    """
     run_worker(workers.update0_files)
 
 @pyqtSlot()
 def run_update_touched_files():
+    """
+    update the data of files opened since the last update
+    """
     run_worker(workers.update_touched_files)
 
 @pyqtSlot()
 def run_update_pdf_files():
+    """
+    collect specifict data about recently loaded pdf files
+    """
     run_worker(workers.update_pdf_files)
 
 def run_worker(func):
