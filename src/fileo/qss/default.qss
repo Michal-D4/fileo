@@ -1,0 +1,229 @@
+QAbstractButton::menu-indicator {
+   image: none;
+}
+QFrame#toolBar {
+   background-color: $toolBarBackground;
+}
+QFrame#title {
+   background-color: $treeViewBackground;
+}
+QTextBrowser, QTreeView#dir_list, QListView {
+   border: none;
+   background-color: $treeViewBackground;
+   color: $navigatorColor;
+   font-family: $fontFamily;
+   font-size: $FontSizeNormal;
+}
+QTextBrowser#compact_list {
+   selection-color: $navigatorColor;
+   selection-background-color: $treeViewBackground;
+   font-family: $fontFamily;
+   font-size: $FontSizeNormal;
+}
+QTreeView#file_list {
+   border: none;
+   background-color: $treeViewFileBG;
+   color: $navigatorColor;
+}
+#toolBar QToolButton {
+   border: none;
+   background-color: $toolBarToolButtonBackground;
+}
+QFrame[frameShape="4"] {
+   border: none;
+   background: $splitLineBackground;
+}
+QFrame[frameShape="4"]:hover {
+   border: none;
+   background: $splitLineHoverBackground;
+}
+QFrame[frameShape="5"] {
+   border: none;
+   background: $splitLineBackground;
+}
+QFrame[frameShape="5"]:hover {
+   border: none;
+   background: $splitLineHoverBackground;
+}
+#frameDB, #frame {
+   background-color: $dialogBackground;
+   border: $shapeBorderRight2 $colorBorder;
+}
+#input_path {
+   border: none;
+   font-family: $fontFamily;
+   font-size: FontSizeNormal;
+   color: $dialogInputColor;
+}
+#listDB {
+   border: none;
+}
+#toolBar QToolButton:checked {
+   border-left: $shapeBorderRight2 $buttonCheckMark;
+   border-top: none;
+   border-right: none;
+   border-bottom: none;
+}
+QFrame#filter_frame {
+   background-color: $filterFrameBackground;
+   color: $filterFrameColor;
+   border: $shapeBorderRight2 $colorBorder;
+}
+#filter_frame > QPlainTextEdit {
+   background-color: $filterFrameTextEditBG;
+}
+FoldContainer {
+   background-color: $FoldContainerBackground;
+   color: $FoldContainerColor;
+}
+QFrame#topBar, #navi_header {
+   background-color: $topBarBackground;
+   color: $topBarColor;
+}
+QFrame#bottomFileFrame {
+   border: none;
+   border-right: $shapeBorderRight2 $colorBorder;
+}
+QFrame#comments {
+   border: none;
+   background: $commentsBackground;
+}
+QFrame#item_comment0  {
+   border: none;
+   background: $commentsBackground;
+}
+QFrame#status {
+   background: $statusBackground;
+}
+QScrollBar:vertical {
+   border: 0px;
+/* background: transparent;                                           */
+/*
+   TODO hide ScrollBar when container not in focus
+   because of WA_TranslucentBackground the desktop is visible through
+   the application, but i want to see an underlaing widget only       */
+   width: 9px;
+   margin: 0px 0 0px 0;
+   background:
+   }
+QScrollBar::handle:vertical {
+   background: $ScrollBarHandleBG;
+   min-height: 20px;
+}
+QScrollBar::add-line:vertical {
+   border: 0px;
+   height: 0px;
+}
+QScrollBar::sub-line:vertical {
+   border: 0px;
+   height: 0px;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+   background: $ScrollBarUpDownArrowBG;
+}
+#topBar QToolButton:hover {
+   border: none;
+   background-color: $topBarToolButtonHoverBG;
+}
+QToolButton#close:hover {
+   border: none;
+   background-color: $ToolButtonCloseHoverBG;
+}
+QToolButton#menu_btn:hover {
+   border: none;
+   background-color: $ToolButtonMenuHoverBG
+}
+QFrame#status QLabel {
+   color: $statusLabelColor
+}
+/* QFrame#navi_header {
+   background-color: $navigatorBackground;
+   color: $navigatorColor;
+} */
+QFrame#header {
+   background-color: $navigatorBackground;
+   color: $navigatorColor;
+}
+QToolButton#more:hover {
+   border: none;
+   background-color: $ToolButtonMenuHoverBG;
+}
+#toFold {
+   border: none;
+   margin:0px;
+   padding:0px;
+   color: $navigatorColor;
+   font: $foldableHeaderFont;
+}
+/* QTreeView */
+QTreeView {
+ padding-left: 12px;
+ show-decoration-selected: 1;
+ font-family: $fontFamily;
+ font-size: $FontSizeNormal;
+}
+QTreeView::item {
+ color: black;
+ border: none;
+ background-color: transparent;
+}
+QTreeView::branch {
+   background-color: transparent;
+}
+/* QTreeView::item:hover {
+ background: $itemHoverBG;
+ border: none;
+}
+QTreeView::branch:hover {
+ background: $itemHoverBG;
+} */
+/* QTreeView::item:hover{background-color: #94C8EA;}
+QTreeView::branch:hover{background-color: #94C8EA;} */
+QTreeView::item:hover{background-color: #99CCCC;}
+QTreeView::branch:hover{background-color: #99CCCC;}
+QTreeView::item:selected:active{
+ background: $itemSelectBG;
+ color: white;
+}
+QTreeView::branch:selected:active{
+ background: $itemSelectBG;
+}
+QTreeView::item:selected:!active {
+ background: $itemSelectNoActive;
+}
+QTreeView::branch:selected:!active {
+ background: $itemSelectNoActive;
+}
+QTreeView::branch:!adjoins-item {
+ border-image: url(src/qss/vline3.svg) 0;
+}
+QTreeView::branch:adjoins-item {
+ border-image: url(src/qss/vline3.svg) 0;
+}
+QTreeView::branch:!has-children:!has-siblings:adjoins-item {
+ border-image: url(src/qss/vline3.svg) 0;
+}
+QTreeView::branch:closed:has-children {
+ border-image: none;
+ image: url(src/qss/angle_right.svg);
+}
+QTreeView::branch:open:has-children {
+ border-image: none;
+ image: url(src/qss/angle_down.svg);
+}
+/* QTreeView::item:selected{background-color: #bedcf0;}
+QTreeView::item:hover:selected{background-color: #94c8ea;}
+QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
+/* END of common qss */
+/* below are special qss which are used for dynamic style switching in code */
+##decorator~#decorator {background: $splitLineBackground;}
+##decorator~#decorator:hover {background: $splitLineHoverBackground;}
+##path~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputColor;
+##name~border: none; font-family: $fontFamily; font-size: $FontSizeBig; color: $dialogInputColor;
+##input_path_edited~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputEditColor;
+##input_path_message~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $ErrorMessage1Color;
+##text_browser~<style type="text/css"> #closeBtn {text-align: right} *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
+##tag_list_border~QFrame {border: $shapeBorderRight2 $colorBorder; background-color: $LightYellow}
+##note_editor~QTextEdit {border: none; background-color: $treeViewBackground }
+##dialog~QFrame#form {background-color: $dialogBackground; border: $shapeBorderRight2 $colorBorder;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
+##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}

@@ -1,0 +1,63 @@
+* syntax of param file:
+* if line:
+*   start with '* '   comment line
+*   $word~str         a pair of key-value;
+*        the key in qss (including "$") will be replaced by the string
+*        that follows the "~"
+$toolBarBackground~#2C2C2C
+$toolBarToolButtonBackground~transparent
+$ScrollBarUpDownArrowBG~transparent
+$colorBorder~#A0A0A0
+$splitLineBackground~#D7D7D7
+$splitLineHoverBackground~#3491F4
+$filterFrameBackground~#E9E9E9
+$FoldContainerBackground~#E9E9E9
+$treeViewBackground~#F3F3F3
+$itemHoverBG~#E8E8E8
+$itemSelectBG~#2261C3
+$itemSelectNoActive~#E4E6F1
+$tagSelectedBG~#B2D6FF
+$tagCurrentBG~#3491F4
+$itemColor~#8D6178
+$treeViewFileBG~#FAFAFA
+$filterFrameColor~#616161
+$filterFramePlainTextEditColor~#616161
+$FoldContainerColor~#616161
+$topBarColor~#6F6F6F
+$navigatorColor~#616161
+$filterFrameTextEditBG~#FFFFFF
+$commentsBackground~#FFFFFF
+$statusLabelColor~#FFFFFF
+$buttonCheckMark~#FFFFFF
+$dialogBackground~#FFFFFF
+$dialogInputColor~#A0A0A0
+$dialogInputEditColor~#000000
+$topBarBackground~#B3B3B3
+$navigatorBackground~#E3E3E3
+$shapeBorderRight1~1px solid
+$shapeBorderRight2~2px solid
+$statusBackground~#2A7BCF
+$ScrollBarHandleBG~#888888
+$topBarToolButtonHoverBG~#C6C6C6
+$ToolButtonCloseHoverBG~#DE1B2E
+$ErrorMessage1Color~#DE1B2E
+$ToolButtonMenuHoverBG~#D2D2D2
+$ToolButtonActiveColor~#FFFFFF
+$ToolButtonColor~#808080
+$fontFamily~Segoe UI
+$foldableHeaderFont~bold 10pt
+$FontSizeNormal~10pt
+$FontSizeBig~12pt
+$LawnGreen~#7CFC00
+$LimeGreen~#32CD32
+$Hourbour~#00FF00
+$HoneydewColor~#F0FFF0
+$CarmineColor~#FF0038
+$ScarletColor~#FF2400
+$CarmineColor~#FF0038
+$CeriseColor~#DE3163
+$LightYellow~#FFFFE0
+$ElectricYellow~#FFF00
+$Xanthic~#EEED09
+$CMYKYellow~#FFEF00
+*FontSizeBigger~14pt

@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "fileo"
+version = "0.1.0"
+description = ""
+authors = ["mihal.d44 <mihal.d44@gmail.com>"]
+readme = "README.md"
+packages = [{include = "fileo", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+loguru = "^0.6.0"
+pypdf2 = "^3.0.1"
+pyqt6 = "^6.4.0"
+qtawesome = "^1.2.2"
+apsw = "^3.40.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
