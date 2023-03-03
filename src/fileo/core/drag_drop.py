@@ -5,6 +5,7 @@ from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
     QModelIndex, QDataStream, QIODevice,
 )
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
+    QGuiApplication
 )
 
 
@@ -126,11 +127,15 @@ def drag_enter_event(event: QDragEnterEvent):
     set DropAction depending on pressed MouseButton:
     LeftButton -> CopyAction; RightButton -> MoveAction
     """
-    if event.buttons() is Qt.MouseButton.RightButton:
+    mod = QGuiApplication.keyboardModifiers()
+    if mod is Qt.KeyboardModifier.ShiftModifier:
         ag.drop_action = Qt.DropAction.MoveAction
-        event.setDropAction(ag.drop_action)
-    elif event.buttons() is Qt.MouseButton.LeftButton:
+    elif mod is Qt.KeyboardModifier.NoModifier:
         ag.drop_action = Qt.DropAction.CopyAction
+    else:
+        event.ignore()
+        return
+    event.setDropAction(ag.drop_action)
     event.accept()
 
 @pyqtSlot(QDragMoveEvent)
