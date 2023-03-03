@@ -10,7 +10,7 @@ from . import app_globals as ag, create_db
 
 def dir_tree_select() -> list:
     to_show_hidden = ag.app.show_hidden.checkState() is Qt.CheckState.Checked
-    sql2 = ('select d.id, p.parent, p.is_copy, p.hide, d.name '
+    sql2 = ('select p.parent, d.id, p.is_copy, p.hide, d.name '
                'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
@@ -27,7 +27,7 @@ def dir_tree_select() -> list:
         pp.append(id)
         rows = curs.execute(sql, {'pid': id})
         for row in rows:
-            qu.appendleft((row[0], pp))
+            qu.appendleft((row[1], pp))
             key = ','.join([str(p) for p in pp])
             yield key, row[-1], ag.DirData(*row[:-1])
 
@@ -224,7 +224,6 @@ def tag_author_insert(conn: apsw.Connection, sqls: list, item: str, id: int):
     else:
         cursor.execute(sqls[1], (item,))
         t_id = conn.last_insert_rowid()
-        logger.info(f"{sqls[2]}, {id=}, {t_id}")
         cursor.execute(sqls[2], (id, t_id))
 
 def insert_comments(id: int, comments: list):
@@ -254,7 +253,6 @@ def insert_comments(id: int, comments: list):
         max_comment_id = get_max_comment_id(curs)
 
         for rec in comments:
-            logger.info(rec)
             if comment_already_exists(curs, rec):
                 continue
             max_comment_id += 1
@@ -532,7 +530,6 @@ def insert_dir(dir_name: str, parent: int) -> int:
     )
     sql2 = 'insert into dirs (name) values (?);'
     sql3 = 'insert into parentdir values (?, ?, 0, 0);'
-
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
         id = curs.execute(sql1, (parent, dir_name)).fetchone()
@@ -548,44 +545,26 @@ def toggle_hidden_dir_state(id: int, parent: int, hidden: bool):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, {'hide':hidden, 'id':id, 'parent':parent})
 
-def delete_dir(id: int):
+def dir_children(id: int):
+    sql = 'select * from parentdir where parent = ?'
+    with ag.db['Conn'] as conn:
+        curs = conn.cursor()
+        return curs.execute(sql, (id,))
+
+def delete_dir(id: int, parent: int):
     """
     delete dir with all children if any
     """
-    sql0 = (  # select all child dirs recursively
-        'WITH x(id, parent, level) AS (SELECT '
-        'id, parent, 0 as level FROM parentdir '
-        'WHERE parent = ? UNION ALL SELECT t.id, '
-        't.parent, x.level + 1 as lvl FROM x '
-        'INNER JOIN parentdir AS t ON t.parent = '
-        'x.id) SELECT * FROM x order by level desc'
-    )
-    sql1 = (   # break all links with child dirs for given parent
-        'delete from dirs where id in (select '
-        'id from parentdir where parent = ?)'
-    )
-    sql2 = 'delete from parentdir where parent = ?'  # delete all child dirs under given parent
-    sql3 = 'delete from parentdir where id = ?'      # break links of this dir with all parents
-    sql4 = 'delete from dirs where id = ?'           # delete this dir
-    curs: apsw.Cursor = ag.db['Conn'].cursor()
+    sql1 = 'delete from parentdir where id = ?'  # delete copies of this dir
+    sql2 = 'delete from dirs where id = ?'       # delete this dir
 
-    def delete_child_dirs():
-        rows = ag.db['Conn'].cursor().execute(sql0, (id,))
-        p_id = 0
-        for row in rows:
-            if p_id == row[1]:
-                continue
-            p_id = row[1]
-            curs.execute(sql1, (p_id,))
-            curs.execute(sql2, (p_id,))
+    with ag.db['Conn'] as conn:
+        curs: apsw.Cursor = conn.cursor()
+        curs.execute(sql1, (id,))
+        curs.execute(sql2, (id,))
 
-    delete_child_dirs()
-
-    curs.execute(sql3, (id,))
-    curs.execute(sql4, (id,))
-
-def delete_dir_copy(id: int, parent: int):
-    sql = 'delete from parentdir where (parent,id) = (?,?)'
+def remove_dir_copy(id: int, parent: int):
+    sql = 'delete from parentdir where (parent, id) = (?,?)'
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (parent, id))
 

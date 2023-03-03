@@ -24,7 +24,7 @@ def exec_user_actions():
     data_methods = {
         "Dirs Create folder": create_dir,
         "Dirs Create folder as child": create_child_dir,
-        "Dirs Delete folder": delete_folder,
+        "Dirs Delete folder(s)": delete_folders,
         "Dirs Toggle hidden state": toggle_hidden_state,
         "Dirs Import files": import_files,
         "tag_inserted": populate_tag_list,
@@ -33,8 +33,8 @@ def exec_user_actions():
         "Files Copy full file name": copy_file_name,
         "Files Open file": open_file,
         "double click file": double_click_file,
-        "Files Remove file from folder": remove_files,
-        "Files Delete file from DB": delete_files,
+        "Files Remove file(s) from folder": remove_files,
+        "Files Delete file(s) from DB": delete_files,
         "Files Reveal in explorer": open_folder,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
@@ -94,11 +94,9 @@ def get_tmp_setting(key: str, default=None):
     return vv if vv else default
 
 def save_branch():
-    logger.info('<----------->')
     save_settings(TREE_PATH=get_branch(ag.dir_list.currentIndex()))
 
 def restore_branch() -> QModelIndex:
-    logger.info('<----------->')
     return expand_branch(get_setting('TREE_PATH', []))
 
 def save_branch_in_temp(index: QModelIndex):
@@ -124,7 +122,6 @@ def get_branch(index: QModelIndex) -> list[int]:
         if u_dat.parent_id == 0:
             break
     branch.reverse()
-    logger.info(f'{branch=}')
     return branch
 
 def expand_branch(branch: list) -> QModelIndex:
@@ -170,7 +167,6 @@ def cur_dir_changed(curr_idx: QModelIndex):
         set_current_file(0)
 
 def current_dir_path():
-    logger.info(f'branch: {get_branch(ag.dir_list.currentIndex())}')
     return get_branch(ag.dir_list.currentIndex())
 
 def restore_path(path: list) -> QModelIndex:
@@ -429,12 +425,10 @@ def export_files():
         str(Path(ag.db["Path"]).parent), "File list (*.file_list *.json *.txt)")
 
     if ok:
-        logger.info(file_name)
         _export_files(file_name)
 
 def _export_files(filename: str):
     with open(filename, "w") as out:
-        logger.info(f"{filename}")
         res = []
         for idx in ag.file_list.selectionModel().selectedRows(0):
             try:
@@ -442,14 +436,12 @@ def _export_files(filename: str):
                 file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
             except TypeError:
                 continue
-            logger.info(f"{id=}, {file_data['file'][2]}")
             out.write(f"{json.dumps(file_data)}\n")
 
 def import_files():
     file_name, ok = QFileDialog.getOpenFileName(ag.app, "Open file to import list of files",
         str(Path.home()), "File list (*.file_list *.json *.txt)")
     if ok:
-        logger.info(file_name)
         _import_files(file_name)
 
 def _import_files(filename):
@@ -528,20 +520,44 @@ def create_folder(index: QModelIndex):
     folder_name = "New folder"
     dir_id = db_ut.insert_dir(folder_name, parent_id)
 
-    user_data = ag.DirData(dir_id, parent_id, False, False)
+    user_data = ag.DirData(parent_id, dir_id, False, False)
 
     index.internalPointer().setUserData(user_data)
 
-def delete_folder():
-    cur_idx = ag.dir_list.selectionModel().currentIndex()
-    u_dat: ag.DirData = cur_idx.data(role=Qt.ItemDataRole.UserRole)
-    if u_dat.is_copy:
-        db_ut.delete_dir_copy(u_dat.id, u_dat.parent_id)
-    else:
-        db_ut.delete_dir(u_dat.id)
-
+def delete_folders():
+    cur_idx = ag.dir_list.currentIndex()
+    for idx in ag.dir_list.selectionModel().selectedRows(0):
+        u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
+        if u_dat.is_copy:
+            db_ut.remove_dir_copy(u_dat.id, u_dat.parent_id)
+            continue
+        if visited := delete_tree(u_dat):
+            delete_visited(visited)
     near_curr = ag.dir_list.model().neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
+
+def delete_visited(visited: list):
+    visited.reverse()
+    for dir in visited:
+        db_ut.delete_dir(dir.id, dir.parent_id)
+
+def delete_tree(u_dat: ag.DirData, visited=None):
+    if visited is None:
+        visited = []
+    visited.append(u_dat)
+    logger.info(f'({u_dat.parent_id}, {u_dat.id}, {u_dat.is_copy}, {u_dat.hidden})')
+
+    children = db_ut.dir_children(u_dat.id)
+    for child in children:
+        dir_dat: ag.DirData = ag.DirData(*child)
+        if dir_dat.is_copy:
+            db_ut.remove_dir_copy(dir_dat.id, dir_dat.parent_id)
+            continue
+        if dir_dat in visited:
+            continue
+        delete_tree(dir_dat, visited)
+
+    return visited
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
@@ -549,7 +565,6 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
         branch = get_branch(index)
         if last_id:
             branch.append(last_id)
-        logger.info(f'{branch=}')
         idx = expand_branch(branch)
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)

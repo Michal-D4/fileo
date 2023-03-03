@@ -201,7 +201,7 @@ def dir_menu(pos):
     menu = QMenu(self)
     if idx.isValid():
         menu.addSeparator()
-        menu.addAction("Delete folder")
+        menu.addAction("Delete folder(s)")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
@@ -227,8 +227,8 @@ def file_menu(pos):
         menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
-        menu.addAction("Remove file from folder")
-        menu.addAction("Delete file from DB")
+        menu.addAction("Remove file(s) from folder")
+        menu.addAction("Delete file(s) from DB")
         action = menu.exec(ag.file_list.mapToGlobal(pos))
         if action:
             ag.signals_.user_action_signal.emit(f"Files {action.text()}")

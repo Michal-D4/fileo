@@ -40,10 +40,14 @@ class appMode(Enum):
 
 @dataclass(slots=True)
 class DirData():
-    id: int
     parent_id: int
+    id: int
     is_copy: bool
     hidden: bool
+
+    def __post_init__(self):
+        self.is_copy = bool(self.is_copy)
+        self.hidden = bool(self.hidden)
 
 @dataclass(slots=True)
 class FileData():
