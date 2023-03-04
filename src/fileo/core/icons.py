@@ -35,6 +35,7 @@ def collect_all_icons():
     other_icons['right'] = qta.icon('fa5s.chevron-right', color=ag.qss_params["$navigatorColor"])
     other_icons['down'] =  qta.icon('fa5s.chevron-down', color=ag.qss_params["$navigatorColor"])
     other_icons["collapse_all"] = qta.icon('mdi.collapse-all-outline', color=ag.qss_params["$topBarColor"])
+    other_icons["refresh"] = qta.icon('mdi.refresh', color=ag.qss_params["$topBarColor"])
     other_icons["open_db"] = qta.icon('mdi.folder-open-outline', color=ag.qss_params["$topBarColor"])
     other_icons["more"] = qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"])
     other_icons["remove_btn"] = qta.icon('mdi.close', color=ag.qss_params["$dialogBackground"],

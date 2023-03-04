@@ -125,9 +125,20 @@ class shoWindow(QMainWindow):
 
     def set_extra_widgets(self):
         """
+        button "refresh" for directory tree
         checkBox to show hidden folders
         button "collapse_all" for directory tree
         """
+        btn = QToolButton()
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setIcon(icons.get_other_icon('refresh'))
+
+        self.container.add_widget(btn, 0)
+        # btn.setCheckable(True)
+        btn.setToolTip("Refresh folder list")
+        btn.clicked.connect(bk_ut.show_hidden_dirs)
+
         self.show_hidden = QCheckBox()
         self.show_hidden.setStyleSheet("border:0px; margin:0px; padding:0px;")
         self.container.add_widget(self.show_hidden, 0)
