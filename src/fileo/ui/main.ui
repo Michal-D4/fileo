@@ -872,7 +872,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="label_2">
+        <widget class="QLabel" name="folder_path">
          <property name="text">
           <string/>
          </property>

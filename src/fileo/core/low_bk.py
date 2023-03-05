@@ -124,6 +124,24 @@ def get_branch(index: QModelIndex) -> list[int]:
     branch.reverse()
     return branch
 
+def get_dir_names_path(index: QModelIndex) -> list[str]:
+    """
+    return:  a list of node names from root to index
+    """
+    if not index.isValid():
+        return []
+    item: TreeItem = index.internalPointer()
+    branch = []
+    while 1:
+        if not item.parent():
+            break
+        name = item.data(Qt.ItemDataRole.DisplayRole)
+        logger.info(f'{name=}')
+        branch.append(name)
+        item = item.parent()
+    branch.reverse()
+    return branch
+
 def expand_branch(branch: list) -> QModelIndex:
     model = ag.dir_list.model()
     parent = QModelIndex()
@@ -159,6 +177,7 @@ def cur_dir_changed(curr_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
+    ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
         save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
