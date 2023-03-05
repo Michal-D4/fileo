@@ -40,6 +40,7 @@ $navigatorBackground~#E3E3E3
 $shapeBorderRight1~1px solid
 $shapeBorderRight2~2px solid
 $statusBackground~#2A7BCF
+$statusLabelHover~#398BCF
 $ScrollBarHandleBG~#888888
 $topBarToolButtonHoverBG~#C6C6C6
 $ToolButtonCloseHoverBG~#DE1B2E

@@ -92,9 +92,6 @@ QFrame#item_comment0  {
    border: none;
    background: $commentsBackground;
 }
-QFrame#status {
-   background: $statusBackground;
-}
 QScrollBar:vertical {
    border: 0px;
 /* background: transparent;                                           */
@@ -103,8 +100,8 @@ QScrollBar:vertical {
    because of WA_TranslucentBackground the desktop is visible through
    the application, but i want to see an underlaing widget only       */
    width: 9px;
-   margin: 0px 0 0px 0;
-   background:
+   margin: 0px;
+   /* background: */
    }
 QScrollBar::handle:vertical {
    background: $ScrollBarHandleBG;
@@ -133,8 +130,25 @@ QToolButton#menu_btn:hover {
    border: none;
    background-color: $ToolButtonMenuHoverBG
 }
+QFrame#status {
+   background: $statusBackground;
+}
+   /* border-left: 4px $statusLabelColor;
+   border-top: none;
+   border-right: 4px $statusLabelColor;
+   border-bottom: none; */
 QFrame#status QLabel {
-   color: $statusLabelColor
+   padding-right: 4px;
+   padding-left: 4px;
+   background-clip: padding;
+   background-color: $statusBackground;
+   color: $statusLabelColor;
+}
+QFrame#status QLabel:hover {
+   padding-right: 4px;
+   padding-left: 4px;
+   background-clip: padding;
+   background-color: $statusLabelHover;
 }
 /* QFrame#navi_header {
    background-color: $navigatorBackground;
