@@ -163,6 +163,7 @@ def populate_all():
     self.show_hidden.setCheckState(
         Qt.CheckState(low_bk.get_setting("SHOW_HIDDEN", 0))
     )
+    self.show_hidden.stateChanged.connect(show_hidden_dirs)
     fill_dir_list()
 
     low_bk.populate_file_list()

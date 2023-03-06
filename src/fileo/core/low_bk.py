@@ -588,6 +588,7 @@ def delete_tree(u_dat: ag.DirData, visited=None):
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
+    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
     if index.isValid():
         branch = get_branch(index)
         if last_id:
@@ -596,7 +597,6 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
 
 def toggle_hidden_state():
     selected = ag.dir_list.selectionModel().selectedIndexes()
