@@ -80,6 +80,10 @@ class shoWindow(QMainWindow):
         self.restore_comment_height()
         self.restore_geometry()
 
+        ag.notes = notesBrowser()
+        ag.notes.setObjectName("file_notes")
+        add_widget_into_frame(self.ui.noteHolder, ag.notes)
+
     def set_busy(self, val: bool):
         self.is_busy = val
         self.ui.busy.setPixmap(icons.get_other_icon("busy")[val])
@@ -179,10 +183,6 @@ class shoWindow(QMainWindow):
 
         ag.file_list = self.ui.file_list
         ag.field_menu = self.ui.field_menu
-
-        ag.notes = notesBrowser()
-        ag.notes.setObjectName("file_notes")
-        add_widget_into_frame(self.ui.noteHolder, ag.notes)
 
     def set_button_icons(self):
         for btn_name, icon in self.icons.items():
