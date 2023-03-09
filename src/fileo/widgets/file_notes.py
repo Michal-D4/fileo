@@ -1,10 +1,10 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QPoint
-from PyQt6.QtGui import QGuiApplication, QResizeEvent
+from PyQt6.QtGui import QGuiApplication, QResizeEvent, QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
     QFrame, QSpacerItem, QSizePolicy, QToolButton, QTextEdit,
-    QMessageBox,
+    QMessageBox, QTextBrowser, QStackedWidget
 )
 
 from datetime import datetime
@@ -18,7 +18,7 @@ from widgets.file_info import fileInfo
 time_format = "%Y-%m-%d %H:%M"
 
 class noteEditor(QWidget):
-    def __init__(self, fileid: str, id=0, parent = None) -> None:
+    def __init__(self, fileid: int, id=0, parent = None) -> None:
         super().__init__(parent)
         self.id = id
         self.file_id = fileid
@@ -130,16 +130,86 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.tagEdit.mouseDoubleClickEvent = self.pick_tags
         self.tagEdit.editingFinished.connect(self.tag_list_changed)
 
-        self.browser.setOpenLinks(False)
-        self.info.setIcon(icons.get_other_icon("info"))
+        self.set_stack_pages()
+
         self.plus.setIcon(icons.get_other_icon("plus"))
-        self.info.clicked.connect(self.show_file_info)
         self.plus.clicked.connect(self.new_comment)
         self.browser.anchorClicked.connect(self.ref_clicked)
 
-        self.editor: noteEditor = None
-        self.file_info: fileInfo = None
-        self.tag_selector: tagBrowser = None
+        self.selectors = [
+            self.l_tags, self.l_autotrs,
+            self.l_locations, self.l_file_info,
+            self.l_comments
+        ]
+        self.switch_page(4)
+
+        self.l_tags.mousePressEvent = self.l_tags_press
+        self.l_autotrs.mousePressEvent = self.l_autotrs_press
+        self.l_locations.mousePressEvent = self.l_locations_press
+        self.l_file_info.mousePressEvent = self.l_file_info_press
+        self.l_comments.mousePressEvent = self.l_comments_press
+
+    def set_stack_pages(self):
+        self.stackedWidget = QStackedWidget(self)
+        self.stackedWidget.setObjectName("stackedWidget")
+
+        # add tag selector page (0)
+        self.tag_selector = tagBrowser(self)
+        self.stackedWidget.addWidget(self.tag_selector)
+
+        # add author selector page (1)
+        self.author_selector = tagBrowser()
+        self.stackedWidget.addWidget(self.author_selector)
+
+        # add file locations page (2)
+        self.locator = QTextBrowser(self)
+        self.stackedWidget.addWidget(self.locator)
+
+        # add file info page (3)
+        self.file_info = fileInfo(self)
+        self.stackedWidget.addWidget(self.file_info)
+
+        # add comments page (4)
+        self.browser = QTextBrowser(self)
+        self.stackedWidget.addWidget(self.browser)
+        self.browser.setOpenLinks(False)
+
+        # add comment editor page (5)
+        self.editor = noteEditor(0, 0)
+        self.stackedWidget.addWidget(self.editor)
+
+        self.verticalLayout.addWidget(self.stackedWidget)
+        self.setStyleSheet(ag.dyn_qss['note_frames'][0])
+
+    def l_tags_press(self, e: QMouseEvent):
+        self.switch_page(0)
+
+    def l_autotrs_press(self, e: QMouseEvent):
+        self.switch_page(1)
+
+    def l_locations_press(self, e: QMouseEvent):
+        self.switch_page(2)
+
+    def l_file_info_press(self, e: QMouseEvent):
+        self.switch_page(3)
+
+    def l_comments_press(self, e: QMouseEvent):
+        self.switch_page(4)
+
+    def switch_page(self, page_no: int):
+        logger.info(f'{page_no=}')
+        self.cur_page = page_no
+        for i, lbl in enumerate(self.selectors):
+            if i == page_no:
+                lbl.setStyleSheet(
+                    'border-left: none;'
+                    'border-top: none;'
+                    'border-right: none;'
+                    'border-bottom: 1px solid #000;'
+                )
+                continue
+            lbl.setStyleSheet('border: none;')
+        self.stackedWidget.setCurrentIndex(page_no)
 
     def note_changed(self, id: int, txt: str):
         if id:
