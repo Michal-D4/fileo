@@ -20,7 +20,7 @@ def right_comma(pos: int, txt: str) -> int:
 
 
 class fileInfo(QWidget):
-    file_info_close = pyqtSignal()
+    # file_info_close = pyqtSignal()
 
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
@@ -48,8 +48,8 @@ class fileInfo(QWidget):
         self.rating.editingFinished.connect(self.rating_changed)
         self.pages.editingFinished.connect(self.pages_changed)
 
-        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.to_close)
+        # escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        # escape.activated.connect(self.to_close)
 
         del_ = QShortcut(QKeySequence(Qt.Key.Key_Delete), self.file_authors)
         del_.activated.connect(self.delete_link)
@@ -68,9 +68,9 @@ class fileInfo(QWidget):
         logger.info(f"{self.pages.text()=}")
         db_ut.update_files_field(self.id, 'pages', self.pages.text())
 
-    def to_close(self):
-        self.file_info_close.emit()
-        self.close()
+    # def to_close(self):
+    #     self.file_info_close.emit()
+    #     self.close()
 
     def custom_menu(self, pos):
         menu = QMenu(self)
@@ -148,7 +148,7 @@ class fileInfo(QWidget):
         close_btn = QToolButton()
         close_btn.setAutoRaise(True)
         close_btn.setIcon(icons.get_other_icon("remove_btn")[0])
-        close_btn.clicked.connect(self.to_close)
+        # close_btn.clicked.connect(self.to_close)
         close_btn.setToolTip("Close (Esc)")
         h_layout.addWidget(close_btn)
 

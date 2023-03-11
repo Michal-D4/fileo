@@ -87,12 +87,6 @@ class tagBrowser(aBrowser):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
-    def ref_clicked(self, href: QUrl):
-        if href.toString() == "lnk--1":
-            self.close()
-            return
-        super().ref_clicked(href)
-
     def show_in_bpowser(self):
         style = ag.dyn_qss['text_browser'][0]
         self.browser.clear()
@@ -156,10 +150,12 @@ class notesBrowser(QWidget, Ui_FileNotes):
         # add tag selector page (0)
         self.tag_selector = tagBrowser(self)
         self.stackedWidget.addWidget(self.tag_selector)
+        # self.tag_selector - set data
 
         # add author selector page (1)
         self.author_selector = tagBrowser()
         self.stackedWidget.addWidget(self.author_selector)
+        # self.author_selector - set data
 
         # add file locations page (2)
         self.locator = QTextBrowser(self)
@@ -199,6 +195,8 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def switch_page(self, page_no: int):
         logger.info(f'{page_no=}')
         self.cur_page = page_no
+        self.title.setText('Authors:' if page_no == 1 else 'Tags:')
+
         for i, lbl in enumerate(self.selectors):
             if i == page_no:
                 lbl.setStyleSheet(
@@ -266,16 +264,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
             id = self.tag_id[self.tags.index(d)]
             self.selected.remove(id)
 
-    def show_file_info(self):
-        self.file_info = fileInfo(ag.app.ui.outer)
-        sz = ag.app.ui.outer.size()
-        file_sz = self.file_info.size()
-        pos_ = QPoint(
-            sz.width() - file_sz.width() - 5,
-            sz.height() - file_sz.height() - 25)
-        self.file_info.move(pos_)
-        self.file_info.show()
-
     def section_title(self, id: int, mod: str, cre: str) -> str:
         btn1 = f'<span class="fa"><a class=t href=x,lnk{id}>&#xf00d;</a></span>'
         btn2 = f'<span class="fa"><a class=t href=,,lnk{id}>&#xf044;</a></span>'
@@ -301,7 +289,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
             buf.append('\n'.join((head, note.note)))
         self.browser.setMarkdown('\n'.join(buf))
 
-    def new_comment(self) -> bool:
+    def new_comment(self):
         self.start_edit(0)
 
     def ref_clicked(self, href: QUrl):
@@ -365,9 +353,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def set_file_id(self, id: int):
         self.file_id = id
         self.set_selected()
-        if self.file_info_visible():
-            self.file_info.close()
-            self.show_file_info()
 
     def set_selected(self):
         file_tag_ids = db_ut.get_file_tagid(self.file_id)
@@ -422,13 +407,3 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def file_info_visible(self) -> bool:
         return self.file_info.isVisible() if self.file_info else False
-
-    def resizeEvent(self, e: QResizeEvent) -> None:
-        delta = e.oldSize() - e.size()
-        if self.editor_visible():
-            sz = self.editor.size()
-            self.editor.resize(sz - delta)
-        if self.tag_selector_visible():
-            sz = self.tag_selector.size()
-            self.tag_selector.resize(sz - delta)
-        return super().resizeEvent(e)

@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_FileNotes(object):
     def setupUi(self, FileNotes):
         FileNotes.setObjectName("FileNotes")
-        FileNotes.resize(544, 327)
+        FileNotes.resize(544, 44)
         self.verticalLayout = QtWidgets.QVBoxLayout(FileNotes)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
@@ -25,17 +25,9 @@ class Ui_FileNotes(object):
         self.horizontalLayout.setContentsMargins(9, 0, 9, 0)
         self.horizontalLayout.setSpacing(6)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.ncombo = QtWidgets.QComboBox(self.header)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ncombo.sizePolicy().hasHeightForWidth())
-        self.ncombo.setSizePolicy(sizePolicy)
-        self.ncombo.setObjectName("ncombo")
-        self.ncombo.addItem("")
-        self.ncombo.setItemText(0, "Tags")
-        self.ncombo.addItem("")
-        self.horizontalLayout.addWidget(self.ncombo)
+        self.title = QtWidgets.QLabel(self.header)
+        self.title.setObjectName("title")
+        self.horizontalLayout.addWidget(self.title)
         self.tagEdit = QtWidgets.QLineEdit(self.header)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -98,7 +90,7 @@ class Ui_FileNotes(object):
     def retranslateUi(self, FileNotes):
         _translate = QtCore.QCoreApplication.translate
         FileNotes.setWindowTitle(_translate("FileNotes", "Form"))
-        self.ncombo.setItemText(1, _translate("FileNotes", "Authors"))
+        self.title.setText(_translate("FileNotes", "TextLabel"))
         self.tagEdit.setPlaceholderText(_translate("FileNotes", "enter file tags here (comma separated) or double click to select from list"))
         self.add.setToolTip(_translate("FileNotes", "add note"))
         self.add.setText(_translate("FileNotes", "..."))
