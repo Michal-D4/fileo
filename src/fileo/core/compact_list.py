@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
 )
 
-from core import app_globals as ag, db_ut
+from core import app_globals as ag
 
 
 class editTag(QWidget):
@@ -202,7 +202,7 @@ class aBrowser(QWidget):
         self.change_selection_emit()
         self.show_in_bpowser()
 
-    def get_selected(self):
+    def get_selected(self) -> list[str]:
         tmp = [self.tags[i] for i in self.selected_idx]
         tmp.sort(key=str.lower)
         return tmp

@@ -28,7 +28,7 @@ def save_bk_settings():
         "FIELDS_STATE": [int(a.isChecked()) for a in actions],
         "COLUMN_WIDTH": low_bk.get_columns_width(),
         "TAG_SEL_LIST": low_bk.tag_selection(),
-        "EXT_SEL_LIST": low_bk._ext_selection(),
+        "EXT_SEL_LIST": low_bk.ext_selection(),
         "AUTHOR_SEL_LIST": low_bk.author_selection(),
         "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
         "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),

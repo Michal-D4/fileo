@@ -646,7 +646,7 @@ def populate_ext_list():
     sel = get_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
-def _ext_selection() -> list:
+def ext_selection() -> list:
     return ag.ext_list.get_selected_ids()
 #endregion
 
