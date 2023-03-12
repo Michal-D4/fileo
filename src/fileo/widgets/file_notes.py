@@ -124,21 +124,22 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.tagEdit.mouseDoubleClickEvent = self.pick_tags
         self.tagEdit.editingFinished.connect(self.tag_list_changed)
 
+        self.selectors = [
+            self.l_tags, self.l_authors,
+            self.l_locations, self.l_file_info,
+            self.l_comments
+        ]
         self.set_stack_pages()
 
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_comment)
         self.browser.anchorClicked.connect(self.ref_clicked)
 
-        self.selectors = [
-            self.l_tags, self.l_autotrs,
-            self.l_locations, self.l_file_info,
-            self.l_comments
-        ]
-        self.switch_page(4)
+        self.cur_page = 4
+        self.switch_page(self.cur_page)
 
         self.l_tags.mousePressEvent = self.l_tags_press
-        self.l_autotrs.mousePressEvent = self.l_autotrs_press
+        self.l_authors.mousePressEvent = self.l_authors_press
         self.l_locations.mousePressEvent = self.l_locations_press
         self.l_file_info.mousePressEvent = self.l_file_info_press
         self.l_comments.mousePressEvent = self.l_comments_press
@@ -174,13 +175,17 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.editor = noteEditor(0, 0)
         self.stackedWidget.addWidget(self.editor)
 
+        ss = ag.dyn_qss['passive_selector'][0]
+        for lbl in self.selectors:
+            lbl.setStyleSheet(ss)
+
         self.verticalLayout.addWidget(self.stackedWidget)
-        self.setStyleSheet(ag.dyn_qss['note_frames'][0])
+        self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
         self.switch_page(0)
 
-    def l_autotrs_press(self, e: QMouseEvent):
+    def l_authors_press(self, e: QMouseEvent):
         self.switch_page(1)
 
     def l_locations_press(self, e: QMouseEvent):
@@ -194,19 +199,14 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def switch_page(self, page_no: int):
         logger.info(f'{page_no=}')
+        self.selectors[self.cur_page].setStyleSheet(
+            ag.dyn_qss['passive_selector'][0]
+        )
+        self.selectors[page_no].setStyleSheet(
+            ag.dyn_qss['active_selector'][0]
+        )
         self.cur_page = page_no
         self.title.setText('Authors:' if page_no == 1 else 'Tags:')
-
-        for i, lbl in enumerate(self.selectors):
-            if i == page_no:
-                lbl.setStyleSheet(
-                    'border-left: none;'
-                    'border-top: none;'
-                    'border-right: none;'
-                    'border-bottom: 1px solid #000;'
-                )
-                continue
-            lbl.setStyleSheet('border: none;')
         self.stackedWidget.setCurrentIndex(page_no)
 
     def note_changed(self, id: int, txt: str):
@@ -222,6 +222,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
                 a, "Commented", ag.file_list.currentIndex()
             )
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
+        self.stackedWidget.setCurrentIndex(4)
 
     def tag_list_changed(self):
         old = [  # list of selected tags before start editing
@@ -294,6 +295,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def ref_clicked(self, href: QUrl):
         tref = href.toString()
+        logger.info(f'{tref=}')
         if tref.startswith("x,lnk"):
             if self.confirm_deletion():
                 id = int(tref[5:])
@@ -323,10 +325,10 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
 
     def start_edit(self, id: int):
-        txt = ''
-        if id:
-            txt = db_ut.get_note(self.file_id, id)
-        self.edit_note(id, txt)
+        txt = db_ut.get_note(self.file_id, id) if id else ''
+        logger.info(f'{id=}, {txt=}')
+        self.editor.set_text(txt)
+        self.stackedWidget.setCurrentIndex(5)
 
     def set_selection(self, ref: str):
         mod = QGuiApplication.keyboardModifiers()
@@ -398,12 +400,3 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.editor.set_text(txt)
 
         self.editor.show()
-
-    def editor_visible(self) -> bool:
-        return self.editor.isVisible() if self.editor else False
-
-    def tag_selector_visible(self) -> bool:
-        return self.tag_selector.isVisible() if self.tag_selector else False
-
-    def file_info_visible(self) -> bool:
-        return self.file_info.isVisible() if self.file_info else False

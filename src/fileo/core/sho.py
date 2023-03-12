@@ -413,11 +413,6 @@ class shoWindow(QMainWindow):
         utils.resize_grips(self)
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
-        if ag.notes.file_info_visible():
-            pos = ag.notes.file_info.pos()
-            dx = e.oldSize().width() - e.size().width()
-            dh = e.oldSize().height() - e.size().height()
-            ag.notes.file_info.move(pos - QPoint(dx, dh))
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:

@@ -48,6 +48,9 @@ $ErrorMessage1Color~#DE1B2E
 $ToolButtonMenuHoverBG~#D2D2D2
 $ToolButtonActiveColor~#FFFFFF
 $ToolButtonColor~#808080
+$$activeColor~#424242
+$passiveColor~#717171
+$bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom: 1px solid $$activeColor;
 $fontFamily~Segoe UI
 $foldableHeaderFont~bold 10pt
 $FontSizeNormal~10pt

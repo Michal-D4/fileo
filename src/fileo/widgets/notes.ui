@@ -127,7 +127,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="l_autotrs">
+       <widget class="QLabel" name="l_authors">
         <property name="text">
          <string>Author selector</string>
         </property>
