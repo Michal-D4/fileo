@@ -53,7 +53,6 @@ class aBrowser(QWidget):
     def __init__(self, name: str='', brackets: bool=False,
         read_only: bool=True, parent=None) -> None:
         super().__init__(parent)
-        self.name = name
         self.read_only = read_only
         self.brackets = brackets
 

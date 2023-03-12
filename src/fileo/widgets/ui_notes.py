@@ -35,6 +35,7 @@ class Ui_FileNotes(object):
         sizePolicy.setHeightForWidth(self.tagEdit.sizePolicy().hasHeightForWidth())
         self.tagEdit.setSizePolicy(sizePolicy)
         self.tagEdit.setFrame(False)
+        self.tagEdit.setReadOnly(True)
         self.tagEdit.setObjectName("tagEdit")
         self.horizontalLayout.addWidget(self.tagEdit)
         self.add = QtWidgets.QToolButton(self.header)

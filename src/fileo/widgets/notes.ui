@@ -71,6 +71,9 @@
         <property name="frame">
          <bool>false</bool>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
         <property name="placeholderText">
          <string>enter file tags here (comma separated) or double click to select from list</string>
         </property>

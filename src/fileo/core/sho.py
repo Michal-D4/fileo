@@ -169,15 +169,15 @@ class shoWindow(QMainWindow):
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         add_widget_into_frame(frames[0], ag.dir_list)
 
-        ag.tag_list = aBrowser(name="Tag", read_only=False)
+        ag.tag_list = aBrowser(read_only=False)
         ag.tag_list.setObjectName("tag_list")
         add_widget_into_frame(frames[1], ag.tag_list)
 
-        ag.ext_list = aBrowser(name="Ext",brackets=True)
+        ag.ext_list = aBrowser(brackets=True)
         ag.ext_list.setObjectName("ext_list")
         add_widget_into_frame(frames[2], ag.ext_list)
 
-        ag.author_list = aBrowser(name="Author", read_only=False, brackets=True)
+        ag.author_list = aBrowser(read_only=False, brackets=True)
         ag.author_list.setObjectName("author_list")
         add_widget_into_frame(frames[3], ag.author_list)
 
