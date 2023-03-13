@@ -17,70 +17,16 @@ from widgets.file_info import fileInfo
 
 time_format = "%Y-%m-%d %H:%M"
 
-class noteEditor(QWidget):
-    def __init__(self, fileid: int, id=0, parent = None) -> None:
+class noteEditor(QTextEdit):
+    def __init__(self, parent = None) -> None:
         super().__init__(parent)
+        self.id = 0
+
+    def set_note_id(self, id: int):
         self.id = id
-        self.file_id = fileid
 
-        self.set_layout()
-
-        self.Ok.setIcon(icons.get_other_icon("ok"))
-        self.Ok.clicked.connect(self.save_note)
-        self.Cancel.setIcon(icons.get_other_icon("cancel2"))
-        self.Cancel.clicked.connect(self.cancel)
-
-    def save_note(self):
-        ag.signals_.file_note_changed.emit(
-            self.id, self.editor.toPlainText()
-        )
-        self.close()
-
-    def set_text(self, data: str):
-        self.editor.setText(data)
-
-    def cancel(self):
-        self.close()
-
-    def set_layout(self):
-        vLayout2 = QVBoxLayout(self)
-        vLayout2.setContentsMargins(0, 0, 0, 0)
-        vLayout2.setSpacing(0)
-
-        frame = QFrame(self)
-        frame.setFrameShape(QFrame.Shape.Box)
-        frame.setFrameShadow(QFrame.Shadow.Raised)
-
-        vLayout = QVBoxLayout(frame)
-        vLayout.setContentsMargins(0, 0, 0, 0)
-        vLayout.setSpacing(0)
-
-        hLayout = QHBoxLayout()
-        hLayout.setContentsMargins(9, -1, 9, -1)
-
-        spacerItem = QSpacerItem(
-            40, 20, QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Minimum)
-        hLayout.addItem(spacerItem)
-
-        self.Ok = QToolButton(frame)
-        self.Ok.setObjectName("Ok")
-        hLayout.addWidget(self.Ok)
-
-        self.Cancel = QToolButton(frame)
-        self.Cancel.setObjectName("Cancel")
-        hLayout.addWidget(self.Cancel)
-
-        vLayout.addLayout(hLayout)
-        self.editor = QTextEdit(frame)
-        self.editor.setFrameShape(QFrame.Shape.NoFrame)
-        self.editor.setObjectName("editor")
-        vLayout.addWidget(self.editor)
-        vLayout2.addWidget(frame)
-
-        ss = ag.dyn_qss['tag_list_border'][0]
-        tt = ag.dyn_qss['note_editor'][0]
-        self.setStyleSheet(' '.join((ss, tt)))
+    def get_note_id(self) -> int:
+        return self.id
 
 
 class tagBrowser(aBrowser):
@@ -156,7 +102,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.edit_tag.editingFinished.connect(self.new_tag_created)
         self.edit_tag.hide()
 
-        ag.signals_.file_note_changed.connect(self.note_changed)
+        # ag.signals_.file_note_changed.connect(self.note_changed)
         # self.tagEdit.mouseDoubleClickEvent = self.pick_tags
         # self.tagEdit.editingFinished.connect(self.tag_list_changed)
 
@@ -169,12 +115,19 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_comment)
+        self.save.setIcon(icons.get_other_icon("ok"))
+        self.cancel.setIcon(icons.get_other_icon("cancel2"))
+        self.save.clicked.connect(self.note_changed)
+        self.cancel.clicked.connect(self.cancel_note_editing)
+        self.edit_btns.hide()
+        self.plus.hide()
+
         self.add.setIcon(icons.get_other_icon("plus"))
         self.add.clicked.connect(self.create_new_tag)
         self.browser.anchorClicked.connect(self.ref_clicked)
 
-        self.cur_page = 4
-        self.switch_page(self.cur_page)
+        self.cur_page = 0
+        self.l_comments_press(None)
 
         self.l_tags.mousePressEvent = self.l_tags_press
         self.l_authors.mousePressEvent = self.l_authors_press
@@ -210,7 +163,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.browser.setOpenLinks(False)
 
         # add comment editor page (5)
-        self.editor = noteEditor(0, 0)
+        self.editor = noteEditor()
         self.stackedWidget.addWidget(self.editor)
 
         ss = ag.dyn_qss['passive_selector'][0]
@@ -234,20 +187,30 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def l_comments_press(self, e: QMouseEvent):
         self.switch_page(4)
+        self.plus.show()
 
     def switch_page(self, page_no: int):
-        logger.info(f'{page_no=}')
-        self.selectors[self.cur_page].setStyleSheet(
-            ag.dyn_qss['passive_selector'][0]
-        )
-        self.selectors[page_no].setStyleSheet(
-            ag.dyn_qss['active_selector'][0]
-        )
+        logger.info(f'{page_no=}, {self.cur_page=}')
+        if page_no < 5 and self.cur_page < 5:
+            self.selectors[self.cur_page].setStyleSheet(
+                ag.dyn_qss['passive_selector'][0]
+            )
+            self.selectors[page_no].setStyleSheet(
+                ag.dyn_qss['active_selector'][0]
+            )
+        if self.cur_page == 5 and page_no != 5:
+            self.edit_btns.hide()
+        if self.cur_page == 4 and page_no != 4:
+            self.plus.hide()
         self.cur_page = page_no
-        self.title.setText('Authors:' if page_no == 1 else 'Tags:')
         self.stackedWidget.setCurrentIndex(page_no)
 
-    def note_changed(self, id: int, txt: str):
+    def cancel_note_editing(self):
+        self.l_comments_press(None)
+
+    def note_changed(self):
+        id = self.editor.get_note_id()
+        txt = self.editor.toPlainText()
         if id:
             ts = db_ut.update_note(self.file_id, id, txt)
         else:
@@ -260,7 +223,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
                 a, "Commented", ag.file_list.currentIndex()
             )
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
-        self.stackedWidget.setCurrentIndex(4)
+        self.l_comments_press(None)
 
     def create_new_tag(self) -> str:
         logger.info(f'{self.add.pos()=}')
@@ -385,8 +348,10 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def start_edit(self, id: int):
         txt = db_ut.get_note(self.file_id, id) if id else ''
         logger.info(f'{id=}, {txt=}')
-        self.editor.set_text(txt)
-        self.stackedWidget.setCurrentIndex(5)
+        self.editor.setText(txt)
+        self.editor.set_note_id(id)
+        self.edit_btns.show()
+        self.switch_page(5)
 
     def set_selection(self, ref: str):
         mod = QGuiApplication.keyboardModifiers()
