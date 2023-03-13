@@ -41,8 +41,11 @@ class tagBrowser(aBrowser):
 
         self.browser.setText(txt)
 
-    def exists(self, tag: str) -> bool:
-        return tag in self.tags
+    def get_tag_id(self, tag: str) -> bool:
+        try:
+            return self.tag_ids[self.tags.index(tag)]
+        except ValueError:
+            return 0
 
     def html_selected(self):
         sel = self.selected_idx
@@ -102,11 +105,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.edit_tag.editingFinished.connect(self.new_tag_created)
         self.edit_tag.hide()
 
-        # ag.signals_.file_note_changed.connect(self.note_changed)
-        # self.tagEdit.mouseDoubleClickEvent = self.pick_tags
-        # self.tagEdit.editingFinished.connect(self.tag_list_changed)
-
-        self.selectors = [
+        self.page_selectors = [
             self.l_tags, self.l_authors,
             self.l_locations, self.l_file_info,
             self.l_comments
@@ -115,15 +114,19 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_comment)
+
         self.save.setIcon(icons.get_other_icon("ok"))
-        self.cancel.setIcon(icons.get_other_icon("cancel2"))
         self.save.clicked.connect(self.note_changed)
+
+        self.cancel.setIcon(icons.get_other_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
+
         self.edit_btns.hide()
         self.plus.hide()
 
         self.add.setIcon(icons.get_other_icon("plus"))
         self.add.clicked.connect(self.create_new_tag)
+
         self.browser.anchorClicked.connect(self.ref_clicked)
 
         self.cur_page = 0
@@ -142,32 +145,39 @@ class notesBrowser(QWidget, Ui_FileNotes):
         # add tag selector page (0)
         self.tag_selector = tagBrowser(self)
         self.stackedWidget.addWidget(self.tag_selector)
+        self.tag_selector.setObjectName('tag_selector')
+        self.tag_selector.change_selection.connect(self.update_tags)
 
         # add author selector page (1)
         self.author_selector = tagBrowser()
         self.stackedWidget.addWidget(self.author_selector)
+        self.author_selector.setObjectName('author_selector')
         # self.author_selector.set_list()
         # self.author_selector.set_selection()
 
         # add file locations page (2)
         self.locator = QTextBrowser(self)
         self.stackedWidget.addWidget(self.locator)
+        self.locator.setObjectName('locator')
 
         # add file info page (3)
         self.file_info = fileInfo(self)
         self.stackedWidget.addWidget(self.file_info)
+        self.file_info.setObjectName('file_info')
 
         # add comments page (4)
         self.browser = QTextBrowser(self)
         self.stackedWidget.addWidget(self.browser)
         self.browser.setOpenLinks(False)
+        self.browser.setObjectName('notes_browser')
 
         # add comment editor page (5)
         self.editor = noteEditor()
         self.stackedWidget.addWidget(self.editor)
+        self.editor.setObjectName('note_editor')
 
         ss = ag.dyn_qss['passive_selector'][0]
-        for lbl in self.selectors:
+        for lbl in self.page_selectors:
             lbl.setStyleSheet(ss)
 
         self.verticalLayout.addWidget(self.stackedWidget)
@@ -192,10 +202,10 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def switch_page(self, page_no: int):
         logger.info(f'{page_no=}, {self.cur_page=}')
         if page_no < 5 and self.cur_page < 5:
-            self.selectors[self.cur_page].setStyleSheet(
+            self.page_selectors[self.cur_page].setStyleSheet(
                 ag.dyn_qss['passive_selector'][0]
             )
-            self.selectors[page_no].setStyleSheet(
+            self.page_selectors[page_no].setStyleSheet(
                 ag.dyn_qss['active_selector'][0]
             )
         if self.cur_page == 5 and page_no != 5:
@@ -237,18 +247,21 @@ class notesBrowser(QWidget, Ui_FileNotes):
         tag = self.edit_tag.text()
         logger.info(f'<<< KU-KU >>> {tag=}')
         self.edit_tag.hide()
-        if self.tag_selector.exists(tag):
+        if self.tag_selector.get_tag_id(tag):
             if tag in self.tagEdit.text():
                 return
         old = self.tag_selector.get_selected()
-        old.append(tag)
-        old.sort()
-        self.tagEdit.setText(', '.join(old))
+        new = [*old, tag]
+        new.sort()
+        self.tagEdit.setText(', '.join(new))
         self.tag_list_changed()
+        # self.tag_list_changed(old)
 
+    # def tag_list_changed(self, old: list[str]):
     def tag_list_changed(self):
         old = self.tag_selector.get_selected()
         new = self.new_tag_list()
+        # there is a pbm; new and old are the same
         logger.info(f'{old=}, {new=}')
 
         self.remove_tags(old, new)
@@ -266,14 +279,13 @@ class notesBrowser(QWidget, Ui_FileNotes):
         ret = False
         diff = set(new) - set(old)
         for d in diff:   # only new in diff
-            if d in self.tags:
-                id = self.tag_id[self.tags.index(d)]
-            else:
+            if not (id := self.tag_selector.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
                 self.tag_id.append(id)
                 self.tags.append(d)
                 ret = True
             self.selected.append(id)
+            logger.info(f'{id=}, {self.file_id=}')
             db_ut.insert_tag_file(id, self.file_id)
         return ret
 
@@ -300,6 +312,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         return hdr
 
     def set_notes_data(self, data):
+        logger.info('<<<<<< KU-KU >>>>>>')
         buf = []
         for row in data:
             note = ag.Note(*row)
@@ -369,6 +382,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         """
         tags: list of tags from DB: (tag, id) pairs
         """
+        logger.info('<<<<<< KU-KU >>>>>>')
         self.tag_selector.set_list(tags)
         self.tag_selector.set_selection(
             (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
@@ -376,45 +390,32 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def set_file_id(self, id: int):
         self.file_id = id
+        logger.info(f'{self.file_id=}')
         self.set_selected()
 
     def set_selected(self):
         tt = self.selected = self.tag_selector.get_selected()
+        logger.info(f'{tt=}')
         self.tagEdit.setText(', '.join(tt))
 
     def update_tags(self, tags: list[str]):
         self.tagEdit.setText(', '.join(tags))
-        self.tag_list_changed()
+        self.tag_list_changed(tags)
 
     def get_selected_tag_ids(self):
-        pp = self.tagEdit.text()
-        if pp:
-            tt = [tag.strip() for tag in pp.split(',')]
-            return [self.tag_id[self.tags.index(tag)] for tag in tt]
-        return []
+        return self.tag_selector.get_selected_ids()
 
-    def pick_tags(self, event):
-        self.tag_selector = tagBrowser()
-        self.tag_selector.change_selection.connect(self.update_tags)
-        self.tag_selector.setParent(self)
-        self.tag_selector.setObjectName("tag_editor")
-        self.tag_selector.setContentsMargins(5,5,5,5)
-        ss = ag.dyn_qss['tag_list_border'][0]
-        self.tag_selector.setStyleSheet(ss)
-        self.tag_selector.move(40, 22)
-        self.tag_selector.resize(self.width()-70, max(self.height() // 3, 90))
-        self.tag_selector.setMinimumHeight(90)
-        self.tag_selector.set_list(zip(self.tags, self.tag_id))
-        self.tag_selector.set_selection(self.selected)
-        self.tag_selector.show()
-
-    def edit_note(self, id: int, txt: str):
-        self.editor = noteEditor(self.file_id, id)
-        self.editor.setParent(self)
-        self.editor.setObjectName("tag_editor")
-        self.editor.setContentsMargins(5,5,5,5)
-        self.editor.move(40, 22)
-        self.editor.resize(self.width()-70, self.height()-40)
-        self.editor.set_text(txt)
-
-        self.editor.show()
+    # def pick_tags(self, event):
+    #     self.tag_selector = tagBrowser()
+    #     self.tag_selector.change_selection.connect(self.update_tags)
+    #     self.tag_selector.setParent(self)
+    #     self.tag_selector.setObjectName("tag_editor")
+    #     self.tag_selector.setContentsMargins(5,5,5,5)
+    #     ss = ag.dyn_qss['tag_list_border'][0]
+    #     self.tag_selector.setStyleSheet(ss)
+    #     self.tag_selector.move(40, 22)
+    #     self.tag_selector.resize(self.width()-70, max(self.height() // 3, 90))
+    #     self.tag_selector.setMinimumHeight(90)
+    #     self.tag_selector.set_list(zip(self.tags, self.tag_id))
+    #     self.tag_selector.set_selection(self.selected)
+    #     self.tag_selector.show()

@@ -36,6 +36,7 @@ class Ui_FileNotes(object):
         self.tagEdit.setSizePolicy(sizePolicy)
         self.tagEdit.setFrame(False)
         self.tagEdit.setReadOnly(True)
+        self.tagEdit.setPlaceholderText("")
         self.tagEdit.setObjectName("tagEdit")
         self.horizontalLayout.addWidget(self.tagEdit)
         self.add = QtWidgets.QToolButton(self.header)
@@ -101,8 +102,7 @@ class Ui_FileNotes(object):
     def retranslateUi(self, FileNotes):
         _translate = QtCore.QCoreApplication.translate
         FileNotes.setWindowTitle(_translate("FileNotes", "Form"))
-        self.title.setText(_translate("FileNotes", "TextLabel"))
-        self.tagEdit.setPlaceholderText(_translate("FileNotes", "enter file tags here (comma separated) or double click to select from list"))
+        self.title.setText(_translate("FileNotes", "Tags:"))
         self.add.setToolTip(_translate("FileNotes", "add new tag"))
         self.add.setText(_translate("FileNotes", "..."))
         self.l_tags.setText(_translate("FileNotes", "Tag selector"))
