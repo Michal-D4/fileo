@@ -206,6 +206,7 @@ def restore_path(path: list) -> QModelIndex:
         if model.rowCount(QModelIndex()) > 0:
             parent = model.index(0, 0, QModelIndex())
 
+    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(parent)
     ag.dir_list.scrollTo(parent, QAbstractItemView.ScrollHint.PositionAtCenter)
     return parent
@@ -284,6 +285,7 @@ def show_files(files):
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
     if idx.isValid():
+        logger.info(f'before setCurrentIndex')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -473,6 +475,7 @@ def _import_files(filename):
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def load_file(fl: dict) -> int:
@@ -515,6 +518,7 @@ def create_child_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
@@ -534,6 +538,7 @@ def create_dir():
 
     if new_idx.isValid():
         create_folder(new_idx)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def create_folder(index: QModelIndex):
@@ -595,6 +600,7 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
             branch.append(last_id)
         idx = expand_branch(branch)
         if idx.isValid():
+            logger.info(f'before setCurrentIndex')
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -678,9 +684,8 @@ def delete_authors(authors: str):
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     if f_dat:
-        notes = db_ut.get_file_notes(f_dat.id)
-        ag.notes.set_notes_data(notes)
+        logger.info(f'{f_dat=}')
+        ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)
-        tags = db_ut.get_tags()
-        ag.notes.set_tags(tags)
+        ag.notes.set_tags(db_ut.get_tags())
 #endregion

@@ -46,6 +46,7 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
@@ -119,9 +120,12 @@ def set_drag_drop_handlers():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
+    logger.info(f'{ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole)}')
     if prev.isValid():
+        logger.info(f'{prev.data(Qt.ItemDataRole.UserRole)=}')
         low_bk.update_file_tag_links(prev)
     if curr.isValid():
+        logger.info(f'{curr.data(Qt.ItemDataRole.UserRole)=}')
         self.ui.label.setText(low_bk.full_file_name(curr))
         low_bk.file_notes_show(curr)
 
@@ -178,6 +182,7 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(Qt.CheckState)

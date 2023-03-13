@@ -152,10 +152,12 @@ class aBrowser(QWidget):
         QApplication.clipboard().setText(';'.join(tags))
 
     def set_list(self, items: list):
+        logger.info(f'{self.objectName()}: {type(items)=}')
         self.tags.clear()
         self.tag_ids.clear()
         self.selected_idx.clear()
         for it in items:
+            logger.info(f'{self.objectName()}: {it=}')
             self.tags.append(it[0])
             self.tag_ids.append(it[1])
         self.show_in_bpowser()
@@ -173,8 +175,10 @@ class aBrowser(QWidget):
             self.browser.setTextCursor(curs)
 
     def set_selection(self, sel_ids: list[int]):
+        logger.info(f'{self.objectName()}: {type(sel_ids)=}')
         if len(self.tags) > 0:
             self.selected_idx = [self.tag_ids.index(int(s)) for s in sel_ids]
+            logger.info(f'{self.objectName()}: {self.selected_idx=}')
             self.show_in_bpowser()
             self.browser.find(self.get_current())
             self.change_selection_emit()
@@ -202,6 +206,7 @@ class aBrowser(QWidget):
         self.show_in_bpowser()
 
     def get_selected(self) -> list[str]:
+        logger.info(f'{self.objectName()}: {self.selected_idx=}')
         tmp = [self.tags[i] for i in self.selected_idx]
         tmp.sort(key=str.lower)
         return tmp
