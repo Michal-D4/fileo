@@ -147,7 +147,6 @@ def create_tables(db_name: str):
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
     cursor = conn.cursor()
     for tbl in TABLES:
-        print(tbl)
         cursor.execute(tbl)
 
     initiate_db(conn)

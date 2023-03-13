@@ -717,9 +717,10 @@ def create_connection(path: str) -> bool:
     if not path:
         return False
 
-    create_db.adjust_user_schema(path)
-    conn: apsw.Connection = apsw.Connection(path)
+    if not create_db.adjust_user_schema(path):
+        return False
 
+    conn: apsw.Connection = apsw.Connection(path)
     ag.db['Path'] = path
     ag.db['Conn'] = conn
 
