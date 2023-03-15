@@ -75,23 +75,115 @@ class authorBrowser(QWidget):
         return inn
 
 #region file_info
-    def populate_file_authors(self):
-        """
-        from authors table
-        """
-        fa_curs = db_ut.get_file_authors(self.id)
-        file_authors = []
-        for author in fa_curs:
-            file_authors.append(author[0])
-        self.file_authors.setPlainText(', '.join(file_authors))
+def populate_file_authors(self):
+    """
+    from authors table
+    """
+    fa_curs = db_ut.get_file_authors(self.id)
+    file_authors = []
+    for author in fa_curs:
+        file_authors.append(author[0])
+    self.file_authors.setPlainText(', '.join(file_authors))
 
-    def populate_combo(self):
-        # move to
-        a_curs = db_ut.get_authors()
-        for author, udat in a_curs:
-            self.combo.addItem(author, udat)
+def populate_combo(self):
+    # move to
+    a_curs = db_ut.get_authors()
+    for author, udat in a_curs:
+        self.combo.addItem(author, udat)
 
+def custom_menu(self, pos):
+    from PyQt6.QtWidgets import QMenu
+    menu = QMenu(self)
+    menu.addAction("Delete selected")
+    menu.addAction("Copy selected")
+    menu.addSeparator()
+    menu.addAction("Select all")
+    action = menu.exec(self.file_authors.mapToGlobal(pos))
+    if action:
+        {'Delete selected': self.delete_link,
+            'Copy selected': self.copy_selected,
+            'Select all': self.select_all
+        }[action.text()]()
 
+def copy_selected(self):
+    from PyQt6.QtWidgets import QApplication
+    curs = self.file_authors.textCursor()
+    QApplication.clipboard().setText(curs.selectedText())
+
+def select_all(self):
+    self.file_authors.selectAll()
+
+def delete_link(self):
+    curs = self.file_authors.textCursor()
+    if curs.hasSelection():
+        sel_txt = curs.selectedText()
+        for txt in sel_txt.split(', '):
+            i = self.combo.findText(txt, Qt.MatchFlag.MatchExactly)
+            if i == -1:
+                continue
+            id = self.combo.itemData(i, Qt.ItemDataRole.UserRole)
+            db_ut.break_file_authors_link(self.id, id)
+        self.populate_file_authors()
+
+def select_on_click(self, e: QMouseEvent):
+    pos = e.pos()
+    sel = self.file_authors.textCursor().selectedText()
+    if sel and e.button() == Qt.MouseButton.RightButton:
+        return
+    txt_curs_at_click = self.file_authors.cursorForPosition(pos)
+    self.file_authors.setTextCursor(txt_curs_at_click)
+    text_pos = self.file_authors.textCursor().position()
+
+    self.select_author_under_pos(text_pos)
+
+def select_author_under_pos(self, pos: int):
+    from PyQt6.QtGui import QTextCursor
+    txt = self.file_authors.toPlainText()
+    left = left_comma(pos, txt)
+    right = right_comma(pos, txt)
+
+    curs = self.file_authors.textCursor()
+    curs.movePosition(
+        QTextCursor.MoveOperation.PreviousCharacter,
+        QTextCursor.MoveMode.MoveAnchor, pos-left
+    )
+    curs.movePosition(
+        QTextCursor.MoveOperation.NextCharacter,
+        QTextCursor.MoveMode.KeepAnchor, right-left
+    )
+
+    self.file_authors.setTextCursor(curs)
+def new_choice(self, idx: int):
+    """
+    add link author-file for the current file
+    """
+    author = self.combo.currentText()
+    if not self.fill_file_authors(author):       # author already exists
+        return
+
+    # create new author
+    id = db_ut.add_author(self.id, author)
+    if id:
+        self.combo.addItem(author, id)
+        ag.signals_.user_action_signal.emit("author inserted")
+
+def fill_file_authors(self, author: str) -> bool:
+    txt = self.file_authors.toPlainText()
+    authors = txt.split(', ') if txt else []
+    if author in authors:
+        return False
+    authors.append(author)
+    authors.sort()
+    self.file_authors.setPlainText(', '.join(authors))
+    return True
+
+def left_comma(pos: int, txt: str) -> int:
+    comma_pos = txt[:pos].rfind(',')
+    return 0 if comma_pos == -1 else comma_pos+2
+
+def right_comma(pos: int, txt: str) -> int:
+    comma_pos = txt[pos:].find(',')
+    return len(txt) if comma_pos == -1 else pos + comma_pos
 #endregion
 
 class notesBrowser(QWidget, Ui_FileNotes):
@@ -169,7 +261,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         # add file info page (3)
         self.file_info = fileInfo(self)
         self.stackedWidget.addWidget(self.file_info)
-        self.file_info.setObjectName('file_info')
 
         # add comments page (4)
         self.browser = QTextBrowser(self)
@@ -380,6 +471,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.tag_selector.get_selected()
             )
         )
+        self.file_info.set_file_id(self.file_id)
 
     def update_tags(self, tags: list[str]):
         logger.info(f'{tags=}, {self.tagEdit.text()=}')

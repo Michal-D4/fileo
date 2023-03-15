@@ -1,35 +1,23 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QPoint, QSize, QDateTime, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut, QTextCursor
-from PyQt6.QtWidgets import (QWidget, QFrame, QFormLayout, QLabel,
-    QLineEdit, QHBoxLayout, QVBoxLayout, QComboBox, QCompleter,
-    QToolButton, QSizePolicy, QSpacerItem, QPlainTextEdit, QMenu,
-    QApplication,
+from PyQt6.QtCore import Qt, QDateTime
+from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
+    QLineEdit, QVBoxLayout, QFrame,
 )
 
 from core import app_globals as ag, db_ut, icons
 
 
 class fileInfo(QWidget):
-    # file_info_close = pyqtSignal()
-
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
 
-        self.id = 0        # file id
-
-        self.form_layout = QFormLayout()
-        self.form = QFrame(self)
-        self.file_authors = QPlainTextEdit()
-        self.rating = QLineEdit()
-        self.pages = QLineEdit()
-        self.combo = QComboBox()
+        self.id = 0
 
         self.form_setup()
-        self.populate_fields()
-
-        self.setStyleSheet(ag.dyn_qss["dialog"][0])
+        self.setObjectName('fileInfo')
+        logger.info(ag.dyn_qss["fileInfo"][0])
+        self.setStyleSheet(ag.dyn_qss["fileInfo"][0])
 
         self.rating.editingFinished.connect(self.rating_changed)
         self.pages.editingFinished.connect(self.pages_changed)
@@ -42,65 +30,33 @@ class fileInfo(QWidget):
         logger.info(f"{self.pages.text()=}")
         db_ut.update_files_field(self.id, 'pages', self.pages.text())
 
+    def set_file_id(self, id: int):
+        self.id = id
+        self.populate_fields()
+
     def form_setup(self):
-        h_layout = QHBoxLayout()
-        lbl = QLabel()
-        lbl.setText("File info")
-        lbl.setObjectName("hdr_lbl")
-        h_layout.addWidget(lbl)
+        form = QFrame(self)
+        self.rating = QLineEdit()
+        self.pages = QLineEdit()
 
-        h_layout.setContentsMargins(9, 6, 9, 6)
-        h_layout.addSpacerItem(
-            QSpacerItem(80, 10,
-                QSizePolicy.Policy.Expanding,
-                QSizePolicy.Policy.Minimum)
-        )
-        close_btn = QToolButton()
-        close_btn.setAutoRaise(True)
-        close_btn.setIcon(icons.get_other_icon("remove_btn")[0])
-        # close_btn.clicked.connect(self.to_close)
-        close_btn.setToolTip("Close (Esc)")
-        h_layout.addWidget(close_btn)
+        self.form_layout = QFormLayout()
+        self.form_layout.setContentsMargins(9, 9, 9, 9)
+        self.form_layout.addRow("File name:", QLabel())
+        self.form_layout.addRow("Path:", QLabel())
+        self.form_layout.addRow("Last opened date:", QLabel())
+        self.form_layout.addRow("Modified date:", QLabel())
+        self.form_layout.addRow("Created date:", QLabel())
+        self.form_layout.addRow("Publication date(book):", QLabel())
+        self.form_layout.addRow("File opened (times):", QLabel())
+        self.form_layout.addRow("File rating:", self.rating)
+        self.form_layout.addRow("Size of file:", QLabel())
+        self.form_layout.addRow("Pages(book):", self.pages)
+        form.setLayout(self.form_layout)
 
-        hdr = QFrame(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        hdr.setSizePolicy(sizePolicy)
-        hdr.setObjectName("hrdFrame")
-        hdr.setLayout(h_layout)
-        hdr.setStyleSheet(ag.dyn_qss["dialog_hdr"][0])
-
-        self.form_layout.setContentsMargins(9, 0, 9, 9)
-        self.form_layout.addRow(QLabel("File name:"), QLabel())
-        self.form_layout.addRow(QLabel("Path:"), QLabel())
-        self.form_layout.addRow(QLabel("Last opened date:"), QLabel())
-        self.form_layout.addRow(QLabel("Modified date:"), QLabel())
-        self.form_layout.addRow(QLabel("Created date:"), QLabel())
-        self.form_layout.addRow(QLabel("Publication date(book):"), QLabel())
-        self.form_layout.addRow(QLabel("File opened (times):"), QLabel())
-        self.form_layout.addRow(QLabel("File rating:"), self.rating)
-        self.form_layout.addRow(QLabel("Size of file:"), QLabel())
-        self.form_layout.addRow(QLabel("Pages(book):"), self.pages)
-
-        self.file_authors.setPlaceholderText(
-            "The author(s) will appear here if entered or picked in the combobox below"
-        )
-        self.file_authors.setReadOnly(True)
-        self.file_authors.setMaximumSize(QSize(16777215, 50))
-        self.form_layout.addRow(QLabel("Author(s)(book):"), self.file_authors)
-        self.combo.setEditable(True)
-        self.combo.setInsertPolicy(QComboBox.InsertPolicy.InsertAlphabetically)
-        self.form_layout.addRow(QLabel("Author selector:"), self.combo)
-
-        v_layout0 =  QVBoxLayout()
-        v_layout0.setContentsMargins(0, 0, 0, 0)
-        v_layout0.addWidget(hdr)
-        v_layout0.addLayout(self.form_layout)
-
-        self.form.setObjectName("form")
-        self.form.setLayout(v_layout0)
-
-        v_layout = QVBoxLayout(self)
-        v_layout.addWidget(self.form)
+        v_layout = QVBoxLayout()
+        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout.addWidget(form)
+        self.setLayout(v_layout)
 
     def populate_fields(self):
         """
