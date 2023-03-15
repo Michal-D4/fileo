@@ -687,5 +687,4 @@ def file_notes_show(file: QModelIndex):
         logger.info(f'{f_dat=}')
         ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)
-        ag.notes.set_tags(db_ut.get_tags())
 #endregion
