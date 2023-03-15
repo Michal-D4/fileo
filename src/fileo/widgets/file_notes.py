@@ -51,14 +51,7 @@ class tagBrowser(aBrowser):
         sel = self.selected_idx
         inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>{tag}</a> "
              for i,tag in enumerate(self.tags))
-
-        clo = ('<p><a><style type="text/css">*[href]{text-decoration: none; '
-            'color: red}</style></a><span class="fa">'
-            '<a class=t href=lnk--1>&#xf410;</a></span></p>')
-
-        txt = (f'<table width="100%"><tr><td width="95%">{inn}</td>'
-            f'<td align="right">{clo}</td></tr></table>')
-        return txt
+        return inn
 
 
 class authorBrowser(QWidget):
@@ -79,15 +72,27 @@ class authorBrowser(QWidget):
         sel = self.selected_idx
         inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>[{tag}]</a> "
              for i,tag in enumerate(self.tags))
+        return inn
 
-        clo = ('<p><a><style type="text/css">*[href]{text-decoration: none; '
-            'color: red}</style></a><span class="fa">'
-            '<a class=t href=lnk--1>&#xf410;</a></span></p>')
+#region file_info
+    def populate_file_authors(self):
+        """
+        from authors table
+        """
+        fa_curs = db_ut.get_file_authors(self.id)
+        file_authors = []
+        for author in fa_curs:
+            file_authors.append(author[0])
+        self.file_authors.setPlainText(', '.join(file_authors))
 
-        txt = (f'<table width="100%"><tr><td width="95%">{inn}</td>'
-            f'<td align="right">{clo}</td></tr></table>')
-        return txt
+    def populate_combo(self):
+        # move to
+        a_curs = db_ut.get_authors()
+        for author, udat in a_curs:
+            self.combo.addItem(author, udat)
 
+
+#endregion
 
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
@@ -101,6 +106,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.setupUi(self)
 
         self.edit_tag = QLineEdit(self)
+        self.edit_tag.setInputMask('n'*20)
         self.edit_tag.setGeometry(0, 0, 100, 24)
         self.edit_tag.editingFinished.connect(self.new_tag_created)
         self.edit_tag.hide()
@@ -235,6 +241,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
         self.l_comments_press(None)
 
+    def set_tag_list(self, tags: list):
+        self.tag_selector.set_list(tags)
+
     def create_new_tag(self) -> str:
         logger.info(f'{self.add.pos()=}')
         self.edit_tag.move(self.add.pos()+QPoint(-100, 22))
@@ -245,7 +254,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def new_tag_created(self):
         tag = self.edit_tag.text()
-        logger.info(f'<<< KU-KU >>> {tag=}')
+        logger.info(f'{tag=}, id: {self.tag_selector.get_tag_id(tag)}')
         self.edit_tag.hide()
         if self.tag_selector.get_tag_id(tag):
             if tag in self.tagEdit.text():
@@ -253,27 +262,22 @@ class notesBrowser(QWidget, Ui_FileNotes):
         old = self.tag_selector.get_selected()
         new = [*old, tag]
         new.sort()
-        self.tagEdit.setText(', '.join(new))
         self.tag_list_changed()
+        self.tagEdit.setText(', '.join(new))
         # self.tag_list_changed(old)
 
     # def tag_list_changed(self, old: list[str]):
     def tag_list_changed(self):
-        old = self.tag_selector.get_selected()
-        new = self.new_tag_list()
-        # there is a pbm; new and old are the same
+        new = self.tag_selector.get_selected()
+        old = [
+            t for t in self.tagEdit.text().split(', ') if t
+        ]
+
         logger.info(f'{old=}, {new=}')
 
-        self.remove_tags(old, new)
+        # self.remove_tags(old, new)
         if self.add_tags(old, new):
             ag.signals_.user_action_signal.emit("tag_inserted")
-
-    def new_tag_list(self):
-        """
-        tag can't contain blanks and can't be empty string
-        """
-        tmp = self.tagEdit.text().replace(' ','')
-        return [t for t in tmp.split(',') if t]
 
     def add_tags(self, old, new) -> bool:
         ret = False
@@ -281,22 +285,10 @@ class notesBrowser(QWidget, Ui_FileNotes):
         for d in diff:   # only new in diff
             if not (id := self.tag_selector.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
-                self.tag_id.append(id)
-                self.tags.append(d)
                 ret = True
-            self.selected.append(id)
             logger.info(f'{id=}, {self.file_id=}')
             db_ut.insert_tag_file(id, self.file_id)
         return ret
-
-    def remove_tags(self, old, new):
-        """
-        remove tag ids from self.selected list
-        """
-        diff = set(old) - set(new)
-        for d in diff:   # only old in diff
-            id = self.tag_id[self.tags.index(d)]
-            self.selected.remove(id)
 
     def section_title(self, id: int, mod: str, cre: str) -> str:
         btn1 = f'<span class="fa"><a class=t href=x,lnk{id}>&#xf00d;</a></span>'
@@ -378,44 +370,28 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.selected.clear()
             self.selected.append(i)
 
-    def set_tags(self, tags):
-        """
-        tags: list of tags from DB: (tag, id) pairs
-        """
-        logger.info('<<<<<< KU-KU >>>>>>')
-        self.tag_selector.set_list(tags)
-        self.tag_selector.set_selection(
-            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
-        )
-
     def set_file_id(self, id: int):
         self.file_id = id
         logger.info(f'{self.file_id=}')
-        self.set_selected()
-
-    def set_selected(self):
-        tt = self.selected = self.tag_selector.get_selected()
-        logger.info(f'{tt=}')
-        self.tagEdit.setText(', '.join(tt))
+        self.tag_selector.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
+        self.tagEdit.setText(', '.join(
+            self.tag_selector.get_selected()
+            )
+        )
 
     def update_tags(self, tags: list[str]):
+        logger.info(f'{tags=}, {self.tagEdit.text()=}')
+        def print_selected():
+            for tag in tags:
+                logger.info(f'{tag=}, {self.tag_selector.get_tag_id(tag)}')
+
+        print_selected()
+
+        self.tag_list_changed()
         self.tagEdit.setText(', '.join(tags))
-        self.tag_list_changed(tags)
+
 
     def get_selected_tag_ids(self):
         return self.tag_selector.get_selected_ids()
-
-    # def pick_tags(self, event):
-    #     self.tag_selector = tagBrowser()
-    #     self.tag_selector.change_selection.connect(self.update_tags)
-    #     self.tag_selector.setParent(self)
-    #     self.tag_selector.setObjectName("tag_editor")
-    #     self.tag_selector.setContentsMargins(5,5,5,5)
-    #     ss = ag.dyn_qss['tag_list_border'][0]
-    #     self.tag_selector.setStyleSheet(ss)
-    #     self.tag_selector.move(40, 22)
-    #     self.tag_selector.resize(self.width()-70, max(self.height() // 3, 90))
-    #     self.tag_selector.setMinimumHeight(90)
-    #     self.tag_selector.set_list(zip(self.tags, self.tag_id))
-    #     self.tag_selector.set_selection(self.selected)
-    #     self.tag_selector.show()
