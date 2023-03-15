@@ -50,7 +50,7 @@ class aBrowser(QWidget):
     delete_items = pyqtSignal(str)
     change_selection = pyqtSignal(list)
 
-    def __init__(self, name: str='', brackets: bool=False,
+    def __init__(self, brackets: bool=False,
         read_only: bool=True, parent=None) -> None:
         super().__init__(parent)
         self.read_only = read_only
@@ -59,7 +59,6 @@ class aBrowser(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.browser: QTextBrowser = QTextBrowser()
-        self.browser.setObjectName(f"{name}_browser")
         self.browser.selectionChanged.connect(self.selection_changed)
         layout.addWidget(self.browser)
         self.setLayout(layout)
