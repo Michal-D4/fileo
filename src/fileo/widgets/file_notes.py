@@ -1,13 +1,10 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QPoint
-from PyQt6.QtGui import QGuiApplication, QResizeEvent, QMouseEvent
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-    QFrame, QSpacerItem, QSizePolicy, QToolButton, QTextEdit,
+from PyQt6.QtGui import QGuiApplication, QMouseEvent
+from PyQt6.QtWidgets import (QWidget, QTextEdit, QScrollArea,
     QMessageBox, QTextBrowser, QStackedWidget, QLineEdit
 )
-
-from datetime import datetime
 
 from .ui_notes import Ui_FileNotes
 
@@ -259,8 +256,15 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.locator.setObjectName('locator')
 
         # add file info page (3)
+        logger.info('before self.file_info = fileInfo(self)')
         self.file_info = fileInfo(self)
         self.stackedWidget.addWidget(self.file_info)
+        # scroll = QScrollArea(self)
+        # scroll.setWidget(self.file_info)
+        # scroll.setWidgetResizable(True)
+        # scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # self.stackedWidget.addWidget(scroll)
 
         # add comments page (4)
         self.browser = QTextBrowser(self)

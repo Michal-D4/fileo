@@ -21,7 +21,7 @@ from . import icons, utils, db_ut, bk_ut
 from . import app_globals as ag
 
 
-MIN_COMMENT_HEIGHT = 75
+MIN_COMMENT_HEIGHT = 50
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400
@@ -107,7 +107,9 @@ class shoWindow(QMainWindow):
 
     def restore_comment_height(self):
         hh = utils.get_setting("commentHeight", MIN_COMMENT_HEIGHT)
+        logger.info(f'{hh=}')
         self.ui.noteHolder.setMinimumHeight(int(hh))
+        self.ui.noteHolder.setMaximumHeight(int(hh))
 
     def restore_geometry(self):
         geometry = utils.get_setting("MainWindowGeometry")
@@ -266,6 +268,7 @@ class shoWindow(QMainWindow):
 
         self.setUpdatesEnabled(False)
         y: int = self.comment_resize(cur_pos.y())
+        logger.info(f'{y=}')
         self.setUpdatesEnabled(True)
 
         self.start_pos.setY(y)
@@ -277,7 +280,9 @@ class shoWindow(QMainWindow):
         cur_height = self.ui.noteHolder.height()
         h = max(cur_height + delta, MIN_COMMENT_HEIGHT)
         h = min(h, self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35)
+        logger.info(f'{h=}; {y0=}, {y=}, {delta=}, {cur_height=}, {self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35}')
         self.ui.noteHolder.setMinimumHeight(h)
+        self.ui.noteHolder.setMaximumHeight(h)
 
         self.start_pos.setY(y0 - h + cur_height)
         return self.start_pos.y()
