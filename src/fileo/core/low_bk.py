@@ -622,11 +622,6 @@ def populate_tag_list():
     sel = get_setting("TAG_SEL_LIST", [])
     ag.tag_list.set_selection(sel)
 
-def update_file_tag_links(idx: QModelIndex):
-    new_tags = ag.notes.get_selected_tag_ids()
-    id = idx.data(Qt.ItemDataRole.UserRole).id
-    db_ut.update_file_tag_links(id, new_tags)
-
 def tag_selection() -> list:
     return ag.tag_list.get_selected_ids()
 

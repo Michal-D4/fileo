@@ -359,9 +359,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         new.sort()
         self.tag_list_changed()
         self.tagEdit.setText(', '.join(new))
-        # self.tag_list_changed(old)
 
-    # def tag_list_changed(self, old: list[str]):
     def tag_list_changed(self):
         new = self.tag_selector.get_selected()
         old = [
@@ -370,14 +368,21 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
         logger.info(f'{old=}, {new=}')
 
-        # self.remove_tags(old, new)
+        self.remove_tags(old, new)
         if self.add_tags(old, new):
             ag.signals_.user_action_signal.emit("tag_inserted")
+
+    def remove_tags(self, old, new):
+        diff = set(old) - set(new)
+        for d in diff:
+            id = self.tag_selector.get_tag_id(d)
+            logger.info(f'{d=}, {id=}, {self.file_id=}')
+            db_ut.delete_tag_file(id, self.file_id)
 
     def add_tags(self, old, new) -> bool:
         ret = False
         diff = set(new) - set(old)
-        for d in diff:   # only new in diff
+        for d in diff:
             if not (id := self.tag_selector.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
                 ret = True
@@ -479,15 +484,5 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def update_tags(self, tags: list[str]):
         logger.info(f'{tags=}, {self.tagEdit.text()=}')
-        def print_selected():
-            for tag in tags:
-                logger.info(f'{tag=}, {self.tag_selector.get_tag_id(tag)}')
-
-        print_selected()
-
         self.tag_list_changed()
         self.tagEdit.setText(', '.join(tags))
-
-
-    def get_selected_tag_ids(self):
-        return self.tag_selector.get_selected_ids()

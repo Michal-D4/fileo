@@ -678,6 +678,13 @@ def insert_tag_file(tag: int, file: int):
     except apsw.ConstraintError:
         pass
 
+def delete_tag_file(tag: int, file: int):
+    sql = 'delete from filetag where (tagid, fileid) = (:tag, :file)'
+    try:
+        ag.db['Conn'].cursor().execute(sql, {'tag': tag, 'file': file})
+    except apsw.ConstraintError:
+        pass
+
 def update_file_tag_links(file: int, tags: list[int]):
     """
     only the deletion of file-tag links is done here

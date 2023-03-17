@@ -21,7 +21,7 @@ from . import icons, utils, db_ut, bk_ut
 from . import app_globals as ag
 
 
-MIN_COMMENT_HEIGHT = 50
+MIN_COMMENT_HEIGHT = 75
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400

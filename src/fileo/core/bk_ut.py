@@ -120,9 +120,6 @@ def set_drag_drop_handlers():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    logger.info(f'{ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole)}')
-    if prev.isValid():
-        low_bk.update_file_tag_links(prev)
     if curr.isValid():
         self.ui.label.setText(low_bk.full_file_name(curr))
         low_bk.file_notes_show(curr)
