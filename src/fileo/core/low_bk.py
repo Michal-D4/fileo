@@ -631,6 +631,7 @@ def tag_changed(new_tag: str):
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()
+    ag.tag_list.edit_finished.emit()
 
 def delete_tags(tags: str):
     """
@@ -639,9 +640,9 @@ def delete_tags(tags: str):
     for id in tags.split(','):
         db_ut.detele_tag(id)
     populate_tag_list()
+    ag.tag_list.edit_finished.emit()
 #endregion
 
-#region  Extensions
 def populate_ext_list():
     ag.ext_list.set_list(db_ut.get_ext_list())
     sel = get_setting("EXT_SEL_LIST", [])
@@ -649,7 +650,6 @@ def populate_ext_list():
 
 def ext_selection() -> list:
     return ag.ext_list.get_selected_ids()
-#endregion
 
 #region  Authors
 def populate_author_list():
@@ -665,6 +665,7 @@ def author_changed(new_author: str):
         return
     db_ut.update_author(ag.author_list.current_id(), new_author)
     populate_author_list()
+    ag.author_list.edit_finished.emit()
 
 def delete_authors(authors: str):
     """
@@ -673,13 +674,12 @@ def delete_authors(authors: str):
     for id in authors.split(','):
         db_ut.detele_author(id)
     populate_author_list()
+    ag.author_list.edit_finished.emit()
 #endregion
 
-#region Comments
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     if f_dat:
         logger.info(f'{f_dat=}')
         ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)
-#endregion

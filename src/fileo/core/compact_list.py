@@ -49,6 +49,7 @@ class aBrowser(QWidget):
     edit_item = pyqtSignal(str)
     delete_items = pyqtSignal(str)
     change_selection = pyqtSignal(list)
+    edit_finished = pyqtSignal()
 
     def __init__(self, brackets: bool=False,
         read_only: bool=True, parent=None) -> None:
@@ -151,12 +152,10 @@ class aBrowser(QWidget):
         QApplication.clipboard().setText(';'.join(tags))
 
     def set_list(self, items: list):
-        logger.info(f'{self.objectName()}: {type(items)=}')
         self.tags.clear()
         self.tag_ids.clear()
         self.selected_idx.clear()
         for it in items:
-            logger.info(f'{self.objectName()}: {it=}')
             self.tags.append(it[0])
             self.tag_ids.append(it[1])
         self.show_in_bpowser()
@@ -174,7 +173,6 @@ class aBrowser(QWidget):
             self.browser.setTextCursor(curs)
 
     def set_selection(self, sel_ids: list[int]):
-        logger.info(f'{self.objectName()}: {type(sel_ids)=}')
         if len(self.tags) > 0:
             self.selected_idx = [self.tag_ids.index(int(s)) for s in sel_ids]
             logger.info(f'{self.objectName()}: {self.selected_idx=}')
@@ -200,6 +198,7 @@ class aBrowser(QWidget):
         self.curr_pos = self.browser.textCursor().position()
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
+        logger.info(f'{self.objectName()}')
         self.update_selected(href, mod)
         self.change_selection_emit()
         self.show_in_bpowser()
@@ -222,7 +221,10 @@ class aBrowser(QWidget):
 
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
         tref = href.toString()[1:]
+        logger.info(f'{self.objectName()}, {tref=}')
         if tref not in self.tags:
+            # no new tags created in this module
+            # so this shouldn't happen
             return
         self.browser.find(tref)
         self.curr_pos = self.browser.textCursor().position()
