@@ -84,7 +84,7 @@ class shoWindow(QMainWindow):
         ag.notes.setObjectName("file_notes")
         add_widget_into_frame(self.ui.noteHolder, ag.notes)
         logger.info('<<<<<< PU-PU >>>>>>')
-        ag.notes.set_tag_list(db_ut.get_tags())
+        ag.notes.set_tag_list()
 
     def set_busy(self, val: bool):
         self.is_busy = val

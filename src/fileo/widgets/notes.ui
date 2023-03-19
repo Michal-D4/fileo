@@ -68,19 +68,22 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>Enter a list of tags separated by commas or select from the &quot;Tag Selector&quot;</string>
+        </property>
         <property name="frame">
          <bool>false</bool>
         </property>
         <property name="readOnly">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string/>
+         <string>Enter a list of tags separated by commas or select from the &quot;Tag Selector&quot;</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="add">
+       <widget class="QToolButton" name="expand">
         <property name="toolTip">
          <string>add new tag</string>
         </property>
@@ -172,9 +175,6 @@
       </item>
       <item>
        <widget class="QToolButton" name="plus">
-        <property name="toolTip">
-         <string>add note</string>
-        </property>
         <property name="text">
          <string>...</string>
         </property>

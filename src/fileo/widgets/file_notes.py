@@ -1,9 +1,9 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QUrl, QDateTime, QPoint
-from PyQt6.QtGui import QGuiApplication, QMouseEvent
-from PyQt6.QtWidgets import (QWidget, QTextEdit, QScrollArea,
-    QMessageBox, QTextBrowser, QStackedWidget, QLineEdit
+from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
+    QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit, QVBoxLayout,
 )
 
 from .ui_notes import Ui_FileNotes
@@ -53,9 +53,29 @@ class tagBrowser(aBrowser):
 
 class authorBrowser(QWidget):
     def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.sel_list = QPlainTextEdit()
+        self.sel_list.setMaximumSize(QSize(16777215, 40))
+        si_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.sel_list.setSizePolicy(si_policy)
 
         self.br = aBrowser()
         self.br.show_in_bpowser = self.show_in_bpowser
+        self.br.change_selection.connect(self.update_selection)
+
+        m_layout = QVBoxLayout(self)
+        m_layout.setContentsMargins(0, 0, 0, 0)
+        m_layout.setSpacing(0)
+        m_layout.addWidget(self.sel_list)
+        m_layout.addWidget(self.br)
+
+    def update_selection(self, items: list[str]):
+        # self.sel_changed()
+        pass
+
+    def create_new_author(self):
+        print('create_new_author')
+        pass
 
     def show_in_bpowser(self):
         style = ag.dyn_qss['text_browser'][0]
@@ -97,7 +117,8 @@ def custom_menu(self, pos):
     menu.addAction("Select all")
     action = menu.exec(self.file_authors.mapToGlobal(pos))
     if action:
-        {'Delete selected': self.delete_link,
+        {
+            'Delete selected': self.delete_link,
             'Copy selected': self.copy_selected,
             'Select all': self.select_all
         }[action.text()]()
@@ -148,8 +169,8 @@ def select_author_under_pos(self, pos: int):
         QTextCursor.MoveOperation.NextCharacter,
         QTextCursor.MoveMode.KeepAnchor, right-left
     )
-
     self.file_authors.setTextCursor(curs)
+
 def new_choice(self, idx: int):
     """
     add link author-file for the current file
@@ -186,19 +207,10 @@ def right_comma(pos: int, txt: str) -> int:
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
-        self.tags = []
-        self.tag_id = []
-        self.selected = []
         self.file_id = 0
         self.id = 0
 
         self.setupUi(self)
-
-        self.edit_tag = QLineEdit(self)
-        self.edit_tag.setInputMask('n'*20)
-        self.edit_tag.setGeometry(0, 0, 100, 24)
-        self.edit_tag.editingFinished.connect(self.new_tag_created)
-        self.edit_tag.hide()
 
         self.page_selectors = [
             self.l_tags, self.l_authors,
@@ -218,9 +230,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
         self.edit_btns.hide()
         self.plus.hide()
-
-        self.add.setIcon(icons.get_other_icon("plus"))
-        self.add.clicked.connect(self.create_new_tag)
+        self.tagEdit.editingFinished.connect(self.finish_edit_tag)
 
         self.browser.anchorClicked.connect(self.ref_clicked)
 
@@ -242,13 +252,12 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.stackedWidget.addWidget(self.tag_selector)
         self.tag_selector.setObjectName('tag_selector')
         self.tag_selector.change_selection.connect(self.update_tags)
+        ag.tag_list.edit_finished.connect(self.update_tag_list)
 
         # add author selector page (1)
-        self.author_selector = tagBrowser()
+        self.author_selector = authorBrowser()
         self.stackedWidget.addWidget(self.author_selector)
         self.author_selector.setObjectName('author_selector')
-        # self.author_selector.set_list()
-        # self.author_selector.set_selection()
 
         # add file locations page (2)
         self.locator = QTextBrowser(self)
@@ -259,12 +268,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         logger.info('before self.file_info = fileInfo(self)')
         self.file_info = fileInfo(self)
         self.stackedWidget.addWidget(self.file_info)
-        # scroll = QScrollArea(self)
-        # scroll.setWidget(self.file_info)
-        # scroll.setWidgetResizable(True)
-        # scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        # self.stackedWidget.addWidget(scroll)
 
         # add comments page (4)
         self.browser = QTextBrowser(self)
@@ -285,18 +288,27 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
+        # tag selector page
         self.switch_page(0)
+        self.plus.hide()
 
     def l_authors_press(self, e: QMouseEvent):
+        # author selector page
         self.switch_page(1)
+        self.plus.hide()
 
     def l_locations_press(self, e: QMouseEvent):
+        # file locations page
         self.switch_page(2)
+        self.plus.hide()
 
     def l_file_info_press(self, e: QMouseEvent):
+        # file info page
         self.switch_page(3)
+        self.plus.hide()
 
     def l_comments_press(self, e: QMouseEvent):
+        # comments page
         self.switch_page(4)
         self.plus.show()
 
@@ -311,8 +323,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
             )
         if self.cur_page == 5 and page_no != 5:
             self.edit_btns.hide()
-        if self.cur_page == 4 and page_no != 4:
-            self.plus.hide()
         self.cur_page = page_no
         self.stackedWidget.setCurrentIndex(page_no)
 
@@ -336,41 +346,34 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
         self.l_comments_press(None)
 
-    def set_tag_list(self, tags: list):
-        self.tag_selector.set_list(tags)
+    def set_tag_list(self):
+        self.tag_selector.set_list(db_ut.get_tags())
 
-    def create_new_tag(self) -> str:
-        logger.info(f'{self.add.pos()=}')
-        self.edit_tag.move(self.add.pos()+QPoint(-100, 22))
-        self.edit_tag.setText('<<< KU_KU >>>')
-        self.edit_tag.show()
-        logger.info(f'{self.edit_tag.isHidden()=}')
-        logger.info(f'{self.edit_tag.geometry()=}')
+    @pyqtSlot()
+    def update_tag_list(self):
+        self.tag_selector.set_list(db_ut.get_tags())
+        self.set_file_id(self.file_id)
 
-    def new_tag_created(self):
-        tag = self.edit_tag.text()
-        logger.info(f'{tag=}, id: {self.tag_selector.get_tag_id(tag)}')
-        self.edit_tag.hide()
-        if self.tag_selector.get_tag_id(tag):
-            if tag in self.tagEdit.text():
-                return
+    @pyqtSlot()
+    def finish_edit_tag(self) -> str:
         old = self.tag_selector.get_selected()
-        new = [*old, tag]
-        new.sort()
-        self.tag_list_changed()
-        self.tagEdit.setText(', '.join(new))
+        new = self.new_tag_list()
+        logger.info(f'<<< finish edit tags >>>')
+        self.tag_list_changed(old, new)
 
-    def tag_list_changed(self):
-        new = self.tag_selector.get_selected()
-        old = [
-            t for t in self.tagEdit.text().split(', ') if t
-        ]
-
+    def tag_list_changed(self, old: list[str], new: list[str]):
         logger.info(f'{old=}, {new=}')
-
         self.remove_tags(old, new)
         if self.add_tags(old, new):
+            self.update_tag_list()
             ag.signals_.user_action_signal.emit("tag_inserted")
+
+    def new_tag_list(self):
+        """
+        tag can't contain blanks and can't be empty string
+        """
+        tmp = self.tagEdit.text().replace(' ','')
+        return [t for t in tmp.split(',') if t]
 
     def remove_tags(self, old, new):
         diff = set(old) - set(new)
@@ -380,15 +383,16 @@ class notesBrowser(QWidget, Ui_FileNotes):
             db_ut.delete_tag_file(id, self.file_id)
 
     def add_tags(self, old, new) -> bool:
-        ret = False
+        inserted = False
         diff = set(new) - set(old)
         for d in diff:
             if not (id := self.tag_selector.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
-                ret = True
+                logger.info(f'inserted; {d=}, {id=}')
+                inserted = True
             logger.info(f'{id=}, {self.file_id=}')
             db_ut.insert_tag_file(id, self.file_id)
-        return ret
+        return inserted
 
     def section_title(self, id: int, mod: str, cre: str) -> str:
         btn1 = f'<span class="fa"><a class=t href=x,lnk{id}>&#xf00d;</a></span>'
@@ -404,7 +408,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         return hdr
 
     def set_notes_data(self, data):
-        logger.info('<<<<<< KU-KU >>>>>>')
         buf = []
         for row in data:
             note = ag.Note(*row)
@@ -434,7 +437,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         if tref.startswith('http'):
             # TODO open link in default browser
             return
-        self.set_selection(tref)
 
     def confirm_deletion(self):
         dlg = QMessageBox(ag.app)
@@ -455,20 +457,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
         logger.info(f'{id=}, {txt=}')
         self.editor.setText(txt)
         self.editor.set_note_id(id)
+        self.plus.hide()
         self.edit_btns.show()
         self.switch_page(5)
-
-    def set_selection(self, ref: str):
-        mod = QGuiApplication.keyboardModifiers()
-        i = self.tags.index(ref)
-        if mod is Qt.KeyboardModifier.ControlModifier:
-            if i in self.selected:
-                self.selected.remove(i)
-            else:
-                self.selected.append(i)
-        else:
-            self.selected.clear()
-            self.selected.append(i)
 
     def set_file_id(self, id: int):
         self.file_id = id
@@ -484,5 +475,5 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def update_tags(self, tags: list[str]):
         logger.info(f'{tags=}, {self.tagEdit.text()=}')
-        self.tag_list_changed()
+        self.tag_list_changed(self.new_tag_list(), tags)
         self.tagEdit.setText(', '.join(tags))
