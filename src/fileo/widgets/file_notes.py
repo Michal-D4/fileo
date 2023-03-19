@@ -209,6 +209,8 @@ class notesBrowser(QWidget, Ui_FileNotes):
         super().__init__(parent)
         self.file_id = 0
         self.id = 0
+        self.maximized = False
+        self.s_height = 0
 
         self.setupUi(self)
 
@@ -218,6 +220,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.l_comments
         ]
         self.set_stack_pages()
+
+        self.expand.setIcon(icons.get_other_icon('up'))
+        self.expand.clicked.connect(self.up_down)
 
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_comment)
@@ -325,6 +330,21 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.edit_btns.hide()
         self.cur_page = page_no
         self.stackedWidget.setCurrentIndex(page_no)
+
+    def up_down(self):
+        if self.maximized:
+            self.expand.setIcon(icons.get_other_icon('up'))
+            ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
+            ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
+            ag.file_list.show()
+        else:
+            self.s_height = self.height()
+            self.expand.setIcon(icons.get_other_icon('down'))
+            hh = ag.file_list.height() + self.s_height
+            ag.app.ui.noteHolder.setMinimumHeight(hh)
+            ag.app.ui.noteHolder.setMaximumHeight(hh)
+            ag.file_list.hide()
+        self.maximized = not self.maximized
 
     def cancel_note_editing(self):
         self.l_comments_press(None)

@@ -85,7 +85,7 @@
       <item>
        <widget class="QToolButton" name="expand">
         <property name="toolTip">
-         <string>add new tag</string>
+         <string>Maximize panel</string>
         </property>
         <property name="text">
          <string>...</string>
