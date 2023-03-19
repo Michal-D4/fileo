@@ -14,6 +14,4 @@ class AppSignals(QObject):
 
     user_action_signal = pyqtSignal(str, name="user_action_signal")
 
-    file_note_changed = pyqtSignal(int, str)
-
     app_mode_changed = pyqtSignal(int)
