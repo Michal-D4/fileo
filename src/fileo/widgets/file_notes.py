@@ -1,9 +1,10 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
-    QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit, QVBoxLayout,
+    QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
+    QVBoxLayout,
 )
 
 from .ui_notes import Ui_FileNotes
@@ -38,12 +39,6 @@ class tagBrowser(aBrowser):
 
         self.browser.setText(txt)
 
-    def get_tag_id(self, tag: str) -> bool:
-        try:
-            return self.tag_ids[self.tags.index(tag)]
-        except ValueError:
-            return 0
-
     def html_selected(self):
         sel = self.selected_idx
         inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>{tag}</a> "
@@ -54,14 +49,17 @@ class tagBrowser(aBrowser):
 class authorBrowser(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.file_id = 0
+
         self.sel_list = QPlainTextEdit()
         self.sel_list.setMaximumSize(QSize(16777215, 40))
         si_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.sel_list.setSizePolicy(si_policy)
+        enter = QShortcut(QKeySequence(Qt.Key.Key_Enter), self.sel_list)
+        enter.activated.connect(self.finish_edit_list)
 
-        self.br = aBrowser()
-        self.br.show_in_bpowser = self.show_in_bpowser
-        self.br.change_selection.connect(self.update_selection)
+        self.br = aBrowser(brackets=True)
+        self.br.setObjectName('author_selector')
 
         m_layout = QVBoxLayout(self)
         m_layout.setContentsMargins(0, 0, 0, 0)
@@ -69,27 +67,66 @@ class authorBrowser(QWidget):
         m_layout.addWidget(self.sel_list)
         m_layout.addWidget(self.br)
 
-    def update_selection(self, items: list[str]):
-        # self.sel_changed()
-        pass
+    def set_authors(self):
+        logger.info('<<< ========== >>>')
+        self.br.set_list(db_ut.get_authors())
 
+    def set_file_id(self, id: int):
+        self.file_id = id
+        logger.info(f'>>> {self.file_id=}')
+        self.br.set_selection(
+            (int(s[0]) for s in db_ut.get_file_author_id(id))
+        )
+        self.sel_list.setPlainText(', '.join(
+            (f'[{it}]' for it in self.br.get_selected())
+        ))
+        self.br.change_selection.connect(self.update_selection)
+
+    @pyqtSlot()
+    def finish_edit_list(self):
+        old = self.br.get_selected()
+        new = self.edited_list()
+        logger.info(f"{old=}, {new=}")
+        self.items_changed(old, new)
+
+    @pyqtSlot(list)
+    def update_selection(self, items: list[str]):
+        logger.info(f"{items=}")
+        self.sel_list_changed(self.edited_list(), items)
+        txt = (f'[{it}]' for it in items)
+        self.sel_list.setPlainText(', '.join(txt))
+
+    def edited_list(self) -> list[str]:
+        tt = self.sel_list.toPlainText()
+        tt = tt.replace('[', '')
+        tt = tt.replace(']', '')
+        return [t.strip() for t in tt.split(',') if t.strip()]
+
+    def sel_list_changed(self, old: list[str], new: list[str]):
+        logger.info(f"{old=}, {new=}")
+        self.remove_items(old, new)
+        if self.add_items(old, new):
+            self.update_list()
+            ag.signals_.user_action_signal.emit("author_inserted")
+
+    def remove_items(self, old: list[str], new: list[str]):
+        diff = set(old) - set(new)
+        for d in diff:
+            if not (id := self.br.get_tag_id(d)):
+                db_ut.break_file_authors_link(self.file_id, id)
+
+    def add_items(self, old: list[str], new: list[str]) -> bool:
+        inserted = False
+        diff = set(new) - set(old)
+        for d in diff:
+            if db_ut.add_author(self.file_id, d):
+                inserted = True
+        return inserted
+
+    #------------------------------------------------
     def create_new_author(self):
         print('create_new_author')
         pass
-
-    def show_in_bpowser(self):
-        style = ag.dyn_qss['text_browser'][0]
-        self.br.browser.clear()
-
-        txt = ''.join((style, self.html_selected()))
-
-        self.br.browser.setText(txt)
-
-    def html_selected(self):
-        sel = self.selected_idx
-        inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>[{tag}]</a> "
-             for i,tag in enumerate(self.tags))
-        return inn
 
 #region file_info
 def populate_file_authors(self):
@@ -366,8 +403,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
         self.l_comments_press(None)
 
-    def set_tag_list(self):
+    def set_data(self):
         self.tag_selector.set_list(db_ut.get_tags())
+        self.author_selector.set_authors()
 
     @pyqtSlot()
     def update_tag_list(self):
@@ -375,7 +413,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.set_file_id(self.file_id)
 
     @pyqtSlot()
-    def finish_edit_tag(self) -> str:
+    def finish_edit_tag(self):
         old = self.tag_selector.get_selected()
         new = self.new_tag_list()
         logger.info(f'<<< finish edit tags >>>')
@@ -395,7 +433,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         tmp = self.tagEdit.text().replace(' ','')
         return [t for t in tmp.split(',') if t]
 
-    def remove_tags(self, old, new):
+    def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
         for d in diff:
             id = self.tag_selector.get_tag_id(d)
@@ -446,7 +484,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         tref = href.toString()
         logger.info(f'{tref=}')
         if tref.startswith("x,lnk"):
-            if self.confirm_deletion():
+            if self.confirm_note_deletion():
                 id = int(tref[5:])
                 self.delete_note(id)
             return
@@ -458,7 +496,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
             # TODO open link in default browser
             return
 
-    def confirm_deletion(self):
+    def confirm_note_deletion(self):
         dlg = QMessageBox(ag.app)
         dlg.setWindowTitle('delete file note')
         dlg.setText(f'confirm deletion of note')
@@ -492,7 +530,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
             )
         )
         self.file_info.set_file_id(self.file_id)
+        self.author_selector.set_file_id(id)
 
+    @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
         logger.info(f'{tags=}, {self.tagEdit.text()=}')
         self.tag_list_changed(self.new_tag_list(), tags)

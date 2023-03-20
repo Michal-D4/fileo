@@ -35,6 +35,10 @@ def get_authors() -> apsw.Cursor:
     sql = 'select author, id from authors order by author COLLATE NOCASE;'
     return ag.db['Conn'].cursor().execute(sql)
 
+def get_file_author_id(id: int) -> apsw.Cursor:
+    sql = "select aid from fileauthor where fileid = ?"
+    return ag.db['Conn'].cursor().execute(sql, (id,))
+
 def get_file_authors(id: int) -> apsw.Cursor:
     sql = (
         'select author from authors a join fileauthor f on f.aid = a.id '
