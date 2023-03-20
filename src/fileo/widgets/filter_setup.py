@@ -228,3 +228,8 @@ class FilterSetup(QWidget):
         self.ui.before.setChecked(low_bk.get_setting("BEFORE", False))
         self.ui.after_date.setDate(QDate.fromJulianDay(low_bk.get_setting("AFTER_DATE", 0)))
         self.ui.before_date.setDate(QDate.fromJulianDay(low_bk.get_setting("BEFORE_DATE", 0)))
+
+        self.tag_selection_changed(ag.tag_list.get_selected())
+        self.ext_selection_changed(ag.ext_list.get_selected())
+        self.author_selection_changed(ag.author_list.get_selected())
+        self.dir_selection_changed()

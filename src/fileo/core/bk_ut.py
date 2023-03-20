@@ -164,6 +164,7 @@ def populate_all():
     )
     self.show_hidden.stateChanged.connect(show_hidden_dirs)
     fill_dir_list()
+    ag.filter.restore_filter_settings()
 
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:

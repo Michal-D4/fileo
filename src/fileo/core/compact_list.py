@@ -178,7 +178,6 @@ class aBrowser(QWidget):
             logger.info(f'{self.objectName()}: {self.selected_idx=}')
             self.show_in_bpowser()
             self.browser.find(self.get_current())
-            self.change_selection_emit()
 
     def change_selection_emit(self):
         items = [val for i,val in enumerate(self.tags) if i in self.selected_idx]
@@ -192,6 +191,12 @@ class aBrowser(QWidget):
         tmp = [self.tag_ids[i] for i in self.selected_idx]
         tmp.sort()
         return tmp
+
+    def get_tag_id(self, tag: str) -> bool:
+        try:
+            return self.tag_ids[self.tags.index(tag)]
+        except ValueError:
+            return 0
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):

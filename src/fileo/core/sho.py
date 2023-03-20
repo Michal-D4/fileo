@@ -83,8 +83,7 @@ class shoWindow(QMainWindow):
         ag.notes = notesBrowser()
         ag.notes.setObjectName("file_notes")
         add_widget_into_frame(self.ui.noteHolder, ag.notes)
-        logger.info('<<<<<< PU-PU >>>>>>')
-        ag.notes.set_tag_list()
+        ag.notes.set_data()
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -231,7 +230,6 @@ class shoWindow(QMainWindow):
         bk_ut.save_bk_settings()
         self.connect_db(db_name)
         bk_ut.populate_all()
-        self.filter_setup.restore_filter_settings()
 
     @pyqtSlot()
     def show_db_list(self):
@@ -380,7 +378,6 @@ class shoWindow(QMainWindow):
         ag.ext_list.change_selection.connect(self.filter_setup.ext_selection_changed)
         ag.author_list.change_selection.connect(self.filter_setup.author_selection_changed)
         ag.filter = self.filter_setup
-        self.filter_setup.restore_filter_settings()
 
     @pyqtSlot()
     def click_scan(self):
