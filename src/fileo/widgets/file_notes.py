@@ -1,10 +1,10 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
-from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
-    QVBoxLayout,
+    QVBoxLayout, QHBoxLayout, QToolButton, QFrame,
 )
 
 from .ui_notes import Ui_FileNotes
@@ -51,21 +51,64 @@ class authorBrowser(QWidget):
         super().__init__(parent)
         self.file_id = 0
 
-        self.sel_list = QPlainTextEdit()
-        self.sel_list.setMaximumSize(QSize(16777215, 40))
+        self.setup_ui()
+
+        ag.author_list.edit_finished.connect(self.refresh_data)
+        self.br.change_selection.connect(self.update_selection)
+
+    def setup_ui(self):
+        self.edit_authors = QPlainTextEdit()
+        self.edit_authors.setObjectName('edit_authors')
+        self.edit_authors.setMaximumSize(QSize(16777215, 42))
         si_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.sel_list.setSizePolicy(si_policy)
-        enter = QShortcut(QKeySequence(Qt.Key.Key_Enter), self.sel_list)
-        enter.activated.connect(self.finish_edit_list)
+        self.edit_authors.setSizePolicy(si_policy)
+        self.edit_authors.setToolTip(
+            'Enter authors separated by commas, '
+            'or select in the list below'
+            ', use Ctrl+Click to select multiple items'
+        )
+
+        self.accept = QToolButton()
+        self.accept.setIcon(icons.get_other_icon("ok"))
+        self.accept.clicked.connect(self.finish_edit_list)
+        self.accept.setToolTip('Accept editing')
+
+        self.reject = QToolButton()
+        self.reject.setIcon(icons.get_other_icon("cancel2"))
+        self.reject.clicked.connect(self.set_selected_text)
+        self.reject.setToolTip('Reject editing')
+
+        v_layout = QVBoxLayout()
+        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout.setSpacing(0)
+        v_layout.addWidget(self.accept)
+        v_layout.addWidget(self.reject)
+
+        h_layout = QHBoxLayout()
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSpacing(0)
+        h_layout.addWidget(self.edit_authors)
+        h_layout.addLayout(v_layout)
 
         self.br = aBrowser(brackets=True)
         self.br.setObjectName('author_selector')
 
-        m_layout = QVBoxLayout(self)
+        authors = QFrame(self)
+        authors.setObjectName('authors')
+        f_layout = QVBoxLayout(self)
+        f_layout.setContentsMargins(0, 0, 0, 0)
+
+        m_layout = QVBoxLayout(authors)
         m_layout.setContentsMargins(0, 0, 0, 0)
         m_layout.setSpacing(0)
-        m_layout.addWidget(self.sel_list)
+        m_layout.addLayout(h_layout)
         m_layout.addWidget(self.br)
+
+        f_layout.addWidget(authors)
+
+    def refresh_data(self):
+        self.set_authors()
+        self.set_selected_text()
 
     def set_authors(self):
         logger.info('<<< ========== >>>')
@@ -77,27 +120,30 @@ class authorBrowser(QWidget):
         self.br.set_selection(
             (int(s[0]) for s in db_ut.get_file_author_id(id))
         )
-        self.sel_list.setPlainText(', '.join(
+        self.set_selected_text()
+
+    @pyqtSlot()
+    def set_selected_text(self):
+        self.edit_authors.setPlainText(', '.join(
             (f'[{it}]' for it in self.br.get_selected())
         ))
-        self.br.change_selection.connect(self.update_selection)
 
     @pyqtSlot()
     def finish_edit_list(self):
         old = self.br.get_selected()
-        new = self.edited_list()
+        new = self.get_edited_list()
         logger.info(f"{old=}, {new=}")
-        self.items_changed(old, new)
+        self.sel_list_changed(old, new)
 
     @pyqtSlot(list)
     def update_selection(self, items: list[str]):
         logger.info(f"{items=}")
-        self.sel_list_changed(self.edited_list(), items)
+        self.sel_list_changed(self.get_edited_list(), items)
         txt = (f'[{it}]' for it in items)
-        self.sel_list.setPlainText(', '.join(txt))
+        self.edit_authors.setPlainText(', '.join(txt))
 
-    def edited_list(self) -> list[str]:
-        tt = self.sel_list.toPlainText()
+    def get_edited_list(self) -> list[str]:
+        tt = self.edit_authors.toPlainText()
         tt = tt.replace('[', '')
         tt = tt.replace(']', '')
         return [t.strip() for t in tt.split(',') if t.strip()]
@@ -105,141 +151,32 @@ class authorBrowser(QWidget):
     def sel_list_changed(self, old: list[str], new: list[str]):
         logger.info(f"{old=}, {new=}")
         self.remove_items(old, new)
-        if self.add_items(old, new):
-            self.update_list()
-            ag.signals_.user_action_signal.emit("author_inserted")
+        self.add_items(old, new)
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
+        logger.info(f'{diff=}')
         for d in diff:
-            if not (id := self.br.get_tag_id(d)):
+            if id := self.br.get_tag_id(d):
+                logger.info(f'{id=}')
                 db_ut.break_file_authors_link(self.file_id, id)
+            logger.info(f'{id=}')
 
-    def add_items(self, old: list[str], new: list[str]) -> bool:
+    def add_items(self, old: list[str], new: list[str]):
         inserted = False
         diff = set(new) - set(old)
+        logger.info(f'{diff=}')
         for d in diff:
             if db_ut.add_author(self.file_id, d):
                 inserted = True
-        return inserted
+        if inserted:
+            self.update_list()
+            ag.signals_.user_action_signal.emit("author_inserted")
 
-    #------------------------------------------------
-    def create_new_author(self):
-        print('create_new_author')
-        pass
+    def update_list(self):
+        self.set_authors()
+        self.set_file_id(self.file_id)
 
-#region file_info
-def populate_file_authors(self):
-    """
-    from authors table
-    """
-    fa_curs = db_ut.get_file_authors(self.id)
-    file_authors = []
-    for author in fa_curs:
-        file_authors.append(author[0])
-    self.file_authors.setPlainText(', '.join(file_authors))
-
-def populate_combo(self):
-    # move to
-    a_curs = db_ut.get_authors()
-    for author, udat in a_curs:
-        self.combo.addItem(author, udat)
-
-def custom_menu(self, pos):
-    from PyQt6.QtWidgets import QMenu
-    menu = QMenu(self)
-    menu.addAction("Delete selected")
-    menu.addAction("Copy selected")
-    menu.addSeparator()
-    menu.addAction("Select all")
-    action = menu.exec(self.file_authors.mapToGlobal(pos))
-    if action:
-        {
-            'Delete selected': self.delete_link,
-            'Copy selected': self.copy_selected,
-            'Select all': self.select_all
-        }[action.text()]()
-
-def copy_selected(self):
-    from PyQt6.QtWidgets import QApplication
-    curs = self.file_authors.textCursor()
-    QApplication.clipboard().setText(curs.selectedText())
-
-def select_all(self):
-    self.file_authors.selectAll()
-
-def delete_link(self):
-    curs = self.file_authors.textCursor()
-    if curs.hasSelection():
-        sel_txt = curs.selectedText()
-        for txt in sel_txt.split(', '):
-            i = self.combo.findText(txt, Qt.MatchFlag.MatchExactly)
-            if i == -1:
-                continue
-            id = self.combo.itemData(i, Qt.ItemDataRole.UserRole)
-            db_ut.break_file_authors_link(self.id, id)
-        self.populate_file_authors()
-
-def select_on_click(self, e: QMouseEvent):
-    pos = e.pos()
-    sel = self.file_authors.textCursor().selectedText()
-    if sel and e.button() == Qt.MouseButton.RightButton:
-        return
-    txt_curs_at_click = self.file_authors.cursorForPosition(pos)
-    self.file_authors.setTextCursor(txt_curs_at_click)
-    text_pos = self.file_authors.textCursor().position()
-
-    self.select_author_under_pos(text_pos)
-
-def select_author_under_pos(self, pos: int):
-    from PyQt6.QtGui import QTextCursor
-    txt = self.file_authors.toPlainText()
-    left = left_comma(pos, txt)
-    right = right_comma(pos, txt)
-
-    curs = self.file_authors.textCursor()
-    curs.movePosition(
-        QTextCursor.MoveOperation.PreviousCharacter,
-        QTextCursor.MoveMode.MoveAnchor, pos-left
-    )
-    curs.movePosition(
-        QTextCursor.MoveOperation.NextCharacter,
-        QTextCursor.MoveMode.KeepAnchor, right-left
-    )
-    self.file_authors.setTextCursor(curs)
-
-def new_choice(self, idx: int):
-    """
-    add link author-file for the current file
-    """
-    author = self.combo.currentText()
-    if not self.fill_file_authors(author):       # author already exists
-        return
-
-    # create new author
-    id = db_ut.add_author(self.id, author)
-    if id:
-        self.combo.addItem(author, id)
-        ag.signals_.user_action_signal.emit("author inserted")
-
-def fill_file_authors(self, author: str) -> bool:
-    txt = self.file_authors.toPlainText()
-    authors = txt.split(', ') if txt else []
-    if author in authors:
-        return False
-    authors.append(author)
-    authors.sort()
-    self.file_authors.setPlainText(', '.join(authors))
-    return True
-
-def left_comma(pos: int, txt: str) -> int:
-    comma_pos = txt[:pos].rfind(',')
-    return 0 if comma_pos == -1 else comma_pos+2
-
-def right_comma(pos: int, txt: str) -> int:
-    comma_pos = txt[pos:].find(',')
-    return len(txt) if comma_pos == -1 else pos + comma_pos
-#endregion
 
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:

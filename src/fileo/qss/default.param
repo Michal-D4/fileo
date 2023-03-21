@@ -11,6 +11,7 @@ $toolBarBackground~#2C2C2C
 $toolBarToolButtonBackground~transparent
 $ScrollBarUpDownArrowBG~transparent
 $colorBorder~#A0A0A0
+$colorBorder2~#ADADAD
 $splitLineBackground~#D7D7D7
 $splitLineHoverBackground~#3491F4
 $filterFrameBackground~#E9E9E9
