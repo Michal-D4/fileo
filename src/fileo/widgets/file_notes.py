@@ -1,4 +1,5 @@
 from loguru import logger
+from collections import defaultdict
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
@@ -178,6 +179,77 @@ class authorBrowser(QWidget):
         self.set_file_id(self.file_id)
 
 
+class Locations(QTextBrowser):
+    def __init__(self, parent = None) -> None:
+        super().__init__(parent)
+        self.file_id = 0
+
+    def set_file_id(self, id: int):
+        self.file_id = id
+        self.get_locations()
+
+    def get_locations(self):
+        branches = defaultdict(list)
+        dir_ids = db_ut.get_file_dir_ids(self.file_id)
+        dirs = self.get_file_dirs(dir_ids)
+        for dir_data in dirs:
+            id = dir_data.id
+            p_id = dir_data.parent_id
+            branches[(id, p_id)].append([id, p_id])
+            logger.info(f'{dir_data}')
+            logger.info(f'{branches[(id, p_id)]=}')
+            self.get_branches(branches[(id, p_id)])
+
+        self.show_branches(branches, dirs)
+
+    def get_file_dirs(self, dir_ids) -> list:
+        dirs = []
+        for id in dir_ids:
+            parents = db_ut.dir_parents(id[0])
+            for pp in parents:
+                logger.info(f'{id=}, {pp=}')
+                dirs.append(ag.DirData(*pp))
+        return dirs
+
+    def get_branches(self, bundle: list):
+        curr = 0
+        while 1:
+            tt = bundle[curr]
+            while 1:
+                if tt[-1] == 0:
+                    break
+                parents = db_ut.dir_parents(tt[-1])
+                first = True
+                for pp in parents:
+                    if first:
+                        ss = [*tt]
+                        tt.append(pp[0])
+                        first = False
+                        continue
+                    bundle.append([*ss, pp[0]])
+            curr += 1
+            if curr >= len(bundle):
+                break
+        logger.info(f'{bundle=}')
+
+    def show_branches(self, branches: dict[list], dirs: list):
+        names = []
+        attribs = []
+        for dd in dirs:
+            dd: ag.DirData
+            for bb in branches[(dd.id, dd.parent_id)]:
+               attribs.append((dd.is_copy, dd.hidden))
+               names.append(self.exec_branch(bb[:-1]))
+               logger.info(f'{names[-1]}, {attribs[-1]}')
+
+    def exec_branch(self, ids: list) -> str:
+        ids.reverse()
+        ww = []
+        for id in ids:
+            ww.append(db_ut.get_dir_name(id))
+        return ' > '.join(ww)
+
+
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
@@ -239,7 +311,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.author_selector.setObjectName('author_selector')
 
         # add file locations page (2)
-        self.locator = QTextBrowser(self)
+        self.locator = Locations(self)
         self.stackedWidget.addWidget(self.locator)
         self.locator.setObjectName('locator')
 
@@ -466,8 +538,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.tag_selector.get_selected()
             )
         )
-        self.file_info.set_file_id(self.file_id)
+        self.file_info.set_file_id(id)
         self.author_selector.set_file_id(id)
+        self.locator.set_file_id(id)
 
     @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
