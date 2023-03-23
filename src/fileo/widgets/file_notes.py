@@ -183,35 +183,39 @@ class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
+        self.branches = defaultdict(list)
+        self.dirs = []
+        self.names = []
+        self.attrs = []
 
     def set_file_id(self, id: int):
         self.file_id = id
         self.get_locations()
+        self.build_branch_data()
+        self.show_branches()
 
     def get_locations(self):
-        branches = defaultdict(list)
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
-        dirs = self.get_file_dirs(dir_ids)
-        for dir_data in dirs:
+        self.get_file_dirs(dir_ids)
+        for dir_data in self.dirs:
             id = dir_data.id
             p_id = dir_data.parent_id
-            branches[(id, p_id)].append([id, p_id])
+            self.branches[(id, p_id)].append([id, p_id])
             logger.info(f'{dir_data}')
-            logger.info(f'{branches[(id, p_id)]=}')
-            self.get_branches(branches[(id, p_id)])
+            logger.info(f'{self.branches[(id, p_id)]=}')
+            self.build_branches(self.branches[(id, p_id)])
 
-        self.show_branches(branches, dirs)
-
-    def get_file_dirs(self, dir_ids) -> list:
-        dirs = []
+    def get_file_dirs(self, dir_ids):
+        self.dirs.clear()
+        logger.info(f'{self.dirs=}')
         for id in dir_ids:
             parents = db_ut.dir_parents(id[0])
             for pp in parents:
                 logger.info(f'{id=}, {pp=}')
-                dirs.append(ag.DirData(*pp))
-        return dirs
+                self.dirs.append(ag.DirData(*pp))
+                logger.info(f'next self.dirs: {self.dirs[-1]}')
 
-    def get_branches(self, bundle: list):
+    def build_branches(self, bundle: list):
         curr = 0
         while 1:
             tt = bundle[curr]
@@ -232,17 +236,32 @@ class Locations(QTextBrowser):
                 break
         logger.info(f'{bundle=}')
 
-    def show_branches(self, branches: dict[list], dirs: list):
-        names = []
-        attribs = []
-        for dd in dirs:
-            dd: ag.DirData
-            for bb in branches[(dd.id, dd.parent_id)]:
-               attribs.append((dd.is_copy, dd.hidden))
-               names.append(self.exec_branch(bb[:-1]))
-               logger.info(f'{names[-1]}, {attribs[-1]}')
+    def show_branches(self):
+        txt = [
+            '<table><tr><th>Path/Folder Tree branch</th>'
+            '<th>Copy</th><th>Hidden</th></tr>'
+        ]
+        for i, atr in enumerate(self.attrs):
+            a = self.names[i]
+            b = 'Y' if self.attrs[i][0] else ''
+            c = 'Y' if self.attrs[i][1] else ''
+            txt.append(
+                f'<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>'
+            )
+        txt.append('</table>')
+        self.setHtml(''.join(txt))
 
-    def exec_branch(self, ids: list) -> str:
+    def build_branch_data(self):
+        self.names.clear()
+        self.attrs.clear()
+        for dd in self.dirs:
+            dd: ag.DirData
+            for bb in self.branches[(dd.id, dd.parent_id)]:
+               self.attrs.append((dd.is_copy, dd.hidden))
+               self.names.append(self.branch_names(bb[:-1]))
+               logger.info(f'{self.names[-1]}, {self.attrs[-1]}')
+
+    def branch_names(self, ids: list) -> str:
         ids.reverse()
         ww = []
         for id in ids:
