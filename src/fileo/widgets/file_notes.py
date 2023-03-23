@@ -238,15 +238,16 @@ class Locations(QTextBrowser):
 
     def show_branches(self):
         txt = [
-            '<table><tr><th>Path/Folder Tree branch</th>'
-            '<th>Copy</th><th>Hidden</th></tr>'
+            '<table><tr><th>Path/Folder Tree branch</th>',
+            '<th>Copy</th><th>Hidden</th></tr>',
         ]
         for i, atr in enumerate(self.attrs):
             a = self.names[i]
             b = 'Y' if self.attrs[i][0] else ''
             c = 'Y' if self.attrs[i][1] else ''
             txt.append(
-                f'<tr><td>{a}</td><td>{b}</td><td>{c}</td></tr>'
+                f'<tr><td>{a}</td><td align="right">{b}</td>'
+                f'<td align="right">{c}</td></tr>'
             )
         txt.append('</table>')
         self.setHtml(''.join(txt))
