@@ -183,10 +183,9 @@ class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
-        self.branches = defaultdict(list)
+        self.branches = []
         self.dirs = []
         self.names = []
-        self.attrs = []
 
     def set_file_id(self, id: int):
         self.file_id = id
@@ -197,13 +196,13 @@ class Locations(QTextBrowser):
     def get_locations(self):
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         self.get_file_dirs(dir_ids)
-        for dir_data in self.dirs:
-            id = dir_data.id
-            p_id = dir_data.parent_id
-            self.branches[(id, p_id)].append([id, p_id])
-            logger.info(f'{dir_data}')
-            logger.info(f'{self.branches[(id, p_id)]=}')
-            self.build_branches(self.branches[(id, p_id)])
+        for dd in self.dirs:
+            logger.info(f'{dd}')
+            self.branches.append(
+                [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
+            )
+            self.build_branches()
+        logger.info(f'{self.branches=}')
 
     def get_file_dirs(self, dir_ids):
         self.dirs.clear()
@@ -215,10 +214,12 @@ class Locations(QTextBrowser):
                 self.dirs.append(ag.DirData(*pp))
                 logger.info(f'next self.dirs: {self.dirs[-1]}')
 
-    def build_branches(self, bundle: list):
+    def build_branches(self):
         curr = 0
         while 1:
-            tt = bundle[curr]
+            if curr >= len(self.branches):
+                break
+            tt = self.branches[curr]
             while 1:
                 if tt[-1] == 0:
                     break
@@ -230,21 +231,16 @@ class Locations(QTextBrowser):
                         tt.append(pp[0])
                         first = False
                         continue
-                    bundle.append([*ss, pp[0]])
+                    self.branches.append([*ss, pp[0]])
             curr += 1
-            if curr >= len(bundle):
-                break
-        logger.info(f'{bundle=}')
+        logger.info(f'{self.branches=}')
 
     def show_branches(self):
         txt = [
             '<table><tr><th>Path/Folder Tree branch</th>',
             '<th>Copy</th><th>Hidden</th></tr>',
         ]
-        for i, atr in enumerate(self.attrs):
-            a = self.names[i]
-            b = 'Y' if self.attrs[i][0] else ''
-            c = 'Y' if self.attrs[i][1] else ''
+        for a,b,c in self.names:
             txt.append(
                 f'<tr><td>{a}</td><td align="right">{b}</td>'
                 f'<td align="right">{c}</td></tr>'
@@ -254,20 +250,19 @@ class Locations(QTextBrowser):
 
     def build_branch_data(self):
         self.names.clear()
-        self.attrs.clear()
-        for dd in self.dirs:
-            dd: ag.DirData
-            for bb in self.branches[(dd.id, dd.parent_id)]:
-               self.attrs.append((dd.is_copy, dd.hidden))
-               self.names.append(self.branch_names(bb[:-1]))
-               logger.info(f'{self.names[-1]}, {self.attrs[-1]}')
+        for bb in self.branches:
+            self.names.append(self.branch_names(bb))
+            logger.info(f'{self.names[-1]}')
 
-    def branch_names(self, ids: list) -> str:
-        ids.reverse()
+    def branch_names(self, bb: list) -> str:
+        is_copy = 'Y' if bb[0][0] else ''
+        hidden = 'Y' if bb[0][1] else ''
+        tt = bb[1:-1]
+        tt.reverse()
         ww = []
-        for id in ids:
+        for id in tt:
             ww.append(db_ut.get_dir_name(id))
-        return ' > '.join(ww)
+        return ' > '.join(ww), is_copy, hidden
 
 
 class notesBrowser(QWidget, Ui_FileNotes):
