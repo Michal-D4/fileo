@@ -112,12 +112,10 @@ class authorBrowser(QWidget):
         self.set_selected_text()
 
     def set_authors(self):
-        logger.info('<<< ========== >>>')
         self.br.set_list(db_ut.get_authors())
 
     def set_file_id(self, id: int):
         self.file_id = id
-        logger.info(f'>>> {self.file_id=}')
         self.br.set_selection(
             (int(s[0]) for s in db_ut.get_file_author_id(id))
         )
@@ -133,12 +131,10 @@ class authorBrowser(QWidget):
     def finish_edit_list(self):
         old = self.br.get_selected()
         new = self.get_edited_list()
-        logger.info(f"{old=}, {new=}")
         self.sel_list_changed(old, new)
 
     @pyqtSlot(list)
     def update_selection(self, items: list[str]):
-        logger.info(f"{items=}")
         self.sel_list_changed(self.get_edited_list(), items)
         txt = (f'[{it}]' for it in items)
         self.edit_authors.setPlainText(', '.join(txt))
@@ -150,23 +146,18 @@ class authorBrowser(QWidget):
         return [t.strip() for t in tt.split(',') if t.strip()]
 
     def sel_list_changed(self, old: list[str], new: list[str]):
-        logger.info(f"{old=}, {new=}")
         self.remove_items(old, new)
         self.add_items(old, new)
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
-        logger.info(f'{diff=}')
         for d in diff:
             if id := self.br.get_tag_id(d):
-                logger.info(f'{id=}')
                 db_ut.break_file_authors_link(self.file_id, id)
-            logger.info(f'{id=}')
 
     def add_items(self, old: list[str], new: list[str]):
         inserted = False
         diff = set(new) - set(old)
-        logger.info(f'{diff=}')
         for d in diff:
             if db_ut.add_author(self.file_id, d):
                 inserted = True
@@ -197,22 +188,17 @@ class Locations(QTextBrowser):
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         self.get_file_dirs(dir_ids)
         for dd in self.dirs:
-            logger.info(f'{dd}')
             self.branches.append(
                 [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
             )
             self.build_branches()
-        logger.info(f'{self.branches=}')
 
     def get_file_dirs(self, dir_ids):
         self.dirs.clear()
-        logger.info(f'{self.dirs=}')
         for id in dir_ids:
             parents = db_ut.dir_parents(id[0])
             for pp in parents:
-                logger.info(f'{id=}, {pp=}')
                 self.dirs.append(ag.DirData(*pp))
-                logger.info(f'next self.dirs: {self.dirs[-1]}')
 
     def build_branches(self):
         curr = 0
@@ -233,7 +219,6 @@ class Locations(QTextBrowser):
                         continue
                     self.branches.append([*ss, pp[0]])
             curr += 1
-        logger.info(f'{self.branches=}')
 
     def show_branches(self):
         txt = [
@@ -252,7 +237,6 @@ class Locations(QTextBrowser):
         self.names.clear()
         for bb in self.branches:
             self.names.append(self.branch_names(bb))
-            logger.info(f'{self.names[-1]}')
 
     def branch_names(self, bb: list) -> str:
         is_copy = 'Y' if bb[0][0] else ''
@@ -331,7 +315,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.locator.setObjectName('locator')
 
         # add file info page (3)
-        logger.info('before self.file_info = fileInfo(self)')
         self.file_info = fileInfo(self)
         self.stackedWidget.addWidget(self.file_info)
 
@@ -379,7 +362,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.plus.show()
 
     def switch_page(self, page_no: int):
-        logger.info(f'{page_no=}, {self.cur_page=}')
         if page_no < 5 and self.cur_page < 5:
             self.page_selectors[self.cur_page].setStyleSheet(
                 ag.dyn_qss['passive_selector'][0]
@@ -440,11 +422,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def finish_edit_tag(self):
         old = self.tag_selector.get_selected()
         new = self.new_tag_list()
-        logger.info(f'<<< finish edit tags >>>')
         self.tag_list_changed(old, new)
 
     def tag_list_changed(self, old: list[str], new: list[str]):
-        logger.info(f'{old=}, {new=}')
         self.remove_tags(old, new)
         if self.add_tags(old, new):
             self.update_tag_list()
@@ -461,7 +441,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         diff = set(old) - set(new)
         for d in diff:
             id = self.tag_selector.get_tag_id(d)
-            logger.info(f'{d=}, {id=}, {self.file_id=}')
             db_ut.delete_tag_file(id, self.file_id)
 
     def add_tags(self, old, new) -> bool:
@@ -470,9 +449,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         for d in diff:
             if not (id := self.tag_selector.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
-                logger.info(f'inserted; {d=}, {id=}')
                 inserted = True
-            logger.info(f'{id=}, {self.file_id=}')
             db_ut.insert_tag_file(id, self.file_id)
         return inserted
 
@@ -506,7 +483,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def ref_clicked(self, href: QUrl):
         tref = href.toString()
-        logger.info(f'{tref=}')
         if tref.startswith("x,lnk"):
             if self.confirm_note_deletion():
                 id = int(tref[5:])
@@ -536,7 +512,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def start_edit(self, id: int):
         txt = db_ut.get_note(self.file_id, id) if id else ''
-        logger.info(f'{id=}, {txt=}')
         self.editor.setText(txt)
         self.editor.set_note_id(id)
         self.plus.hide()
@@ -545,7 +520,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def set_file_id(self, id: int):
         self.file_id = id
-        logger.info(f'{self.file_id=}')
         self.tag_selector.set_selection(
             (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
         )
@@ -559,6 +533,5 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
-        logger.info(f'{tags=}, {self.tagEdit.text()=}')
         self.tag_list_changed(self.new_tag_list(), tags)
         self.tagEdit.setText(', '.join(tags))
