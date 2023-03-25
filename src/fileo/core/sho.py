@@ -106,7 +106,6 @@ class shoWindow(QMainWindow):
 
     def restore_comment_height(self):
         hh = utils.get_setting("commentHeight", MIN_COMMENT_HEIGHT)
-        logger.info(f'{hh=}')
         self.ui.noteHolder.setMinimumHeight(int(hh))
         self.ui.noteHolder.setMaximumHeight(int(hh))
 
@@ -258,19 +257,21 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def hsplit_move_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        if not self.start_pos:
-            self.start_pos = self.mapFromGlobal(cur_pos)
-            return
-        cur_pos = self.mapFromGlobal(cur_pos)
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            cur_pos = e.globalPosition().toPoint()
+            if not self.start_pos:
+                self.start_pos = self.mapFromGlobal(cur_pos)
+                return
+            cur_pos = self.mapFromGlobal(cur_pos)
 
-        self.setUpdatesEnabled(False)
-        y: int = self.comment_resize(cur_pos.y())
-        logger.info(f'{y=}')
-        self.setUpdatesEnabled(True)
+            self.setUpdatesEnabled(False)
+            y: int = self.comment_resize(cur_pos.y())
+            self.setUpdatesEnabled(True)
 
-        self.start_pos.setY(y)
-        e.accept()
+            self.start_pos.setY(y)
+            e.accept()
+        else:
+            e.ignore()
 
     def comment_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
@@ -278,7 +279,6 @@ class shoWindow(QMainWindow):
         cur_height = self.ui.noteHolder.height()
         h = max(cur_height + delta, MIN_COMMENT_HEIGHT)
         h = min(h, self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35)
-        logger.info(f'{h=}; {y0=}, {y=}, {delta=}, {cur_height=}, {self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35}')
         self.ui.noteHolder.setMinimumHeight(h)
         self.ui.noteHolder.setMaximumHeight(h)
 
