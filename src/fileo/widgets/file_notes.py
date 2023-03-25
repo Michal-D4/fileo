@@ -1,5 +1,4 @@
 from loguru import logger
-from collections import defaultdict
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
@@ -187,6 +186,8 @@ class Locations(QTextBrowser):
     def get_locations(self):
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         self.get_file_dirs(dir_ids)
+        self.branches.clear()
+        self.curr = 0
         for dd in self.dirs:
             self.branches.append(
                 [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
@@ -203,9 +204,9 @@ class Locations(QTextBrowser):
     def build_branches(self):
         curr = 0
         while 1:
-            if curr >= len(self.branches):
+            if self.curr >= len(self.branches):
                 break
-            tt = self.branches[curr]
+            tt = self.branches[self.curr]
             while 1:
                 if tt[-1] == 0:
                     break
@@ -218,16 +219,18 @@ class Locations(QTextBrowser):
                         first = False
                         continue
                     self.branches.append([*ss, pp[0]])
-            curr += 1
+            self.curr += 1
 
     def show_branches(self):
         txt = [
             '<table><tr><th>Path/Folder Tree branch</th>',
-            '<th>Copy</th><th>Hidden</th></tr>',
+            '<th width="60" align="right">Copy</th>'
+            '<th width="60" align="right">Hidden</th></tr>',
         ]
         for a,b,c in self.names:
             txt.append(
-                f'<tr><td>{a}</td><td align="right">{b}</td>'
+                f'<tr><td>{a}</td>'
+                f'<td align="right">{b}</td>'
                 f'<td align="right">{c}</td></tr>'
             )
         txt.append('</table>')
