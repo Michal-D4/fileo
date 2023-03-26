@@ -168,6 +168,9 @@ class authorBrowser(QWidget):
         self.set_authors()
         self.set_file_id(self.file_id)
 
+def dir_attrs(dd: ag.DirData):
+    tt = f'{"C" if dd.is_copy else ""}{"H" if dd.hidden else ""}'
+    return f'({tt})' if tt else ''
 
 class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
@@ -189,9 +192,7 @@ class Locations(QTextBrowser):
         self.branches.clear()
         self.curr = 0
         for dd in self.dirs:
-            self.branches.append(
-                [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
-            )
+            self.branches.append([(dd.id, dir_attrs(dd)), dd.parent_id])
             self.build_branches()
 
     def get_file_dirs(self, dir_ids):
@@ -202,7 +203,12 @@ class Locations(QTextBrowser):
                 self.dirs.append(ag.DirData(*pp))
 
     def build_branches(self):
-        curr = 0
+        def add_dir_parent(qq: ag.DirData, tt: list) -> list:
+            ss = [*tt[:-1]]
+            tt[-1] = (qq.id, dir_attrs(qq))
+            tt.append(qq.parent_id)
+            return ss
+
         while 1:
             if self.curr >= len(self.branches):
                 break
@@ -213,25 +219,23 @@ class Locations(QTextBrowser):
                 parents = db_ut.dir_parents(tt[-1])
                 first = True
                 for pp in parents:
+                    qq = ag.DirData(*pp)
                     if first:
-                        ss = [*tt]
-                        tt.append(pp[0])
+                        ss = add_dir_parent(qq, tt)
                         first = False
                         continue
-                    self.branches.append([*ss, pp[0]])
+                    self.branches.append(
+                        [*ss, (qq.id, dir_attrs(qq)), qq.parent_id]
+                    )
             self.curr += 1
 
     def show_branches(self):
         txt = [
-            '<table><tr><th>Path/Folder Tree branch</th>',
-            '<th width="60" align="right">Copy</th>'
-            '<th width="60" align="right">Hidden</th></tr>',
+            '<table><tr><td><b>Path/Folder Tree branch</b></td>',
         ]
         for a,b,c in self.names:
             txt.append(
                 f'<tr><td>{a}</td>'
-                f'<td align="right">{b}</td>'
-                f'<td align="right">{c}</td></tr>'
             )
         txt.append('</table>')
         self.setHtml(''.join(txt))
@@ -242,13 +246,14 @@ class Locations(QTextBrowser):
             self.names.append(self.branch_names(bb))
 
     def branch_names(self, bb: list) -> str:
+        tt = bb[:-1]
+        tt.reverse()
         is_copy = 'Y' if bb[0][0] else ''
         hidden = 'Y' if bb[0][1] else ''
-        tt = bb[1:-1]
-        tt.reverse()
         ww = []
         for id in tt:
-            ww.append(db_ut.get_dir_name(id))
+            name = db_ut.get_dir_name(id[0])
+            ww.append(f'{name}{id[1]}')
         return ' > '.join(ww), is_copy, hidden
 
 
