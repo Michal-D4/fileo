@@ -80,6 +80,11 @@ class shoWindow(QMainWindow):
         self.restore_comment_height()
         self.restore_geometry()
 
+        ag.notes = notesBrowser()
+        ag.notes.setObjectName("file_notes")
+        add_widget_into_frame(self.ui.noteHolder, ag.notes)
+        ag.notes.set_data()
+
     def set_busy(self, val: bool):
         self.is_busy = val
         self.ui.busy.setPixmap(icons.get_other_icon("busy")[val])
@@ -102,6 +107,7 @@ class shoWindow(QMainWindow):
     def restore_comment_height(self):
         hh = utils.get_setting("commentHeight", MIN_COMMENT_HEIGHT)
         self.ui.noteHolder.setMinimumHeight(int(hh))
+        self.ui.noteHolder.setMaximumHeight(int(hh))
 
     def restore_geometry(self):
         geometry = utils.get_setting("MainWindowGeometry")
@@ -125,14 +131,23 @@ class shoWindow(QMainWindow):
 
     def set_extra_widgets(self):
         """
+        button "refresh" for directory tree
         checkBox to show hidden folders
         button "collapse_all" for directory tree
         """
+        btn = QToolButton()
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setIcon(icons.get_other_icon('refresh'))
+
+        self.container.add_widget(btn, 0)
+        btn.setToolTip("Refresh folder list")
+        btn.clicked.connect(bk_ut.show_hidden_dirs)
+
         self.show_hidden = QCheckBox()
         self.show_hidden.setStyleSheet("border:0px; margin:0px; padding:0px;")
         self.container.add_widget(self.show_hidden, 0)
         self.show_hidden.setToolTip("Show hidden folders")
-        self.show_hidden.stateChanged.connect(bk_ut.show_hidden_dirs)
 
         btn = QToolButton()
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
@@ -156,24 +171,20 @@ class shoWindow(QMainWindow):
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         add_widget_into_frame(frames[0], ag.dir_list)
 
-        ag.tag_list = aBrowser(name="Tag", read_only=False)
+        ag.tag_list = aBrowser(read_only=False)
         ag.tag_list.setObjectName("tag_list")
         add_widget_into_frame(frames[1], ag.tag_list)
 
-        ag.ext_list = aBrowser(name="Ext",brackets=True)
+        ag.ext_list = aBrowser(brackets=True)
         ag.ext_list.setObjectName("ext_list")
         add_widget_into_frame(frames[2], ag.ext_list)
 
-        ag.author_list = aBrowser(name="Author", read_only=False, brackets=True)
+        ag.author_list = aBrowser(read_only=False, brackets=True)
         ag.author_list.setObjectName("author_list")
         add_widget_into_frame(frames[3], ag.author_list)
 
         ag.file_list = self.ui.file_list
         ag.field_menu = self.ui.field_menu
-
-        ag.notes = notesBrowser()
-        ag.notes.setObjectName("file_notes")
-        add_widget_into_frame(self.ui.noteHolder, ag.notes)
 
     def set_button_icons(self):
         for btn_name, icon in self.icons.items():
@@ -218,7 +229,6 @@ class shoWindow(QMainWindow):
         bk_ut.save_bk_settings()
         self.connect_db(db_name)
         bk_ut.populate_all()
-        self.filter_setup.restore_filter_settings()
 
     @pyqtSlot()
     def show_db_list(self):
@@ -247,18 +257,21 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def hsplit_move_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        if not self.start_pos:
-            self.start_pos = self.mapFromGlobal(cur_pos)
-            return
-        cur_pos = self.mapFromGlobal(cur_pos)
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            cur_pos = e.globalPosition().toPoint()
+            if not self.start_pos:
+                self.start_pos = self.mapFromGlobal(cur_pos)
+                return
+            cur_pos = self.mapFromGlobal(cur_pos)
 
-        self.setUpdatesEnabled(False)
-        y: int = self.comment_resize(cur_pos.y())
-        self.setUpdatesEnabled(True)
+            self.setUpdatesEnabled(False)
+            y: int = self.comment_resize(cur_pos.y())
+            self.setUpdatesEnabled(True)
 
-        self.start_pos.setY(y)
-        e.accept()
+            self.start_pos.setY(y)
+            e.accept()
+        else:
+            e.ignore()
 
     def comment_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
@@ -267,6 +280,7 @@ class shoWindow(QMainWindow):
         h = max(cur_height + delta, MIN_COMMENT_HEIGHT)
         h = min(h, self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35)
         self.ui.noteHolder.setMinimumHeight(h)
+        self.ui.noteHolder.setMaximumHeight(h)
 
         self.start_pos.setY(y0 - h + cur_height)
         return self.start_pos.y()
@@ -364,7 +378,6 @@ class shoWindow(QMainWindow):
         ag.ext_list.change_selection.connect(self.filter_setup.ext_selection_changed)
         ag.author_list.change_selection.connect(self.filter_setup.author_selection_changed)
         ag.filter = self.filter_setup
-        self.filter_setup.restore_filter_settings()
 
     @pyqtSlot()
     def click_scan(self):
@@ -404,11 +417,6 @@ class shoWindow(QMainWindow):
         utils.resize_grips(self)
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
-        if ag.notes.file_info_visible():
-            pos = ag.notes.file_info.pos()
-            dx = e.oldSize().width() - e.size().width()
-            dh = e.oldSize().height() - e.size().height()
-            ag.notes.file_info.move(pos - QPoint(dx, dh))
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:

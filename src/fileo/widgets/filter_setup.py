@@ -212,8 +212,9 @@ class FilterSetup(QWidget):
     def restore_filter_settings(self):
         self.ui.selected_dir.setChecked(low_bk.get_setting("DIR_CHECK", False))
         self.ui.selected_tag.setChecked(low_bk.get_setting("TAG_CHECK", False))
-        self.ui.all_btn.setChecked(low_bk.get_setting("IS_ALL", False))
-        self.ui.any_btn.setChecked(not low_bk.get_setting("IS_ALL", False))
+        is_all = low_bk.get_setting("IS_ALL", False)
+        self.ui.all_btn.setChecked(is_all)
+        self.ui.any_btn.setChecked(not is_all)
         self.ui.selected_ext.setChecked(low_bk.get_setting("EXT_CHECK", False))
         self.ui.selected_author.setChecked(low_bk.get_setting("AUTHOR_CHECK", False))
         self.ui.open_sel.setChecked(low_bk.get_setting("OPEN_CHECK", False))
@@ -227,3 +228,8 @@ class FilterSetup(QWidget):
         self.ui.before.setChecked(low_bk.get_setting("BEFORE", False))
         self.ui.after_date.setDate(QDate.fromJulianDay(low_bk.get_setting("AFTER_DATE", 0)))
         self.ui.before_date.setDate(QDate.fromJulianDay(low_bk.get_setting("BEFORE_DATE", 0)))
+
+        self.tag_selection_changed(ag.tag_list.get_selected())
+        self.ext_selection_changed(ag.ext_list.get_selected())
+        self.author_selection_changed(ag.author_list.get_selected())
+        self.dir_selection_changed()

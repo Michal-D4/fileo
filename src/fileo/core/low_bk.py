@@ -124,6 +124,24 @@ def get_branch(index: QModelIndex) -> list[int]:
     branch.reverse()
     return branch
 
+def get_dir_names_path(index: QModelIndex) -> list[str]:
+    """
+    return:  a list of node names from root to index
+    """
+    if not index.isValid():
+        return []
+    item: TreeItem = index.internalPointer()
+    branch = []
+    while 1:
+        if not item.parent():
+            break
+        name = item.data(Qt.ItemDataRole.DisplayRole)
+        logger.info(f'{name=}')
+        branch.append(name)
+        item = item.parent()
+    branch.reverse()
+    return branch
+
 def expand_branch(branch: list) -> QModelIndex:
     model = ag.dir_list.model()
     parent = QModelIndex()
@@ -159,6 +177,7 @@ def cur_dir_changed(curr_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
+    ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
         save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
@@ -187,6 +206,7 @@ def restore_path(path: list) -> QModelIndex:
         if model.rowCount(QModelIndex()) > 0:
             parent = model.index(0, 0, QModelIndex())
 
+    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(parent)
     ag.dir_list.scrollTo(parent, QAbstractItemView.ScrollHint.PositionAtCenter)
     return parent
@@ -265,6 +285,7 @@ def show_files(files):
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
     if idx.isValid():
+        logger.info(f'before setCurrentIndex')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -454,6 +475,7 @@ def _import_files(filename):
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def load_file(fl: dict) -> int:
@@ -496,6 +518,7 @@ def create_child_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
@@ -515,6 +538,7 @@ def create_dir():
 
     if new_idx.isValid():
         create_folder(new_idx)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def create_folder(index: QModelIndex):
@@ -569,15 +593,16 @@ def delete_tree(u_dat: ag.DirData, visited=None):
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
+    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
     if index.isValid():
         branch = get_branch(index)
         if last_id:
             branch.append(last_id)
         idx = expand_branch(branch)
         if idx.isValid():
+            logger.info(f'before setCurrentIndex')
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
 
 def toggle_hidden_state():
     selected = ag.dir_list.selectionModel().selectedIndexes()
@@ -597,11 +622,6 @@ def populate_tag_list():
     sel = get_setting("TAG_SEL_LIST", [])
     ag.tag_list.set_selection(sel)
 
-def update_file_tag_links(idx: QModelIndex):
-    new_tags = ag.notes.get_selected_tag_ids()
-    id = idx.data(Qt.ItemDataRole.UserRole).id
-    db_ut.update_file_tag_links(id, new_tags)
-
 def tag_selection() -> list:
     return ag.tag_list.get_selected_ids()
 
@@ -611,6 +631,7 @@ def tag_changed(new_tag: str):
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()
+    ag.tag_list.edit_finished.emit()
 
 def delete_tags(tags: str):
     """
@@ -619,17 +640,16 @@ def delete_tags(tags: str):
     for id in tags.split(','):
         db_ut.detele_tag(id)
     populate_tag_list()
+    ag.tag_list.edit_finished.emit()
 #endregion
 
-#region  Extensions
 def populate_ext_list():
     ag.ext_list.set_list(db_ut.get_ext_list())
     sel = get_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
-def _ext_selection() -> list:
+def ext_selection() -> list:
     return ag.ext_list.get_selected_ids()
-#endregion
 
 #region  Authors
 def populate_author_list():
@@ -645,6 +665,7 @@ def author_changed(new_author: str):
         return
     db_ut.update_author(ag.author_list.current_id(), new_author)
     populate_author_list()
+    ag.author_list.edit_finished.emit()
 
 def delete_authors(authors: str):
     """
@@ -653,15 +674,12 @@ def delete_authors(authors: str):
     for id in authors.split(','):
         db_ut.detele_author(id)
     populate_author_list()
+    ag.author_list.edit_finished.emit()
 #endregion
 
-#region Comments
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     if f_dat:
-        notes = db_ut.get_file_notes(f_dat.id)
-        ag.notes.set_notes_data(notes)
-        tags = db_ut.get_tags()
-        ag.notes.set_tags(tags)
+        logger.info(f'{f_dat=}')
+        ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)
-#endregion

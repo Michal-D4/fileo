@@ -4,13 +4,14 @@
 *   $word~str         a pair of key-value;
 *        the key in qss (including "$") will be replaced by the string
 *        that follows the "~"
-$VLINE~src/fileo/qss/vline3
-$angleRight~src/fileo/qss/angle_right
+$VLINE~src/fileo/qss/vline3.svg
+$angleRight~src/fileo/qss/angle_right.svg
 $angleDown~src/fileo/qss/angle_down.svg
 $toolBarBackground~#2C2C2C
 $toolBarToolButtonBackground~transparent
 $ScrollBarUpDownArrowBG~transparent
 $colorBorder~#A0A0A0
+$colorBorder2~#ADADAD
 $splitLineBackground~#D7D7D7
 $splitLineHoverBackground~#3491F4
 $filterFrameBackground~#E9E9E9
@@ -40,6 +41,7 @@ $navigatorBackground~#E3E3E3
 $shapeBorderRight1~1px solid
 $shapeBorderRight2~2px solid
 $statusBackground~#2A7BCF
+$statusLabelHover~#398BCF
 $ScrollBarHandleBG~#888888
 $topBarToolButtonHoverBG~#C6C6C6
 $ToolButtonCloseHoverBG~#DE1B2E
@@ -47,6 +49,9 @@ $ErrorMessage1Color~#DE1B2E
 $ToolButtonMenuHoverBG~#D2D2D2
 $ToolButtonActiveColor~#FFFFFF
 $ToolButtonColor~#808080
+$$activeColor~#424242
+$passiveColor~#717171
+$bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom: 1px solid $$activeColor;
 $fontFamily~Segoe UI
 $foldableHeaderFont~bold 10pt
 $FontSizeNormal~10pt

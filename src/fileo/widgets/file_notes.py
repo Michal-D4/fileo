@@ -1,13 +1,11 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QUrl, QDateTime, QPoint
-from PyQt6.QtGui import QGuiApplication, QResizeEvent
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-    QFrame, QSpacerItem, QSizePolicy, QToolButton, QTextEdit,
-    QMessageBox,
+from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
+    QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
+    QVBoxLayout, QHBoxLayout, QToolButton, QFrame,
 )
-
-from datetime import datetime
 
 from .ui_notes import Ui_FileNotes
 
@@ -17,81 +15,21 @@ from widgets.file_info import fileInfo
 
 time_format = "%Y-%m-%d %H:%M"
 
-class noteEditor(QWidget):
-    def __init__(self, fileid: str, id=0, parent = None) -> None:
+class noteEditor(QTextEdit):
+    def __init__(self, parent = None) -> None:
         super().__init__(parent)
+        self.id = 0
+
+    def set_note_id(self, id: int):
         self.id = id
-        self.file_id = fileid
 
-        self.set_layout()
-
-        self.Ok.setIcon(icons.get_other_icon("ok"))
-        self.Ok.clicked.connect(self.save_note)
-        self.Cancel.setIcon(icons.get_other_icon("cancel2"))
-        self.Cancel.clicked.connect(self.cancel)
-
-    def save_note(self):
-        ag.signals_.file_note_changed.emit(
-            self.id, self.editor.toPlainText()
-        )
-        self.close()
-
-    def set_text(self, data: str):
-        self.editor.setText(data)
-
-    def cancel(self):
-        self.close()
-
-    def set_layout(self):
-        vLayout2 = QVBoxLayout(self)
-        vLayout2.setContentsMargins(0, 0, 0, 0)
-        vLayout2.setSpacing(0)
-
-        frame = QFrame(self)
-        frame.setFrameShape(QFrame.Shape.Box)
-        frame.setFrameShadow(QFrame.Shadow.Raised)
-
-        vLayout = QVBoxLayout(frame)
-        vLayout.setContentsMargins(0, 0, 0, 0)
-        vLayout.setSpacing(0)
-
-        hLayout = QHBoxLayout()
-        hLayout.setContentsMargins(9, -1, 9, -1)
-
-        spacerItem = QSpacerItem(
-            40, 20, QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Minimum)
-        hLayout.addItem(spacerItem)
-
-        self.Ok = QToolButton(frame)
-        self.Ok.setObjectName("Ok")
-        hLayout.addWidget(self.Ok)
-
-        self.Cancel = QToolButton(frame)
-        self.Cancel.setObjectName("Cancel")
-        hLayout.addWidget(self.Cancel)
-
-        vLayout.addLayout(hLayout)
-        self.editor = QTextEdit(frame)
-        self.editor.setFrameShape(QFrame.Shape.NoFrame)
-        self.editor.setObjectName("editor")
-        vLayout.addWidget(self.editor)
-        vLayout2.addWidget(frame)
-
-        ss = ag.dyn_qss['tag_list_border'][0]
-        tt = ag.dyn_qss['note_editor'][0]
-        self.setStyleSheet(' '.join((ss, tt)))
+    def get_note_id(self) -> int:
+        return self.id
 
 
 class tagBrowser(aBrowser):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-
-    def ref_clicked(self, href: QUrl):
-        if href.toString() == "lnk--1":
-            self.close()
-            return
-        super().ref_clicked(href)
 
     def show_in_bpowser(self):
         style = ag.dyn_qss['text_browser'][0]
@@ -105,43 +43,361 @@ class tagBrowser(aBrowser):
         sel = self.selected_idx
         inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>{tag}</a> "
              for i,tag in enumerate(self.tags))
+        return inn
 
-        clo = ('<p><a><style type="text/css">*[href]{text-decoration: none; '
-            'color: red}</style></a><span class="fa">'
-            '<a class=t href=lnk--1>&#xf410;</a></span></p>')
 
-        txt = (f'<table width="100%"><tr><td width="95%">{inn}</td>'
-            f'<td align="right">{clo}</td></tr></table>')
-        return txt
+class authorBrowser(QWidget):
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self.file_id = 0
+
+        self.setup_ui()
+
+        ag.author_list.edit_finished.connect(self.refresh_data)
+        self.br.change_selection.connect(self.update_selection)
+
+    def setup_ui(self):
+        self.edit_authors = QPlainTextEdit()
+        self.edit_authors.setObjectName('edit_authors')
+        self.edit_authors.setMaximumSize(QSize(16777215, 42))
+        si_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        self.edit_authors.setSizePolicy(si_policy)
+        self.edit_authors.setToolTip(
+            'Enter authors separated by commas, '
+            'or select in the list below'
+            ', use Ctrl+Click to select multiple items'
+        )
+
+        self.accept = QToolButton()
+        self.accept.setIcon(icons.get_other_icon("ok"))
+        self.accept.clicked.connect(self.finish_edit_list)
+        self.accept.setToolTip('Accept editing')
+
+        self.reject = QToolButton()
+        self.reject.setIcon(icons.get_other_icon("cancel2"))
+        self.reject.clicked.connect(self.set_selected_text)
+        self.reject.setToolTip('Reject editing')
+
+        v_layout = QVBoxLayout()
+        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout.setSpacing(0)
+        v_layout.addWidget(self.accept)
+        v_layout.addWidget(self.reject)
+
+        h_layout = QHBoxLayout()
+        h_layout.setContentsMargins(0, 0, 0, 0)
+        h_layout.setSpacing(0)
+        h_layout.addWidget(self.edit_authors)
+        h_layout.addLayout(v_layout)
+
+        self.br = aBrowser(brackets=True)
+        self.br.setObjectName('author_selector')
+
+        authors = QFrame(self)
+        authors.setObjectName('authors')
+        f_layout = QVBoxLayout(self)
+        f_layout.setContentsMargins(0, 0, 0, 0)
+
+        m_layout = QVBoxLayout(authors)
+        m_layout.setContentsMargins(0, 0, 0, 0)
+        m_layout.setSpacing(0)
+        m_layout.addLayout(h_layout)
+        m_layout.addWidget(self.br)
+
+        f_layout.addWidget(authors)
+
+    def refresh_data(self):
+        self.set_authors()
+        self.set_selected_text()
+
+    def set_authors(self):
+        self.br.set_list(db_ut.get_authors())
+
+    def set_file_id(self, id: int):
+        self.file_id = id
+        self.br.set_selection(
+            (int(s[0]) for s in db_ut.get_file_author_id(id))
+        )
+        self.set_selected_text()
+
+    @pyqtSlot()
+    def set_selected_text(self):
+        self.edit_authors.setPlainText(', '.join(
+            (f'[{it}]' for it in self.br.get_selected())
+        ))
+
+    @pyqtSlot()
+    def finish_edit_list(self):
+        old = self.br.get_selected()
+        new = self.get_edited_list()
+        self.sel_list_changed(old, new)
+
+    @pyqtSlot(list)
+    def update_selection(self, items: list[str]):
+        self.sel_list_changed(self.get_edited_list(), items)
+        txt = (f'[{it}]' for it in items)
+        self.edit_authors.setPlainText(', '.join(txt))
+
+    def get_edited_list(self) -> list[str]:
+        tt = self.edit_authors.toPlainText()
+        tt = tt.replace('[', '')
+        tt = tt.replace(']', '')
+        return [t.strip() for t in tt.split(',') if t.strip()]
+
+    def sel_list_changed(self, old: list[str], new: list[str]):
+        self.remove_items(old, new)
+        self.add_items(old, new)
+
+    def remove_items(self, old: list[str], new: list[str]):
+        diff = set(old) - set(new)
+        for d in diff:
+            if id := self.br.get_tag_id(d):
+                db_ut.break_file_authors_link(self.file_id, id)
+
+    def add_items(self, old: list[str], new: list[str]):
+        inserted = False
+        diff = set(new) - set(old)
+        for d in diff:
+            if db_ut.add_author(self.file_id, d):
+                inserted = True
+        if inserted:
+            self.update_list()
+            ag.signals_.user_action_signal.emit("author_inserted")
+
+    def update_list(self):
+        self.set_authors()
+        self.set_file_id(self.file_id)
+
+
+class Locations(QTextBrowser):
+    def __init__(self, parent = None) -> None:
+        super().__init__(parent)
+        self.file_id = 0
+        self.branches = []
+        self.dirs = []
+        self.names = []
+
+    def set_file_id(self, id: int):
+        self.file_id = id
+        self.get_locations()
+        self.build_branch_data()
+        self.show_branches()
+
+    def get_locations(self):
+        dir_ids = db_ut.get_file_dir_ids(self.file_id)
+        self.get_file_dirs(dir_ids)
+        self.branches.clear()
+        self.curr = 0
+        for dd in self.dirs:
+            self.branches.append(
+                [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
+            )
+            self.build_branches()
+
+    def get_file_dirs(self, dir_ids):
+        self.dirs.clear()
+        for id in dir_ids:
+            parents = db_ut.dir_parents(id[0])
+            for pp in parents:
+                self.dirs.append(ag.DirData(*pp))
+
+    def build_branches(self):
+        curr = 0
+        while 1:
+            if self.curr >= len(self.branches):
+                break
+            tt = self.branches[self.curr]
+            while 1:
+                if tt[-1] == 0:
+                    break
+                parents = db_ut.dir_parents(tt[-1])
+                first = True
+                for pp in parents:
+                    if first:
+                        ss = [*tt]
+                        tt.append(pp[0])
+                        first = False
+                        continue
+                    self.branches.append([*ss, pp[0]])
+            self.curr += 1
+
+    def show_branches(self):
+        txt = [
+            '<table><tr><th>Path/Folder Tree branch</th>',
+            '<th width="60" align="right">Copy</th>'
+            '<th width="60" align="right">Hidden</th></tr>',
+        ]
+        for a,b,c in self.names:
+            txt.append(
+                f'<tr><td>{a}</td>'
+                f'<td align="right">{b}</td>'
+                f'<td align="right">{c}</td></tr>'
+            )
+        txt.append('</table>')
+        self.setHtml(''.join(txt))
+
+    def build_branch_data(self):
+        self.names.clear()
+        for bb in self.branches:
+            self.names.append(self.branch_names(bb))
+
+    def branch_names(self, bb: list) -> str:
+        is_copy = 'Y' if bb[0][0] else ''
+        hidden = 'Y' if bb[0][1] else ''
+        tt = bb[1:-1]
+        tt.reverse()
+        ww = []
+        for id in tt:
+            ww.append(db_ut.get_dir_name(id))
+        return ' > '.join(ww), is_copy, hidden
 
 
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
-        self.tags = []
-        self.tag_id = []
-        self.selected = []
         self.file_id = 0
         self.id = 0
+        self.maximized = False
+        self.s_height = 0
 
         self.setupUi(self)
 
-        ag.signals_.file_note_changed.connect(self.note_changed)
-        self.tagEdit.mouseDoubleClickEvent = self.pick_tags
-        self.tagEdit.editingFinished.connect(self.tag_list_changed)
+        self.page_selectors = [
+            self.l_tags, self.l_authors,
+            self.l_locations, self.l_file_info,
+            self.l_comments
+        ]
+        self.set_stack_pages()
 
-        self.browser.setOpenLinks(False)
-        self.info.setIcon(icons.get_other_icon("info"))
+        self.expand.setIcon(icons.get_other_icon('up'))
+        self.expand.clicked.connect(self.up_down)
+
         self.plus.setIcon(icons.get_other_icon("plus"))
-        self.info.clicked.connect(self.show_file_info)
         self.plus.clicked.connect(self.new_comment)
+
+        self.save.setIcon(icons.get_other_icon("ok"))
+        self.save.clicked.connect(self.note_changed)
+
+        self.cancel.setIcon(icons.get_other_icon("cancel2"))
+        self.cancel.clicked.connect(self.cancel_note_editing)
+
+        self.edit_btns.hide()
+        self.plus.hide()
+        self.tagEdit.editingFinished.connect(self.finish_edit_tag)
+
         self.browser.anchorClicked.connect(self.ref_clicked)
 
-        self.editor: noteEditor = None
-        self.file_info: fileInfo = None
-        self.tag_selector: tagBrowser = None
+        self.cur_page = 0
+        self.l_comments_press(None)
 
-    def note_changed(self, id: int, txt: str):
+        self.l_tags.mousePressEvent = self.l_tags_press
+        self.l_authors.mousePressEvent = self.l_authors_press
+        self.l_locations.mousePressEvent = self.l_locations_press
+        self.l_file_info.mousePressEvent = self.l_file_info_press
+        self.l_comments.mousePressEvent = self.l_comments_press
+
+    def set_stack_pages(self):
+        self.stackedWidget = QStackedWidget(self)
+        self.stackedWidget.setObjectName("stackedWidget")
+
+        # add tag selector page (0)
+        self.tag_selector = tagBrowser(self)
+        self.stackedWidget.addWidget(self.tag_selector)
+        self.tag_selector.setObjectName('tag_selector')
+        self.tag_selector.change_selection.connect(self.update_tags)
+        ag.tag_list.edit_finished.connect(self.update_tag_list)
+
+        # add author selector page (1)
+        self.author_selector = authorBrowser()
+        self.stackedWidget.addWidget(self.author_selector)
+        self.author_selector.setObjectName('author_selector')
+
+        # add file locations page (2)
+        self.locator = Locations(self)
+        self.stackedWidget.addWidget(self.locator)
+        self.locator.setObjectName('locator')
+
+        # add file info page (3)
+        self.file_info = fileInfo(self)
+        self.stackedWidget.addWidget(self.file_info)
+
+        # add comments page (4)
+        self.browser = QTextBrowser(self)
+        self.stackedWidget.addWidget(self.browser)
+        self.browser.setOpenLinks(False)
+        self.browser.setObjectName('notes_browser')
+
+        # add comment editor page (5)
+        self.editor = noteEditor()
+        self.stackedWidget.addWidget(self.editor)
+        self.editor.setObjectName('note_editor')
+
+        ss = ag.dyn_qss['passive_selector'][0]
+        for lbl in self.page_selectors:
+            lbl.setStyleSheet(ss)
+
+        self.verticalLayout.addWidget(self.stackedWidget)
+        self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
+
+    def l_tags_press(self, e: QMouseEvent):
+        # tag selector page
+        self.switch_page(0)
+        self.plus.hide()
+
+    def l_authors_press(self, e: QMouseEvent):
+        # author selector page
+        self.switch_page(1)
+        self.plus.hide()
+
+    def l_locations_press(self, e: QMouseEvent):
+        # file locations page
+        self.switch_page(2)
+        self.plus.hide()
+
+    def l_file_info_press(self, e: QMouseEvent):
+        # file info page
+        self.switch_page(3)
+        self.plus.hide()
+
+    def l_comments_press(self, e: QMouseEvent):
+        # comments page
+        self.switch_page(4)
+        self.plus.show()
+
+    def switch_page(self, page_no: int):
+        if page_no < 5 and self.cur_page < 5:
+            self.page_selectors[self.cur_page].setStyleSheet(
+                ag.dyn_qss['passive_selector'][0]
+            )
+            self.page_selectors[page_no].setStyleSheet(
+                ag.dyn_qss['active_selector'][0]
+            )
+        if self.cur_page == 5 and page_no != 5:
+            self.edit_btns.hide()
+        self.cur_page = page_no
+        self.stackedWidget.setCurrentIndex(page_no)
+
+    def up_down(self):
+        if self.maximized:
+            self.expand.setIcon(icons.get_other_icon('up'))
+            ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
+            ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
+            ag.file_list.show()
+        else:
+            self.s_height = self.height()
+            self.expand.setIcon(icons.get_other_icon('down'))
+            hh = ag.file_list.height() + self.s_height
+            ag.app.ui.noteHolder.setMinimumHeight(hh)
+            ag.app.ui.noteHolder.setMaximumHeight(hh)
+            ag.file_list.hide()
+        self.maximized = not self.maximized
+
+    def cancel_note_editing(self):
+        self.l_comments_press(None)
+
+    def note_changed(self):
+        id = self.editor.get_note_id()
+        txt = self.editor.toPlainText()
         if id:
             ts = db_ut.update_note(self.file_id, id, txt)
         else:
@@ -154,15 +410,27 @@ class notesBrowser(QWidget, Ui_FileNotes):
                 a, "Commented", ag.file_list.currentIndex()
             )
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
+        self.l_comments_press(None)
 
-    def tag_list_changed(self):
-        old = [  # list of selected tags before start editing
-            self.tags[self.tag_id.index(i)] for i in self.selected
-        ]
+    def set_data(self):
+        self.tag_selector.set_list(db_ut.get_tags())
+        self.author_selector.set_authors()
+
+    @pyqtSlot()
+    def update_tag_list(self):
+        self.tag_selector.set_list(db_ut.get_tags())
+        self.set_file_id(self.file_id)
+
+    @pyqtSlot()
+    def finish_edit_tag(self):
+        old = self.tag_selector.get_selected()
         new = self.new_tag_list()
+        self.tag_list_changed(old, new)
 
+    def tag_list_changed(self, old: list[str], new: list[str]):
         self.remove_tags(old, new)
         if self.add_tags(old, new):
+            self.update_tag_list()
             ag.signals_.user_action_signal.emit("tag_inserted")
 
     def new_tag_list(self):
@@ -172,39 +440,21 @@ class notesBrowser(QWidget, Ui_FileNotes):
         tmp = self.tagEdit.text().replace(' ','')
         return [t for t in tmp.split(',') if t]
 
-    def add_tags(self, old, new) -> bool:
-        ret = False
-        diff = set(new) - set(old)
-        for d in diff:   # only new in diff
-            if d in self.tags:
-                id = self.tag_id[self.tags.index(d)]
-            else:
-                id = db_ut.insert_tag(d)
-                self.tag_id.append(id)
-                self.tags.append(d)
-                ret = True
-            self.selected.append(id)
-            db_ut.insert_tag_file(id, self.file_id)
-        return ret
-
-    def remove_tags(self, old, new):
-        """
-        remove tag ids from self.selected list
-        """
+    def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
-        for d in diff:   # only old in diff
-            id = self.tag_id[self.tags.index(d)]
-            self.selected.remove(id)
+        for d in diff:
+            id = self.tag_selector.get_tag_id(d)
+            db_ut.delete_tag_file(id, self.file_id)
 
-    def show_file_info(self):
-        self.file_info = fileInfo(ag.app.ui.outer)
-        sz = ag.app.ui.outer.size()
-        file_sz = self.file_info.size()
-        pos_ = QPoint(
-            sz.width() - file_sz.width() - 5,
-            sz.height() - file_sz.height() - 25)
-        self.file_info.move(pos_)
-        self.file_info.show()
+    def add_tags(self, old, new) -> bool:
+        inserted = False
+        diff = set(new) - set(old)
+        for d in diff:
+            if not (id := self.tag_selector.get_tag_id(d)):
+                id = db_ut.insert_tag(d)
+                inserted = True
+            db_ut.insert_tag_file(id, self.file_id)
+        return inserted
 
     def section_title(self, id: int, mod: str, cre: str) -> str:
         btn1 = f'<span class="fa"><a class=t href=x,lnk{id}>&#xf00d;</a></span>'
@@ -231,13 +481,13 @@ class notesBrowser(QWidget, Ui_FileNotes):
             buf.append('\n'.join((head, note.note)))
         self.browser.setMarkdown('\n'.join(buf))
 
-    def new_comment(self) -> bool:
+    def new_comment(self):
         self.start_edit(0)
 
     def ref_clicked(self, href: QUrl):
         tref = href.toString()
         if tref.startswith("x,lnk"):
-            if self.confirm_deletion():
+            if self.confirm_note_deletion():
                 id = int(tref[5:])
                 self.delete_note(id)
             return
@@ -248,9 +498,8 @@ class notesBrowser(QWidget, Ui_FileNotes):
         if tref.startswith('http'):
             # TODO open link in default browser
             return
-        self.set_selection(tref)
 
-    def confirm_deletion(self):
+    def confirm_note_deletion(self):
         dlg = QMessageBox(ag.app)
         dlg.setWindowTitle('delete file note')
         dlg.setText(f'confirm deletion of note')
@@ -265,100 +514,27 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.set_notes_data(db_ut.get_file_notes(self.file_id))
 
     def start_edit(self, id: int):
-        txt = ''
-        if id:
-            txt = db_ut.get_note(self.file_id, id)
-        self.edit_note(id, txt)
-
-    def set_selection(self, ref: str):
-        mod = QGuiApplication.keyboardModifiers()
-        i = self.tags.index(ref)
-        if mod is Qt.KeyboardModifier.ControlModifier:
-            if i in self.selected:
-                self.selected.remove(i)
-            else:
-                self.selected.append(i)
-        else:
-            self.selected.clear()
-            self.selected.append(i)
-
-    def set_tags(self, tags):
-        """
-        tags: list of tags from DB: (tag, id) pairs
-        """
-        self.tags.clear()
-        self.tag_id.clear()
-        for it in tags:
-            self.tags.append(it[0])
-            self.tag_id.append(it[1])
+        txt = db_ut.get_note(self.file_id, id) if id else ''
+        self.editor.setText(txt)
+        self.editor.set_note_id(id)
+        self.plus.hide()
+        self.edit_btns.show()
+        self.switch_page(5)
 
     def set_file_id(self, id: int):
         self.file_id = id
-        self.set_selected()
-        if self.file_info_visible():
-            self.file_info.close()
-            self.show_file_info()
+        self.tag_selector.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
+        self.tagEdit.setText(', '.join(
+            self.tag_selector.get_selected()
+            )
+        )
+        self.file_info.set_file_id(id)
+        self.author_selector.set_file_id(id)
+        self.locator.set_file_id(id)
 
-    def set_selected(self):
-        file_tag_ids = db_ut.get_file_tagid(self.file_id)
-        self.selected = [int(s[0]) for s in file_tag_ids]
-        tt = [
-            tag for i,tag in enumerate(self.tags)
-            if self.tag_id[i] in self.selected]
-        self.tagEdit.setText(', '.join(tt))
-
+    @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
+        self.tag_list_changed(self.new_tag_list(), tags)
         self.tagEdit.setText(', '.join(tags))
-        self.tag_list_changed()
-
-    def get_selected_tag_ids(self):
-        pp = self.tagEdit.text()
-        if pp:
-            tt = [tag.strip() for tag in pp.split(',')]
-            return [self.tag_id[self.tags.index(tag)] for tag in tt]
-        return []
-
-    def pick_tags(self, event):
-        self.tag_selector = tagBrowser()
-        self.tag_selector.change_selection.connect(self.update_tags)
-        self.tag_selector.setParent(self)
-        self.tag_selector.setObjectName("tag_editor")
-        self.tag_selector.setContentsMargins(5,5,5,5)
-        ss = ag.dyn_qss['tag_list_border'][0]
-        self.tag_selector.setStyleSheet(ss)
-        self.tag_selector.move(40, 22)
-        self.tag_selector.resize(self.width()-70, max(self.height() // 3, 90))
-        self.tag_selector.setMinimumHeight(90)
-        self.tag_selector.set_list(zip(self.tags, self.tag_id))
-        self.tag_selector.set_selection(self.selected)
-        self.tag_selector.show()
-
-    def edit_note(self, id: int, txt: str):
-        self.editor = noteEditor(self.file_id, id)
-        self.editor.setParent(self)
-        self.editor.setObjectName("tag_editor")
-        self.editor.setContentsMargins(5,5,5,5)
-        self.editor.move(40, 22)
-        self.editor.resize(self.width()-70, self.height()-40)
-        self.editor.set_text(txt)
-
-        self.editor.show()
-
-    def editor_visible(self) -> bool:
-        return self.editor.isVisible() if self.editor else False
-
-    def tag_selector_visible(self) -> bool:
-        return self.tag_selector.isVisible() if self.tag_selector else False
-
-    def file_info_visible(self) -> bool:
-        return self.file_info.isVisible() if self.file_info else False
-
-    def resizeEvent(self, e: QResizeEvent) -> None:
-        delta = e.oldSize() - e.size()
-        if self.editor_visible():
-            sz = self.editor.size()
-            self.editor.resize(sz - delta)
-        if self.tag_selector_visible():
-            sz = self.tag_selector.size()
-            self.tag_selector.resize(sz - delta)
-        return super().resizeEvent(e)

@@ -17,7 +17,7 @@ from core.sho import shoWindow
 
 def main():
     app = QApplication([])
-    # logger.remove(0)
+    logger.remove()
     # fmt = "{time:%b-%d %H:%M:%S} | {level:6} | {module}.{function}({line}): {message}"
     fmt = "{time:%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
     file_name = f"fill-{dt.now():%b-%d-%H}.log"
@@ -26,7 +26,6 @@ def main():
         logger.add(sys.stderr, format=fmt)
     else:
         logger.add(file_name, format=fmt)
-    # logger.add(file_name, format=fmt, level="TRACE")
     logger.info("START ==============================>")
 
     thema_name = "default"

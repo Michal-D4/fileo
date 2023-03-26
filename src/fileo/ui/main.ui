@@ -690,12 +690,18 @@
              </widget>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
               <property name="spacing">
                <number>0</number>
               </property>
               <item>
                <widget class="QTreeView" name="file_list">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -739,6 +745,18 @@
               </item>
               <item>
                <widget class="QFrame" name="hSplit">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>3</height>
+                 </size>
+                </property>
                 <property name="frameShape">
                  <enum>QFrame::HLine</enum>
                 </property>
@@ -756,7 +774,7 @@
               <item>
                <widget class="QFrame" name="noteHolder">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -764,7 +782,7 @@
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>75</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -802,13 +820,13 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>20</height>
+        <height>24</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>20</height>
+        <height>24</height>
        </size>
       </property>
       <property name="styleSheet">
@@ -841,18 +859,40 @@
        </property>
        <item>
         <widget class="QLabel" name="busy">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
          <property name="text">
           <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="margin">
+          <number>8</number>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="db_name">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
          <property name="text">
           <string/>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
          <property name="margin">
-          <number>0</number>
+          <number>8</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="folder_path">
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>
@@ -871,8 +911,14 @@
        </item>
        <item>
         <widget class="QLabel" name="others">
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
          <property name="text">
           <string/>
+         </property>
+         <property name="margin">
+          <number>8</number>
          </property>
         </widget>
        </item>

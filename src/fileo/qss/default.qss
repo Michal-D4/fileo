@@ -92,9 +92,6 @@ QFrame#item_comment0  {
    border: none;
    background: $commentsBackground;
 }
-QFrame#status {
-   background: $statusBackground;
-}
 QScrollBar:vertical {
    border: 0px;
 /* background: transparent;                                           */
@@ -103,8 +100,8 @@ QScrollBar:vertical {
    because of WA_TranslucentBackground the desktop is visible through
    the application, but i want to see an underlaing widget only       */
    width: 9px;
-   margin: 0px 0 0px 0;
-   background:
+   margin: 0px;
+   /* background: */
    }
 QScrollBar::handle:vertical {
    background: $ScrollBarHandleBG;
@@ -133,8 +130,25 @@ QToolButton#menu_btn:hover {
    border: none;
    background-color: $ToolButtonMenuHoverBG
 }
+QFrame#status {
+   background: $statusBackground;
+}
+   /* border-left: 4px $statusLabelColor;
+   border-top: none;
+   border-right: 4px $statusLabelColor;
+   border-bottom: none; */
 QFrame#status QLabel {
-   color: $statusLabelColor
+   padding-right: 4px;
+   padding-left: 4px;
+   background-clip: padding;
+   background-color: $statusBackground;
+   color: $statusLabelColor;
+}
+QFrame#status QLabel:hover {
+   padding-right: 4px;
+   padding-left: 4px;
+   background-clip: padding;
+   background-color: $statusLabelHover;
 }
 /* QFrame#navi_header {
    background-color: $navigatorBackground;
@@ -223,7 +237,14 @@ QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
 ##input_path_edited~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputEditColor;
 ##input_path_message~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $ErrorMessage1Color;
 ##text_browser~<style type="text/css"> #closeBtn {text-align: right} *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
-##tag_list_border~QFrame {border: $shapeBorderRight2 $colorBorder; background-color: $LightYellow}
+##active_selector~$bottomBorder color: $$activeColor
+##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
+##noteFrames~QFrame#header {$bottomBorder background-color: $treeViewBackground; }
+##noteFrames~QLineEdit#tagEdit {background-color: $commentsBackground}
+##noteFrames~QFrame#labels {border: none; background-color: $commentsBackground}
+##noteFrames~QFrame#authors {border: none; background-color: $commentsBackground}
+##noteFrames~QPlainTextEdit#edit_authors {border: $shapeBorderRight1 $colorBorder2;}
 ##note_editor~QTextEdit {border: none; background-color: $treeViewBackground }
-##dialog~QFrame#form {background-color: $dialogBackground; border: $shapeBorderRight2 $colorBorder;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
+##dialog~QFrame#form {background-color: $dialogBackground; border: none;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
+##fileInfo~background: $treeViewBackground
 ##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}

@@ -28,7 +28,7 @@ def save_bk_settings():
         "FIELDS_STATE": [int(a.isChecked()) for a in actions],
         "COLUMN_WIDTH": low_bk.get_columns_width(),
         "TAG_SEL_LIST": low_bk.tag_selection(),
-        "EXT_SEL_LIST": low_bk._ext_selection(),
+        "EXT_SEL_LIST": low_bk.ext_selection(),
         "AUTHOR_SEL_LIST": low_bk.author_selection(),
         "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
         "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
@@ -46,6 +46,7 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
@@ -119,8 +120,6 @@ def set_drag_drop_handlers():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    if prev.isValid():
-        low_bk.update_file_tag_links(prev)
     if curr.isValid():
         self.ui.label.setText(low_bk.full_file_name(curr))
         low_bk.file_notes_show(curr)
@@ -163,7 +162,9 @@ def populate_all():
     self.show_hidden.setCheckState(
         Qt.CheckState(low_bk.get_setting("SHOW_HIDDEN", 0))
     )
+    self.show_hidden.stateChanged.connect(show_hidden_dirs)
     fill_dir_list()
+    ag.filter.restore_filter_settings()
 
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
@@ -177,6 +178,7 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(Qt.CheckState)

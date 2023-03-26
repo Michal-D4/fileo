@@ -11,7 +11,7 @@ The graphical interface is shown in the image below.
 ## The GUI elements:
 
 1. shows application mode
-2. menu button to hide/show the left pane sub-windows: folders, tags, file extensions, authors
+2. menu button to hide/show the left pane widgets: folders, tags, file extensions, authors
 3. shows the name of current file
 4. menu button to select which fields will be visible in the file list (12)
 5. shows the name of the current database
@@ -24,16 +24,16 @@ The graphical interface is shown in the image below.
    5. open dialog to scan the file system to load files into the database
    6. hide/show left pane
    7. menu button   &mdash;   do nothing yet
-8. the folder tree sub-window
-9. the tag list sub-window
-10. the file extension list sub-window
-11. the author list sub-window
+8. the folder tree widget
+9. the tag list widget
+10. the file extension list widget
+11. the author list widget
 12. the file list
 13. the comments to the current file
 14. the filter setup dialog
 15. the list of tags, applied to the current file
 
-The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" sub-window.
+The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
 It the FILTER mode, the list of files depends on the parameters of the filter set in FILTER_SETUP mode.
 
@@ -60,7 +60,7 @@ As said, the app is about files. Files have a number of attributes:
 The following attributes are used in filter: all dates (but only one can be used at a time), extension, tags, rating, authors, and folder which was intentionally not included in the file attributes.
 
 Folders are not associated with file system directories, the path is used for that. You can freely create, move, copy and delete folders in the folder tree, the files will remain intact. You can, for example, create multiple folder hierarchies, this can be handy. Of course, if you delete all folders it will be impossible to access files using folder tree, but they remain accessible by filter. The next time the **`@@Lost`** folder will appear, it can be used to access files that are not in any other folder.
-You can also copy/move files from one folder to another. **Copying** is carried out by dragging *with the left mouse button pressed*, **moving** - *with the right mouse button*.
+You can also copy/move files from one folder to another. **Copying** is carried out by dragging *with the left mouse button pressed*, **moving** - *with the left mouse button and Shift key pressed*.
 
 ## How it works
 
@@ -103,19 +103,19 @@ With filter defined on the picture the file list will include files from folders
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
-The button Done applies a filter, closing dialog and switch application into "Filter mode". In this mode when you change selection in one of the sub-windows in the left pane (Folders, Tags, Extensions, Authors) the list of files is changing accordingly.
+The button Done applies a filter, closing dialog and switch application into "Filter mode". In this mode when you change selection in one of the widgets in the left pane (Folders, Tags, Extensions, Authors) the list of files is changing accordingly.
 
 ### How to make comments to file
 
 ![fileo-comments](img/fileo-comments.jpg)
 
 1. the file list
-2. tags of the current file, this input field allows to add/remove tags. The double click in this field opens list of registered tags, you can select tags from this list (press Ctrl to select multiply tags).
-3. comments container, in the picture there are two comments to the current file, sorted in last "modified" date order.
+2. tags of the current file, this input field allows to add/remove tags. The double click in this field opens list of registered tags, you can select tags from this list (press Ctrl to select multiple tags).
+3. comments widget, in the picture there are two comments to the current file, sorted in last "modified" date order.
 4. "File info" widget to show the information about the current file. You can edit the following fields in this widget: rating of file, number of pages and authors.
    Authors can be added/selected in the combobox "Author selection" or deleted in the field "Author()(book)".
-5. plus button - add comment
-6. '*i*' button - show "File info" widget (4)
+5. "+"  plus button - add comment
+6. "*i*" button - show "File info" widget (4)
 7. delete comment button
 8. edit comment button
 
