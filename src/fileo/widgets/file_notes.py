@@ -1,4 +1,6 @@
 from loguru import logger
+from dataclasses import dataclass
+from datetime import datetime
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
@@ -14,6 +16,21 @@ from core.compact_list import aBrowser
 from widgets.file_info import fileInfo
 
 time_format = "%Y-%m-%d %H:%M"
+
+@dataclass(slots=True)
+class Note():
+    note: str
+    id: int
+    modified: datetime
+    created: datetime
+
+    def __post_init__(self):
+        try:
+            self.modified = datetime.fromtimestamp(self.modified)
+            self.created = datetime.fromtimestamp(self.created)
+        except:
+            pass
+
 
 class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
@@ -477,7 +494,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def set_notes_data(self, data):
         buf = []
         for row in data:
-            note = ag.Note(*row)
+            note = Note(*row)
             head = self.section_title(
                 note.id,
                 note.modified.strftime(time_format),
