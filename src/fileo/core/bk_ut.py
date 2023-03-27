@@ -52,7 +52,7 @@ def toggle_collapse(collapse: bool):
 def restore_sorting():
     col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
     order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.model().sort(col, order)
+    ag.file_list.header().setSortIndicator(col, order)
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
@@ -121,7 +121,7 @@ def set_drag_drop_handlers():
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
-        self.ui.label.setText(low_bk.full_file_name(curr))
+        self.ui.label.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
 def file_list_resize(e: QResizeEvent):
@@ -178,7 +178,6 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(Qt.CheckState)
