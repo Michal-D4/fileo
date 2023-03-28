@@ -574,7 +574,6 @@ def dir_children(id: int) -> apsw.Cursor:
 def get_dir_name(id: int) -> str:
     sql = 'select name from dirs where id = ?'
     res = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
-    logger.info(f'{id=}, {res=}')
     return res[0] if res else ''
 
 def delete_dir(id: int, parent: int):
