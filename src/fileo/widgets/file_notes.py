@@ -156,17 +156,24 @@ class authorBrowser(QWidget):
         self.edit_authors.setPlainText(', '.join(txt))
 
     def get_edited_list(self) -> list[str]:
-        tt = self.edit_authors.toPlainText()
+        tt = self.edit_authors.toPlainText().strip()
         tt = tt.replace('[', '')
-        tt = tt.replace(']', '')
-        return [t.strip() for t in tt.split(',') if t.strip()]
+        pp = [t.strip() for t in tt.split('],') if t.strip()]
+        if tt.endswith(']'):
+            pp[-1] = pp[-1][:-1]
+        else:
+            qq = [t.strip() for t in pp[-1].split(',') if t.strip()]
+            pp = [*pp[:-1], *qq]
+        return pp
 
     def sel_list_changed(self, old: list[str], new: list[str]):
+        logger.info(f'{old=}, {new=}')
         self.remove_items(old, new)
         self.add_items(old, new)
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
+        logger.info(f'{diff=}')
         for d in diff:
             if id := self.br.get_tag_id(d):
                 db_ut.break_file_authors_link(self.file_id, id)
@@ -174,7 +181,9 @@ class authorBrowser(QWidget):
     def add_items(self, old: list[str], new: list[str]):
         inserted = False
         diff = set(new) - set(old)
+        logger.info(f'{diff=}')
         for d in diff:
+            logger.info(f'{self.file_id=}, {d=}')
             if db_ut.add_author(self.file_id, d):
                 inserted = True
         if inserted:
