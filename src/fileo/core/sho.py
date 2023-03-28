@@ -270,8 +270,6 @@ class shoWindow(QMainWindow):
 
             self.start_pos.setY(y)
             e.accept()
-        else:
-            e.ignore()
 
     def comment_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
@@ -298,18 +296,19 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def vsplit_move_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        if not self.start_pos:
-            self.start_pos = self.mapFromGlobal(cur_pos)
-            return
-        cur_pos = self.mapFromGlobal(cur_pos)
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            cur_pos = e.globalPosition().toPoint()
+            if not self.start_pos:
+                self.start_pos = self.mapFromGlobal(cur_pos)
+                return
+            cur_pos = self.mapFromGlobal(cur_pos)
 
-        self.setUpdatesEnabled(False)
-        x: int = self.navigator_resize(cur_pos.x())
-        self.setUpdatesEnabled(True)
+            self.setUpdatesEnabled(False)
+            x: int = self.navigator_resize(cur_pos.x())
+            self.setUpdatesEnabled(True)
 
-        self.start_pos.setX(x)
-        e.accept()
+            self.start_pos.setX(x)
+            e.accept()
 
     def navigator_resize(self, x: int) -> int:
         x0 = self.start_pos.x()
