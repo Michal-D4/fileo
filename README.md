@@ -115,3 +115,46 @@ The button Done applies a filter, closing dialog and switch application into "Fi
 2. the button to discard changes
 
 Note is a markdown text.
+
+### Tag selector
+
+![tag-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\tag-selector.jpg)
+
+1. The list of tags associated with the current file. You can input here a list of tags separated by commas. It is the only place where the new tag can be created. The new tags will appear in the list 2 and 4.
+2. The list of tags. The tags selected in this list apply to the file filter. 
+3. The context menu in the list of tags. The current tag is highlighted - "package" in this case.
+4. The tag selector. The tags selected here will appear in the list 1.
+
+### Author selector
+
+![author-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\author-selector.jpg)
+
+1. The list of authors associated with the current file. You can input here a list of authors separated by commas (in square brackets if author name contains comma as in "Vaughan, Lee", otherwise it may be entered without brackets, but new authors without brackets must be in the end of list). It is the only place where the new author can be created. The new authors will appear in the list 2 and 4.
+2. The list of authors. The authors selected in this list apply to the file filter. 
+3. The context menu in the list of authors. The current tag is highlighted - "Vijay  Pande" in this case.
+4. The author selector. The authors selected here will appear in the list 1.
+
+### Locations
+
+![Locations](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\Locations.jpg)
+
+The current file "Environment Variables in Linux.md" has 5 locations (Paths/Folder Tree branches).
+
+The letters "C" and "H" in brackets means "Copy" and "Hidden". "Copy" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a copy of the folder "fileo" in the path 1; the folder "Linux" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
+
+![Folders](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\Folders.jpg)
+
+1. The "FOLDERS" widget
+2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "fileo" and "New folder1" in the folder "New folder2" are copies. The only difference between folder and its copies is that when you delete folder all its copies and all its children will be deleted too, whereas deletion of any copy of folder does not impact any other folder.
+3. The current file. "Environment Variables in Linux.md"
+
+### File info
+
+![file-info](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\file-info.jpg)
+
+The "File rating" and "Pages" can be edited here. But they also can be edited directly in the file list if visible:
+
+![file-list-fields](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\file-list-fields.jpg)
+
+1. The file list
+2. Menu to select fields visible in the file list. The checked fields are visible, the field "File Name" is alwais visible.
