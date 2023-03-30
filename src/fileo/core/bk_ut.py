@@ -121,6 +121,7 @@ def set_drag_drop_handlers():
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
+        ag.file_list.scrollTo(curr)
         self.ui.label.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
