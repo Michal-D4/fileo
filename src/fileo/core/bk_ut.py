@@ -6,7 +6,7 @@ from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView
+from PyQt6.QtWidgets import QMenu, QTreeView, QMessageBox
 
 from . import app_globals as ag, low_bk, load_files, drag_drop as dd
 from widgets import workers
@@ -56,6 +56,7 @@ def restore_sorting():
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
+    set_setup_menu()
 
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
@@ -104,6 +105,19 @@ def set_field_menu():
     menu.actions()[0].setEnabled(False)
     menu.setToolTipsVisible(True)
     ag.field_menu.setMenu(menu)
+
+def set_setup_menu():
+    print('set_setup_menu')
+    menu = QMenu(self)
+    act = QAction('About', self)
+    act.triggered.connect(about)
+    menu.addAction(act)
+    menu.setObjectName('setup_menu')
+    self.ui.btnSetup.setMenu(menu)
+
+@pyqtSlot()
+def about():
+    QMessageBox.about(self, 'title', 'text')
 
 def field_list_changed():
     resize_columns(0)

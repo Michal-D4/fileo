@@ -114,6 +114,7 @@ class Ui_Sho(object):
         self.btnSetup.setStyleSheet("")
         self.btnSetup.setText("")
         self.btnSetup.setIconSize(QtCore.QSize(32, 32))
+        self.btnSetup.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.btnSetup.setAutoRaise(True)
         self.btnSetup.setObjectName("btnSetup")
         self.verticalLayout_2.addWidget(self.btnSetup)

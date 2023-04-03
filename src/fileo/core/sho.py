@@ -2,12 +2,12 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QObject, QEvent
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent)
+                         QResizeEvent, )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget, QCheckBox)
+                             QFrame, QWidget, QCheckBox, )
 
 from ui.ui_main import Ui_Sho
 from widgets.filter_setup import FilterSetup
@@ -65,6 +65,17 @@ class shoWindow(QMainWindow):
         bk_ut.bk_setup(self)
         self.is_busy = False
         self.set_busy(False)
+        self.ui.btnSetup.menu().installEventFilter(self)
+
+    def eventFilter(self, obj: QObject, e: QEvent) -> bool:
+        if e.type() == QEvent.Type.Show and obj == self.ui.btnSetup.menu():
+            sz = obj.sizeHint()
+            pos = self.ui.btnSetup.pos()
+            print(f'{sz=}, {pos=}, {obj.pos()=}')
+            print(f'{obj.objectName()}, {type(obj)=}')
+            obj.move(self.mapToGlobal(pos + QPoint(53, 26 - sz.height())))
+            return True
+        return False
 
     def create_fold_container(self):
         self.fold_layout = QVBoxLayout(self.ui.container)
@@ -201,7 +212,6 @@ class shoWindow(QMainWindow):
 
         self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
-        self.ui.btnSetup.clicked.connect(self.click_setup_button)
 
         self.ui.vSplit.enterEvent = self.vsplit_enter_event
         self.ui.vSplit.mousePressEvent = self.vsplit_press_event
@@ -401,9 +411,6 @@ class shoWindow(QMainWindow):
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
 
-    @pyqtSlot()
-    def click_setup_button(self):
-        print('click_setup clicked')
 
     def mousePressEvent(self, e: QMouseEvent):
         if self.open_db and self.open_db.isVisible():
