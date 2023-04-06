@@ -56,7 +56,6 @@ def restore_sorting():
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
-    set_setup_menu()
 
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
@@ -106,18 +105,17 @@ def set_field_menu():
     menu.setToolTipsVisible(True)
     ag.field_menu.setMenu(menu)
 
-def set_setup_menu():
-    print('set_setup_menu')
-    menu = QMenu(self)
-    act = QAction('About', self)
-    act.triggered.connect(about)
-    menu.addAction(act)
-    menu.setObjectName('setup_menu')
-    self.ui.btnSetup.setMenu(menu)
-
 @pyqtSlot()
-def about():
-    QMessageBox.about(self, 'title', 'text')
+def click_setup_button():
+    menu = QMenu(self)
+    menu.addAction('About')
+    sz = menu.sizeHint()
+    pos = self.ui.btnSetup.pos()
+    action = menu.exec(ag.app.mapToGlobal(
+        pos + QPoint(53, 26 - sz.height())
+    ))
+    if action:
+        ag.signals_.user_action_signal.emit(f"Setup {action.text()}")
 
 def field_list_changed():
     resize_columns(0)

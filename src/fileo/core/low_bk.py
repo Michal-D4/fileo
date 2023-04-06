@@ -38,6 +38,7 @@ def exec_user_actions():
         "Files Reveal in explorer": open_folder,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
+        "Setup About": about,
       }
 
     @pyqtSlot(str)
@@ -53,6 +54,10 @@ def exec_user_actions():
             print(f'Action not implemented {err}')
 
     return execute_action
+
+@pyqtSlot()
+def about():
+    QMessageBox.about(ag.app, 'title', 'text')
 
 #region Common
 def save_settings(**kwargs):

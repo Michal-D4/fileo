@@ -65,17 +65,6 @@ class shoWindow(QMainWindow):
         bk_ut.bk_setup(self)
         self.is_busy = False
         self.set_busy(False)
-        self.ui.btnSetup.menu().installEventFilter(self)
-
-    def eventFilter(self, obj: QObject, e: QEvent) -> bool:
-        if e.type() == QEvent.Type.Show and obj == self.ui.btnSetup.menu():
-            sz = obj.sizeHint()
-            pos = self.ui.btnSetup.pos()
-            print(f'{sz=}, {pos=}, {obj.pos()=}')
-            print(f'{obj.objectName()}, {type(obj)=}')
-            obj.move(self.mapToGlobal(pos + QPoint(53, 26 - sz.height())))
-            return True
-        return False
 
     def create_fold_container(self):
         self.fold_layout = QVBoxLayout(self.ui.container)
@@ -212,6 +201,7 @@ class shoWindow(QMainWindow):
 
         self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
+        self.ui.btnSetup.clicked.connect(bk_ut.click_setup_button)
 
         self.ui.vSplit.enterEvent = self.vsplit_enter_event
         self.ui.vSplit.mousePressEvent = self.vsplit_press_event
@@ -410,7 +400,6 @@ class shoWindow(QMainWindow):
         else:
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
-
 
     def mousePressEvent(self, e: QMouseEvent):
         if self.open_db and self.open_db.isVisible():
