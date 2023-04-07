@@ -20,6 +20,9 @@ def collect_all_icons():
     tmp1 = qta.icon('mdi.circle', color="#00FF00")
     tmp2 = qta.icon('mdi.circle', color="#FF0000")
     other_icons["busy"] = (tmp1.pixmap(sz), tmp2.pixmap(sz))
+    sz2 = QSize(24, 24)
+    tmp3 = qta.icon('mdi.information-outline', color=ag.qss_params["$itemSelectBG"])
+    other_icons['info'] = tmp3.pixmap(sz2)
 
     other_icons["copy"] = qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
     other_icons["folder"] = qta.icon('mdi.alpha-f', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
@@ -29,7 +32,6 @@ def collect_all_icons():
     other_icons["cancel2"] = qta.icon('mdi.window-close', color=ag.qss_params["$CarmineColor"])
 
     other_icons["toEdit"] = qta.icon('mdi.pencil-outline', color=ag.qss_params["$navigatorColor"])
-    other_icons['info'] = qta.icon('mdi.information-variant', color=ag.qss_params["$navigatorColor"])
     other_icons['plus'] = qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"])
 
     other_icons['right'] = qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"])

@@ -9,11 +9,12 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
     )
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QApplication, QMessageBox, QAbstractItemView, QFileDialog
+from PyQt6.QtWidgets import QApplication, QAbstractItemView, QFileDialog
 
 from core import db_ut, app_globals as ag
 from core.table_model import TableModel, ProxyModel2
 from core.edit_tree_model2 import TreeModel, TreeItem
+from widgets import about
 
 def exec_user_actions():
     """
@@ -38,7 +39,7 @@ def exec_user_actions():
         "Files Reveal in explorer": open_folder,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
-        "Setup About": about,
+        "Setup About": show_about,
       }
 
     @pyqtSlot(str)
@@ -56,8 +57,9 @@ def exec_user_actions():
     return execute_action
 
 @pyqtSlot()
-def about():
-    QMessageBox.about(ag.app, 'title', 'text')
+def show_about():
+    dlg = about.AboutDialog(ag.app)
+    dlg.show()
 
 #region Common
 def save_settings(**kwargs):
