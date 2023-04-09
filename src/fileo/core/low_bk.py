@@ -7,9 +7,11 @@ import pickle
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
-    )
+)
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QApplication, QAbstractItemView, QFileDialog
+from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
+    QFileDialog, QMessageBox,
+)
 
 from core import db_ut, app_globals as ag
 from core.table_model import TableModel, ProxyModel2
@@ -52,12 +54,18 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            print(f'Action not implemented {err}')
+            dlg = QMessageBox(ag.app)
+            dlg.setWindowTitle('Action not implemented')
+            dlg.setText(f'Action name: {err}')
+            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+            dlg.setIcon(QMessageBox.Icon.Warning)
+            dlg.exec()
 
     return execute_action
 
 @pyqtSlot()
 def show_about():
+    print('show_about')
     dlg = about.AboutDialog(ag.app)
     dlg.show()
 
