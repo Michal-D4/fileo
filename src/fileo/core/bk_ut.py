@@ -65,7 +65,8 @@ def bk_setup(main: 'shoWindow'):
     set_drag_drop_handlers()
 
     ag.file_list.resizeEvent = file_list_resize
-    ag.signals_.user_action_signal.connect(low_bk.exec_user_actions())
+    execute_user_action = low_bk.exec_user_actions()
+    ag.signals_.user_action_signal.connect(execute_user_action)
     ag.signals_.start_file_search.connect(file_searching)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
@@ -304,7 +305,6 @@ def run_update_pdf_files():
     run_worker(workers.update_pdf_files)
 
 def run_worker(func):
-    print(f'run_worker - function: {func.__name__}')
     if self.is_busy or not ag.db['Conn']:
         return
     self.thread = QThread(self)
@@ -321,6 +321,5 @@ def run_worker(func):
 
 @pyqtSlot()
 def finish_worker():
-    print('finish_worker')
     self.thread.quit()
     self.set_busy(False)
