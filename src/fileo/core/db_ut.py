@@ -333,15 +333,11 @@ def filter_sqls(key: str, field: str='') -> str:
     }[key]
 
 def filter_files(param: dict) -> apsw.Cursor:
-    # print(param)
     sqlist = filter_subsqls(param)
 
     par, cond = filter_parcond(param)
 
     sql = assemble_filter_sql(cond, sqlist)
-
-    # print(sql)
-    # print(f"{par=}")
 
     return (
         ag.db['Conn'].cursor().execute(sql, tuple(par))
@@ -739,7 +735,6 @@ def get_files_tag(tag: int) -> set[int]:
     return set(files)
 
 def create_connection(path: str) -> bool:
-    print(f"create_connection: {path=}, {ag.db['Path']=}")
     if not path:
         return False
 

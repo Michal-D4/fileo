@@ -65,7 +65,6 @@ def exec_user_actions():
 
 @pyqtSlot()
 def show_about():
-    print('show_about')
     dlg = about.AboutDialog(ag.app)
     dlg.show()
 
