@@ -195,7 +195,7 @@ def cur_dir_changed(curr_idx: QModelIndex):
         save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        files_from_folder()
+        show_folder_files()
         set_current_file(0)
 
 def current_dir_path():
@@ -240,7 +240,7 @@ def app_mode_changed(old_mode: ag.appMode):
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
 
-    {ag.appMode.DIR: files_from_folder,
+    {ag.appMode.DIR: show_folder_files,
      ag.appMode.FILTER: filtered_files,
     } [ag.mode]()
     if ag.file_list.model().rowCount() > 0:
@@ -248,7 +248,7 @@ def app_mode_changed(old_mode: ag.appMode):
 
 def populate_file_list():
     if ag.mode is ag.appMode.DIR:
-        files_from_folder()
+        show_folder_files()
     else:             # appMode.FILTER or appMode.FILTER_SETUP
         filtered_files()
 
@@ -263,7 +263,7 @@ def filter_changed():
     filtered_files()
     set_current_file(0)
 
-def files_from_folder():
+def show_folder_files():
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
 
