@@ -112,7 +112,6 @@ def start_drag_dirs(action):
         if ag.mode is ag.appMode.DIR else Qt.DropAction.CopyAction,
         Qt.DropAction.CopyAction)
 
-    logger.info(f'{action=}, {bb=}')
     if bb is not Qt.DropAction.IgnoreAction:
         low_bk.reload_dirs_changed(ag.drop_target, ag.dropped_ids[0])
 
@@ -126,13 +125,11 @@ def start_drag_files(action):
         Qt.DropAction.CopyAction | Qt.DropAction.MoveAction,
         Qt.DropAction.CopyAction)
 
-    logger.info(f'{action=}')
     if action is Qt.DropAction.MoveAction:
         low_bk.show_folder_files()
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):
-    logger.info(f'{event.dropAction()=}, {event.buttons()=}')
     ag.drop_button = event.buttons()
     event.accept()
 
@@ -186,7 +183,6 @@ def drop_event(e: QDropEvent):
         index.data(role=Qt.ItemDataRole.UserRole).id
         if index.isValid() else 0
     )
-    logger.info(f'{id=}')
     if drop_data(e.mimeData(), e.dropAction(), id):
         ag.drop_target = index
         e.accept()
@@ -196,21 +192,16 @@ def drop_event(e: QDropEvent):
 
 def choose_drop_action(e: QDropEvent):
     pos = e.position().toPoint()
-    logger.info(f'{e.dropAction()=}, {pos=}, {ag.drop_button=}')
     if ag.drop_button == Qt.MouseButton.RightButton:
         menu = QMenu(ag.app)
         menu.addAction('Copy')
         menu.addAction('Move')
         act = menu.exec(ag.app.mapToGlobal(pos))
-        logger.info(f'{act.text()=}')
         if act.text() == 'Copy':
-            logger.info('Copy')
             e.setDropAction(Qt.DropAction.CopyAction)
         elif act.text() == 'Move':
-            logger.info('Move')
             e.setDropAction(Qt.DropAction.MoveAction)
         else:
-            logger.info('Ignore')
             e.setDropAction(Qt.DropAction.IgnoreAction)
             e.ignore()
     else:
