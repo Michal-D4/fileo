@@ -62,7 +62,7 @@ def bk_setup(main: 'shoWindow'):
 
     set_context_menu()
     populate_all()
-    set_drag_drop_handlers()
+    dd.set_drag_drop_handlers()
 
     ag.file_list.resizeEvent = file_list_resize
     execute_user_action = low_bk.exec_user_actions()
@@ -123,13 +123,6 @@ def field_list_changed():
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
     low_bk.set_current_file(idx.row())
-
-def set_drag_drop_handlers():
-    ag.dir_list.startDrag = dd.start_drag_dirs
-    ag.file_list.startDrag = dd.start_drag_files
-    ag.dir_list.dragMoveEvent = dd.drag_move_event
-    ag.dir_list.dragEnterEvent = dd.drag_enter_event
-    ag.dir_list.dropEvent = dd.drop_event
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):

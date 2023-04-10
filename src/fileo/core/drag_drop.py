@@ -2,11 +2,11 @@ from loguru import logger
 from collections import deque
 
 from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
-    QModelIndex, QDataStream, QIODevice,
+    QModelIndex, QDataStream, QIODevice, QPoint,
 )
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
-    QGuiApplication
 )
+from PyQt6.QtWidgets import QMenu
 
 
 from . import app_globals as ag, low_bk, load_files, db_ut
@@ -94,8 +94,15 @@ def dir_mime_data(indexes) -> QMimeData:
     mime_data.setData(ag.mimeType.folders.value, drag_data)
     return mime_data
 
+def set_drag_drop_handlers():
+    ag.dir_list.startDrag = start_drag_dirs
+    ag.file_list.startDrag = start_drag_files
+    ag.dir_list.dragMoveEvent = drag_move_event
+    ag.dir_list.dragEnterEvent = drag_enter_event
+    ag.dir_list.dropEvent = drop_event
+
 @pyqtSlot(Qt.DropAction)
-def start_drag_dirs(dummy):
+def start_drag_dirs(action):
     drag = QDrag(ag.app)
 
     mime_data = get_dir_mime_data()
@@ -105,11 +112,12 @@ def start_drag_dirs(dummy):
         if ag.mode is ag.appMode.DIR else Qt.DropAction.CopyAction,
         Qt.DropAction.CopyAction)
 
+    logger.info(f'{action=}, {bb=}')
     if bb is not Qt.DropAction.IgnoreAction:
         low_bk.reload_dirs_changed(ag.drop_target, ag.dropped_ids[0])
 
 @pyqtSlot(Qt.DropAction)
-def start_drag_files(dummy):
+def start_drag_files(action):
     drag = QDrag(ag.app)
 
     mime_data = get_files_mime_data()
@@ -118,33 +126,23 @@ def start_drag_files(dummy):
         Qt.DropAction.CopyAction | Qt.DropAction.MoveAction,
         Qt.DropAction.CopyAction)
 
-    if ag.drop_action is Qt.DropAction.MoveAction:
-        low_bk.files_from_folder()
+    logger.info(f'{action=}')
+    if action is Qt.DropAction.MoveAction:
+        low_bk.show_folder_files()
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):
-    """
-    set DropAction depending on pressed MouseButton:
-    LeftButton -> CopyAction; RightButton -> MoveAction
-    """
-    mod = QGuiApplication.keyboardModifiers()
-    if mod is Qt.KeyboardModifier.ShiftModifier:
-        ag.drop_action = Qt.DropAction.MoveAction
-    elif mod is Qt.KeyboardModifier.NoModifier:
-        ag.drop_action = Qt.DropAction.CopyAction
-    else:
-        event.ignore()
-        return
-    event.setDropAction(ag.drop_action)
+    logger.info(f'{event.dropAction()=}, {event.buttons()=}')
+    ag.drop_button = event.buttons()
     event.accept()
 
 @pyqtSlot(QDragMoveEvent)
 def drag_move_event(event: QDragMoveEvent):
-    mime_data: QMimeData = event.mimeData()
     if event.dropAction() is Qt.DropAction.IgnoreAction:
         event.ignore()
         return
 
+    mime_data: QMimeData = event.mimeData()
     if mime_data.hasFormat(ag.mimeType.folders.value):
         can_drop_dir_here(event)
     else:
@@ -180,20 +178,43 @@ def is_descendant(idx: QModelIndex) -> bool:
     return False
 
 @pyqtSlot(QDropEvent)
-def drop_event(event: QDropEvent):
-    pos = event.position().toPoint()
+def drop_event(e: QDropEvent):
+    choose_drop_action(e)
+    pos = e.position().toPoint()
     index = ag.dir_list.indexAt(pos)
-
     id = (
         index.data(role=Qt.ItemDataRole.UserRole).id
         if index.isValid() else 0
     )
-    if drop_data(event.mimeData(), ag.drop_action, id):
+    logger.info(f'{id=}')
+    if drop_data(e.mimeData(), e.dropAction(), id):
         ag.drop_target = index
-        event.accept()
+        e.accept()
     else:
-        ag.drop_action = Qt.DropAction.IgnoreAction
-        event.ignore()
+        e.setDropAction(Qt.DropAction.IgnoreAction)
+        e.ignore()
+
+def choose_drop_action(e: QDropEvent):
+    pos = e.position().toPoint()
+    logger.info(f'{e.dropAction()=}, {pos=}, {ag.drop_button=}')
+    if ag.drop_button == Qt.MouseButton.RightButton:
+        menu = QMenu(ag.app)
+        menu.addAction('Copy')
+        menu.addAction('Move')
+        act = menu.exec(ag.app.mapToGlobal(pos))
+        logger.info(f'{act.text()=}')
+        if act.text() == 'Copy':
+            logger.info('Copy')
+            e.setDropAction(Qt.DropAction.CopyAction)
+        elif act.text() == 'Move':
+            logger.info('Move')
+            e.setDropAction(Qt.DropAction.MoveAction)
+        else:
+            logger.info('Ignore')
+            e.setDropAction(Qt.DropAction.IgnoreAction)
+            e.ignore()
+    else:
+        e.setDropAction(Qt.DropAction.CopyAction)
 
 def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     if data.hasFormat('text/uri-list'):

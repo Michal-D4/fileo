@@ -59,7 +59,7 @@ stop_thread = False
 mode = appMode.DIR
 section_resized: bool = False
 
-drop_action = None
+drop_button = 0
 drop_target = None
 dropped_ids = []
 
