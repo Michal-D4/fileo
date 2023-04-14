@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QToolButton
 
-from core.app_signals import AppSignals
+from .app_signals import AppSignals
 if TYPE_CHECKING:
-    from core.compact_list import aBrowser
-    from core.sho import shoWindow
-    from widgets.file_notes import notesBrowser
-    from widgets.filter_setup import FilterSetup
+    from .compact_list import aBrowser
+    from .sho import shoWindow
+    from ..widgets.file_notes import notesBrowser
+    from ..widgets.filter_setup import FilterSetup
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()

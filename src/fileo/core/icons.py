@@ -3,7 +3,7 @@ from typing import Dict
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize
 
-from core import app_globals as ag
+from . import app_globals as ag
 
 __all__ = ['collect_all_icons', 'get_toolbar_icons',
            'get_other_icon',

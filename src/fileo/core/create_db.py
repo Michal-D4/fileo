@@ -1,7 +1,7 @@
 import apsw
 from loguru import logger
 
-from core import app_globals as ag
+from . import app_globals as ag
 
 TABLES = (
 """

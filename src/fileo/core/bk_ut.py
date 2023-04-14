@@ -9,7 +9,7 @@ from PyQt6.QtGui import (QAction, QResizeEvent,
 from PyQt6.QtWidgets import QMenu, QTreeView, QMessageBox
 
 from . import app_globals as ag, low_bk, load_files, drag_drop as dd
-from widgets import workers
+from ..widgets import workers
 
 if TYPE_CHECKING:
     from .sho import shoWindow

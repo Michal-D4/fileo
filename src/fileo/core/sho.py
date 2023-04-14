@@ -9,13 +9,13 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
                              QFrame, QWidget, QCheckBox, )
 
-from ui.ui_main import Ui_Sho
-from widgets.filter_setup import FilterSetup
-from widgets.fold_container import FoldContainer
-from widgets.open_db import OpenDB
-from widgets.file_search import fileSearch
+from ..ui.ui_main import Ui_Sho
+from ..widgets.filter_setup import FilterSetup
+from ..widgets.fold_container import FoldContainer
+from ..widgets.open_db import OpenDB
+from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
-from widgets.file_notes import notesBrowser
+from ..widgets.file_notes import notesBrowser
 
 from . import icons, utils, db_ut, bk_ut
 from . import app_globals as ag

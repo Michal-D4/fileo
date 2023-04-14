@@ -11,8 +11,8 @@ os.environ['PYTHONBREAKPOINT'] = '0'
 
 from PyQt6.QtWidgets import QApplication
 
-from core import icons, app_globals as ag, utils
-from core.sho import shoWindow
+from .core import icons, app_globals as ag, utils
+from .core.sho import shoWindow
 
 
 def main():

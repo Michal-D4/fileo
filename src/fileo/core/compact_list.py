@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
 )
 
-from core import app_globals as ag
+from . import app_globals as ag
 
 
 class editTag(QWidget):

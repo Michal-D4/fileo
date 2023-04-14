@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import (QFileDialog, QHBoxLayout, QLabel,
     QApplication,
 )
 
-from core import create_db, icons, utils, app_globals as ag
-from widgets.ui_open_db import Ui_openDB
+from ..core import create_db, icons, utils, app_globals as ag
+from .ui_open_db import Ui_openDB
 
 
 class listItem(QWidget):

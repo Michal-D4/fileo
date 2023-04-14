@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
     QLineEdit, QVBoxLayout, QScrollArea, QFrame,
 )
 
-from core import app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut
 
 
 class fileInfo(QWidget):
