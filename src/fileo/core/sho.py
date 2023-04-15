@@ -83,7 +83,8 @@ class shoWindow(QMainWindow):
         ag.notes = notesBrowser()
         ag.notes.setObjectName("file_notes")
         add_widget_into_frame(self.ui.noteHolder, ag.notes)
-        ag.notes.set_data()
+        if ag.db['Conn']:
+            ag.notes.set_data()
 
     def set_busy(self, val: bool):
         self.is_busy = val
