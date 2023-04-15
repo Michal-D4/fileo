@@ -36,7 +36,6 @@ def main():
         logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")
         return
 
-    icons.collect_all_icons()
     main_window = shoWindow()
 
     main_window.show()

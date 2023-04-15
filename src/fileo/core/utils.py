@@ -8,14 +8,14 @@ from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant
 from PyQt6.QtGui import QMouseEvent, QIcon
 from PyQt6.QtWidgets import QApplication
 
-from . import app_globals as ag
+from . import icons, app_globals as ag
 from .. import qss as qtss
 
 __all__ = ['setup_ui', 'resize_grips',
             'get_setting', 'save_setting',
 ]
 
-APP_NAME = "fileBox"
+APP_NAME = "fileo"
 MAKER = 'miha'
 
 settings = None
@@ -99,8 +99,6 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     params = None
     qss = None
 
-    app.setWindowIcon(QIcon(str(resources.path(qtss, "art_explode.ico"))))
-
     def get_qss_theme():
         nonlocal params
         nonlocal qss
@@ -159,3 +157,15 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
 
     if to_save:
         save_qss("out-qss.log")
+
+    icons.collect_all_icons()
+
+    try:
+        from ctypes import windll  # to show icon on the taskbar - Windows only
+        myappid = '.'.join((MAKER, APP_NAME))
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        logger.info(f"{myappid=}")
+    except ImportError:
+        pass
+
+    app.setWindowIcon(icons.get_other_icon('app'))
