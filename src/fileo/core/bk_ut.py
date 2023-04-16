@@ -6,7 +6,7 @@ from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView, QMessageBox
+from PyQt6.QtWidgets import QMenu, QTreeView
 
 from . import app_globals as ag, low_bk, load_files, drag_drop as dd
 from ..widgets import workers
