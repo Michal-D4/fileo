@@ -121,7 +121,7 @@ Note is a markdown text.
 ![tag-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\tag-selector.jpg)
 
 1. The list of tags associated with the current file. You can input here a list of tags separated by commas. It is the only place where the new tag can be created. The new tags will appear in the list 2 and 4.
-2. The list of tags. The tags selected in this list apply to the file filter. 
+2. The list of tags. The tags selected in this list apply to the file filter.
 3. The context menu in the list of tags. The current tag is highlighted - "package" in this case.
 4. The tag selector. The tags selected here will appear in the list 1.
 
@@ -130,7 +130,7 @@ Note is a markdown text.
 ![author-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\author-selector.jpg)
 
 1. The list of authors associated with the current file. You can input here a list of authors separated by commas (in square brackets if author name contains comma as in "Vaughan, Lee", otherwise it may be entered without brackets, but new authors without brackets must be in the end of list). It is the only place where the new author can be created. The new authors will appear in the list 2 and 4.
-2. The list of authors. The authors selected in this list apply to the file filter. 
+2. The list of authors. The authors selected in this list apply to the file filter.
 3. The context menu in the list of authors. The current tag is highlighted - "Vijay  Pande" in this case.
 4. The author selector. The authors selected here will appear in the list 1.
 

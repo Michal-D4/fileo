@@ -2,12 +2,10 @@ from typing import List
 
 from loguru import logger
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QToolButton, QWidget
+from PyQt6.QtWidgets import QWidget
 
-from core import icons, app_globals as ag
-from widgets.ui_foldable import Ui_foldable
+from ..core import icons, app_globals as ag
+from .ui_foldable import Ui_foldable
 
 __all__ = ['set_hovering', 'set_decorator_qss', 'toggle_collapse',
            'set_title', 'add_button', 'get_inner_widget',

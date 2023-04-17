@@ -1,5 +1,7 @@
 __pycache__/
 .git/
+build/
+dist/
 *.code-workspace
 .history/
 .pyc

@@ -3,8 +3,8 @@ from loguru import logger
 from PyQt6.QtCore import Qt, QDate, QDateTime
 from PyQt6.QtWidgets import QWidget
 
-from core import app_globals as ag, icons, low_bk, db_ut
-from widgets.ui_set_filter import Ui_filterSetup
+from ..core import app_globals as ag, icons, low_bk, db_ut
+from .ui_set_filter import Ui_filterSetup
 
 def unix_date(ts: float) -> int:
     unix_epoch = 2440587.5   # julian date of 1970-01-01

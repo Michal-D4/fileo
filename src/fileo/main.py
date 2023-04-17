@@ -11,8 +11,8 @@ os.environ['PYTHONBREAKPOINT'] = '0'
 
 from PyQt6.QtWidgets import QApplication
 
-from core import icons, app_globals as ag, utils
-from core.sho import shoWindow
+from .core import icons, app_globals as ag, utils
+from .core.sho import shoWindow
 
 
 def main():
@@ -36,7 +36,6 @@ def main():
         logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")
         return
 
-    icons.collect_all_icons()
     main_window = shoWindow()
 
     main_window.show()

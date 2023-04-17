@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
 )
 
-from core import app_globals as ag
+from . import app_globals as ag
 
 
 class editTag(QWidget):
@@ -175,6 +175,7 @@ class aBrowser(QWidget):
     def set_selection(self, sel_ids: list[int]):
         if len(self.tags) > 0:
             self.selected_idx = [self.tag_ids.index(int(s)) for s in sel_ids]
+            logger.info(f'{self.objectName()}: {self.selected_idx=}')
             self.show_in_bpowser()
             self.browser.find(self.get_current())
 
@@ -202,6 +203,7 @@ class aBrowser(QWidget):
         self.curr_pos = self.browser.textCursor().position()
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
+        logger.info(f'{self.objectName()}')
         self.update_selected(href, mod)
         self.change_selection_emit()
         self.show_in_bpowser()
@@ -223,6 +225,7 @@ class aBrowser(QWidget):
 
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
         tref = href.toString()[1:]
+        logger.info(f'{self.objectName()}, {tref=}')
         if tref not in self.tags:
             # no new tags created in this module
             # so this shouldn't happen

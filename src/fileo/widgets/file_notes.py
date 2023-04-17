@@ -11,9 +11,9 @@ from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
 
 from .ui_notes import Ui_FileNotes
 
-from core import icons, app_globals as ag, db_ut
-from core.compact_list import aBrowser
-from widgets.file_info import fileInfo
+from ..core import icons, app_globals as ag, db_ut
+from ..core.compact_list import aBrowser
+from .file_info import fileInfo
 
 time_format = "%Y-%m-%d %H:%M"
 

@@ -5,7 +5,7 @@ from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
     QSortFilterProxyModel,
     )
 
-from core import app_globals as ag, db_ut
+from . import app_globals as ag, db_ut
 
 
 class ProxyModel(QSortFilterProxyModel):

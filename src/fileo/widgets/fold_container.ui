@@ -286,7 +286,7 @@
   <customwidget>
    <class>Foldable</class>
    <extends>QWidget</extends>
-   <header>widgets.foldable</header>
+   <header>.foldable</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget, QFileDialog
 
 from .ui_file_search import Ui_FileSearch
 
-from core import app_globals as ag, icons
+from ..core import app_globals as ag, icons
 
 
 class fileSearch(QWidget):

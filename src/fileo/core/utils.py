@@ -8,13 +8,14 @@ from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant
 from PyQt6.QtGui import QMouseEvent, QIcon
 from PyQt6.QtWidgets import QApplication
 
-from core import app_globals as ag
+from . import icons, app_globals as ag
+from .. import qss as qtss
 
 __all__ = ['setup_ui', 'resize_grips',
             'get_setting', 'save_setting',
 ]
 
-APP_NAME = "fileBox"
+APP_NAME = "fileo"
 MAKER = 'miha'
 
 settings = None
@@ -24,7 +25,11 @@ def get_setting(key: str, default: Optional[Any]=None) -> QVariant:
     global settings
     if not settings:
         settings = QSettings(MAKER, APP_NAME)
-    return settings.value(key, default) or default
+    try:
+        to_set = settings.value(key, default)
+    except TypeError:
+        to_set = default
+    return to_set
 
 def save_setting(**kwargs):
     if not kwargs:
@@ -37,7 +42,7 @@ def save_setting(**kwargs):
         settings.setValue(key, QVariant(value))
 
 def setup_ui(self):
-    from widgets.custom_grips import CustomGrip
+    from ..widgets.custom_grips import CustomGrip
 
     # CUSTOM GRIPS
     self.grips = {}
@@ -94,13 +99,11 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     params = None
     qss = None
 
-    app.setWindowIcon(QIcon(str(resources.path("qss", "art_explode.ico"))))
-
     def get_qss_theme():
         nonlocal params
         nonlocal qss
-        qss = resources.read_text("qss", '.'.join((theme, "qss")))
-        params = resources.read_text("qss", '.'.join((theme, "param")))
+        qss = resources.read_text(qtss, '.'.join((theme, "qss")))
+        params = resources.read_text(qtss, '.'.join((theme, "param")))
 
     def param_substitution():
         for key, val in ag.qss_params.items():
@@ -154,3 +157,15 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
 
     if to_save:
         save_qss("out-qss.log")
+
+    icons.collect_all_icons()
+
+    try:
+        from ctypes import windll  # to show icon on the taskbar - Windows only
+        myappid = '.'.join((MAKER, APP_NAME))
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        logger.info(f"{myappid=}")
+    except ImportError:
+        pass
+
+    app.setWindowIcon(icons.get_other_icon('app'))

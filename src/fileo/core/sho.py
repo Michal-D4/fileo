@@ -2,20 +2,20 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QObject, QEvent
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent, )
+                         QResizeEvent, QPixmap, QIcon,  )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
                              QFrame, QWidget, QCheckBox, )
 
-from ui.ui_main import Ui_Sho
-from widgets.filter_setup import FilterSetup
-from widgets.fold_container import FoldContainer
-from widgets.open_db import OpenDB
-from widgets.file_search import fileSearch
+from ..ui.ui_main import Ui_Sho
+from ..widgets.filter_setup import FilterSetup
+from ..widgets.fold_container import FoldContainer
+from ..widgets.open_db import OpenDB
+from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
-from widgets.file_notes import notesBrowser
+from ..widgets.file_notes import notesBrowser
 
 from . import icons, utils, db_ut, bk_ut
 from . import app_globals as ag
@@ -83,7 +83,8 @@ class shoWindow(QMainWindow):
         ag.notes = notesBrowser()
         ag.notes.setObjectName("file_notes")
         add_widget_into_frame(self.ui.noteHolder, ag.notes)
-        ag.notes.set_data()
+        if ag.db['Conn']:
+            ag.notes.set_data()
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -190,6 +191,10 @@ class shoWindow(QMainWindow):
         for btn_name, icon in self.icons.items():
             btn: QToolButton  = getattr(self.ui, btn_name)
             btn.setIcon(icon[btn.isChecked()])
+        icon = QIcon()
+        logger.info(f"{ag.qss_params['$searchIcon']=}")
+        icon.addPixmap(QPixmap(ag.qss_params['$searchIcon']))
+        self.ui.btn_search.setIcon(icon)
 
     def connect_slots(self):
         self.ui.close.clicked.connect(self.close_app)

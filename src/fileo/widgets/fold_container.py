@@ -1,15 +1,15 @@
 from functools import reduce
-from operator import add, attrgetter
+from operator import add
 
 from loguru import logger
 
 from PyQt6.QtCore import QObject, QPoint, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction, QIcon, QMouseEvent, QResizeEvent
-from PyQt6.QtWidgets import QMenu, QToolButton, QWidget
+from PyQt6.QtGui import QAction, QMouseEvent, QResizeEvent
+from PyQt6.QtWidgets import QMenu, QWidget
 
-from core import icons, app_globals as ag
-from widgets.foldable import Foldable
-from widgets.ui_fold_container import Ui_Foldings
+from ..core import icons, app_globals as ag
+from .foldable import Foldable
+from .ui_fold_container import Ui_Foldings
 
 MIN_HEIGHT = 62
 

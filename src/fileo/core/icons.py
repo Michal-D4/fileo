@@ -3,7 +3,7 @@ from typing import Dict
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize
 
-from core import app_globals as ag
+from . import app_globals as ag
 
 __all__ = ['collect_all_icons', 'get_toolbar_icons',
            'get_other_icon',
@@ -20,6 +20,11 @@ def collect_all_icons():
     tmp1 = qta.icon('mdi.circle', color="#00FF00")
     tmp2 = qta.icon('mdi.circle', color="#FF0000")
     other_icons["busy"] = (tmp1.pixmap(sz), tmp2.pixmap(sz))
+
+    other_icons["app"] = qta.icon(
+        'mdi.creation', color=ag.qss_params["$Xanthic"],
+        opacity=0.8, scale_factor = 1.3
+    )
 
     other_icons["copy"] = qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
     other_icons["folder"] = qta.icon('mdi.alpha-f', color=ag.qss_params["$LimeGreen"], scale_factor = 2)

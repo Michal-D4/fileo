@@ -13,10 +13,10 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox,
 )
 
-from core import db_ut, app_globals as ag
-from core.table_model import TableModel, ProxyModel2
-from core.edit_tree_model2 import TreeModel, TreeItem
-from widgets import about
+from . import db_ut, app_globals as ag
+from .table_model import TableModel, ProxyModel2
+from .edit_tree_model2 import TreeModel, TreeItem
+from ..widgets import about
 
 def exec_user_actions():
     """
