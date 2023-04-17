@@ -29,7 +29,6 @@ def collect_all_icons():
     other_icons["cancel2"] = qta.icon('mdi.window-close', color=ag.qss_params["$CarmineColor"])
 
     other_icons["toEdit"] = qta.icon('mdi.pencil-outline', color=ag.qss_params["$navigatorColor"])
-    other_icons['info'] = qta.icon('mdi.information-variant', color=ag.qss_params["$navigatorColor"])
     other_icons['plus'] = qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"])
 
     other_icons['right'] = qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"])

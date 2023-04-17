@@ -40,7 +40,6 @@ class FilterSetup(QWidget):
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
 
     def after_changed(self, st: bool):
-        print(f"after_changed: {st=}")
         self.ui.after_date.setEnabled(st)
         if not st:
             self.ui.before_date.clearMinimumDate()
@@ -53,7 +52,6 @@ class FilterSetup(QWidget):
             self.ui.after_date.clearMaximumDate()
 
     def before_changed(self, st: bool):
-        print(f"before_changed: {st=}")
         self.ui.before_date.setEnabled(st)
         if not st:
             self.ui.after_date.clearMaximumDate()
@@ -66,21 +64,17 @@ class FilterSetup(QWidget):
             self.ui.before_date.clearMinimumDate()
 
     def changed_after_date(self):
-        print(f"changed_after_date")
         if self.ui.before.isChecked():
             self.ui.before_date.setMinimumDate(self.ui.after_date.date())
 
     def changed_before_date(self):
-        print(f"changed_before_date")
         if self.ui.after.isChecked():
             self.ui.after_date.setMaximumDate(self.ui.before_date.date())
 
     def open_changed(self, st: bool):
-        print(f"open_changed: {st=}")
         self.ui.open_edit.setEnabled(st)
 
     def rating_changed(self, st: bool):
-        print(f"rating_changed: {st=}")
         self.ui.rating_edit.setEnabled(st)
 
     def done_clicked(self) -> bool:

@@ -2,12 +2,12 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QObject, QEvent
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent)
+                         QResizeEvent, )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget, QCheckBox)
+                             QFrame, QWidget, QCheckBox, )
 
 from ui.ui_main import Ui_Sho
 from widgets.filter_setup import FilterSetup
@@ -201,7 +201,7 @@ class shoWindow(QMainWindow):
 
         self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
-        self.ui.btnSetup.clicked.connect(self.click_setup_button)
+        self.ui.btnSetup.clicked.connect(bk_ut.click_setup_button)
 
         self.ui.vSplit.enterEvent = self.vsplit_enter_event
         self.ui.vSplit.mousePressEvent = self.vsplit_press_event
@@ -270,8 +270,6 @@ class shoWindow(QMainWindow):
 
             self.start_pos.setY(y)
             e.accept()
-        else:
-            e.ignore()
 
     def comment_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
@@ -298,18 +296,19 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def vsplit_move_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        if not self.start_pos:
-            self.start_pos = self.mapFromGlobal(cur_pos)
-            return
-        cur_pos = self.mapFromGlobal(cur_pos)
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            cur_pos = e.globalPosition().toPoint()
+            if not self.start_pos:
+                self.start_pos = self.mapFromGlobal(cur_pos)
+                return
+            cur_pos = self.mapFromGlobal(cur_pos)
 
-        self.setUpdatesEnabled(False)
-        x: int = self.navigator_resize(cur_pos.x())
-        self.setUpdatesEnabled(True)
+            self.setUpdatesEnabled(False)
+            x: int = self.navigator_resize(cur_pos.x())
+            self.setUpdatesEnabled(True)
 
-        self.start_pos.setX(x)
-        e.accept()
+            self.start_pos.setX(x)
+            e.accept()
 
     def navigator_resize(self, x: int) -> int:
         x0 = self.start_pos.x()
@@ -401,10 +400,6 @@ class shoWindow(QMainWindow):
         else:
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
-
-    @pyqtSlot()
-    def click_setup_button(self):
-        print('click_setup clicked')
 
     def mousePressEvent(self, e: QMouseEvent):
         if self.open_db and self.open_db.isVisible():

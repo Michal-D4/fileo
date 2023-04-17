@@ -7,13 +7,16 @@ import pickle
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
-    )
+)
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QApplication, QMessageBox, QAbstractItemView, QFileDialog
+from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
+    QFileDialog, QMessageBox,
+)
 
 from core import db_ut, app_globals as ag
 from core.table_model import TableModel, ProxyModel2
 from core.edit_tree_model2 import TreeModel, TreeItem
+from widgets import about
 
 def exec_user_actions():
     """
@@ -38,6 +41,7 @@ def exec_user_actions():
         "Files Reveal in explorer": open_folder,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
+        "Setup About": show_about,
       }
 
     @pyqtSlot(str)
@@ -50,9 +54,19 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            print(f'Action not implemented {err}')
+            dlg = QMessageBox(ag.app)
+            dlg.setWindowTitle('Action not implemented')
+            dlg.setText(f'Action name: {err}')
+            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+            dlg.setIcon(QMessageBox.Icon.Warning)
+            dlg.exec()
 
     return execute_action
+
+@pyqtSlot()
+def show_about():
+    dlg = about.AboutDialog(ag.app)
+    dlg.show()
 
 #region Common
 def save_settings(**kwargs):
@@ -136,7 +150,6 @@ def get_dir_names_path(index: QModelIndex) -> list[str]:
         if not item.parent():
             break
         name = item.data(Qt.ItemDataRole.DisplayRole)
-        logger.info(f'{name=}')
         branch.append(name)
         item = item.parent()
     branch.reverse()
@@ -182,7 +195,7 @@ def cur_dir_changed(curr_idx: QModelIndex):
         save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        files_from_folder()
+        show_folder_files()
         set_current_file(0)
 
 def current_dir_path():
@@ -206,7 +219,6 @@ def restore_path(path: list) -> QModelIndex:
         if model.rowCount(QModelIndex()) > 0:
             parent = model.index(0, 0, QModelIndex())
 
-    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(parent)
     ag.dir_list.scrollTo(parent, QAbstractItemView.ScrollHint.PositionAtCenter)
     return parent
@@ -228,7 +240,7 @@ def app_mode_changed(old_mode: ag.appMode):
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
 
-    {ag.appMode.DIR: files_from_folder,
+    {ag.appMode.DIR: show_folder_files,
      ag.appMode.FILTER: filtered_files,
     } [ag.mode]()
     if ag.file_list.model().rowCount() > 0:
@@ -236,7 +248,7 @@ def app_mode_changed(old_mode: ag.appMode):
 
 def populate_file_list():
     if ag.mode is ag.appMode.DIR:
-        files_from_folder()
+        show_folder_files()
     else:             # appMode.FILTER or appMode.FILTER_SETUP
         filtered_files()
 
@@ -251,7 +263,7 @@ def filter_changed():
     filtered_files()
     set_current_file(0)
 
-def files_from_folder():
+def show_folder_files():
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
 
@@ -285,7 +297,6 @@ def show_files(files):
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
     if idx.isValid():
-        logger.info(f'before setCurrentIndex')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -475,7 +486,6 @@ def _import_files(filename):
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
-        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def load_file(fl: dict) -> int:
@@ -518,7 +528,6 @@ def create_child_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
-        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
@@ -538,7 +547,6 @@ def create_dir():
 
     if new_idx.isValid():
         create_folder(new_idx)
-        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(new_idx)
 
 def create_folder(index: QModelIndex):
@@ -577,8 +585,6 @@ def delete_tree(u_dat: ag.DirData, visited=None):
     if visited is None:
         visited = []
     visited.append(u_dat)
-    logger.info(f'({u_dat.parent_id}, {u_dat.id}, {u_dat.is_copy}, {u_dat.hidden})')
-
     children = db_ut.dir_children(u_dat.id)
     for child in children:
         dir_dat: ag.DirData = ag.DirData(*child)
@@ -588,7 +594,6 @@ def delete_tree(u_dat: ag.DirData, visited=None):
         if dir_dat in visited:
             continue
         delete_tree(dir_dat, visited)
-
     return visited
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
@@ -600,7 +605,6 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
             branch.append(last_id)
         idx = expand_branch(branch)
         if idx.isValid():
-            logger.info(f'before setCurrentIndex')
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -680,6 +684,5 @@ def delete_authors(authors: str):
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     if f_dat:
-        logger.info(f'{f_dat=}')
         ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)

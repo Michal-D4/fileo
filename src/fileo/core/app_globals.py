@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum, unique
 from typing import TYPE_CHECKING
 
@@ -56,25 +55,11 @@ class FileData():
     ext_id: int
     path: int
 
-@dataclass(slots=True)
-class Note():
-    note: str
-    id: int
-    modified: datetime
-    created: datetime
-
-    def __post_init__(self):
-        try:
-            self.modified = datetime.fromtimestamp(self.modified)
-            self.created = datetime.fromtimestamp(self.created)
-        except:
-            pass
-
 stop_thread = False
 mode = appMode.DIR
 section_resized: bool = False
 
-drop_action = None
+drop_button = 0
 drop_target = None
 dropped_ids = []
 

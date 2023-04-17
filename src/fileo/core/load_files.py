@@ -47,7 +47,6 @@ class loadFiles(QObject):
         cursor = self.conn.cursor().execute(sql)
         for row in cursor:
             if Path(row[-1]).is_dir():  # skip not dirs
-                logger.info(f"Path: {row[-1]}, pathId: {row}")
                 self.paths[row[-1]] = PathDir(row[0], 0)
 
     def set_files_iterator(self, files):
@@ -61,9 +60,7 @@ class loadFiles(QObject):
 
     def load_to_dir(self, dir_id):
         self.load_id = dir_id
-        logger.info(f"{self.load_id=}")
         for line in self.files:
-            logger.info(line)
             file = Path(line)
             self.drop_file(file)
 
@@ -72,13 +69,11 @@ class loadFiles(QObject):
     def drop_file(self, filename: Path):
         path_id = self.get_path_id(str(filename.parent))
 
-        logger.info(f'{path_id=}, {filename}')
         id = (
             self.find_file(path_id, filename.name) or
             self._drop_file(path_id, filename)
         )
 
-        logger.info(f"{id=}, {self.load_id=}")
         self.set_file_dir_link(id, self.load_id)
 
     def _drop_file(self, path_id: int, file_name: Path) -> int:
@@ -87,7 +82,6 @@ class loadFiles(QObject):
 
         ext_id = self.insert_extension(file_name)
 
-        logger.info(f"{ext_id=}, {path_id=}, {file_name.name}")
         self.conn.cursor().execute(INSERT_FILE,
             {'file': file_name.name, 'ext_id': ext_id, 'path': path_id}
         )
@@ -108,15 +102,12 @@ class loadFiles(QObject):
 
             file = Path(line)
             id = self.insert_file(file)
-            logger.info(f"{id=}")
-
         self.conn.close()
         self.finished.emit(self.ext_inserted)
 
     def create_load_dir(self):
         load_dir = f'Load {datetime.now().strftime("%b %d %H:%M")}'
         self.load_id = self._insert_dir(load_dir)
-        logger.info(f'{self.load_id=}')
         self.add_parent_dir(0, self.load_id)
 
     def insert_file(self, full_file_name: Path) -> int:
@@ -126,8 +117,6 @@ class loadFiles(QObject):
         :return: file_id if inserted new, 0 if already exists
         """
         path_id = self.get_path_id(str(full_file_name.parent))
-
-        logger.info(f"{path_id=}, {str(full_file_name)}")
 
         if self.find_file(path_id, full_file_name.name):
             return 0
@@ -152,13 +141,11 @@ class loadFiles(QObject):
 
     def set_file_dir_link(self, id: int, dir_id: int):
         INSERT_FILEDIR = 'insert into filedir values (:file, :dir);'
-        logger.info(f'{id=}, {dir_id=}')
         self.conn.cursor().execute(INSERT_FILEDIR, {'file': id, 'dir': dir_id})
 
     def find_file(self, path_id: int, file_name: str) -> int:
         FIND_FILE = ('select id from files where path = :pid and filename = :name')
 
-        logger.info(f'{path_id=}, {file_name}')
         id = self.conn.cursor().execute(FIND_FILE,
             {'pid': path_id, 'name': file_name}
         ).fetchone()
@@ -167,7 +154,6 @@ class loadFiles(QObject):
 
     def get_dir_id(self, path: Path, path_id: int) -> int:
         if str(path) in self.paths:
-            logger.info(f'{self.paths[str(path)]}, {str(path)}')
             id = self.paths[str(path)].dirId
             if id:
                 return id
@@ -175,12 +161,10 @@ class loadFiles(QObject):
         parent_id = self.find_closest_parent(path)
         id = self._new_dir(path, parent_id)
         self.paths[str(path)] = PathDir(path_id, id)
-        logger.info(f'{self.paths[str(path)]}, {str(path)}')
         return id
 
     def _new_dir(self, path: Path, parent_id: int):
         id = self._insert_dir(path.name)
-        logger.info(f'{id=}, {parent_id=}')
         self.add_parent_dir(parent_id, id)
         return id
 
@@ -223,7 +207,6 @@ class loadFiles(QObject):
             'values (:p_id, :id)'
         )
 
-        logger.info(f'{parent=}, {id_dir=}')
         self.conn.cursor().execute(
             INSERT_PARENT, {'p_id': parent, 'id': id_dir}
         )
@@ -236,10 +219,8 @@ class loadFiles(QObject):
              or  0,         None
         """
         # the first parent of "new_path / '@'" is a new_path itself
-        logger.info(f"{str(new_path)=}")
         for parent_path in (new_path / '@').parents:
             str_parent = str(parent_path)
-            logger.info(f'parent:{str_parent}')
             if str_parent in self.paths:
                 return self.paths[str_parent].dirId or self.load_id
 

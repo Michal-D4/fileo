@@ -6,7 +6,7 @@ from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView
+from PyQt6.QtWidgets import QMenu, QTreeView, QMessageBox
 
 from . import app_globals as ag, low_bk, load_files, drag_drop as dd
 from widgets import workers
@@ -52,7 +52,7 @@ def toggle_collapse(collapse: bool):
 def restore_sorting():
     col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
     order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.model().sort(col, order)
+    ag.file_list.header().setSortIndicator(col, order)
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
@@ -62,10 +62,11 @@ def bk_setup(main: 'shoWindow'):
 
     set_context_menu()
     populate_all()
-    set_drag_drop_handlers()
+    dd.set_drag_drop_handlers()
 
     ag.file_list.resizeEvent = file_list_resize
-    ag.signals_.user_action_signal.connect(low_bk.exec_user_actions())
+    execute_user_action = low_bk.exec_user_actions()
+    ag.signals_.user_action_signal.connect(execute_user_action)
     ag.signals_.start_file_search.connect(file_searching)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
@@ -105,23 +106,29 @@ def set_field_menu():
     menu.setToolTipsVisible(True)
     ag.field_menu.setMenu(menu)
 
+@pyqtSlot()
+def click_setup_button():
+    menu = QMenu(self)
+    menu.addAction('About')
+    sz = menu.sizeHint()
+    pos = self.ui.btnSetup.pos()
+    action = menu.exec(ag.app.mapToGlobal(
+        pos + QPoint(53, 26 - sz.height())
+    ))
+    if action:
+        ag.signals_.user_action_signal.emit(f"Setup {action.text()}")
+
 def field_list_changed():
     resize_columns(0)
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
     low_bk.set_current_file(idx.row())
 
-def set_drag_drop_handlers():
-    ag.dir_list.startDrag = dd.start_drag_dirs
-    ag.file_list.startDrag = dd.start_drag_files
-    ag.dir_list.dragMoveEvent = dd.drag_move_event
-    ag.dir_list.dragEnterEvent = dd.drag_enter_event
-    ag.dir_list.dropEvent = dd.drop_event
-
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
-        self.ui.label.setText(low_bk.full_file_name(curr))
+        ag.file_list.scrollTo(curr)
+        self.ui.label.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
 def file_list_resize(e: QResizeEvent):
@@ -178,7 +185,6 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    logger.info(f'before setCurrentIndex')
     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(Qt.CheckState)
@@ -292,7 +298,6 @@ def run_update_pdf_files():
     run_worker(workers.update_pdf_files)
 
 def run_worker(func):
-    print(f'run_worker - function: {func.__name__}')
     if self.is_busy or not ag.db['Conn']:
         return
     self.thread = QThread(self)
@@ -309,6 +314,5 @@ def run_worker(func):
 
 @pyqtSlot()
 def finish_worker():
-    print('finish_worker')
     self.thread.quit()
     self.set_busy(False)

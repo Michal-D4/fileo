@@ -1,4 +1,6 @@
 from loguru import logger
+from dataclasses import dataclass
+from datetime import datetime
 
 from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
@@ -14,6 +16,21 @@ from core.compact_list import aBrowser
 from widgets.file_info import fileInfo
 
 time_format = "%Y-%m-%d %H:%M"
+
+@dataclass(slots=True)
+class Note():
+    note: str
+    id: int
+    modified: datetime
+    created: datetime
+
+    def __post_init__(self):
+        try:
+            self.modified = datetime.fromtimestamp(self.modified)
+            self.created = datetime.fromtimestamp(self.created)
+        except:
+            pass
+
 
 class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
@@ -139,17 +156,24 @@ class authorBrowser(QWidget):
         self.edit_authors.setPlainText(', '.join(txt))
 
     def get_edited_list(self) -> list[str]:
-        tt = self.edit_authors.toPlainText()
+        tt = self.edit_authors.toPlainText().strip()
         tt = tt.replace('[', '')
-        tt = tt.replace(']', '')
-        return [t.strip() for t in tt.split(',') if t.strip()]
+        pp = [t.strip() for t in tt.split('],') if t.strip()]
+        if tt.endswith(']'):
+            pp[-1] = pp[-1][:-1]
+        else:
+            qq = [t.strip() for t in pp[-1].split(',') if t.strip()]
+            pp = [*pp[:-1], *qq]
+        return pp
 
     def sel_list_changed(self, old: list[str], new: list[str]):
+        logger.info(f'{old=}, {new=}')
         self.remove_items(old, new)
         self.add_items(old, new)
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
+        logger.info(f'{diff=}')
         for d in diff:
             if id := self.br.get_tag_id(d):
                 db_ut.break_file_authors_link(self.file_id, id)
@@ -157,7 +181,9 @@ class authorBrowser(QWidget):
     def add_items(self, old: list[str], new: list[str]):
         inserted = False
         diff = set(new) - set(old)
+        logger.info(f'{diff=}')
         for d in diff:
+            logger.info(f'{self.file_id=}, {d=}')
             if db_ut.add_author(self.file_id, d):
                 inserted = True
         if inserted:
@@ -168,6 +194,9 @@ class authorBrowser(QWidget):
         self.set_authors()
         self.set_file_id(self.file_id)
 
+def dir_attrs(dd: ag.DirData):
+    tt = f'{"C" if dd.is_copy else ""}{"H" if dd.hidden else ""}'
+    return f'({tt})' if tt else ''
 
 class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
@@ -189,9 +218,7 @@ class Locations(QTextBrowser):
         self.branches.clear()
         self.curr = 0
         for dd in self.dirs:
-            self.branches.append(
-                [(dd.is_copy, dd.hidden), dd.id, dd.parent_id]
-            )
+            self.branches.append([(dd.id, dir_attrs(dd)), dd.parent_id])
             self.build_branches()
 
     def get_file_dirs(self, dir_ids):
@@ -202,7 +229,12 @@ class Locations(QTextBrowser):
                 self.dirs.append(ag.DirData(*pp))
 
     def build_branches(self):
-        curr = 0
+        def add_dir_parent(qq: ag.DirData, tt: list) -> list:
+            ss = [*tt[:-1]]
+            tt[-1] = (qq.id, dir_attrs(qq))
+            tt.append(qq.parent_id)
+            return ss
+
         while 1:
             if self.curr >= len(self.branches):
                 break
@@ -213,25 +245,23 @@ class Locations(QTextBrowser):
                 parents = db_ut.dir_parents(tt[-1])
                 first = True
                 for pp in parents:
+                    qq = ag.DirData(*pp)
                     if first:
-                        ss = [*tt]
-                        tt.append(pp[0])
+                        ss = add_dir_parent(qq, tt)
                         first = False
                         continue
-                    self.branches.append([*ss, pp[0]])
+                    self.branches.append(
+                        [*ss, (qq.id, dir_attrs(qq)), qq.parent_id]
+                    )
             self.curr += 1
 
     def show_branches(self):
         txt = [
-            '<table><tr><th>Path/Folder Tree branch</th>',
-            '<th width="60" align="right">Copy</th>'
-            '<th width="60" align="right">Hidden</th></tr>',
+            '<table><tr><td><b>Path/Folder Tree branch</b></td>',
         ]
         for a,b,c in self.names:
             txt.append(
                 f'<tr><td>{a}</td>'
-                f'<td align="right">{b}</td>'
-                f'<td align="right">{c}</td></tr>'
             )
         txt.append('</table>')
         self.setHtml(''.join(txt))
@@ -242,13 +272,14 @@ class Locations(QTextBrowser):
             self.names.append(self.branch_names(bb))
 
     def branch_names(self, bb: list) -> str:
+        tt = bb[:-1]
+        tt.reverse()
         is_copy = 'Y' if bb[0][0] else ''
         hidden = 'Y' if bb[0][1] else ''
-        tt = bb[1:-1]
-        tt.reverse()
         ww = []
         for id in tt:
-            ww.append(db_ut.get_dir_name(id))
+            name = db_ut.get_dir_name(id[0])
+            ww.append(f'{name}{id[1]}')
         return ' > '.join(ww), is_copy, hidden
 
 
@@ -472,7 +503,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def set_notes_data(self, data):
         buf = []
         for row in data:
-            note = ag.Note(*row)
+            note = Note(*row)
             head = self.section_title(
                 note.id,
                 note.modified.strftime(time_format),

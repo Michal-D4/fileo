@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fileo"
 version = "0.1.0"
-description = ""
+description = "Yet another file organizer"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
 packages = [{include = "fileo", from = "src"}]
