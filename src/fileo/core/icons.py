@@ -22,8 +22,8 @@ def collect_all_icons():
     other_icons["busy"] = (tmp1.pixmap(sz), tmp2.pixmap(sz))
 
     other_icons["app"] = qta.icon(
-        'mdi.file-star-outline', color=ag.qss_params["$Xanthic"],
-        opacity=0.8
+        'mdi.creation', color=ag.qss_params["$Xanthic"],
+        opacity=0.8, scale_factor = 1.3
     )
 
     other_icons["copy"] = qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
