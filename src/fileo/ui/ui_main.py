@@ -345,7 +345,7 @@ class Ui_Sho(object):
         self.btnDir.setToolTip(_translate("Sho", "Show file list for current directory"))
         self.btnFilter.setToolTip(_translate("Sho", "Show file list according the filter"))
         self.btnFilterSetup.setToolTip(_translate("Sho", "Setup file list filter"))
-        self.btnScan.setToolTip(_translate("Sho", "Scan file system for files and add them into DB"))
+        self.btnScan.setToolTip(_translate("Sho", "Scan file system to add files into DB"))
         self.btnToggleBar.setToolTip(_translate("Sho", "Toggle Navigator bar"))
         self.btnSetup.setToolTip(_translate("Sho", "Menu"))
         self.btn_search.setToolTip(_translate("Sho", "Search file(s) by name"))

@@ -267,7 +267,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Scan file system for files and add them into DB</string>
+            <string>Scan file system to add files into DB</string>
            </property>
            <property name="styleSheet">
             <string notr="true"/>

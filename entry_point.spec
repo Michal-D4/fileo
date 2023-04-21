@@ -8,7 +8,7 @@ a = Analysis(
     ['entry_point.py'],
     pathex=[],
     binaries=[],
-    datas=[(r'src\fileo\qss', r'src\fileo\qss')],
+    datas=[('src/fileo/qss', 'src/fileo/qss')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

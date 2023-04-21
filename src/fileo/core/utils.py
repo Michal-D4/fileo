@@ -1,11 +1,11 @@
 from loguru import logger
 
 from typing import Any, Optional
-import importlib.resources as resources
+from importlib import resources
 
 
 from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant
-from PyQt6.QtGui import QMouseEvent, QIcon
+from PyQt6.QtGui import QMouseEvent, QPixmap
 from PyQt6.QtWidgets import QApplication
 
 from . import icons, app_globals as ag
@@ -99,6 +99,9 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     params = None
     qss = None
 
+    with resources.path(qtss, "search.svg") as pic_path:
+        res_path = pic_path.parent.as_posix()
+
     def get_qss_theme():
         nonlocal params
         nonlocal qss
@@ -107,8 +110,10 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
 
     def param_substitution():
         for key, val in ag.qss_params.items():
-            if val.startswith("$"):
-                ag.qss_params[key] = ag.qss_params[val]
+            if key.startswith("$ico_"):
+                ag.qss_params[key] = '/'.join((res_path, val))
+            elif key.startswith("$"):
+                ag.qss_params[key] = val
 
     def parse_params():
         nonlocal params
@@ -160,11 +165,20 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
 
     icons.collect_all_icons()
 
+    icons.add_other_icon(
+        'search', QPixmap(ag.qss_params['$ico_search'])
+    )
+    icons.add_other_icon(
+        'match_case', QPixmap(ag.qss_params['$ico_match_case'])
+    )
+    icons.add_other_icon(
+        'match_word', QPixmap(ag.qss_params['$ico_match_word'])
+    )
+
     try:
         from ctypes import windll  # to show icon on the taskbar - Windows only
         myappid = '.'.join((MAKER, APP_NAME))
         windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-        logger.info(f"{myappid=}")
     except ImportError:
         pass
 

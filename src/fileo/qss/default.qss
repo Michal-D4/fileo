@@ -209,21 +209,21 @@ QTreeView::branch:selected:!active {
  background: $itemSelectNoActive;
 }
 QTreeView::branch:!adjoins-item {
- border-image: url($VLINE) 0;
+ border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:adjoins-item {
- border-image: url($VLINE) 0;
+ border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:!has-children:!has-siblings:adjoins-item {
- border-image: url($VLINE) 0;
+ border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:closed:has-children {
  border-image: none;
- image: url($angleRight);
+ image: url($ico_angleRight);
 }
 QTreeView::branch:open:has-children {
  border-image: none;
- image: url($angleDown);
+ image: url($ico_angleDown);
 }
 /* QTreeView::item:selected{background-color: #bedcf0;}
 QTreeView::item:hover:selected{background-color: #94c8ea;}
@@ -246,5 +246,9 @@ QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
 ##noteFrames~QPlainTextEdit#edit_authors {border: $shapeBorderRight1 $colorBorder2;}
 ##note_editor~QTextEdit {border: none; background-color: $treeViewBackground }
 ##dialog~QFrame#form {background-color: $dialogBackground; border: none;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
+##searchFrame~QFrame#frame {border: $shapeBorderRight1 $colorBorder; margin: 0px; padding: 0px 5px; }
+##searchFrame~QLineEdit#searchLine {border: none; margin: 0px; }
+##searchFrame~#frame QToolButton {border: none; background-color: $dialogBackground;}
+##searchFrame~#frame QToolButton:checked {border: $shapeBorderRight1 $colorBorder; border-radius: 3px; background-color: $tagSelectedBG;}
 ##fileInfo~background: $treeViewBackground
 ##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}

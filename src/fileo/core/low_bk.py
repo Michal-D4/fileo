@@ -42,6 +42,7 @@ def exec_user_actions():
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
         "Setup About": show_about,
+        "find_files_by_name": find_files_by_name,
       }
 
     @pyqtSlot(str)
@@ -56,12 +57,19 @@ def exec_user_actions():
         except KeyError as err:
             dlg = QMessageBox(ag.app)
             dlg.setWindowTitle('Action not implemented')
-            dlg.setText(f'Action name: {err}')
+            dlg.setText(f'Action name "{err}" not implemented')
             dlg.setStandardButtons(QMessageBox.StandardButton.Close)
             dlg.setIcon(QMessageBox.Icon.Warning)
             dlg.exec()
 
     return execute_action
+
+@pyqtSlot()
+def find_files_by_name(param: str):
+    print(f'param')
+    pp = param.split(',')
+    files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
+    show_files(files)
 
 @pyqtSlot()
 def show_about():

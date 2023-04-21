@@ -1,7 +1,9 @@
+from loguru import logger
 import qtawesome as qta
 from typing import Dict
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize
+from pathlib import Path
 
 from . import app_globals as ag
 
@@ -45,7 +47,17 @@ def collect_all_icons():
     other_icons["more"] = qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"])
     other_icons["remove_btn"] = qta.icon('mdi.close', color=ag.qss_params["$dialogBackground"],
         color_active=ag.qss_params["$dialogInputEditColor"]),
-    other_icons["save_filter"] = qta.icon('mdi.plus', color=ag.qss_params["$filterFrameColor"])
+    other_icons["prev_folder"] = qta.icon(
+        'mdi.arrow-left',
+        color=ag.qss_params["$dialogInputColor"],
+        color_active=ag.qss_params["$topBarColor"],
+        color_selected=ag.qss_params["$itemSelectBG"]
+        )
+    other_icons["next_folder"] = qta.icon(
+        'mdi.arrow-right',
+        color=ag.qss_params["$dialogInputColor"],
+        color_active=ag.qss_params["$topBarColor"]
+        )
 
 def _collect_toolbar_icons():
     # global icons
@@ -115,6 +127,11 @@ def _collect_toolbar_icons():
 
 def get_other_icon(key: str) -> QIcon|QPixmap:
     return other_icons[key]
+
+def add_other_icon(key: str, pict: QPixmap):
+    ico = QIcon()
+    ico.addPixmap(pict)
+    other_icons[key] = ico
 
 def get_toolbar_icons() -> Dict:
     return toolbar_icons

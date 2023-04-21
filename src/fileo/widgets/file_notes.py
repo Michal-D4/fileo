@@ -2,7 +2,7 @@ from loguru import logger
 from dataclasses import dataclass
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QUrl, QDateTime, QSize, pyqtSlot
+from PyQt6.QtCore import QUrl, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
@@ -159,11 +159,12 @@ class authorBrowser(QWidget):
         tt = self.edit_authors.toPlainText().strip()
         tt = tt.replace('[', '')
         pp = [t.strip() for t in tt.split('],') if t.strip()]
-        if tt.endswith(']'):
-            pp[-1] = pp[-1][:-1]
-        else:
-            qq = [t.strip() for t in pp[-1].split(',') if t.strip()]
-            pp = [*pp[:-1], *qq]
+        if pp:
+            if tt.endswith(']'):
+                pp[-1] = pp[-1][:-1]
+            else:
+                qq = [t.strip() for t in pp[-1].split(',') if t.strip()]
+                pp = [*pp[:-1], *qq]
         return pp
 
     def sel_list_changed(self, old: list[str], new: list[str]):

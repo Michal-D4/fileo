@@ -92,6 +92,36 @@ def get_ext_list() -> apsw.Cursor:
     return ag.db['Conn'].cursor().execute(sql)
 
 #region files
+def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
+    sql = (
+        'with x(fileid, commented) as (select fileid, max(modified) '
+        'from comments group by fileid) '
+        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
+        'f.id, fd.dir, f.extid, f.path from files f '
+        'left join x on x.fileid = f.id '
+        'join filedir fd on fd.file = f.id '
+        'where filename '
+        f"{'glob ?' if case else 'like ?'}"
+    )
+    wildcard = '*' if case else '%'
+    nn = name if exact else f'{wildcard}{name}{wildcard}'
+    print(f'{nn=}')
+    print(sql)
+    with ag.db['Conn'] as conn:
+        return conn.execute(sql, (nn,))
+
+def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
+    sql = (
+        'select count(*) from files where filename '
+        f"{'glob ?' if case else 'like ?'}"
+    )
+    wildcard = '*' if case else '%'
+    nn = name if exact else f'{wildcard}{name}{wildcard}'
+    with ag.db['Conn'] as conn:
+        res = conn.execute(sql, (nn,)).fetchone()
+        return res[0] > 0
+
 def get_files(did: int, parent: int) -> apsw.Cursor:
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '

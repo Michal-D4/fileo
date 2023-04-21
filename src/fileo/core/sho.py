@@ -131,30 +131,45 @@ class shoWindow(QMainWindow):
         self.container.ui.label.setText(f"{val}")
 
     def set_extra_widgets(self):
-        """
-        button "refresh" for directory tree
-        checkBox to show hidden folders
-        button "collapse_all" for directory tree
-        """
-        btn = QToolButton()
+        btn = QToolButton()             # button "Prev. folder"
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        btn.setIcon(icons.get_other_icon('refresh'))
+        # btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        btn.setAutoRaise(True)
+        # btn.setDisabled(True)
+        btn.setIcon(icons.get_other_icon('prev_folder'))
+        self.container.add_widget(btn, 0)
+        btn.setToolTip("Previous folder")
+        btn.clicked.connect(bk_ut.to_prev_folder)
 
+        btn = QToolButton()             # button "Next folder"
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setAutoRaise(True)
+        btn.setIcon(icons.get_other_icon('next_folder'))
+        self.container.add_widget(btn, 0)
+        btn.setToolTip("Next folder")
+        btn.clicked.connect(bk_ut.to_next_folder)
+
+        btn = QToolButton()             # button "refresh"
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setAutoRaise(True)
+        btn.setIcon(icons.get_other_icon('refresh'))
         self.container.add_widget(btn, 0)
         btn.setToolTip("Refresh folder list")
         btn.clicked.connect(bk_ut.show_hidden_dirs)
 
-        self.show_hidden = QCheckBox()
+        self.show_hidden = QCheckBox()  # checkBox to show hidden folders
         self.show_hidden.setStyleSheet("border:0px; margin:0px; padding:0px;")
         self.container.add_widget(self.show_hidden, 0)
         self.show_hidden.setToolTip("Show hidden folders")
 
-        btn = QToolButton()
+        btn = QToolButton()             # button "collapse_all"
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setAutoRaise(True)
         btn.setIcon(icons.get_other_icon('collapse_all'))
-
         self.container.add_widget(btn, 0)
         btn.setCheckable(True)
         btn.setToolTip("Collapse/expand tree")
@@ -191,10 +206,8 @@ class shoWindow(QMainWindow):
         for btn_name, icon in self.icons.items():
             btn: QToolButton  = getattr(self.ui, btn_name)
             btn.setIcon(icon[btn.isChecked()])
-        icon = QIcon()
-        logger.info(f"{ag.qss_params['$searchIcon']=}")
-        icon.addPixmap(QPixmap(ag.qss_params['$searchIcon']))
-        self.ui.btn_search.setIcon(icon)
+        self.ui.btn_search.setIcon(icons.get_other_icon('search'))
+        self.ui.btn_search.clicked.connect(bk_ut.search_files)
 
     def connect_slots(self):
         self.ui.close.clicked.connect(self.close_app)
@@ -242,8 +255,7 @@ class shoWindow(QMainWindow):
         and choose which to use
         """
         if not self.open_db:
-            self.open_db = OpenDB()
-            self.open_db.setParent(self)
+            self.open_db = OpenDB(self)
         self.open_db.move(48, 20)
         self.open_db.resize(min(self.width() // 2, MAX_WIDTH_DB_DIALOG),
             self.height() - 60)
@@ -376,8 +388,7 @@ class shoWindow(QMainWindow):
             self.filter_setup.hide()
 
     def init_filter_setup(self):
-        self.filter_setup = FilterSetup()
-        self.filter_setup.setParent(self)
+        self.filter_setup = FilterSetup(self)
         ag.tag_list.change_selection.connect(self.filter_setup.tag_selection_changed)
         ag.ext_list.change_selection.connect(self.filter_setup.ext_selection_changed)
         ag.author_list.change_selection.connect(self.filter_setup.author_selection_changed)
@@ -389,8 +400,7 @@ class shoWindow(QMainWindow):
         search for files with a given extension
         in the selected folder and its subfolders
         """
-        srch_files = fileSearch()
-        srch_files.setParent(self)
+        srch_files = fileSearch(self)
         srch_files.move(
             (self.width()-srch_files.width()) // 4,
             (self.height()-srch_files.height()) // 4)
