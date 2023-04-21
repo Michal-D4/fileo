@@ -4,9 +4,12 @@
 *   $word~str         a pair of key-value;
 *        the key in qss (including "$") will be replaced by the string
 *        that follows the "~"
-$VLINE~src/fileo/qss/vline3.svg
-$angleRight~src/fileo/qss/angle_right.svg
-$angleDown~src/fileo/qss/angle_down.svg
+$ico_VLINE~vline3.svg
+$ico_angleRight~angle_right.svg
+$ico_angleDown~angle_down.svg
+$ico_search~search.svg
+$ico_match_case~match_case.svg
+$ico_match_word~match_word.svg
 $toolBarBackground~#2C2C2C
 $toolBarToolButtonBackground~transparent
 $ScrollBarUpDownArrowBG~transparent

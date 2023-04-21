@@ -267,7 +267,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Scan file system for files and add them into DB</string>
+            <string>Scan file system to add files into DB</string>
            </property>
            <property name="styleSheet">
             <string notr="true"/>
@@ -518,6 +518,22 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QToolButton" name="btn_search">
+                <property name="toolTip">
+                 <string>Search file(s) by name</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::InstantPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QToolButton" name="field_menu">

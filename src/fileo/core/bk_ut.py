@@ -9,7 +9,7 @@ from PyQt6.QtGui import (QAction, QResizeEvent,
 from PyQt6.QtWidgets import QMenu, QTreeView
 
 from . import app_globals as ag, low_bk, load_files, drag_drop as dd
-from ..widgets import workers
+from ..widgets import workers, find_files
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -36,6 +36,21 @@ def save_bk_settings():
     }
     low_bk.save_settings(**settings)
     self.filter_setup.save_filter_settings()
+
+@pyqtSlot()
+def search_files():
+    ff = find_files.findFile(ag.app)
+    logger.info(f'{ff.size()=}, {ag.app.width()=}')
+    ff.move(ag.app.width() - ff.width() - 40, 40)
+    ff.show()
+
+@pyqtSlot()
+def to_prev_folder():
+    print('to_prev_folder clicked')
+
+@pyqtSlot()
+def to_next_folder():
+    print('to_next_folder clicked')
 
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
@@ -67,7 +82,7 @@ def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize
     execute_user_action = low_bk.exec_user_actions()
     ag.signals_.user_action_signal.connect(execute_user_action)
-    ag.signals_.start_file_search.connect(file_searching)
+    ag.signals_.start_file_search.connect(file_loading)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
@@ -242,7 +257,7 @@ def file_menu(pos):
             ag.signals_.user_action_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
-def file_searching(root_path: str, ext: list[str]):
+def file_loading(root_path: str, ext: list[str]):
     """
     search for files with a given extension
     in the selected folder and its subfolders

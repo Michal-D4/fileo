@@ -1,0 +1,6 @@
+<svg width="20" height="20">
+  <g font-size="14" font-family="Segoe UI" fill="black" stroke="none">
+    <text x="2" y="14">ab</text>
+  </g>
+  <path d="M1 15 v3 h17 v-3" stroke="black" stroke-width="1" fill="none"/>
+</svg>
