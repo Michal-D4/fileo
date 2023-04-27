@@ -43,6 +43,7 @@ def exec_user_actions():
         "filter_changed": filter_changed,
         "Setup About": show_about,
         "find_files_by_name": find_files_by_name,
+        "enable_next_prev": enable_next_prev,
       }
 
     @pyqtSlot(str)
@@ -65,8 +66,13 @@ def exec_user_actions():
     return execute_action
 
 @pyqtSlot()
+def enable_next_prev(param: str):
+    not_empty = param.split(',')
+    ag.app.btn_next.setDisabled(not_empty[0] == 'no')
+    ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
+
+@pyqtSlot()
 def find_files_by_name(param: str):
-    print(f'param')
     pp = param.split(',')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
@@ -191,8 +197,8 @@ def set_dir_model():
     ag.dir_list.setModel(model)
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter.dir_selection_changed)
 
-@pyqtSlot(QModelIndex)
-def cur_dir_changed(curr_idx: QModelIndex):
+@pyqtSlot(QModelIndex, QModelIndex)
+def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     """
     currentRowChanged signal in dirTree
     :@param curr_idx:
@@ -203,8 +209,26 @@ def cur_dir_changed(curr_idx: QModelIndex):
         save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
+        file_idx = ag.file_list.currentIndex()
+        file_row = file_idx.row() if file_idx.isValid() else 0
         show_folder_files()
-        set_current_file(0)
+        if ag.hist_folder:
+            ag.hist_folder = False
+        else:       # new history item
+            add_history_item(file_row)
+            save_file_row_in_model(file_row, prev_idx)
+            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+        set_current_file(ag.file_row)
+
+def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
+    model = ag.dir_list.model()
+    dir_item = model.getItem(prev_idx)
+    dir_item.userData.file_row = file_row
+
+def add_history_item(file_row: int):
+    ag.history.set_file_id(file_row)
+    branch = get_branch(ag.dir_list.currentIndex())
+    ag.history.add_item(branch, 0)
 
 def current_dir_path():
     return get_branch(ag.dir_list.currentIndex())
@@ -306,7 +330,9 @@ def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
     if idx.isValid():
         ag.file_list.setCurrentIndex(idx)
-        ag.file_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+        ag.file_list.scrollTo(
+            idx, QAbstractItemView.ScrollHint.PositionAtCenter
+        )
 
 def field_val(typ:str, val=0):
     if typ == "str":

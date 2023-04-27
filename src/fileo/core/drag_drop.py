@@ -284,10 +284,10 @@ def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     return True
 
 def copy_folder(index: QModelIndex, target: int) -> bool:
-    dir_id = index.data(Qt.ItemDataRole.UserRole).id
-    ag.dropped_ids.append(dir_id)
+    dir_data = index.data(Qt.ItemDataRole.UserRole)
+    ag.dropped_ids.append(dir_data.id)
 
-    db_ut.copy_dir(target, dir_id)
+    db_ut.copy_dir(target, dir_data)
     return True
 
 def move_folder(index: QModelIndex, target: int) -> bool:

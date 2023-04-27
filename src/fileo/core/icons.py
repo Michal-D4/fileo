@@ -47,17 +47,8 @@ def collect_all_icons():
     other_icons["more"] = qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"])
     other_icons["remove_btn"] = qta.icon('mdi.close', color=ag.qss_params["$dialogBackground"],
         color_active=ag.qss_params["$dialogInputEditColor"]),
-    other_icons["prev_folder"] = qta.icon(
-        'mdi.arrow-left',
-        color=ag.qss_params["$dialogInputColor"],
-        color_active=ag.qss_params["$topBarColor"],
-        color_selected=ag.qss_params["$itemSelectBG"]
-        )
-    other_icons["next_folder"] = qta.icon(
-        'mdi.arrow-right',
-        color=ag.qss_params["$dialogInputColor"],
-        color_active=ag.qss_params["$topBarColor"]
-        )
+    other_icons["prev_folder"] = qta.icon('mdi.arrow-left',)
+    other_icons["next_folder"] = qta.icon('mdi.arrow-right',)
 
 def _collect_toolbar_icons():
     # global icons
