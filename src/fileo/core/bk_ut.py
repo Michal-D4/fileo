@@ -6,9 +6,11 @@ from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView
+from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
 
-from . import app_globals as ag, low_bk, load_files, drag_drop as dd
+from . import (app_globals as ag, low_bk, load_files,
+    drag_drop as dd, history,
+)
 from ..widgets import workers, find_files
 
 if TYPE_CHECKING:
@@ -24,7 +26,6 @@ def save_bk_settings():
 
     settings = {
         "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
-        "FILE_ID": ag.file_list.currentIndex().row(),
         "FIELDS_STATE": [int(a.isChecked()) for a in actions],
         "COLUMN_WIDTH": low_bk.get_columns_width(),
         "TAG_SEL_LIST": low_bk.tag_selection(),
@@ -33,6 +34,7 @@ def save_bk_settings():
         "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
         "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
         "SHOW_HIDDEN": self.show_hidden.checkState(),
+        "HISTORY": ag.history.get_history()
     }
     low_bk.save_settings(**settings)
     self.filter_setup.save_filter_settings()
@@ -40,17 +42,33 @@ def save_bk_settings():
 @pyqtSlot()
 def search_files():
     ff = find_files.findFile(ag.app)
-    logger.info(f'{ff.size()=}, {ag.app.width()=}')
     ff.move(ag.app.width() - ff.width() - 40, 40)
     ff.show()
 
 @pyqtSlot()
 def to_prev_folder():
-    print('to_prev_folder clicked')
+    row = ag.file_list.currentIndex().row()
+    ag.history.set_file_id(row)
+    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
+    folder: history.Item = ag.history.prev_dir()
+    history_folder(folder)
 
 @pyqtSlot()
 def to_next_folder():
-    print('to_next_folder clicked')
+    row = ag.file_list.currentIndex().row()
+    ag.history.set_file_id(row)
+    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
+    folder: history.Item = ag.history.next_dir()
+    history_folder(folder)
+
+def history_folder(folder: history.Item):
+    ag.hist_folder = True
+    idx = low_bk.expand_branch(folder.path)
+    if idx.isValid():
+        ag.file_row = folder.file_id
+        ag.dir_list.setCurrentIndex(idx)
+        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+        low_bk.set_current_file(ag.file_row)
 
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
@@ -61,7 +79,6 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-        logger.info(f'before setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
@@ -71,17 +88,24 @@ def restore_sorting():
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
+    ag.history = history.History()
+
+    execute_user_action = low_bk.exec_user_actions()
+    ag.signals_.user_action_signal.connect(execute_user_action)
 
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
     set_context_menu()
+
     populate_all()
+    hist = low_bk.get_setting('HISTORY', [[], [], None])
+    ag.history.set_history(*hist)
+    history_folder(hist[-1])
+
     dd.set_drag_drop_handlers()
 
     ag.file_list.resizeEvent = file_list_resize
-    execute_user_action = low_bk.exec_user_actions()
-    ag.signals_.user_action_signal.connect(execute_user_action)
     ag.signals_.start_file_search.connect(file_loading)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
@@ -191,7 +215,6 @@ def populate_all():
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
         restore_sorting()
-        low_bk.set_current_file(low_bk.get_setting("FILE_ID", 0))
 
 def fill_dir_list():
     """

@@ -55,6 +55,7 @@ parent integer NOT NULL,
 id integer NOT NULL,
 is_copy integer not null default 0,
 hide integer not null default 0,
+file_id integer not null default 0,
 PRIMARY KEY(parent, id)
 );
 """,
@@ -107,7 +108,7 @@ extension text
 """,
 )
 APP_ID = 1718185071
-USER_VER = 3
+USER_VER = 5
 
 def is_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -131,13 +132,26 @@ def adjust_user_schema(db_name: str) -> int:
                 v = (2,)
             if v[0] == 2:
                 conn.cursor().execute(
-                    'PRAGMA user_version=3;'
                     'insert into settings (key) values (?)',
                     ('SHOW_HIDDEN',)
                 )
-                return 3
+                v = (3,)
+            if v[0] == 3:
+                conn.cursor().execute(
+                    'PRAGMA user_version=4;'
+                    'alter table parentdir add column file_id integer '
+                    'not null default 0; pragma user_version=2;'
+                )
+                v = (4,)
+            if v[0] == 4:
+                initialize_settings(conn)
+                conn.cursor().execute(
+                    'PRAGMA user_version=5;'
+                )
+                v = (5,)
             return v[0]
         except apsw.SQLError as err:
+            logger.info(err)
             return 0
 
 def create_tables(db_name: str):
@@ -151,13 +165,21 @@ def create_tables(db_name: str):
 
     initiate_db(conn)
 
-def initiate_db(connection):
-    """ insert root row into table Dirs """
+def initialize_settings(connection):
+    sql = (
+        'insert into settings (key) select (:key) '
+        'where not exists (select key from settings '
+        'where key = :key)'
+    )
     cursor = connection.cursor()
-
-    cursor.execute("insert into dirs values (0, null),(1, '@@Lost');")
     for name in ag.setting_names:
-        cursor.execute('insert into settings (key) values (?)', (name,))
+        logger.info(name)
+        cursor.execute(sql, {'key': name})
+
+def initiate_db(connection):
+    """ insert "root" and "Lost" rows into table Dirs """
+    connection.cursor().execute("insert into dirs values (0, null),(1, '@@Lost');")
+    initialize_settings(connection)
 
 if __name__ == "__main__":
     create_tables("ex1.db")

@@ -133,10 +133,6 @@ QToolButton#menu_btn:hover {
 QFrame#status {
    background: $statusBackground;
 }
-   /* border-left: 4px $statusLabelColor;
-   border-top: none;
-   border-right: 4px $statusLabelColor;
-   border-bottom: none; */
 QFrame#status QLabel {
    padding-right: 4px;
    padding-left: 4px;
@@ -157,6 +153,10 @@ QFrame#status QLabel:hover {
 QFrame#header {
    background-color: $navigatorBackground;
    color: $navigatorColor;
+}
+QFrame#header QToolButton:hover:enabled {
+   border: none;
+   background-color: $ToolButtonMenuHoverBG;
 }
 QToolButton#more:hover {
    border: none;

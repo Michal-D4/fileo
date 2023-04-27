@@ -9,9 +9,11 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list:
-    to_show_hidden = ag.app.show_hidden.checkState() is Qt.CheckState.Checked
-    sql2 = ('select p.parent, d.id, p.is_copy, p.hide, d.name '
-               'from dirs d join parentdir p on p.id = d.id '
+    to_show_hidden = (
+        ag.app.show_hidden.checkState() is Qt.CheckState.Checked
+    )
+    sql2 = ('select p.parent, d.id, p.is_copy, p.hide, p.file_id, '
+               'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
     sql = sql2[0] if to_show_hidden else ' '.join(sql2)
@@ -145,7 +147,7 @@ def lost_files() -> bool:
         'not in (select distinct file from filedir)'
     )
     sql1 = 'select 1 from parentdir where (parent,id) = (0,1)'
-    sql2 = 'insert into parentdir values (0, 1, 0, 0)'
+    sql2 = 'insert into parentdir values (0, 1, 0, 0, 0)'
     sql3 = 'select file from filedir where dir = 1'
     sql4 = 'delete from parentdir where (parent,id) = (0,1)'
     sql5 = "select 1 from dirs where id = 1"
@@ -559,9 +561,15 @@ def update_dir_name(name: str, id: int):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (name, id))
 
+def update_file_id(dirs: list, row_id: int):
+    sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
+    p_d = dirs[-2:] if len(dirs) > 1 else (0, dirs[0])
+    with ag.db['Conn'] as conn:
+        conn.cursor().execute(sql, (row_id, *p_d))
+
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = 'insert into parentdir values (?, ?, 0, 0);'
+    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0);'
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
@@ -606,8 +614,8 @@ def delete_dir(id: int, parent: int):
     """
     delete dir with all children if any
     """
-    sql1 = 'delete from parentdir where id = ?'  # delete copies of this dir
-    sql2 = 'delete from dirs where id = ?'       # delete this dir
+    sql1 = 'delete from parentdir where id = ?'
+    sql2 = 'delete from dirs where id = ?'
 
     with ag.db['Conn'] as conn:
         curs: apsw.Cursor = conn.cursor()
@@ -619,11 +627,13 @@ def remove_dir_copy(id: int, parent: int):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (parent, id))
 
-def copy_dir(parent: int, id: int) -> bool:
-    sql = 'insert into parentdir values (?, ?, 1, 0);'
+def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
+    sql = 'insert into parentdir values (?, ?, 1, 0, ?);'
     with ag.db['Conn'] as conn:
         try:
-            conn.cursor().execute(sql, (parent, id))
+            conn.cursor().execute(
+                sql, (parent, dir_data.id, dir_data.file_row)
+            )
             return True
         except apsw.ConstraintError:
             return False   # silently, dir copy already exists

@@ -70,8 +70,12 @@ class authorBrowser(QWidget):
 
         self.setup_ui()
 
+        # list of authors changed outside, in ag.author_list
         ag.author_list.edit_finished.connect(self.refresh_data)
+
         self.br.change_selection.connect(self.update_selection)
+        self.accept.clicked.connect(self.finish_edit_list)
+        self.reject.clicked.connect(self.set_selected_text)
 
     def setup_ui(self):
         self.edit_authors = QPlainTextEdit()
@@ -87,12 +91,10 @@ class authorBrowser(QWidget):
 
         self.accept = QToolButton()
         self.accept.setIcon(icons.get_other_icon("ok"))
-        self.accept.clicked.connect(self.finish_edit_list)
         self.accept.setToolTip('Accept editing')
 
         self.reject = QToolButton()
         self.reject.setIcon(icons.get_other_icon("cancel2"))
-        self.reject.clicked.connect(self.set_selected_text)
         self.reject.setToolTip('Reject editing')
 
         v_layout = QVBoxLayout()
@@ -148,6 +150,9 @@ class authorBrowser(QWidget):
         old = self.br.get_selected()
         new = self.get_edited_list()
         self.sel_list_changed(old, new)
+        self.br.set_selection(
+            (int(s[0]) for s in db_ut.get_file_author_id(self.file_id))
+        )
 
     @pyqtSlot(list)
     def update_selection(self, items: list[str]):
@@ -188,12 +193,8 @@ class authorBrowser(QWidget):
             if db_ut.add_author(self.file_id, d):
                 inserted = True
         if inserted:
-            self.update_list()
+            self.set_authors()
             ag.signals_.user_action_signal.emit("author_inserted")
-
-    def update_list(self):
-        self.set_authors()
-        self.set_file_id(self.file_id)
 
 def dir_attrs(dd: ag.DirData):
     tt = f'{"C" if dd.is_copy else ""}{"H" if dd.hidden else ""}'

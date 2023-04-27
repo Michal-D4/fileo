@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from .sho import shoWindow
     from ..widgets.file_notes import notesBrowser
     from ..widgets.filter_setup import FilterSetup
+    from .history import History
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
@@ -24,6 +25,9 @@ author_list: 'aBrowser' = None
 field_menu: QToolButton = None
 notes: 'notesBrowser' = None
 filter: 'FilterSetup' = None
+history: 'History' = None
+hist_folder = False
+file_row = 0
 
 db = { 'Path': '', 'Conn': None, }
 
@@ -43,6 +47,7 @@ class DirData():
     id: int
     is_copy: bool
     hidden: bool
+    file_row: int = 0
 
     def __post_init__(self):
         self.is_copy = bool(self.is_copy)
@@ -91,6 +96,7 @@ setting_names = (     # DB settings only
     "FILE_SORT_COLUMN",
     "FILE_SORT_ORDER",
     "SHOW_HIDDEN",
+    "HISTORY",
 )
 
 dyn_qss = defaultdict(list)

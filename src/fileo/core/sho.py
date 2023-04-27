@@ -63,7 +63,6 @@ class shoWindow(QMainWindow):
         self.restote_settings()
         self.restore_mode()
         bk_ut.bk_setup(self)
-        self.is_busy = False
         self.set_busy(False)
 
     def create_fold_container(self):
@@ -131,25 +130,27 @@ class shoWindow(QMainWindow):
         self.container.ui.label.setText(f"{val}")
 
     def set_extra_widgets(self):
-        btn = QToolButton()             # button "Prev. folder"
-        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        # btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        btn.setAutoRaise(True)
-        # btn.setDisabled(True)
-        btn.setIcon(icons.get_other_icon('prev_folder'))
-        self.container.add_widget(btn, 0)
-        btn.setToolTip("Previous folder")
-        btn.clicked.connect(bk_ut.to_prev_folder)
+        self.btn_prev = QToolButton()
+        self.btn_prev.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.btn_prev.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        self.btn_prev.setAutoRaise(True)
+        self.btn_prev.setIcon(icons.get_other_icon('prev_folder'))
+        self.container.add_widget(self.btn_prev, 0)
+        self.btn_prev.setToolTip("Previous folder")
+        self.btn_prev.clicked.connect(bk_ut.to_prev_folder)
+        self.btn_prev.setObjectName('btn_prev')
+        self.btn_prev.setDisabled(True)
 
-        btn = QToolButton()             # button "Next folder"
-        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        btn.setAutoRaise(True)
-        btn.setIcon(icons.get_other_icon('next_folder'))
-        self.container.add_widget(btn, 0)
-        btn.setToolTip("Next folder")
-        btn.clicked.connect(bk_ut.to_next_folder)
+        self.btn_next = QToolButton()
+        self.btn_next.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.btn_next.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        self.btn_next.setAutoRaise(True)
+        self.btn_next.setIcon(icons.get_other_icon('next_folder'))
+        self.container.add_widget(self.btn_next, 0)
+        self.btn_next.setToolTip("Next folder")
+        self.btn_next.clicked.connect(bk_ut.to_next_folder)
+        self.btn_next.setObjectName('btn_next')
+        self.btn_next.setDisabled(True)
 
         btn = QToolButton()             # button "refresh"
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
