@@ -95,19 +95,22 @@ def get_ext_list() -> apsw.Cursor:
 
 #region files
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
+    """
+    case - if True case sensitive
+    """
+    filename = 'filename' if case else 'upper(filename)'
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '
         'from comments group by fileid) '
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
-        'f.id, fd.dir, f.extid, f.path from files f '
-        'left join x on x.fileid = f.id '
-        'join filedir fd on fd.file = f.id '
-        'where filename '
-        f"{'glob ?' if case else 'like ?'}"
+        'f.id, f.extid, f.path from files f '
+        'left join x on x.fileid = f.id where '
+        f'{filename} glob ?'
     )
-    wildcard = '*' if case else '%'
-    nn = name if exact else f'{wildcard}{name}{wildcard}'
+    nn = name if case else name.upper()
+    if not exact:
+        nn = f'*{nn}*'
     print(f'{nn=}')
     print(sql)
     with ag.db['Conn'] as conn:
@@ -130,7 +133,7 @@ def get_files(did: int, parent: int) -> apsw.Cursor:
         'from comments group by fileid) '
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
-        'f.id, fd.dir, f.extid, f.path from files f '
+        'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
         'join parentdir p on fd.dir = p.id '      # to avoid duplications
@@ -352,7 +355,7 @@ def filter_sqls(key: str, field: str='') -> str:
             'from comments group by fileid) '
             'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
             'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
-            'f.id, 0, f.extid, f.path from files f '
+            'f.id, f.extid, f.path from files f '
             'left join x on x.fileid = f.id '
         ),
         'open-0': "nopen <= ?",

@@ -52,7 +52,8 @@ def update_pdf_files():
         try:
             pdf_file_update(id, pp)
         except FileNotFoundError as e:
-            logger.info(f'{e}')
+            # logger.info(f'{e}')
+            pass
 
 def pdf_file_update(id: int, file: str):
     with (open(file, "rb")) as pdf_file:

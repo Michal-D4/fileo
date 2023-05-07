@@ -151,7 +151,7 @@ def adjust_user_schema(db_name: str) -> int:
                 v = (5,)
             return v[0]
         except apsw.SQLError as err:
-            logger.info(err)
+            # logger.info(err)
             return 0
 
 def create_tables(db_name: str):
@@ -173,7 +173,7 @@ def initialize_settings(connection):
     )
     cursor = connection.cursor()
     for name in ag.setting_names:
-        logger.info(name)
+        # logger.info(name)
         cursor.execute(sql, {'key': name})
 
 def initiate_db(connection):

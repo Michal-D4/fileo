@@ -45,26 +45,6 @@ class ProxyModel2(ProxyModel):
             else (Qt.ItemFlag.ItemIsDragEnabled | super().flags(index))
         )
 
-    def mimeTypes(self):
-        return ag.mimeType.files
-
-    def mimeData(self, indexes):
-        item_data = QByteArray()
-        data_stream = QDataStream(item_data, QIODevice.WriteOnly)
-
-        data_stream.writeInt(len(indexes))
-        tmp = None
-        for idx in indexes:
-            s_idx = self.mapToSource(idx)
-            tmp = self.sourceModel().data(s_idx, role=Qt.ItemDataRole.UserRole)
-            data_stream.writeInt(tmp.file_id)    # file ID
-            # may need, in case of copy/move for real folder using mimeData
-            data_stream.writeInt(tmp.dir_id)
-
-        mime_data = QMimeData()
-        mime_data.setData(ag.mimeType.files, item_data)
-        return mime_data
-
     def update_opened(self, ts: int, index: QModelIndex):
         self.sourceModel().update_opened(ts, self.mapToSource(index))
 

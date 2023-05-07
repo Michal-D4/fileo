@@ -11,8 +11,8 @@ from ..core import app_globals as ag, icons
 
 
 class fileSearch(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, parent = None) -> None:
+        super().__init__(parent)
 
         self.ui = Ui_FileSearch()
         self.ui.setupUi(self)

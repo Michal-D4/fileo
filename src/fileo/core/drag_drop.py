@@ -39,13 +39,21 @@ def file_mime_data(indexes) -> QMimeData:
     model = ag.file_list.model()
     drag_data = QByteArray()
     data_stream = QDataStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
+    if ag.mode is ag.appMode.DIR:
+        dir_idx = ag.dir_list.currentIndex()
+        dir_id = dir_idx.data(Qt.ItemDataRole.UserRole).id
+    else:
+        dir_id = 0
 
+    data_stream.writeInt(dir_id)
     data_stream.writeInt(len(indexes))
     for idx in indexes:
         s_idx = model.mapToSource(idx)
-        u_dat = model.sourceModel().data(s_idx, role=Qt.ItemDataRole.UserRole)
-        data_stream.writeInt(u_dat.id)
-        data_stream.writeInt(u_dat.dir_id)
+        data_stream.writeInt(
+            model.sourceModel().data(
+                s_idx, role=Qt.ItemDataRole.UserRole
+            ).id
+        )
 
     mime_data = QMimeData()
     mime_data.setData(ag.mimeType.files.value, drag_data)
@@ -121,11 +129,11 @@ def start_drag_files(action):
 
     mime_data = get_files_mime_data()
     drag.setMimeData(mime_data)
-    drag.exec(
+    bb = drag.exec(
         Qt.DropAction.CopyAction | Qt.DropAction.MoveAction,
         Qt.DropAction.CopyAction)
 
-    if action is Qt.DropAction.MoveAction:
+    if bb is Qt.DropAction.MoveAction:
         low_bk.show_folder_files()
 
 @pyqtSlot(QDragEnterEvent)
@@ -192,7 +200,8 @@ def drop_event(e: QDropEvent):
 
 def choose_drop_action(e: QDropEvent):
     pos = e.position().toPoint()
-    if ag.drop_button == Qt.MouseButton.RightButton:
+    if (ag.drop_button == Qt.MouseButton.RightButton and
+        ag.mode is ag.appMode.DIR):
         menu = QMenu(ag.app)
         menu.addAction('Copy')
         menu.addAction('Move')
@@ -238,11 +247,11 @@ def copy_files(data: QMimeData, target: int) -> bool:
     files_data = data.data(ag.mimeType.files.value)
     stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
 
+    _ = stream.readInt()   # source dir_id - not used here
     count = stream.readInt()
 
     for _ in range(count):
         id = stream.readInt()
-        _ = stream.readInt()   # dir_id; don't use here
         db_ut.copy_file(id, target)
 
     return True
@@ -251,11 +260,11 @@ def move_files(data: QMimeData, target: int) -> bool:
     files_data = data.data(ag.mimeType.files.value)
     stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
 
+    dir_id = stream.readInt()   # source dir_id
     count = stream.readInt()
 
     for _ in range(count):
         id = stream.readInt()
-        dir_id = stream.readInt()
         if not dir_id:
             dir_id = db_ut.get_dir_id_for_file(id)
         if dir_id:
