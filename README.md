@@ -6,26 +6,27 @@ Fileo[fɑɪlɔ] - could be FileOrganizer, but that doesn't matter.
 
 The graphical interface is shown in the image below.
 
-![fileo](img/fileo.jpg)
+![fileo](https://github.com/Michal-D4/fileo/raw/main/img/fileo.jpg)
 
 ## The GUI elements:
 
-1. the application mode
-2. the menu button to hide/show the left pane widgets: folders, tags, file extensions, authors
+1. The label to display application mode
+2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane. All menu items checked in the image &ndash; this means that all widgets are visible.
 3. the name of current file
-4. menu button to select which fields will be visible in the file list
-5. the name of the current database
-6. the branch of folder tree from the root to the current folder
-7. the left toolbar, it contains the following buttons from top to bottom:
+4. buttons to search files by name and to select which fields will be visible in the file list
+5. the group of buttons for working with the tree of folders
+6. the left toolbar, it contains the following buttons from top to bottom:
    1. button to chose/create the data base file
    2. selection of the "DIR" mode of application, the file list shows the files from the current folder
    3. selection of the "FILTER" mode, the list of files shows the files according to the filter settings
    4. open the filter settings dialog, switch application into "FILTER_SETUP" mode
    5. open dialog to scan the file system to load files into the database
    6. hide/show left pane
-   7. menu button   &mdash;   do nothing yet
-8. the dialog to start scan the file system folders for files
-9. the panel to show/edit file data: comments(notes), tags, authors(for books), locations - the folder branches where the current file can be found - file may reside in the several folders.
+   7. menu button
+7. the list of files from selected folder, of created by filter
+8. the name of the current database
+9. the branch of folder tree from the root to the current folder
+10. the panel to show/edit file data: comments(notes), tags, authors(for books), locations - the folder branches where the current file can be found - file may reside in the several folders.
 
 The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
@@ -62,26 +63,26 @@ You can also copy/move files from one folder to another. **Copying** is carried 
 
 There are two method to add files:
 
-1. Open "Search for files..." dialog with the button ![image-20230210145215938](img/image-20230210145215938.png)
+1. Open "Search for files..." dialog with the button ![image-20230210145215938](https://github.com/Michal-D4/fileo/raw/main/img/image-20230210145215938.png)
 
-   ![image-20230210145404623](img/image-20230210145404623.png)
+   ![image-20230210145404623](https://github.com/Michal-D4/fileo/raw/main/img/image-20230210145404623.png)
 
 2. drag files from the file explorer (or similar application) to the folder in the folder tree.
 
 > **Note**. Scanning the file system can be quite lengthy, so it is performed in a separate thread.
 > The red circle in the lower left corner is a sign that the thread is working:
 >
-> ![image-20230213184306153](img/image-20230213184306153.png)
+> ![image-20230213184306153](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213184306153.png)
 >
-> Only one thread can run at time. The user interface is not blocking but you should avoid to perform operation that make changes in the database, for example, drag-drop operations. But you can change the list of files by changing a current folder or filter, or you can open files.
+> Only one background thread can run at a time - this is the design of the application. The user interface is not blocking but you should avoid to perform operation that make changes in the database, for example, drag-drop operations. But you can change the list of files by changing a current folder or filter, or you can open files.
 
 3. You can export the selected files (with all their attributes) from one database using the file list context menu
 
-   ![export-files](img/export-files.jpg)
+   ![export-files](https://github.com/Michal-D4/fileo/raw/main/img/export-files.jpg)
 
    and then import them to another database
 
-   ![import-files](img/import-files.jpg)
+   ![import-files](https://github.com/Michal-D4/fileo/raw/main/img/import-files.jpg)
 
    to the folder "New folder" in this case.
 
@@ -89,7 +90,7 @@ There are two method to add files:
 
 Firstly you should setup the filter:
 
-![image-20230213185910924](img/image-20230213185910924.png)
+![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
 With filter defined on the picture the file list will include files from folders `DB`, `ML` and `Rust`, that has at least one of tags `Math`, `ML` or `package`, has rating greater than 4, and opened after `2022-09-14`.
 
@@ -99,9 +100,15 @@ The Apply button applies a specified filter without closing the Filter Setup dia
 
 The button Done applies a filter, closing dialog and switch application into "Filter mode". In this mode when you change selection in one of the widgets in the left pane (Folders, Tags, Extensions, Authors) the list of files is changing accordingly.
 
+### How to find files by name
+
+![image-20230428203253627](https://github.com/Michal-D4/fileo/raw/main/img/find_file.jpg)
+
+
+
 ### How to make notes to the file
 
-![fileo-comments](img/fileo-comments.jpg)
+![fileo-comments](https://github.com/Michal-D4/fileo/raw/main/img/fileo-comments.jpg)
 
 1. "+"  plus button - add new note and open it in the editor
 6. "x" button - delete the note
@@ -109,7 +116,7 @@ The button Done applies a filter, closing dialog and switch application into "Fi
 
 #### Note editor
 
-![edit-comment](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\edit-comment.jpg)
+![edit-comment](https://github.com/Michal-D4/fileo/raw/main/img/edit-comment.jpg)
 
 1. the save changes button
 2. the button to discard changes
@@ -118,7 +125,7 @@ Note is a markdown text.
 
 ### Tag selector
 
-![tag-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\tag-selector.jpg)
+![tag-selector](https://github.com/Michal-D4/fileo/raw/main/img/tag-selector.jpg)
 
 1. The list of tags associated with the current file. You can input here a list of tags separated by commas. It is the only place where the new tag can be created. The new tags will appear in the list 2 and 4.
 2. The list of tags. The tags selected in this list apply to the file filter. 
@@ -127,7 +134,7 @@ Note is a markdown text.
 
 ### Author selector
 
-![author-selector](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\author-selector.jpg)
+![author-selector](https://github.com/Michal-D4/fileo/raw/main/img/author-selector.jpg)
 
 1. The list of authors associated with the current file. You can input here a list of authors separated by commas (in square brackets if author name contains comma as in "Vaughan, Lee", otherwise it may be entered without brackets, but new authors without brackets must be in the end of list). It is the only place where the new author can be created. The new authors will appear in the list 2 and 4.
 2. The list of authors. The authors selected in this list apply to the file filter. 
@@ -136,13 +143,13 @@ Note is a markdown text.
 
 ### Locations
 
-![Locations](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\Locations.jpg)
+![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
 The current file "Environment Variables in Linux.md" has 5 locations (Paths/Folder Tree branches).
 
 The letters "C" and "H" in brackets means "Copy" and "Hidden". "Copy" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a copy of the folder "fileo" in the path 1; the folder "Linux" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
 
-![Folders](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\Folders.jpg)
+![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg)
 
 1. The "FOLDERS" widget
 2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "fileo" and "New folder1" in the folder "New folder2" are copies. The only difference between folder and its copies is that when you delete folder all its copies and all its children will be deleted too, whereas deletion of any copy of folder does not impact any other folder.
@@ -150,11 +157,12 @@ The letters "C" and "H" in brackets means "Copy" and "Hidden". "Copy" and "Hidde
 
 ### File info
 
-![file-info](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\file-info.jpg)
+![file-info](https://github.com/Michal-D4/fileo/raw/main/img/file-info.jpg)
 
 The "File rating" and "Pages" can be edited here. But they also can be edited directly in the file list if visible:
 
-![file-list-fields](C:\Users\mihal\OneDrive\Documents\pyprj\fileo\img\file-list-fields.jpg)
+![file-list-fields](https://github.com/Michal-D4/fileo/raw/main/img/file-list-fields.jpg)
 
 1. The file list
-2. Menu to select fields visible in the file list. The checked fields are visible, the field "File Name" is alwais visible.
+2. Menu to select fields visible in the file list. The checked fields are visible, the field "File Name" is always visible.
+
