@@ -13,10 +13,10 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox,
 )
 
-from . import db_ut, app_globals as ag
+from . import db_ut, app_globals as ag, utils
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
-from ..widgets import about
+from ..widgets import about, preferencies
 
 def exec_user_actions():
     """
@@ -42,6 +42,7 @@ def exec_user_actions():
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
         "Setup About": show_about,
+        "Setup Preferencies": set_preferencies,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
       }
@@ -76,6 +77,12 @@ def find_files_by_name(param: str):
     pp = param.split(',')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
+
+@pyqtSlot()
+def set_preferencies():
+    pref = preferencies.Preferencies(ag.app)
+    pref.resize(499, 184)
+    pref.show()
 
 @pyqtSlot()
 def show_about():
@@ -314,14 +321,15 @@ def show_files(files):
         ff1 = []
         for i,typ in field_idx:
             ff1.append(field_val(typ, ff[i]))
-        model.append_row(ff1, ag.FileData(*ff[-4:]))
+        model.append_row(ff1, ag.FileData(*ff[-3:]))
 
     ag.app.ui.others.setText(f"files: {model.rowCount()}")
+
     if model.rowCount() == 0:
         row = ["THERE ARE NO FILES HERE"]
         for _,typ in field_idx[1:]:
             row.append(field_val(typ))
-        model.append_row(row, ag.FileData(-1,0,0,0))
+        model.append_row(row, ag.FileData(-1,0,0))
 
     set_file_model(model)
     header_restore(model)
@@ -487,8 +495,13 @@ def post_delete_file(row: int):
 
 #region  export-import
 def export_files():
-    file_name, ok = QFileDialog.getSaveFileName(ag.app, "Open file to save list of selected files",
-        str(Path(ag.db["Path"]).parent), "File list (*.file_list *.json *.txt)")
+    pp = Path('~/fileo/export').expanduser()
+    path = utils.get_qsetting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
+        caption='Open file to save list of exported files',
+        directory=(Path(path) / 'untitled').as_posix(),
+        filter='File list (*.file_list *.json *.txt)'
+    )
 
     if ok:
         _export_files(file_name)
@@ -505,22 +518,31 @@ def _export_files(filename: str):
             out.write(f"{json.dumps(file_data)}\n")
 
 def import_files():
-    file_name, ok = QFileDialog.getOpenFileName(ag.app, "Open file to import list of files",
-        str(Path.home()), "File list (*.file_list *.json *.txt)")
+    pp = Path('~/fileo/export').expanduser()
+    path = utils.get_qsetting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    file_name, ok = QFileDialog.getOpenFileName(ag.app,
+        caption="Open file to import list of files",
+        directory=path,
+        filter="File list (*.file_list *.json *.txt)")
     if ok:
         _import_files(file_name)
 
 def _import_files(filename):
     branch = get_branch(ag.dir_list.currentIndex())
-    exist_dir = -1
+    exist_dir = 0
+
     with open(filename, "r") as fp:
         for line in fp:
             exist_dir = load_file(json.loads(line))
-    if exist_dir >= 0:
+
+    if exist_dir > 0:
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
+        ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
+    else:
+        show_folder_files()
 
 def load_file(fl: dict) -> int:
     file_ = fl['file']
@@ -529,7 +551,7 @@ def load_file(fl: dict) -> int:
         return
 
     dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
-    existed = -1
+    existed = 0
 
     id = db_ut.registered_file_id(file_[-1], file_[1])
     if id:

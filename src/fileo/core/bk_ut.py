@@ -44,6 +44,7 @@ def search_files():
     ff = find_files.findFile(ag.app)
     ff.move(ag.app.width() - ff.width() - 40, 40)
     ff.show()
+    ff.srch_pattern.setFocus()
 
 @pyqtSlot()
 def to_prev_folder():
@@ -62,7 +63,12 @@ def to_next_folder():
     history_folder(folder)
 
 def history_folder(folder: history.Item):
+    if not folder:
+        return
     ag.hist_folder = True
+    _history_folder(folder)
+
+def _history_folder(folder: history.Item):
     idx = low_bk.expand_branch(folder.path)
     if idx.isValid():
         ag.file_row = folder.file_id
@@ -101,7 +107,8 @@ def bk_setup(main: 'shoWindow'):
     populate_all()
     hist = low_bk.get_setting('HISTORY', [[], [], None])
     ag.history.set_history(*hist)
-    history_folder(hist[-1])
+    ag.hist_folder = not hist[0]
+    _history_folder(hist[-1])
 
     dd.set_drag_drop_handlers()
 
@@ -148,6 +155,8 @@ def set_field_menu():
 @pyqtSlot()
 def click_setup_button():
     menu = QMenu(self)
+    menu.addAction('Preferencies')
+    menu.addSeparator()
     menu.addAction('About')
     sz = menu.sizeHint()
     pos = self.ui.btnSetup.pos()

@@ -594,19 +594,3 @@ class FoldContainer(QWidget):
 
     def _hover_end(self, y: int, seq: int):
         self.unsetCursor()
-
-# ===========================================================
-#  these lines are needed only in "test3_fold.py", the separate
-#  container test
-#  the closeEvent here doesn't work inside the app; only in test
-    from PyQt6.QtGui import QCloseEvent
-    def closeEvent(self, event: QCloseEvent) -> None:
-        from core import utils
-        settings = {
-            "FoldContainerGeometry": self.saveGeometry(),
-            "container": self.save_state(),
-        }
-
-        utils.save_setting(**settings)
-
-        super().closeEvent(event)

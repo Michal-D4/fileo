@@ -9,10 +9,10 @@ from PyQt6.QtGui import QMouseEvent, QPixmap
 from PyQt6.QtWidgets import QApplication
 
 from . import icons, app_globals as ag
-from .. import qss as qtss
+from .. import qss as style_sheets
 
 __all__ = ['setup_ui', 'resize_grips',
-            'get_setting', 'save_setting',
+            'get_qsetting', 'save_qsetting',
 ]
 
 APP_NAME = "fileo"
@@ -21,7 +21,7 @@ MAKER = 'miha'
 settings = None
 
 
-def get_setting(key: str, default: Optional[Any]=None) -> QVariant:
+def get_qsetting(key: str, default: Optional[Any]=None) -> QVariant:
     global settings
     if not settings:
         settings = QSettings(MAKER, APP_NAME)
@@ -31,7 +31,7 @@ def get_setting(key: str, default: Optional[Any]=None) -> QVariant:
         to_set = default
     return to_set
 
-def save_setting(**kwargs):
+def save_qsetting(**kwargs):
     if not kwargs:
         return
     global settings
@@ -99,14 +99,14 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     params = None
     qss = None
 
-    with resources.path(qtss, "search.svg") as pic_path:
+    with resources.path(style_sheets, "search.svg") as pic_path:
         res_path = pic_path.parent.as_posix()
 
     def get_qss_theme():
         nonlocal params
         nonlocal qss
-        qss = resources.read_text(qtss, '.'.join((theme, "qss")))
-        params = resources.read_text(qtss, '.'.join((theme, "param")))
+        qss = resources.read_text(style_sheets, '.'.join((theme, "qss")))
+        params = resources.read_text(style_sheets, '.'.join((theme, "param")))
 
     def param_substitution():
         for key, val in ag.qss_params.items():

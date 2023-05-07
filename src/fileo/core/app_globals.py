@@ -56,7 +56,6 @@ class DirData():
 @dataclass(slots=True)
 class FileData():
     id: int
-    dir_id: int
     ext_id: int
     path: int
 

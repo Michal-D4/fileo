@@ -1,5 +1,7 @@
 from loguru import logger
 
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QHBoxLayout, QToolButton, QFrame, QSizePolicy,
     QMessageBox,
@@ -20,6 +22,9 @@ class findFile(QWidget):
         self.setStyleSheet(' '.join(ag.dyn_qss['searchFrame']))
         self.setup_ui()
         self.srch_pattern.editingFinished.connect(self.search_files)
+
+        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        escape.activated.connect(self.close)
 
     def setup_ui(self):
         self.srch_pattern = QLineEdit()
