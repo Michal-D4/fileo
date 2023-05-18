@@ -17,6 +17,7 @@ from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
 from ..widgets.file_notes import notesBrowser
 
+from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut
 from . import app_globals as ag
 
@@ -127,7 +128,7 @@ class shoWindow(QMainWindow):
     @mode.setter
     def mode(self, val: ag.appMode):
         ag.mode = val
-        self.container.ui.label.setText(f"{val}")
+        self.container.ui.app_mode.setText(f"{val}")
 
     def set_extra_widgets(self):
         self.btn_prev = QToolButton()
@@ -202,6 +203,7 @@ class shoWindow(QMainWindow):
         add_widget_into_frame(frames[3], ag.author_list)
 
         ag.file_list = self.ui.file_list
+        ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(ag.file_list))
         ag.field_menu = self.ui.field_menu
 
     def set_button_icons(self):

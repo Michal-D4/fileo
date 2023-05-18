@@ -111,8 +111,6 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     nn = name if case else name.upper()
     if not exact:
         nn = f'*{nn}*'
-    print(f'{nn=}')
-    print(sql)
     with ag.db['Conn'] as conn:
         return conn.execute(sql, (nn,))
 
@@ -151,36 +149,36 @@ def lost_files() -> bool:
     )
     sql1 = 'select 1 from parentdir where (parent,id) = (0,1)'
     sql2 = 'insert into parentdir values (0, 1, 0, 0, 0)'
-    sql3 = 'select file from filedir where dir = 1'
-    sql4 = 'delete from parentdir where (parent,id) = (0,1)'
+    sql3 = 'delete from filedir where dir = 1'
     sql5 = "select 1 from dirs where id = 1"
     sql6 = "insert into dirs values (1, '@@Lost')"
-    def hide_lost_dir() -> bool:
-        res = conn.cursor().execute(sql3).fetchone()
-        if not res:
-            conn.cursor().execute(sql4)
-        return not res
 
-    def show_lost_dir() -> bool:
+    def show_lost_dir():
+        '''
+        insert @@Lost into the directory tree if it doesn't already exist
+        '''
         res = conn.cursor().execute(sql1).fetchone()
         if not res:
             conn.cursor().execute(sql2)
-        return not res
+
+    def create_lost_dir():
+        '''
+        create @@Lost dir if not exists
+        '''
+        id1 = conn.cursor().execute(sql5).fetchone()
+        if not id1:     # create '@@Lost' folder
+            conn.cursor().execute(sql6).fetchone()
 
     try:
         with ag.db['Conn'] as conn:
-            id1 = conn.cursor().execute(sql5).fetchone()
-            if not id1:
-                conn.cursor().execute(sql6).fetchone()
+            create_lost_dir()
 
-            before = conn.last_insert_rowid()
-            conn.cursor().execute(sql0)
-            after = conn.last_insert_rowid()
-
-            if after == before:
-                return hide_lost_dir()
-
-            return show_lost_dir()
+            conn.cursor().execute(sql3)   # clear @@Lost dir
+            conn.cursor().execute(sql0)   # fill @@Lost dir
+            if conn.changes():
+                show_lost_dir()
+                return True
+            return False
     except:
         return False
 

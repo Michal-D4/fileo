@@ -1,11 +1,10 @@
-from collections.abc import Iterable
+from loguru import logger
 
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
-    QMimeData, QByteArray, QDataStream, QIODevice,
-    QSortFilterProxyModel,
+    QSortFilterProxyModel, pyqtSignal
     )
 
-from . import app_globals as ag, db_ut
+from . import db_ut
 
 
 class ProxyModel(QSortFilterProxyModel):
@@ -40,19 +39,28 @@ class ProxyModel2(ProxyModel):
             return super().flags(index)
 
         return (
-            (Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsDragEnabled | super().flags(index))
-            if self.sourceModel().headerData(index.column()) in ('rating', 'Pages', 'Published')
-            else (Qt.ItemFlag.ItemIsDragEnabled | super().flags(index))
+            (Qt.ItemFlag.ItemIsEditable |
+             Qt.ItemFlag.ItemIsDragEnabled |
+             super().flags(index))
+            if self.sourceModel().headerData(index.column()) in (
+                'rating', 'Pages', 'Published', 'File Name'
+            )
+            else (Qt.ItemFlag.ItemIsDragEnabled |
+                  super().flags(index))
         )
 
     def update_opened(self, ts: int, index: QModelIndex):
+        """
+        update timestamp when file is opened
+        ts - the unix epoch timestamp
+        """
         self.sourceModel().update_opened(ts, self.mapToSource(index))
-
-    def update_field_by_name(self, val, name: str, index: QModelIndex):
-        self.sourceModel().update_field_by_name(val, name, self.mapToSource(index))
 
 
 class TableModel(QAbstractTableModel):
+
+    model_data_changed = pyqtSignal(str)
+
     def __init__(self, parent=None, *args):
         super(TableModel, self).__init__(parent)
         self.header = ()
@@ -114,7 +122,8 @@ class TableModel(QAbstractTableModel):
         role=Qt.ItemDataRole.DisplayRole):
         if not self.header:
             return None
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+        if (orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole):
             return self.header[section]
 
     def setHeaderData(self, p_int, orientation, value, role=None):
@@ -128,13 +137,17 @@ class TableModel(QAbstractTableModel):
 
         col = index.column()
         line = self.rows[index.row()]
-        if col < 1 or col >= len(line):
+        if col < 0 or col >= len(line):
             return False
-        header = self.header[index.column()]
-        val = value.toSecsSinceEpoch() if self.header[col] == 'Published' else value
-        db_ut.update_files_field(self.user_data[index.row()].id, header, val)
+        field = self.header[col]
+        val = value.toSecsSinceEpoch() if field == 'Published' else value
+        if field == 'File Name':
+            field = 'filename'
+        db_ut.update_files_field(self.user_data[index.row()].id, field, val)
         line[col] = value
         self.dataChanged.emit(index, index)
+        if field == 'filename':
+            self.model_data_changed.emit(value)
         return True
 
     def get_row(self, row):
@@ -144,7 +157,7 @@ class TableModel(QAbstractTableModel):
 
     def update_opened(self, ts: int, index: QModelIndex):
         """
-        ts - timestamp
+        ts - the unix epoch timestamp
         """
         if "Open#" in self.header:
             i = self.header.index("Open#")
@@ -152,8 +165,3 @@ class TableModel(QAbstractTableModel):
         if "Open Date" in self.header:
             i = self.header.index("Open Date")
             self.rows[index.row()][i].setSecsSinceEpoch(ts)
-
-    def update_field_by_name(self, val, name: str, index: QModelIndex):
-        if name in self.header:
-            i = self.header.index(name)
-            self.rows[index.row()][i] = val

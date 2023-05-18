@@ -141,7 +141,10 @@ class loadFiles(QObject):
 
     def set_file_dir_link(self, id: int, dir_id: int):
         INSERT_FILEDIR = 'insert into filedir values (:file, :dir);'
-        self.conn.cursor().execute(INSERT_FILEDIR, {'file': id, 'dir': dir_id})
+        try:
+            self.conn.cursor().execute(INSERT_FILEDIR, {'file': id, 'dir': dir_id})
+        except apsw.ConstraintError:
+            pass
 
     def find_file(self, path_id: int, file_name: str) -> int:
         FIND_FILE = ('select id from files where path = :pid and filename = :name')

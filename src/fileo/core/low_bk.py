@@ -39,6 +39,7 @@ def exec_user_actions():
         "Files Remove file(s) from folder": remove_files,
         "Files Delete file(s) from DB": delete_files,
         "Files Reveal in explorer": open_folder,
+        "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
         "Setup About": show_about,
@@ -65,6 +66,30 @@ def exec_user_actions():
             dlg.exec()
 
     return execute_action
+
+@pyqtSlot()
+def rename_file():
+    idx = ag.file_list.currentIndex()
+    idx0 = ag.file_list.model().index(idx.row(), 0, QModelIndex())
+    ag.file_list.setCurrentIndex(idx)
+    old_name = full_file_name(idx0)
+    ag.file_path = Path(old_name)
+    if ag.file_path.exists() and ag.file_path.is_file():
+        ag.file_list.edit(idx0)
+
+@pyqtSlot(str)
+def rename_in_file_system(new_name: str):
+    new_path = ag.file_path.rename(ag.file_path.parent / new_name)
+    if new_path.name == new_name:
+        ag.app.ui.current_filename.setText(new_name)
+    else:
+        dlg = QMessageBox(ag.app)
+        dlg.setWindowTitle('Error renaming file')
+        dlg.setText(f'File {ag.file_path.name} was not renamed')
+        dlg.setDetailedText(ag.file_path.as_posix())
+        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+        dlg.setIcon(QMessageBox.Icon.Critical)
+        dlg.exec()
 
 @pyqtSlot()
 def enable_next_prev(param: str):
@@ -333,6 +358,7 @@ def show_files(files):
 
     set_file_model(model)
     header_restore(model)
+    model.model_data_changed.connect(rename_in_file_system)
 
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)

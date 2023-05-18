@@ -176,7 +176,7 @@ def field_list_changed():
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
         ag.file_list.scrollTo(curr)
-        self.ui.label.setText(low_bk.file_name(curr))
+        self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
 def file_list_resize(e: QResizeEvent):
@@ -280,9 +280,12 @@ def file_menu(pos):
         menu.addAction("Open file")
         menu.addAction("Reveal in explorer")
         menu.addSeparator()
+        menu.addAction("Rename file")
+        menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
         menu.addAction("Remove file(s) from folder")
+        menu.addSeparator()
         menu.addAction("Delete file(s) from DB")
         action = menu.exec(ag.file_list.mapToGlobal(pos))
         if action:
