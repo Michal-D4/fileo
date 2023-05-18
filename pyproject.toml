@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Yet another file organizer"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
-packages = [{include = "fileo", from = "src"}]
+packages = [
+{include = "entry_point.py"},
+{include = "fileo", from = "src"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

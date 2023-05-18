@@ -11,14 +11,17 @@ from ..core import app_globals as ag, db_ut, low_bk
 def find_lost_files() -> bool:
     return db_ut.lost_files()
 
-def sha256sum(filename):
+def sha256sum(filename: Path) -> str:
     h  = hashlib.sha256()
     b  = bytearray(128*1024)
     mv = memoryview(b)
-    with open(filename, 'rb', buffering=0) as f:
-        while n := f.readinto(mv):
-            h.update(mv[:n])
-    return h.hexdigest()
+    try:
+        with open(filename, 'rb', buffering=0) as f:
+            while n := f.readinto(mv):
+                h.update(mv[:n])
+        return h.hexdigest()
+    except FileNotFoundError:
+        return ''
 
 def update0_files():
     files = db_ut.recent_loaded_files()

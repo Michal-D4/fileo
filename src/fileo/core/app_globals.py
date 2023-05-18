@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QToolButton
@@ -28,12 +29,14 @@ filter: 'FilterSetup' = None
 history: 'History' = None
 hist_folder = False
 file_row = 0
+file_path: Path = None
 
 db = { 'Path': '', 'Conn': None, }
 
 class mimeType(Enum):
     folders = "folders"
     files = "files"
+    uri = 'text/uri-list'
 
 @unique
 class appMode(Enum):

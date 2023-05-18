@@ -206,10 +206,11 @@ def choose_drop_action(e: QDropEvent):
         menu.addAction('Copy')
         menu.addAction('Move')
         act = menu.exec(ag.app.mapToGlobal(pos))
-        if act.text() == 'Copy':
-            e.setDropAction(Qt.DropAction.CopyAction)
-        elif act.text() == 'Move':
-            e.setDropAction(Qt.DropAction.MoveAction)
+        if act:
+            if act.text() == 'Copy':
+                e.setDropAction(Qt.DropAction.CopyAction)
+            elif act.text() == 'Move':
+                e.setDropAction(Qt.DropAction.MoveAction)
         else:
             e.setDropAction(Qt.DropAction.IgnoreAction)
             e.ignore()
@@ -217,8 +218,10 @@ def choose_drop_action(e: QDropEvent):
         e.setDropAction(Qt.DropAction.CopyAction)
 
 def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    if data.hasFormat('text/uri-list'):
-        return drop_uri_list(data, target)
+    if data.hasFormat(ag.mimeType.uri.value):
+        drop_uri_list(data, target)
+        update_file_list(target)
+        return True
 
     if data.hasFormat(ag.mimeType.files.value):
         return drop_files(data, act, target)
@@ -228,13 +231,19 @@ def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
 
     return False
 
+def update_file_list(target: int):
+    idx = ag.dir_list.currentIndex()
+    if idx.isValid():
+        if (ag.mode is ag.appMode.DIR and
+            idx.data(Qt.ItemDataRole.UserRole).id == target):
+            low_bk.show_folder_files()
+
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
     load.set_files_iterator(
         (it.toLocalFile() for it in data.urls())
     )
     load.load_to_dir(target)
-    return True
 
 def drop_files(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     if act is Qt.DropAction.CopyAction:
