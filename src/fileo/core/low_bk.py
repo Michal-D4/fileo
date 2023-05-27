@@ -227,6 +227,7 @@ def set_dir_model():
     model: TreeModel = TreeModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
+    ag.dir_list.setFocus()
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter.dir_selection_changed)
 
 @pyqtSlot(QModelIndex, QModelIndex)
@@ -348,7 +349,7 @@ def show_files(files):
             ff1.append(field_val(typ, ff[i]))
         model.append_row(ff1, ag.FileData(*ff[-3:]))
 
-    ag.app.ui.others.setText(f"files: {model.rowCount()}")
+    ag.app.ui.file_count.setText(f"files: {model.rowCount()}")
 
     if model.rowCount() == 0:
         row = ["THERE ARE NO FILES HERE"]

@@ -909,13 +909,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="folder_path">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -929,7 +922,14 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="others">
+        <widget class="QLabel" name="folder_path">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="file_count">
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>

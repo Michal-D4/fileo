@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (QDialog, QLabel, QSizePolicy,
     QHBoxLayout, QVBoxLayout, QDialogButtonBox, QStyle,
 )
@@ -22,7 +22,7 @@ class AboutDialog(QDialog):
         v_layout.setSpacing(16)
 
         h_layout = QHBoxLayout()
-        h_layout.setSpacing(24)
+        h_layout.setSpacing(16)
 
         ico = QLabel(self)
         size_policy = QSizePolicy(
@@ -33,12 +33,11 @@ class AboutDialog(QDialog):
         ico.setPixmap(self.get_info_icon())
         h_layout.addWidget(ico)
 
-        sub = QLabel(self)
-        sub.setText('Fileo - yet another file keeper')
-        font = QFont()
-        font.setPointSize(16)
-        sub.setFont(font)
-        sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        from ..main import app_version
+
+        app_info = QLabel(self)
+        app_info.setText(f'Fileo v.{app_version()} - yet another file keeper')
+        h_layout.addWidget(app_info)
 
         self.git_repo = QLabel(self)
         self.git_repo.setOpenExternalLinks(True)
@@ -49,19 +48,9 @@ class AboutDialog(QDialog):
         self.git_repo.setText(
             f"GitHub repository: <a href='{link}'>{link}</a>"
         )
-        font = QFont()
-        font.setPointSize(12)
-        self.git_repo.setFont(font)
-
-        v_layout2 = QVBoxLayout()
-        v_layout2.setSpacing(24)
-
-        v_layout2.addWidget(sub)
-        v_layout2.addWidget(self.git_repo)
-
-        h_layout.addLayout(v_layout2)
 
         v_layout.addLayout(h_layout)
+        v_layout.addWidget(self.git_repo)
         v_layout.addWidget(self.buttonBox)
         self.setModal(True)
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from PyQt6.QtCore import QUrl, QDateTime, QSize, pyqtSlot
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QDesktopServices
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
     QVBoxLayout, QHBoxLayout, QToolButton, QFrame,
@@ -90,10 +90,12 @@ class authorBrowser(QWidget):
         )
 
         self.accept = QToolButton()
+        self.accept.setObjectName('ok')
         self.accept.setIcon(icons.get_other_icon("ok"))
         self.accept.setToolTip('Accept editing')
 
         self.reject = QToolButton()
+        self.reject.setObjectName('cancel')
         self.reject.setIcon(icons.get_other_icon("cancel2"))
         self.reject.setToolTip('Reject editing')
 
@@ -352,6 +354,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
         # add file info page (3)
         self.file_info = fileInfo(self)
+        self.file_info.setObjectName('file_info')
         self.stackedWidget.addWidget(self.file_info)
 
         # add comments page (4)
@@ -529,7 +532,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
             self.start_edit(id)
             return
         if tref.startswith('http'):
-            # TODO open link in default browser
+            QDesktopServices.openUrl(href)
             return
 
     def confirm_note_deletion(self):

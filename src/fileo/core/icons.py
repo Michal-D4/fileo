@@ -3,7 +3,6 @@ import qtawesome as qta
 from typing import Dict
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import QSize
-from pathlib import Path
 
 from . import app_globals as ag
 
