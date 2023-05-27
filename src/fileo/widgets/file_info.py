@@ -15,7 +15,9 @@ class fileInfo(QWidget):
         self.file_id = 0
 
         self.rating = QLineEdit()
+        self.rating.setObjectName('edit_rating')
         self.pages = QLineEdit()
+        self.pages.setObjectName('edit_pages')
         self.rating.editingFinished.connect(self.rating_changed)
         self.pages.editingFinished.connect(self.pages_changed)
 

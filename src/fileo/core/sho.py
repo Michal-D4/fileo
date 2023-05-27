@@ -4,10 +4,12 @@ import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent, QPixmap, QIcon,  )
+                         QResizeEvent,
+)
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget, QCheckBox, )
+                             QFrame, QWidget, QCheckBox,
+)
 
 from ..ui.ui_main import Ui_Sho
 from ..widgets.filter_setup import FilterSetup
@@ -158,12 +160,14 @@ class shoWindow(QMainWindow):
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
         btn.setIcon(icons.get_other_icon('refresh'))
+        btn.setObjectName('refresh')
         self.container.add_widget(btn, 0)
         btn.setToolTip("Refresh folder list")
         btn.clicked.connect(bk_ut.show_hidden_dirs)
 
         self.show_hidden = QCheckBox()  # checkBox to show hidden folders
         self.show_hidden.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        self.show_hidden.setObjectName('show_hide')
         self.container.add_widget(self.show_hidden, 0)
         self.show_hidden.setToolTip("Show hidden folders")
 
@@ -172,6 +176,7 @@ class shoWindow(QMainWindow):
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
         btn.setIcon(icons.get_other_icon('collapse_all'))
+        btn.setObjectName('collapse_all')
         self.container.add_widget(btn, 0)
         btn.setCheckable(True)
         btn.setToolTip("Collapse/expand tree")
@@ -188,6 +193,8 @@ class shoWindow(QMainWindow):
         ag.dir_list.setAcceptDrops(True)
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        ag.dir_list.setFocusPolicy(Qt.FocusPolicy.StrongFocus) # default
+        ag.dir_list.setObjectName('dir_list')
         add_widget_into_frame(frames[0], ag.dir_list)
 
         ag.tag_list = aBrowser(read_only=False)

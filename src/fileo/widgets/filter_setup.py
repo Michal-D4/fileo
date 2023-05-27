@@ -1,9 +1,7 @@
-from loguru import logger
-
-from PyQt6.QtCore import Qt, QDate, QDateTime
+from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtWidgets import QWidget
 
-from ..core import app_globals as ag, icons, low_bk, db_ut
+from ..core import app_globals as ag, low_bk, db_ut
 from .ui_set_filter import Ui_filterSetup
 
 def unix_date(ts: float) -> int:
