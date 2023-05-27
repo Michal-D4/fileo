@@ -2,7 +2,7 @@ from loguru import logger
 from collections import deque
 
 from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
-    QModelIndex, QDataStream, QIODevice, QPoint,
+    QModelIndex, QDataStream, QIODevice,
 )
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )

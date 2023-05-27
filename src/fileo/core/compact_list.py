@@ -60,6 +60,7 @@ class aBrowser(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.browser: QTextBrowser = QTextBrowser()
+        self.browser.setObjectName('a_browser')
         self.browser.selectionChanged.connect(self.selection_changed)
         layout.addWidget(self.browser)
         self.setLayout(layout)

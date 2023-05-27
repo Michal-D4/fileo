@@ -2,6 +2,8 @@ __pycache__/
 .git/
 build/
 dist/
+# installation folder EXE/
+EXE/
 *.code-workspace
 .history/
 .pyc

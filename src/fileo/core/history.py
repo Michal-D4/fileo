@@ -1,8 +1,6 @@
 from loguru import logger
 from dataclasses import dataclass
 
-from PyQt6.QtCore import Qt
-
 from . import app_globals as ag, db_ut
 
 @dataclass(slots=True)
