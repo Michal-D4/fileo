@@ -115,12 +115,11 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
         return conn.execute(sql, (nn,))
 
 def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
-    sql = (
-        'select count(*) from files where filename '
-        f"{'glob ?' if case else 'like ?'}"
-    )
-    wildcard = '*' if case else '%'
-    nn = name if exact else f'{wildcard}{name}{wildcard}'
+    filename = 'filename' if case else 'upper(filename)'
+    sql = f'select count(*) from files where {filename} glob ?'
+    nn = name if case else name.upper()
+    if not exact:
+        nn = f'*{nn}*'
     with ag.db['Conn'] as conn:
         res = conn.execute(sql, (nn,)).fetchone()
         return res[0] > 0

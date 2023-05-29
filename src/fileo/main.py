@@ -25,7 +25,7 @@ def app_version() -> str:
     what the shit is this versioning support API
     it's easier to hardcode it everywhere
     """
-    return '0.9.0'
+    return '0.9.1'
 
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fileo"
-version = "0.9.0"
+version = "0.9.1"
 description = "Yet another file organizer"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
