@@ -67,15 +67,23 @@ class findFile(QWidget):
             self.case.isChecked(),
             self.word.isChecked()
         )
+        if not name:
+            self.search_err_msg('Please enter file name')
+            return
+
         if db_ut.exists_file_with_name(name, case, word):
             ag.signals_.user_action_signal.emit(
                 f'find_files_by_name/{name},{int(case)},{int(word)}'
             )
             self.close()
         else:
-            dlg = QMessageBox(ag.app)
-            dlg.setWindowTitle(f'File not found"')
-            dlg.setText(f'File "{name}" not found')
-            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-            dlg.setIcon(QMessageBox.Icon.Warning)
-            dlg.exec()
+            self.search_err_msg(f'File "{name}" not found')
+
+    def search_err_msg(self, msg):
+        dlg = QMessageBox(ag.app)
+        dlg.setWindowTitle(f'File not found"')
+        dlg.setText(msg)
+        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+        dlg.setIcon(QMessageBox.Icon.Warning)
+        dlg.exec()
+        self.srch_pattern.setFocus()
