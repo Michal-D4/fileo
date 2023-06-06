@@ -77,7 +77,7 @@ class shoWindow(QMainWindow):
         self.container.set_qss_fold(ag.dyn_qss['decorator'])
 
     def restote_settings(self):
-        self.connect_db(utils.get_qsetting("DB_NAME", ""))
+        self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
         self.restore_comment_height()
         self.restore_geometry()
@@ -98,28 +98,28 @@ class shoWindow(QMainWindow):
             self.init_filter_setup()
 
     def restore_container(self):
-        state = utils.get_qsetting("container", (DEFAULT_CONTAINER_WIDTH, None))
+        state = utils.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
             self.ui.container.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        self.mode = utils.get_qsetting("appMode", ag.appMode.DIR)
+        self.mode = ag.appMode(utils.get_app_setting("appMode", ag.appMode.DIR.value))
         self.click_checkable_button(True, self.mode)
 
     def restore_comment_height(self):
-        hh = utils.get_qsetting("commentHeight", MIN_COMMENT_HEIGHT)
+        hh = utils.get_app_setting("commentHeight", MIN_COMMENT_HEIGHT)
         self.ui.noteHolder.setMinimumHeight(int(hh))
         self.ui.noteHolder.setMaximumHeight(int(hh))
 
     def restore_geometry(self):
-        geometry = utils.get_qsetting("MainWindowGeometry")
+        geometry = utils.get_app_setting("MainWindowGeometry")
 
         if geometry:
             self.restoreGeometry(geometry)
 
         maximize_restore = utils.setup_ui(self)
-        is_maximized = int(utils.get_qsetting("maximizedWindow", False))
+        is_maximized = int(utils.get_app_setting("maximizedWindow", False))
         if is_maximized:
             maximize_restore()
 
@@ -445,12 +445,12 @@ class shoWindow(QMainWindow):
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.saveGeometry(),
             "container": self.container.save_state(),
-            "appMode": self.mode,
+            "appMode": self.mode.value,
             "commentHeight": self.ui.noteHolder.height(),
             "DB_NAME": ag.db['Path'],
         }
 
-        utils.save_qsetting(**settings)
+        utils.save_app_setting(**settings)
         bk_ut.save_bk_settings()
 
         super().closeEvent(event)

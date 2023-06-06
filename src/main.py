@@ -25,7 +25,7 @@ def app_version() -> str:
     what the shit is this versioning support API
     it's easier to hardcode it everywhere
     """
-    return '0.9.1'
+    return '0.9.2'
 
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():
@@ -38,7 +38,6 @@ def tab_pressed():
 
 def set_logger(file):
     logger.remove()
-    # fmt = "{time:%b-%d %H:%M:%S} | {level:6} | {module}.{function}({line}): {message}"
     fmt = "{time:%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
     file_name = file
     if file_name == "sys.stderr":
@@ -55,14 +54,26 @@ def main():
     # set_logger(file_name)
 
     try:
-        lock_file = QLockFile(QDir.tempPath() + '/' + app_name() + '.lock')
-        logger.info(f'{lock_file.fileName()}')
+        lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
+        # logger.info(f'{lock_file.fileName()}')
         if not lock_file.tryLock():
+            if lock_file.error() is QLockFile.LockError.LockFailedError:
+                res = lock_file.getLockInfo()
+                # logger.info(res)
+                import platform
+                if platform.system() == 'Windows':
+                    from pywinauto import Application
+                    running_app = Application().connect(process=res[1])
+                    running_app.top_window().set_focus()
+                elif platform.system() == 'Linux':
+                    pass
+                elif platform.system() == 'Darwin':
+                    pass
+
             sys.exit(0)
 
         global app
         app = QApplication([])
-
 
         try:
             thema_name = "default"

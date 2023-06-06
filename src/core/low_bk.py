@@ -5,12 +5,12 @@ from loguru import logger
 from pathlib import Path
 import pickle
 
-from PyQt6.QtCore import (Qt, QSize, QModelIndex,
+from PyQt6.QtCore import (Qt, QSize, QModelIndex, QPoint,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
 )
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QMenu,
 )
 
 from . import db_ut, app_globals as ag, utils
@@ -33,7 +33,8 @@ def exec_user_actions():
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
         "author inserted": populate_author_list,
-        "Files Copy full file name": copy_file_name,
+        "Files Copy file name(s)": copy_file_name,
+        "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_file,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
@@ -66,6 +67,81 @@ def exec_user_actions():
             dlg.exec()
 
     return execute_action
+
+@pyqtSlot(QPoint)
+def dir_menu(pos):
+    logger.info(f'{pos=}')
+    idx = ag.dir_list.indexAt(pos)
+    menu = QMenu(ag.app)
+    if idx.isValid():
+        menu.addSeparator()
+        menu.addAction("Delete folder(s)")
+        menu.addSeparator()
+        menu.addAction("Toggle hidden state")
+        menu.addSeparator()
+        menu.addAction("Import files")
+        menu.addSeparator()
+        menu.addAction("Create folder")
+        menu.addAction("Create folder as child")
+    else:
+        menu.addAction("Create folder")
+
+    action = menu.exec(ag.dir_list.mapToGlobal(pos))
+    if action:
+        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
+
+@pyqtSlot(QPoint)
+def file_menu(pos):
+    logger.info(f'{pos=}')
+    idx = ag.file_list.indexAt(pos)
+    if idx.isValid():
+        menu = QMenu(ag.app)
+        menu.addAction("Copy file name(s)")
+        menu.addAction("Copy full file name(s)")
+        menu.addAction("Reveal in explorer")
+        menu.addSeparator()
+        menu.addAction("Open file")
+        menu.addSeparator()
+        menu.addAction("Rename file")
+        menu.addSeparator()
+        menu.addAction("Export selected files")
+        menu.addSeparator()
+        menu.addAction("Remove file(s) from folder")
+        menu.addSeparator()
+        menu.addAction("Delete file(s) from DB")
+        action = menu.exec(ag.file_list.mapToGlobal(pos))
+        if action:
+            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
+
+@pyqtSlot()
+def rename_file():
+    idx = ag.file_list.currentIndex()
+    idx0 = ag.file_list.model().index(idx.row(), 0, QModelIndex())
+    ag.file_list.setCurrentIndex(idx)
+    old_name = full_file_name(idx0)
+    ag.file_path = Path(old_name)
+    if ag.file_path.exists() and ag.file_path.is_file():
+        ag.file_list.edit(idx0)
+
+@pyqtSlot(str)
+def rename_in_file_system(new_name: str):
+    new_path = ag.file_path.rename(ag.file_path.parent / new_name)
+    if new_path.name == new_name:
+        ag.app.ui.current_filename.setText(new_name)
+    else:
+        dlg = QMessageBox(ag.app)
+        dlg.setWindowTitle('Error renaming file')
+        dlg.setText(f'File {ag.file_path.name} was not renamed')
+        dlg.setDetailedText(ag.file_path.as_posix())
+        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
+        dlg.setIcon(QMessageBox.Icon.Critical)
+        dlg.exec()
+
+@pyqtSlot()
+def enable_next_prev(param: str):
+    not_empty = param.split(',')
+    ag.app.btn_next.setDisabled(not_empty[0] == 'no')
+    ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
 
 @pyqtSlot()
 def rename_file():
@@ -116,6 +192,9 @@ def show_about():
 
 #region Common
 def save_settings(**kwargs):
+    """
+    used to save settings on DB level
+    """
     if not ag.db["Conn"]:
         return
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
@@ -125,13 +204,20 @@ def save_settings(**kwargs):
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
 
 def get_setting(key: str, default=None):
+    """
+    used to restore settings on DB level
+    """
     if not ag.db["Conn"]:
         return default
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql = "select value from settings where key = :key;"
 
     val = cursor.execute(sql, {"key": key}).fetchone()[0]
-    vv = pickle.loads(val) if val else None
+    try:
+        vv = pickle.loads(val) if val else None
+    except:
+        vv = default
+    # logger.info(f'{key=}, {vv=}')
 
     return vv if vv else default
 
@@ -237,6 +323,14 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
+    def set_history():
+        if ag.hist_folder:
+            ag.hist_folder = False
+        else:       # new history item
+            add_history_item(file_row)
+            save_file_row_in_model(file_row, prev_idx)
+            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
         save_settings(COLUMN_WIDTH=get_columns_width())
@@ -245,12 +339,8 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         show_folder_files()
-        if ag.hist_folder:
-            ag.hist_folder = False
-        else:       # new history item
-            add_history_item(file_row)
-            save_file_row_in_model(file_row, prev_idx)
-            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+        # logger.info(f'{ag.hist_folder=}, {file_row=}')
+        set_history()
         set_current_file(ag.file_row)
 
 def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
@@ -427,9 +517,17 @@ def field_titles() -> list:
     return af_name
 
 def copy_file_name():
-    idx = ag.file_list.currentIndex()
-    if idx.isValid():
-        QApplication.clipboard().setText(full_file_name(idx))
+    files = []
+    for idx in ag.file_list.selectionModel().selectedRows(0):
+        files.append(file_name(idx))
+    QApplication.clipboard().setText('\n'.join(files))
+
+
+def copy_full_file_name():
+    files = []
+    for idx in ag.file_list.selectionModel().selectedRows(0):
+        files.append(full_file_name(idx))
+    QApplication.clipboard().setText('\n'.join(files))
 
 def open_folder():
     idx = ag.file_list.currentIndex()
@@ -523,7 +621,7 @@ def post_delete_file(row: int):
 #region  export-import
 def export_files():
     pp = Path('~/fileo/export').expanduser()
-    path = utils.get_qsetting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = utils.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
     file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
         caption='Open file to save list of exported files',
         directory=(Path(path) / 'untitled').as_posix(),
@@ -546,7 +644,7 @@ def _export_files(filename: str):
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
-    path = utils.get_qsetting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = utils.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
     file_name, ok = QFileDialog.getOpenFileName(ag.app,
         caption="Open file to import list of files",
         directory=path,

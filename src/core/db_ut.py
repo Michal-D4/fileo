@@ -97,27 +97,70 @@ def get_ext_list() -> apsw.Cursor:
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     """
     case - if True case sensitive
+    exact - if True look for an exact match
     """
-    filename = 'filename' if case else 'upper(filename)'
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '
         'from comments group by fileid) '
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
-        'left join x on x.fileid = f.id where '
-        f'{filename} glob ?'
+        'left join x on x.fileid = f.id'
     )
-    nn = name if case else name.upper()
+    nn = name if case else name.casefold()
+
+    def get_nonascii_names() -> list:
+        res = []
+        with ag.db['Conn'] as conn:
+            for line in conn.cursor().execute(sql):
+                ll = line[0] if case else line[0].casefold()
+                if exact:
+                    if ll == nn:
+                        res.append(line)
+                else:
+                    if nn in ll:
+                        res.append(line)
+        return res
+
+    if not name.isascii():
+        return get_nonascii_names()
+
+    # search string contains only ASCII symbols
+    filename = 'filename' if case else 'lower(filename)'
+    cond = f'where {filename} glob ?'
+
     if not exact:
         nn = f'*{nn}*'
     with ag.db['Conn'] as conn:
-        return conn.execute(sql, (nn,))
+        return conn.execute(' '.join((sql, cond)), (nn,))
 
 def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
-    filename = 'filename' if case else 'upper(filename)'
+    """
+    case - if True case sensitive
+    exact - if True look for an exact match
+    """
+    nn = name if case else name.casefold()
+
+    def exist_nonascii_name() -> bool:
+        sql = f'select filename from files'
+        with ag.db['Conn'] as conn:
+            for line in conn.cursor().execute(sql):
+                ll = line[0] if case else line[0].casefold()
+                if exact:
+                    if ll == nn:
+                        return True
+                else:
+                    if nn in ll:
+                        return True
+        return False
+
+    if not name.isascii():
+        return exist_nonascii_name()
+
+    # search string contains only ASCII symbols
+    filename = 'filename' if case else 'lower(filename)'
+
     sql = f'select count(*) from files where {filename} glob ?'
-    nn = name if case else name.upper()
     if not exact:
         nn = f'*{nn}*'
     with ag.db['Conn'] as conn:
