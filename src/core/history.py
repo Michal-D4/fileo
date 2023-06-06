@@ -5,8 +5,8 @@ from . import app_globals as ag, db_ut
 
 @dataclass(slots=True)
 class Item():
-    path: list
-    file_id: int
+    path: list = tuple()
+    file_id: int = 0
 
     def __post_init__(self):
         if isinstance(self.path, str):
@@ -14,12 +14,15 @@ class Item():
 
 class History(object):
     def __init__(self, limit: int = 20):
-        self.curr: Item = None
+        self.curr: Item = Item()
         self.limit: int = limit
         self.next = []
         self.prev = []
 
     def set_history(self, next: list, prev: list, curr: Item):
+        """
+        used to restore history on startup
+        """
         self.next = next
         self.prev = prev
         self.curr = curr
@@ -28,7 +31,7 @@ class History(object):
         )
 
     def set_limit(self, limit: int):
-        self.limit: int = limit
+        self.limit: int = int(limit)
         if len(self.next) > limit:
             self.next = self.next[len(self.next)-limit:]
         if len(self.prev) > limit:
@@ -61,7 +64,7 @@ class History(object):
         '''
         set file_id in the history item to be left
         '''
-        if self.curr:
+        if self.curr.path:
             self.curr.file_id = row_no
             db_ut.update_file_id(self.curr.path, row_no)
 
@@ -81,5 +84,8 @@ class History(object):
         self.curr = Item(path, file_id)
 
     def get_history(self) -> list:
+        """
+        used to save histiry on close
+        """
         self.set_file_id(ag.file_list.currentIndex().row())
         return [self.next, self.prev, self.curr]

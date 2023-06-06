@@ -1,17 +1,24 @@
 from loguru import logger
 from typing import TYPE_CHECKING
+import sys
 
 from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
+from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView, QWidget
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd, history,
 )
 from ..widgets import workers, find_files
+if sys.platform.startswith("win"):
+    from . import win_menu as menu
+elif sys.platform.startswith("linux"):
+    from . import linux_menu as menu
+else:
+    raise ImportError(f"doesn't support {sys.platform} system")
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -102,13 +109,20 @@ def bk_setup(main: 'shoWindow'):
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
-    set_context_menu()
+    menu.set_context_menu()
 
-    populate_all()
-    hist = low_bk.get_setting('HISTORY', [[], [], None])
-    ag.history.set_history(*hist)
-    ag.hist_folder = not hist[0]
-    _history_folder(hist[-1])
+    if ag.db['Conn']:
+        populate_all()
+
+        hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
+        ag.history.set_history(*hist)
+        ag.hist_folder = not hist[0]
+        _history_folder(hist[-1])
+
+        QTimer.singleShot(10 * 1000, show_lost_files)
+        QTimer.singleShot(5 * 60 * 1000, run_update0_files)
+        QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
+        QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
     dd.set_drag_drop_handlers()
 
@@ -123,11 +137,6 @@ def bk_setup(main: 'shoWindow'):
 
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_action_signal.emit("double click file"))
-
-    QTimer.singleShot(10 * 1000, show_lost_files)
-    QTimer.singleShot(5 * 60 * 1000, run_update0_files)
-    QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
-    QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
 def set_field_menu():
     menu = QMenu(self)
@@ -241,55 +250,6 @@ def show_hidden_dirs(state: Qt.CheckState):
     """
     low_bk.save_branch()
     fill_dir_list()
-
-def set_context_menu():
-    """
-    Set context menus for each widget
-    :return:
-    """
-    ag.dir_list.customContextMenuRequested.connect(dir_menu)
-    ag.file_list.customContextMenuRequested.connect(file_menu)
-
-@pyqtSlot(QPoint)
-def dir_menu(pos):
-    idx = ag.dir_list.indexAt(pos)
-    menu = QMenu(self)
-    if idx.isValid():
-        menu.addSeparator()
-        menu.addAction("Delete folder(s)")
-        menu.addSeparator()
-        menu.addAction("Toggle hidden state")
-        menu.addSeparator()
-        menu.addAction("Import files")
-        menu.addSeparator()
-        menu.addAction("Create folder")
-        menu.addAction("Create folder as child")
-    else:
-        menu.addAction("Create folder")
-
-    action = menu.exec(ag.dir_list.mapToGlobal(pos))
-    if action:
-        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
-
-@pyqtSlot(QPoint)
-def file_menu(pos):
-    idx = ag.file_list.indexAt(pos)
-    if idx.isValid():
-        menu = QMenu(self)
-        menu.addAction("Copy full file name")
-        menu.addAction("Open file")
-        menu.addAction("Reveal in explorer")
-        menu.addSeparator()
-        menu.addAction("Rename file")
-        menu.addSeparator()
-        menu.addAction("Export selected files")
-        menu.addSeparator()
-        menu.addAction("Remove file(s) from folder")
-        menu.addSeparator()
-        menu.addAction("Delete file(s) from DB")
-        action = menu.exec(ag.file_list.mapToGlobal(pos))
-        if action:
-            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):

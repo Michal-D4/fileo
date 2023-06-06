@@ -11,27 +11,31 @@ from PyQt6.QtWidgets import QApplication
 from . import icons, app_globals as ag
 from .. import qss as style_sheets
 
-__all__ = ['setup_ui', 'resize_grips',
-            'get_qsetting', 'save_qsetting',
-]
-
 APP_NAME = "fileo"
 MAKER = 'miha'
 
 settings = None
 
 
-def get_qsetting(key: str, default: Optional[Any]=None) -> QVariant:
+def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
+    """
+    used to restore settings on application level
+    """
     global settings
     if not settings:
         settings = QSettings(MAKER, APP_NAME)
     try:
         to_set = settings.value(key, default)
-    except TypeError:
+    except (TypeError, SystemError) as e:
+        # logger.info(f'{type(e)}, {e=}')
         to_set = default
+    # logger.info(f'{key=}, {default=}, {to_set=}')
     return to_set
 
-def save_qsetting(**kwargs):
+def save_app_setting(**kwargs):
+    """
+    used to save settings on application level
+    """
     if not kwargs:
         return
     global settings

@@ -90,7 +90,7 @@ class OpenDB(QWidget):
             QApplication.clipboard().setText(self.ui.input_path.placeholderText())
 
     def restore_db_list(self):
-        self.db_list = utils.get_qsetting("DB_List", []) or []
+        self.db_list = utils.get_app_setting("DB_List", []) or []
         for it in self.db_list:
             self.add_item_widget(it)
         self.ui.listDB.setCurrentRow(0)
@@ -147,7 +147,7 @@ class OpenDB(QWidget):
 
     def add_db(self):
         pp = Path('~/fileo/dbs').expanduser()
-        path = utils.get_qsetting('DEFAULT_DB_PATH', pp.as_posix())
+        path = utils.get_app_setting('DEFAULT_DB_PATH', pp.as_posix())
         file_name, ok_ = QFileDialog.getSaveFileName(self,
             caption="Select DB file",
             directory=path,
@@ -196,5 +196,5 @@ class OpenDB(QWidget):
         self.close()
 
     def close(self) -> bool:
-        utils.save_qsetting(**{"DB_List": self.db_list})
+        utils.save_app_setting(**{"DB_List": self.db_list})
         return super().close()

@@ -6,10 +6,6 @@ from PyQt6.QtCore import QSize
 
 from . import app_globals as ag
 
-__all__ = ['collect_all_icons', 'get_toolbar_icons',
-           'get_other_icon',
-]
-
 toolbar_icons = {}
 other_icons = {}
 

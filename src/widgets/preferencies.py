@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QDialogButtonBox, QSizePolicy, QSpacerItem,
 )
 
-from ..core import utils
+from ..core import utils, app_globals as ag
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -52,24 +52,25 @@ class Preferencies(QDialog):
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
         }
-        utils.save_qsetting(**settings)
+        utils.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
         create_dir(Path(self.export_path.text()))
+        ag.history.set_limit(settings["FOLDER_HISTORY_DEPTH"])
         self.close()
 
     def set_inputs(self):
         self.db_path = QLineEdit()
         pp = Path('~/fileo').expanduser()
         self.db_path.setText(
-            utils.get_qsetting('DEFAULT_DB_PATH', str(pp / 'dbs'))
+            utils.get_app_setting('DEFAULT_DB_PATH', str(pp / 'dbs'))
         )
         self.export_path = QLineEdit()
         self.export_path.setText(
-            utils.get_qsetting('DEFAULT_EXPORT_PATH', str(pp / 'export'))
+            utils.get_app_setting('DEFAULT_EXPORT_PATH', str(pp / 'export'))
         )
         self.folder_history_depth = QSpinBox()
         self.folder_history_depth.setMinimum(2)
         self.folder_history_depth.setMaximum(50)
-        self.folder_history_depth.setValue(
-            utils.get_qsetting('FOLDER_HISTORY_DEPTH', 15)
-        )
+        val = utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
+        self.folder_history_depth.setValue(val)
+        ag.history.set_limit(val)
