@@ -90,7 +90,7 @@ class shoWindow(QMainWindow):
 
     def set_busy(self, val: bool):
         self.is_busy = val
-        self.ui.busy.setPixmap(icons.get_other_icon("busy")[val])
+        self.ui.busy.setPixmap(icons.get_other_icon("busy", int(val)))
 
     def connect_db(self, path: str):
         if db_ut.create_connection(path):
@@ -104,7 +104,9 @@ class shoWindow(QMainWindow):
             self.ui.container.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        self.mode = ag.appMode(utils.get_app_setting("appMode", ag.appMode.DIR.value))
+        self.mode = ag.appMode(
+            int(utils.get_app_setting("appMode", ag.appMode.DIR.value))
+        )
         self.click_checkable_button(True, self.mode)
 
     def restore_comment_height(self):
@@ -133,54 +135,40 @@ class shoWindow(QMainWindow):
         self.container.ui.app_mode.setText(f"{val}")
 
     def set_extra_widgets(self):
-        self.btn_prev = QToolButton()
-        self.btn_prev.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.btn_prev.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        self.btn_prev.setAutoRaise(True)
-        self.btn_prev.setIcon(icons.get_other_icon('prev_folder'))
-        self.container.add_widget(self.btn_prev, 0)
-        self.btn_prev.setToolTip("Previous folder")
+        self.btn_prev = self._create_button('prev_folder', 'btn_prev', 'Previous folder')
         self.btn_prev.clicked.connect(bk_ut.to_prev_folder)
-        self.btn_prev.setObjectName('btn_prev')
         self.btn_prev.setDisabled(True)
 
-        self.btn_next = QToolButton()
-        self.btn_next.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.btn_next.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        self.btn_next.setAutoRaise(True)
-        self.btn_next.setIcon(icons.get_other_icon('next_folder'))
-        self.container.add_widget(self.btn_next, 0)
-        self.btn_next.setToolTip("Next folder")
+        self.btn_next = self._create_button('next_folder', 'btn_next', 'Next folder')
         self.btn_next.clicked.connect(bk_ut.to_next_folder)
-        self.btn_next.setObjectName('btn_next')
         self.btn_next.setDisabled(True)
 
-        btn = QToolButton()             # button "refresh"
-        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        btn.setAutoRaise(True)
-        btn.setIcon(icons.get_other_icon('refresh'))
-        btn.setObjectName('refresh')
-        self.container.add_widget(btn, 0)
-        btn.setToolTip("Refresh folder list")
+        btn = self._create_button('refresh', 'refresh', 'Refresh folder list')
         btn.clicked.connect(bk_ut.show_hidden_dirs)
 
-        self.show_hidden = QCheckBox()  # checkBox to show hidden folders
-        self.show_hidden.setStyleSheet("border:0px; margin:0px; padding:0px;")
-        self.show_hidden.setObjectName('show_hide')
-        self.container.add_widget(self.show_hidden, 0)
-        self.show_hidden.setToolTip("Show hidden folders")
+        self.show_hidden = self._create_button('show_hide', 'show_hide', 'Show hidden folders')
+        self.show_hidden.setCheckable(True)
+        self.show_hidden.clicked.connect(self.show_hide_click)
 
-        btn = QToolButton()             # button "collapse_all"
+        self.collapse_btn = self._create_button('collapse_all', 'collapse_all', 'Collapse/expand tree')
+        self.collapse_btn.setCheckable(True)
+        self.collapse_btn.clicked.connect(bk_ut.toggle_collapse)
+
+    def _create_button(self, icon_name: str, o_name: str, tool_tip: str) -> QToolButton:
+        btn = QToolButton()
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
-        btn.setIcon(icons.get_other_icon('collapse_all'))
-        btn.setObjectName('collapse_all')
+        btn.setIcon(icons.get_other_icon(icon_name))
+        btn.setObjectName(o_name)
         self.container.add_widget(btn, 0)
-        btn.setCheckable(True)
-        btn.setToolTip("Collapse/expand tree")
-        btn.clicked.connect(bk_ut.toggle_collapse)
+        btn.setToolTip(tool_tip)
+        return btn
+
+    @pyqtSlot(bool)
+    def show_hide_click(self, state: bool):
+        bk_ut.show_hidden_dirs()
+        self.show_hidden.setIcon(icons.get_other_icon('show_hide', int(state)))
 
     def setup_global_widgets(self):
         ag.app = bk_ut.self = self
@@ -195,6 +183,7 @@ class shoWindow(QMainWindow):
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         ag.dir_list.setFocusPolicy(Qt.FocusPolicy.StrongFocus) # default
         ag.dir_list.setObjectName('dir_list')
+        ag.dir_list.expanded.connect(self.branch_expanded)
         add_widget_into_frame(frames[0], ag.dir_list)
 
         ag.tag_list = aBrowser(read_only=False)
@@ -212,6 +201,10 @@ class shoWindow(QMainWindow):
         ag.file_list = self.ui.file_list
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(ag.file_list))
         ag.field_menu = self.ui.field_menu
+
+    @pyqtSlot()
+    def branch_expanded(self):
+        self.collapse_btn.setChecked(False)
 
     def set_button_icons(self):
         for btn_name, icon in self.icons.items():

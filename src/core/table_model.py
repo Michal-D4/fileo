@@ -56,6 +56,9 @@ class ProxyModel2(ProxyModel):
         """
         self.sourceModel().update_opened(ts, self.mapToSource(index))
 
+    def update_field_by_name(self, val, name: str, index: QModelIndex):
+        self.sourceModel().update_field_by_name(val, name, self.mapToSource(index))
+
 
 class TableModel(QAbstractTableModel):
 
@@ -165,3 +168,8 @@ class TableModel(QAbstractTableModel):
         if "Open Date" in self.header:
             i = self.header.index("Open Date")
             self.rows[index.row()][i].setSecsSinceEpoch(ts)
+
+    def update_field_by_name(self, val, name: str, index: QModelIndex):
+        if name in self.header:
+            i = self.header.index(name)
+            self.rows[index.row()][i] = val

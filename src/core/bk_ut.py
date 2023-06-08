@@ -1,24 +1,17 @@
 from loguru import logger
 from typing import TYPE_CHECKING
-import sys
 
 from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView, QWidget
+from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd, history,
 )
 from ..widgets import workers, find_files
-if sys.platform.startswith("win"):
-    from . import win_menu as menu
-elif sys.platform.startswith("linux"):
-    from . import linux_menu as menu
-else:
-    raise ImportError(f"doesn't support {sys.platform} system")
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -40,8 +33,8 @@ def save_bk_settings():
         "AUTHOR_SEL_LIST": low_bk.author_selection(),
         "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
         "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
-        "SHOW_HIDDEN": self.show_hidden.checkState(),
-        "HISTORY": ag.history.get_history()
+        "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
+        "HISTORY": ag.history.get_history(),
     }
     low_bk.save_settings(**settings)
     self.filter_setup.save_filter_settings()
@@ -109,7 +102,7 @@ def bk_setup(main: 'shoWindow'):
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
-    menu.set_context_menu()
+    set_context_menu()
 
     if ag.db['Conn']:
         populate_all()
@@ -223,10 +216,9 @@ def populate_all():
     low_bk.populate_ext_list()
     low_bk.populate_author_list()
 
-    self.show_hidden.setCheckState(
-        Qt.CheckState(low_bk.get_setting("SHOW_HIDDEN", 0))
+    self.show_hidden.setChecked(
+        bool(low_bk.get_setting("SHOW_HIDDEN", 0))
     )
-    self.show_hidden.stateChanged.connect(show_hidden_dirs)
     fill_dir_list()
     ag.filter.restore_filter_settings()
 
@@ -243,13 +235,64 @@ def fill_dir_list():
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
     ag.dir_list.setCurrentIndex(idx)
 
-@pyqtSlot(Qt.CheckState)
-def show_hidden_dirs(state: Qt.CheckState):
+@pyqtSlot()
+def show_hidden_dirs():
     """
     QCheckBox stateChanged signal handler
     """
     low_bk.save_branch()
     fill_dir_list()
+
+def set_context_menu():
+    """
+    Set context menus for each widget
+    :return:
+    """
+    ag.dir_list.customContextMenuRequested.connect(dir_menu)
+    ag.file_list.customContextMenuRequested.connect(file_menu)
+
+@pyqtSlot(QPoint)
+def dir_menu(pos):
+    idx = ag.dir_list.indexAt(pos)
+    menu = QMenu(self)
+    if idx.isValid():
+        menu.addSeparator()
+        menu.addAction("Delete folder(s)")
+        menu.addSeparator()
+        menu.addAction("Toggle hidden state")
+        menu.addSeparator()
+        menu.addAction("Import files")
+        menu.addSeparator()
+        menu.addAction("Create folder")
+        menu.addAction("Create folder as child")
+    else:
+        menu.addAction("Create folder")
+
+    action = menu.exec(ag.dir_list.mapToGlobal(pos))
+    if action:
+        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
+
+@pyqtSlot(QPoint)
+def file_menu(pos):
+    idx = ag.file_list.indexAt(pos)
+    if idx.isValid():
+        menu = QMenu(self)
+        menu.addAction("Copy file name(s)")
+        menu.addAction("Copy full file name(s)")
+        menu.addAction("Reveal in explorer")
+        menu.addSeparator()
+        menu.addAction("Open file")
+        menu.addSeparator()
+        menu.addAction("Rename file")
+        menu.addSeparator()
+        menu.addAction("Export selected files")
+        menu.addSeparator()
+        menu.addAction("Remove file(s) from folder")
+        menu.addSeparator()
+        menu.addAction("Delete file(s) from DB")
+        action = menu.exec(ag.file_list.mapToGlobal(pos))
+        if action:
+            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):

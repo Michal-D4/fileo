@@ -9,14 +9,11 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list:
-    to_show_hidden = (
-        ag.app.show_hidden.checkState() is Qt.CheckState.Checked
-    )
     sql2 = ('select p.parent, d.id, p.is_copy, p.hide, p.file_id, '
                'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
-    sql = sql2[0] if to_show_hidden else ' '.join(sql2)
+    sql = sql2[0] if ag.app.show_hidden.isChecked() else ' '.join(sql2)
 
     curs: apsw.Cursor = ag.db['Conn'].cursor()
 
@@ -490,17 +487,19 @@ def clear_temp():
     sql = "delete from aux where key not like 'save%'"
     ag.db['Conn'].cursor().execute(sql)
 
-def save_to_temp(key: str, val: int):
+def save_to_temp(key: str, val):
     ag.db['Conn'].cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
-def save_branch_in_temp(path: str):
-    sql = 'update aux set val = ? where key = ?'
-    ag.db['Conn'].cursor().execute(sql, (path, 'TREE_PATH'))
+def save_branch_in_temp(path):
+    sql = 'update aux set val = :path where key = :key'
+    key = 'TREE_PATH'
+    ag.db['Conn'].cursor().execute(sql, {'path': path, 'key': key})
 
 def get_branch_from_temp() -> str:
     sql = 'select val from aux where key = ?'
-    res = ag.db['Conn'].cursor().execute(sql, ('TREE_PATH',)).fetchone()
+    key = 'TREE_PATH'
+    res = ag.db['Conn'].cursor().execute(sql, (key,)).fetchone()
     return res[0] if res else ''
 
 def get_file_path(id: int) -> str:

@@ -18,32 +18,36 @@ def collect_all_icons():
     tmp2 = qta.icon('mdi.circle', color="#FF0000")
     other_icons["busy"] = (tmp1.pixmap(sz), tmp2.pixmap(sz))
 
-    other_icons["app"] = qta.icon(
-        'mdi.creation', color=ag.qss_params["$Xanthic"],
-        opacity=0.8, scale_factor = 1.3
+    other_icons["app"] = (
+        qta.icon('mdi.creation', color=ag.qss_params["$Xanthic"],
+                 opacity=0.8, scale_factor = 1.3,),
     )
 
-    other_icons["copy"] = qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
-    other_icons["folder"] = qta.icon('mdi.alpha-f', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
-    other_icons["hidden"] = qta.icon('mdi.alpha-h', color=ag.qss_params["$LimeGreen"], scale_factor = 2)
+    other_icons["copy"] = (qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
+    other_icons["folder"] = (qta.icon('mdi.alpha-f', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
+    other_icons["hidden"] = (qta.icon('mdi.alpha-h', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
 
-    other_icons["ok"] = qta.icon('mdi.check', color=ag.qss_params["$LimeGreen"])
-    other_icons["cancel2"] = qta.icon('mdi.window-close', color=ag.qss_params["$CarmineColor"])
+    other_icons["ok"] = (qta.icon('mdi.check', color=ag.qss_params["$LimeGreen"]),)
+    other_icons["cancel2"] = (qta.icon('mdi.window-close', color=ag.qss_params["$CarmineColor"]),)
 
-    other_icons["toEdit"] = qta.icon('mdi.pencil-outline', color=ag.qss_params["$navigatorColor"])
-    other_icons['plus'] = qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"])
+    other_icons["toEdit"] = (qta.icon('mdi.pencil-outline', color=ag.qss_params["$navigatorColor"]),)
+    other_icons['plus'] = (qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"]),)
 
-    other_icons['right'] = qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"])
-    other_icons['down'] =  qta.icon('mdi.chevron-down', color=ag.qss_params["$navigatorColor"])
-    other_icons['up'] =  qta.icon('mdi.chevron-up', color=ag.qss_params["$navigatorColor"])
-    other_icons["collapse_all"] = qta.icon('mdi.collapse-all-outline', color=ag.qss_params["$topBarColor"])
-    other_icons["refresh"] = qta.icon('mdi.refresh', color=ag.qss_params["$topBarColor"])
-    other_icons["open_db"] = qta.icon('mdi.folder-open-outline', color=ag.qss_params["$topBarColor"])
-    other_icons["more"] = qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"])
-    other_icons["remove_btn"] = qta.icon('mdi.close', color=ag.qss_params["$dialogBackground"],
-        color_active=ag.qss_params["$dialogInputEditColor"]),
-    other_icons["prev_folder"] = qta.icon('mdi.arrow-left',)
-    other_icons["next_folder"] = qta.icon('mdi.arrow-right',)
+    other_icons['right'] = (qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"]),)
+    other_icons['down'] = (qta.icon('mdi.chevron-down', color=ag.qss_params["$navigatorColor"]),)
+    other_icons['up'] = (qta.icon('mdi.chevron-up', color=ag.qss_params["$navigatorColor"]),)
+    other_icons["collapse_all"] = (qta.icon('mdi.collapse-all-outline', color=ag.qss_params["$topBarColor"]),)
+    other_icons["refresh"] = (qta.icon('mdi.refresh', color=ag.qss_params["$topBarColor"]),)
+    other_icons["open_db"] = (qta.icon('mdi.folder-open-outline', color=ag.qss_params["$topBarColor"]),)
+    other_icons["more"] = (qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"]),)
+    other_icons["remove_btn"] = (qta.icon('mdi.close', color=ag.qss_params["$dialogBackground"],
+        color_active=ag.qss_params["$dialogInputEditColor"]),)
+    other_icons["prev_folder"] = (qta.icon('mdi.arrow-left',),)
+    other_icons["next_folder"] = (qta.icon('mdi.arrow-right',),)
+    other_icons["show_hide"] = (
+        qta.icon('mdi.checkbox-blank-outline', color=ag.qss_params["$topBarColor"]),
+        qta.icon('mdi.checkbox-marked-outline', color=ag.qss_params["$topBarColor"]),
+    )
 
 def _collect_toolbar_icons():
     # global icons
@@ -111,13 +115,13 @@ def _collect_toolbar_icons():
         qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"]),
     )
 
-def get_other_icon(key: str) -> QIcon|QPixmap:
-    return other_icons[key]
+def get_other_icon(key: str, index: int = 0) -> QIcon|QPixmap:
+    return other_icons[key][index]
 
 def add_other_icon(key: str, pict: QPixmap):
     ico = QIcon()
     ico.addPixmap(pict)
-    other_icons[key] = ico
+    other_icons[key] = (ico,)
 
 def get_toolbar_icons() -> Dict:
     return toolbar_icons

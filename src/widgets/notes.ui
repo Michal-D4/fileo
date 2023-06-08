@@ -30,7 +30,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="header">
+    <widget class="QFrame" name="head">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>

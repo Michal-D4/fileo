@@ -25,7 +25,7 @@ def app_version() -> str:
     what the shit is this versioning support API
     it's easier to hardcode it everywhere
     """
-    return '0.9.2'
+    return '0.9.3'
 
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():
@@ -39,11 +39,11 @@ def tab_pressed():
 def set_logger(file):
     logger.remove()
     fmt = "{time:%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
-    file_name = file
-    if file_name == "sys.stderr":
+
+    if file == "sys.stderr":
         logger.add(sys.stderr, format=fmt)
     else:
-        logger.add(file_name, format=fmt)
+        logger.add(file, format=fmt)
     logger.info("START ==============================>")
     logger.info(f'{app_name()=}, {app_version()=}')
 

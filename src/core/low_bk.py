@@ -5,12 +5,12 @@ from loguru import logger
 from pathlib import Path
 import pickle
 
-from PyQt6.QtCore import (Qt, QSize, QModelIndex, QPoint,
+from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
 )
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QMenu,
+    QFileDialog, QMessageBox,
 )
 
 from . import db_ut, app_globals as ag, utils
@@ -67,81 +67,6 @@ def exec_user_actions():
             dlg.exec()
 
     return execute_action
-
-@pyqtSlot(QPoint)
-def dir_menu(pos):
-    logger.info(f'{pos=}')
-    idx = ag.dir_list.indexAt(pos)
-    menu = QMenu(ag.app)
-    if idx.isValid():
-        menu.addSeparator()
-        menu.addAction("Delete folder(s)")
-        menu.addSeparator()
-        menu.addAction("Toggle hidden state")
-        menu.addSeparator()
-        menu.addAction("Import files")
-        menu.addSeparator()
-        menu.addAction("Create folder")
-        menu.addAction("Create folder as child")
-    else:
-        menu.addAction("Create folder")
-
-    action = menu.exec(ag.dir_list.mapToGlobal(pos))
-    if action:
-        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
-
-@pyqtSlot(QPoint)
-def file_menu(pos):
-    logger.info(f'{pos=}')
-    idx = ag.file_list.indexAt(pos)
-    if idx.isValid():
-        menu = QMenu(ag.app)
-        menu.addAction("Copy file name(s)")
-        menu.addAction("Copy full file name(s)")
-        menu.addAction("Reveal in explorer")
-        menu.addSeparator()
-        menu.addAction("Open file")
-        menu.addSeparator()
-        menu.addAction("Rename file")
-        menu.addSeparator()
-        menu.addAction("Export selected files")
-        menu.addSeparator()
-        menu.addAction("Remove file(s) from folder")
-        menu.addSeparator()
-        menu.addAction("Delete file(s) from DB")
-        action = menu.exec(ag.file_list.mapToGlobal(pos))
-        if action:
-            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
-
-@pyqtSlot()
-def rename_file():
-    idx = ag.file_list.currentIndex()
-    idx0 = ag.file_list.model().index(idx.row(), 0, QModelIndex())
-    ag.file_list.setCurrentIndex(idx)
-    old_name = full_file_name(idx0)
-    ag.file_path = Path(old_name)
-    if ag.file_path.exists() and ag.file_path.is_file():
-        ag.file_list.edit(idx0)
-
-@pyqtSlot(str)
-def rename_in_file_system(new_name: str):
-    new_path = ag.file_path.rename(ag.file_path.parent / new_name)
-    if new_path.name == new_name:
-        ag.app.ui.current_filename.setText(new_name)
-    else:
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('Error renaming file')
-        dlg.setText(f'File {ag.file_path.name} was not renamed')
-        dlg.setDetailedText(ag.file_path.as_posix())
-        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-        dlg.setIcon(QMessageBox.Icon.Critical)
-        dlg.exec()
-
-@pyqtSlot()
-def enable_next_prev(param: str):
-    not_empty = param.split(',')
-    ag.app.btn_next.setDisabled(not_empty[0] == 'no')
-    ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
 
 @pyqtSlot()
 def rename_file():
@@ -610,10 +535,7 @@ def get_dir_id(file: int) -> int:
 def post_delete_file(row: int):
     populate_file_list()
     model = ag.file_list.model()
-    if row >= model.rowCount():
-        row -= 1
-    if row < 0:
-        return
+    row -= int(row >= model.rowCount())
 
     set_current_file(row)
 #endregion

@@ -154,6 +154,10 @@ QFrame#header {
    background-color: $navigatorBackground;
    color: $navigatorColor;
 }
+QFrame#header QToolButton:checked {
+   border: $shapeBorderRight1 $colorBorder;
+   background-color: $tagSelectedBG;
+}
 QFrame#header QToolButton:hover:enabled {
    border: none;
    background-color: $ToolButtonMenuHoverBG;
@@ -239,7 +243,7 @@ QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
 ##text_browser~<style type="text/css"> #closeBtn {text-align: right} *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
 ##active_selector~$bottomBorder color: $$activeColor
 ##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
-##noteFrames~QFrame#header {$bottomBorder background-color: $treeViewBackground; }
+##noteFrames~QFrame#head {$bottomBorder background-color: $treeViewBackground; }
 ##noteFrames~QLineEdit#tagEdit {background-color: $commentsBackground}
 ##noteFrames~QFrame#labels {border: none; background-color: $commentsBackground}
 ##noteFrames~QFrame#authors {border: none; background-color: $commentsBackground}

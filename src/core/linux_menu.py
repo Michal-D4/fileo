@@ -1,38 +1,50 @@
 from loguru import logger
 
-from PyQt6.QtGui import QMouseEvent,
-from PyQt6.QtWidgets import QTreeView
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QDropEvent
+from PyQt6.QtWidgets import QMenu
 
-from . import app_globals as ag, low_bk
 
-def set_context_menu():
+from . import app_globals as ag
+
+def choose_drop_action(e: QDropEvent):
     """
-    Set context menus for each widget
-    :return:
+    MoveAction can be used in the following cases
+    1 - to move folders, always
+    2 - to move files in case of ag.appMode.DIR
+    Otherwise, only CopyAction can be used
+    The menu appears if both Actions can be used
+    and KeyboardModifier is not used.
     """
-    ag.dir_list.customContextMenuRequested.connect(low_bk.dir_menu)
-    ag.file_list.customContextMenuRequested.connect(low_bk.file_menu)
-    ag.dir_list.mouseReleaseEvent = dir_mouse_release
-    ag.dir_list.mousePressEvent = dir_mouse_press
-    ag.file_list.mouseReleaseEvent = file_mouse_release
-    ag.file_list.mousePressEvent = file_mouse_press
+    if (ag.mode is ag.appMode.DIR or
+        not e.mimeData().hasFormat(ag.mimeType.files.value)):
+        if not has_modifier(e):
+            use_menu(e)
+    else:
+        e.setDropAction(Qt.DropAction.CopyAction)
 
-def file_mouse_press(e: QMouseEvent):
-    super(QTreeView, ag.file_list).mousePressEvent(e)
-    logger.info(f'{type(e)}')
-    e.ignore()
+def has_modifier(e: QDropEvent) -> bool:
+    if e.modifiers() is Qt.KeyboardModifier.ShiftModifier:
+        e.setDropAction(Qt.DropAction.MoveAction)
+        return True
+    if e.modifiers() is Qt.KeyboardModifier.ControlModifier:
+        e.setDropAction(Qt.DropAction.CopyAction)
+        return True
+    return False
 
-def file_mouse_release(e: QMouseEvent):
-    super(QTreeView, ag.file_list).mouseReleaseEvent(e)
-    logger.info(f'{type(e)}')
-    e.ignore()
-
-def dir_mouse_press(e: QMouseEvent):
-    logger.info(f'{e.type()}, {e.buttons()}')
-    super(QTreeView, ag.dir_list).mousePressEvent(e)
-    e.ignore()
-
-def dir_mouse_release(e: QMouseEvent):
-    logger.info(f'{e.type()}, {e.buttons()}')
-    super(QTreeView, ag.dir_list).mouseReleaseEvent(e)
-    e.ignore()
+def use_menu(e: QDropEvent):
+    pos = e.position().toPoint()
+    menu = QMenu(ag.app)
+    menu.addAction('Move\tShift')
+    menu.addAction('Copy\tCtrl')
+    menu.addSeparator()
+    menu.addAction('Cancel\tEsc')
+    act = menu.exec(ag.app.mapToGlobal(pos))
+    if act:
+        if act.text().startswith('Copy'):
+            e.setDropAction(Qt.DropAction.CopyAction)
+        elif act.text().startswith('Move'):
+            e.setDropAction(Qt.DropAction.MoveAction)
+    else:
+        e.setDropAction(Qt.DropAction.IgnoreAction)
+        e.ignore()
