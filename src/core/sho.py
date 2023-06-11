@@ -91,6 +91,9 @@ class shoWindow(QMainWindow):
     def set_busy(self, val: bool):
         self.is_busy = val
         self.ui.busy.setPixmap(icons.get_other_icon("busy", int(val)))
+        self.ui.busy.setToolTip(
+            'Background thread is working' if val else 'No active background thread'
+        )
 
     def connect_db(self, path: str):
         if db_ut.create_connection(path):

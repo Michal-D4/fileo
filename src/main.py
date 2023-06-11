@@ -21,9 +21,7 @@ def app_name() -> str:
 
 def app_version() -> str:
     """
-    if it changes then also change in "pyproject.toml" file
-    what the shit is this versioning support API
-    it's easier to hardcode it everywhere
+    if version changed here then also change it in the "pyproject.toml" file
     """
     return '0.9.3'
 
