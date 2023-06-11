@@ -6,7 +6,7 @@ authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
 packages = [
 {include = "entry_point.py"},
-{include = "fileo", from = "src"},
+{include = "src"},
 ]
 
 [tool.poetry.dependencies]
