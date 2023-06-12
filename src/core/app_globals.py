@@ -30,8 +30,9 @@ history: 'History' = None
 hist_folder = False
 file_row = 0
 file_path: Path = None
+single_instance = False
 
-db = { 'Path': '', 'Conn': None, }
+db = { 'Path': '', 'Conn': None, 'restore': True }
 
 class mimeType(Enum):
     folders = "folders"

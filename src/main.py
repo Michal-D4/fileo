@@ -63,12 +63,15 @@ def main():
         lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
         # logger.info(f'{lock_file.fileName()}')
         if not lock_file.tryLock():
-            if lock_file.error() is QLockFile.LockError.LockFailedError:
-                res = lock_file.getLockInfo()
-                # logger.info(f'lockInfo: {res}')
-                win_activate.activate(res)
+            ag.single_instance = utils.get_app_setting("SINGLE_INSTANCE", False)
+            if ag.single_instance:
+                if lock_file.error() is QLockFile.LockError.LockFailedError:
+                    res = lock_file.getLockInfo()
+                    win_activate.activate(res)
 
-            sys.exit(0)
+                sys.exit(0)
+            else:
+                ag.db['restore'] = False
 
         global app
         app = QApplication([])

@@ -77,7 +77,8 @@ class shoWindow(QMainWindow):
         self.container.set_qss_fold(ag.dyn_qss['decorator'])
 
     def restote_settings(self):
-        self.connect_db(utils.get_app_setting("DB_NAME", ""))
+        if ag.db['restore']:
+            self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
         self.restore_comment_height()
         self.restore_geometry()
