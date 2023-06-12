@@ -358,13 +358,15 @@ def get_pdf_files() -> apsw.Cursor:
     return ag.db['Conn'].cursor().execute(sql)
 
 def update_file_data(id, st, hash):
+    hs = (', hash', ',?') if hash else ('','')
     sql = (
-        'update files set (modified, created, size, hash) '
-        '= (?, ?, ?, ?) where id = ?'
+        f'update files set (modified, created, size{hs[0]}) '
+        f'= (?, ?, ?{hs[1]}) where id = ?'
     )
     ag.db['Conn'].cursor().execute(
         sql, (int(st.st_mtime), int(st.st_ctime),
-        st.st_size, hash, id)
+        st.st_size, hash, id) if hash else
+        (int(st.st_mtime), int(st.st_ctime), st.st_size, id)
     )
 
 def update_pdf_file(id, pages, p_date):
