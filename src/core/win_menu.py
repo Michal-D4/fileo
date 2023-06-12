@@ -1,3 +1,5 @@
+from loguru import logger
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QDropEvent
 from PyQt6.QtWidgets import QMenu
@@ -13,11 +15,11 @@ def choose_drop_action(e: QDropEvent):
     Otherwise, only CopyAction can be used
     The menu appears if both Actions can be used
     """
-    pos = e.position().toPoint()
     if (ag.drop_button == Qt.MouseButton.RightButton and
         (ag.mode is ag.appMode.DIR or
          not e.mimeData().hasFormat(ag.mimeType.files.value)
         )):
+        pos = e.position().toPoint()
         menu = QMenu(ag.app)
         menu.addAction('Copy')
         menu.addAction('Move')
@@ -32,3 +34,7 @@ def choose_drop_action(e: QDropEvent):
             e.ignore()
     else:
         e.setDropAction(Qt.DropAction.CopyAction)
+    # logger.info(e.dropAction())
+    # logger.info(f'mimeType files: {e.mimeData().hasFormat(ag.mimeType.files.value)}')
+    # logger.info(f'mimeType folders: {e.mimeData().hasFormat(ag.mimeType.folders.value)}')
+    # logger.info(f'mimeType URI: {e.mimeData().hasFormat(ag.mimeType.uri.value)}')

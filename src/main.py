@@ -14,6 +14,14 @@ from PyQt6.QtWidgets import QApplication, QWidget
 from .core import utils, app_globals as ag
 from .core.sho import shoWindow
 
+if sys.platform.startswith("win"):
+    from .core import win_win as win_activate
+elif sys.platform.startswith("linux"):
+    from .core import linux_win as win_activate
+else:
+    raise ImportError(f"doesn't support {sys.platform} system")
+
+
 app: QApplication = None
 
 def app_name() -> str:
@@ -57,16 +65,8 @@ def main():
         if not lock_file.tryLock():
             if lock_file.error() is QLockFile.LockError.LockFailedError:
                 res = lock_file.getLockInfo()
-                # logger.info(res)
-                import platform
-                if platform.system() == 'Windows':
-                    from pywinauto import Application
-                    running_app = Application().connect(process=res[1])
-                    running_app.top_window().set_focus()
-                elif platform.system() == 'Linux':
-                    pass
-                elif platform.system() == 'Darwin':
-                    pass
+                # logger.info(f'lockInfo: {res}')
+                win_activate.activate(res)
 
             sys.exit(0)
 
