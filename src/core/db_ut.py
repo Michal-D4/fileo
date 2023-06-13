@@ -828,6 +828,7 @@ def create_connection(path: str) -> bool:
     conn: apsw.Connection = apsw.Connection(path)
     ag.db['Path'] = path
     ag.db['Conn'] = conn
+    ag.signals_.user_action_signal.emit('Enable_buttons')
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')
