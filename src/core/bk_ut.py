@@ -52,21 +52,23 @@ def search_files():
 @pyqtSlot()
 def to_prev_folder():
     row = ag.file_list.currentIndex().row()
+    logger.info(f'{row=}')
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.prev_dir()
-    history_folder(folder)
+    go_to_history_folder(folder)
 
 @pyqtSlot()
 def to_next_folder():
     row = ag.file_list.currentIndex().row()
+    logger.info(f'{row=}')
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.next_dir()
-    history_folder(folder)
+    go_to_history_folder(folder)
 
-def history_folder(folder: history.Item):
-    if not folder:
+def go_to_history_folder(folder: history.Item):
+    if not folder.path:
         return
     ag.hist_folder = True
     _history_folder(folder)
@@ -224,7 +226,7 @@ def populate_all():
         restore_sorting()
 
     hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
-    logger.info(f'{hist=}')
+    logger.info('>>> before "set_history"')
     ag.history.set_history(*hist)
     ag.hist_folder = not hist[0]
     _history_folder(hist[-1])
@@ -330,7 +332,7 @@ def finish_loading(has_new_ext: bool):
 @pyqtSlot()
 def show_lost_files():
     if workers.find_lost_files():
-        low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
+        ag.signals_.user_action_signal.emit('reload_dirs')
 
 @pyqtSlot()
 def run_update0_files():
