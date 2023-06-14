@@ -26,7 +26,7 @@ class listItem(QWidget):
         self.remove_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.remove_btn.setAutoRaise(True)
 
-        self.remove_btn.setIcon(icons.get_other_icon("remove_btn")[0])
+        self.remove_btn.setIcon(icons.get_other_icon("remove_btn"))
 
         self.name_path.addWidget(self.name)
         self.name_path.addWidget(self.path)
