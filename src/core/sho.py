@@ -20,7 +20,7 @@ from .compact_list import aBrowser
 from ..widgets.file_notes import notesBrowser
 
 from .filename_editor import fileEditorDelegate
-from . import icons, utils, db_ut, bk_ut, history
+from . import icons, utils, db_ut, bk_ut, history, low_bk
 from . import app_globals as ag
 
 
@@ -63,7 +63,7 @@ class shoWindow(QMainWindow):
         self.set_extra_widgets()
 
         self.setup_global_widgets()
-        self.restote_settings()
+        self.restore_settings()
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
@@ -76,7 +76,10 @@ class shoWindow(QMainWindow):
         self.fold_layout.addWidget(self.container)
         self.container.set_qss_fold(ag.dyn_qss['decorator'])
 
-    def restote_settings(self):
+    def restore_settings(self):
+        execute_user_action = low_bk.exec_user_actions()
+        ag.signals_.user_action_signal.connect(execute_user_action)
+
         if ag.db['restore']:
             self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
@@ -101,7 +104,6 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
-        logger.info(f'{path=}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
@@ -260,13 +262,11 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(str)
     def get_db_name(self, db_name: str):
-        logger.info(f"{db_name=} == {ag.db['Path']=}")
         if db_name == ag.db['Path']:
             return
 
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
-            logger.info(f'{db_name=}')
             bk_ut.populate_all()
 
     @pyqtSlot()

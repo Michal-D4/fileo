@@ -98,9 +98,6 @@ def restore_sorting():
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
 
-    execute_user_action = low_bk.exec_user_actions()
-    ag.signals_.user_action_signal.connect(execute_user_action)
-
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
