@@ -265,13 +265,10 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         if ag.hist_folder:
             ag.hist_folder = False
         else:       # new history item
-            logger.info(f'{file_row=}')
             add_history_item(file_row)
             save_file_row_in_model(file_row, prev_idx)
             ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
 
-    logger.info(f'prev_idx: {prev_idx.data(Qt.ItemDataRole.UserRole)}, {prev_idx.data(Qt.ItemDataRole.DisplayRole)}')
-    logger.info(f'curr_idx: {curr_idx.data(Qt.ItemDataRole.UserRole)}, {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
         save_settings(COLUMN_WIDTH=get_columns_width())
@@ -279,7 +276,6 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
-        logger.info(f'{file_row=}')
         show_folder_files()
         new_history_item()
         set_current_file(ag.file_row)
@@ -290,7 +286,6 @@ def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
     dir_item.userData.file_row = file_row
 
 def add_history_item(file_row: int):
-    logger.info(f'{file_row=}')
     ag.history.set_file_id(file_row)
     branch = get_branch(ag.dir_list.currentIndex())
     ag.history.add_item(branch, 0)

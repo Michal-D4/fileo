@@ -52,7 +52,6 @@ def search_files():
 @pyqtSlot()
 def to_prev_folder():
     row = ag.file_list.currentIndex().row()
-    logger.info(f'{row=}')
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.prev_dir()
@@ -61,7 +60,6 @@ def to_prev_folder():
 @pyqtSlot()
 def to_next_folder():
     row = ag.file_list.currentIndex().row()
-    logger.info(f'{row=}')
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.next_dir()
@@ -226,7 +224,6 @@ def populate_all():
         restore_sorting()
 
     hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
-    logger.info('>>> before "set_history"')
     ag.history.set_history(*hist)
     ag.hist_folder = not hist[0]
     _history_folder(hist[-1])
