@@ -1,8 +1,10 @@
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QDialog, QLabel, QSizePolicy,
     QHBoxLayout, QVBoxLayout, QDialogButtonBox, QStyle,
 )
+
+from ..core import app_globals as ag
 
 
 class AboutDialog(QDialog):
@@ -10,7 +12,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle('About Fileo')
+        self.set_title()
         self.buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Close
         )
@@ -54,9 +56,22 @@ class AboutDialog(QDialog):
         v_layout.addWidget(self.buttonBox)
         self.setModal(True)
 
+        db_ver = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
+        db_ver.activated.connect(self.get_db_user_version)
+
     def get_info_icon(self) -> QPixmap:
         ico = QStyle.standardIcon(
             self.style(),
             QStyle.StandardPixmap.SP_MessageBoxInformation
         )
         return ico.pixmap(QSize(32, 32))
+
+    def get_db_user_version(self):
+        if ag.db['Conn']:
+            self.set_title(ag.db['Conn'].execute('PRAGMA user_version').fetchone()[0])
+
+    def set_title(self, db_ver: str = ''):
+        if db_ver:
+            self.setWindowTitle(f'About Fileo, DB v.{db_ver}')
+        else:
+            self.setWindowTitle('About Fileo')
