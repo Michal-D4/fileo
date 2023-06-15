@@ -3,8 +3,6 @@ import apsw
 from collections import deque
 from pathlib import PurePath
 
-from PyQt6.QtCore import Qt
-
 from . import app_globals as ag, create_db
 
 

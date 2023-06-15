@@ -8,7 +8,7 @@ from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget, QCheckBox,
+                             QFrame, QWidget,
 )
 
 from ..ui.ui_main import Ui_Sho
