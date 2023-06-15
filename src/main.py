@@ -31,7 +31,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.3'
+    return '0.9.4'
 
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():
