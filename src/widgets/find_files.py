@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QMessageBox,
 )
 
-from ..core  import app_globals as ag, db_ut, icons
+from ..core  import app_globals as ag, db_ut, icons, low_bk
 
 
 class findFile(QWidget):
@@ -29,7 +29,8 @@ class findFile(QWidget):
     def setup_ui(self):
         self.srch_pattern = QLineEdit()
         self.srch_pattern.setObjectName('searchLine')
-        self.srch_pattern.setToolTip('Find')
+        self.srch_pattern.setPlaceholderText('Input file name or its part.')
+        self.srch_pattern.setToolTip('Enter - start search; Esc - cancel.')
 
         self.case = QToolButton()
         self.case.setAutoRaise(True)
@@ -42,6 +43,11 @@ class findFile(QWidget):
         self.word.setCheckable(True)
         self.word.setIcon(icons.get_other_icon('match_word'))
         self.word.setToolTip('Exact match')
+
+        name, case, word = low_bk.get_setting('SEARCH_FILE', ('',0,0))
+        self.srch_pattern.setText(name)
+        self.case.setChecked(case)
+        self.word.setChecked(word)
 
         self.frame = QFrame()
         self.frame.setObjectName('frame')
@@ -75,6 +81,7 @@ class findFile(QWidget):
             ag.signals_.user_action_signal.emit(
                 f'find_files_by_name/{name},{int(case)},{int(word)}'
             )
+            low_bk.save_settings(SEARCH_FILE=(name, case, word))
             self.close()
         else:
             self.search_err_msg(f'File "{name}" not found')

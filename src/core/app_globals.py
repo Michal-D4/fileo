@@ -100,6 +100,7 @@ setting_names = (     # DB settings only
     "FILE_SORT_ORDER",
     "SHOW_HIDDEN",
     "HISTORY",
+    "SEARCH_FILE",
 )
 
 dyn_qss = defaultdict(list)

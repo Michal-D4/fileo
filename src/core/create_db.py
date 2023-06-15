@@ -108,7 +108,7 @@ extension text
 """,
 )
 APP_ID = 1718185071
-USER_VER = 5
+USER_VER = 6
 
 def is_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -143,12 +143,12 @@ def adjust_user_schema(db_name: str) -> int:
                     'not null default 0; pragma user_version=2;'
                 )
                 v = (4,)
-            if v[0] == 4:
+            if v[0] == 4 or v[0] == 5:
                 initialize_settings(conn)
                 conn.cursor().execute(
-                    'PRAGMA user_version=5;'
+                    'PRAGMA user_version=6;'
                 )
-                v = (5,)
+                v = (6,)
             return v[0]
         except apsw.SQLError as err:
             # logger.info(err)
@@ -182,4 +182,4 @@ def initiate_db(connection):
     initialize_settings(connection)
 
 if __name__ == "__main__":
-    create_tables("ex1.db")
+    create_tables("ex000.db")
