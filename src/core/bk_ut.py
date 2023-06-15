@@ -9,7 +9,7 @@ from PyQt6.QtGui import (QAction, QResizeEvent,
 from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, history,
+    drag_drop as dd, history, icons,
 )
 from ..widgets import workers, find_files
 
@@ -210,9 +210,10 @@ def populate_all():
     low_bk.populate_ext_list()
     low_bk.populate_author_list()
 
-    self.show_hidden.setChecked(
-        bool(low_bk.get_setting("SHOW_HIDDEN", 0))
-    )
+    hide_state = low_bk.get_setting("SHOW_HIDDEN", 0)
+    self.show_hidden.setChecked(hide_state)
+    self.show_hidden.setIcon(icons.get_other_icon('show_hide', hide_state))
+
     fill_dir_list()
     ag.filter.restore_filter_settings()
 
