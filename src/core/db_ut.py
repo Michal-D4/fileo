@@ -3,8 +3,6 @@ import apsw
 from collections import deque
 from pathlib import PurePath
 
-from PyQt6.QtCore import Qt
-
 from . import app_globals as ag, create_db
 
 
@@ -182,42 +180,56 @@ def lost_files() -> bool:
     """
     put the lost files in a special folder and show it
     """
+    # check if there are lost files
     sql0 = (
+        'select 1 from files where id not in ('
+        'select distinct file from filedir)'
+    )
+    # add lost files to @@Lost dir (dir_id=1)
+    sql1 = (
         'insert into filedir select id,1 from files where id '
         'not in (select distinct file from filedir)'
     )
-    sql1 = 'select 1 from parentdir where (parent,id) = (0,1)'
-    sql2 = 'insert into parentdir values (0, 1, 0, 0, 0)'
-    sql3 = 'delete from filedir where dir = 1'
+    # check if link to the @@Lost exists in dir tree
+    sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
+    # add @@Lost link into dir tree
+    sql3 = 'insert into parentdir values (0, 1, 0, 0, 0)'
+    # clear @@Lost
+    sql4 = 'delete from filedir where dir = 1'
+    # check if the @@Lost dir exists
     sql5 = "select 1 from dirs where id = 1"
+    # create @@Lost dir
     sql6 = "insert into dirs values (1, '@@Lost')"
 
-    def show_lost_dir():
+    def add_lost_in_tree():
         '''
-        insert @@Lost into the directory tree if it doesn't already exist
+        add @@Lost link into dir tree if doesn't exist
         '''
-        res = conn.cursor().execute(sql1).fetchone()
+        res = conn.cursor().execute(sql2).fetchone()
         if not res:
-            conn.cursor().execute(sql2)
+            conn.cursor().execute(sql3)
 
     def create_lost_dir():
         '''
-        create @@Lost dir if not exists
+        create @@Lost dir if doesn't exist
         '''
         id1 = conn.cursor().execute(sql5).fetchone()
-        if not id1:     # create '@@Lost' folder
+        if not id1:
             conn.cursor().execute(sql6).fetchone()
 
     try:
         with ag.db['Conn'] as conn:
+            has_lost = conn.cursor().execute(sql0).fetchone()
+            if not has_lost:
+                return False
+
             create_lost_dir()
 
-            conn.cursor().execute(sql3)   # clear @@Lost dir
-            conn.cursor().execute(sql0)   # fill @@Lost dir
-            if conn.changes():
-                show_lost_dir()
-                return True
-            return False
+            conn.cursor().execute(sql4)   # clear @@Lost dir
+            conn.cursor().execute(sql1)   # fill @@Lost dir
+
+            add_lost_in_tree()
+            return True
     except:
         return False
 
@@ -358,13 +370,15 @@ def get_pdf_files() -> apsw.Cursor:
     return ag.db['Conn'].cursor().execute(sql)
 
 def update_file_data(id, st, hash):
+    hs = (', hash', ',?') if hash else ('','')
     sql = (
-        'update files set (modified, created, size, hash) '
-        '= (?, ?, ?, ?) where id = ?'
+        f'update files set (modified, created, size{hs[0]}) '
+        f'= (?, ?, ?{hs[1]}) where id = ?'
     )
     ag.db['Conn'].cursor().execute(
         sql, (int(st.st_mtime), int(st.st_ctime),
-        st.st_size, hash, id)
+        st.st_size, hash, id) if hash else
+        (int(st.st_mtime), int(st.st_ctime), st.st_size, id)
     )
 
 def update_pdf_file(id, pages, p_date):
@@ -826,6 +840,7 @@ def create_connection(path: str) -> bool:
     conn: apsw.Connection = apsw.Connection(path)
     ag.db['Path'] = path
     ag.db['Conn'] = conn
+    ag.signals_.user_action_signal.emit('Enable_buttons')
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

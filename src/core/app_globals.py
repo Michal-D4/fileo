@@ -27,11 +27,12 @@ field_menu: QToolButton = None
 notes: 'notesBrowser' = None
 filter: 'FilterSetup' = None
 history: 'History' = None
-hist_folder = False
+hist_folder = True
 file_row = 0
 file_path: Path = None
+single_instance = False
 
-db = { 'Path': '', 'Conn': None, }
+db = { 'Path': '', 'Conn': None, 'restore': True }
 
 class mimeType(Enum):
     folders = "folders"
@@ -99,6 +100,7 @@ setting_names = (     # DB settings only
     "FILE_SORT_ORDER",
     "SHOW_HIDDEN",
     "HISTORY",
+    "SEARCH_FILE",
 )
 
 dyn_qss = defaultdict(list)

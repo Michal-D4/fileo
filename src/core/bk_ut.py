@@ -9,7 +9,7 @@ from PyQt6.QtGui import (QAction, QResizeEvent,
 from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, history,
+    drag_drop as dd, history, icons,
 )
 from ..widgets import workers, find_files
 
@@ -24,20 +24,23 @@ def save_bk_settings():
 
     actions = ag.field_menu.menu().actions()
 
-    settings = {
-        "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
-        "FIELDS_STATE": [int(a.isChecked()) for a in actions],
-        "COLUMN_WIDTH": low_bk.get_columns_width(),
-        "TAG_SEL_LIST": low_bk.tag_selection(),
-        "EXT_SEL_LIST": low_bk.ext_selection(),
-        "AUTHOR_SEL_LIST": low_bk.author_selection(),
-        "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
-        "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
-        "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
-        "HISTORY": ag.history.get_history(),
-    }
-    low_bk.save_settings(**settings)
-    self.filter_setup.save_filter_settings()
+    try:
+        settings = {
+            "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
+            "FIELDS_STATE": [int(a.isChecked()) for a in actions],
+            "COLUMN_WIDTH": low_bk.get_columns_width(),
+            "TAG_SEL_LIST": low_bk.tag_selection(),
+            "EXT_SEL_LIST": low_bk.ext_selection(),
+            "AUTHOR_SEL_LIST": low_bk.author_selection(),
+            "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
+            "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
+            "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
+            "HISTORY": ag.history.get_history(),
+        }
+        low_bk.save_settings(**settings)
+        self.filter_setup.save_filter_settings()
+    except:
+        pass
 
 @pyqtSlot()
 def search_files():
@@ -52,7 +55,7 @@ def to_prev_folder():
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.prev_dir()
-    history_folder(folder)
+    go_to_history_folder(folder)
 
 @pyqtSlot()
 def to_next_folder():
@@ -60,10 +63,10 @@ def to_next_folder():
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.next_dir()
-    history_folder(folder)
+    go_to_history_folder(folder)
 
-def history_folder(folder: history.Item):
-    if not folder:
+def go_to_history_folder(folder: history.Item):
+    if not folder.path:
         return
     ag.hist_folder = True
     _history_folder(folder)
@@ -94,10 +97,6 @@ def restore_sorting():
 
 def bk_setup(main: 'shoWindow'):
     set_field_menu()
-    ag.history = history.History()
-
-    execute_user_action = low_bk.exec_user_actions()
-    ag.signals_.user_action_signal.connect(execute_user_action)
 
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
@@ -106,11 +105,6 @@ def bk_setup(main: 'shoWindow'):
 
     if ag.db['Conn']:
         populate_all()
-
-        hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
-        ag.history.set_history(*hist)
-        ag.hist_folder = not hist[0]
-        _history_folder(hist[-1])
 
         QTimer.singleShot(10 * 1000, show_lost_files)
         QTimer.singleShot(5 * 60 * 1000, run_update0_files)
@@ -216,15 +210,21 @@ def populate_all():
     low_bk.populate_ext_list()
     low_bk.populate_author_list()
 
-    self.show_hidden.setChecked(
-        bool(low_bk.get_setting("SHOW_HIDDEN", 0))
-    )
+    hide_state = low_bk.get_setting("SHOW_HIDDEN", 0)
+    self.show_hidden.setChecked(hide_state)
+    self.show_hidden.setIcon(icons.get_other_icon('show_hide', hide_state))
+
     fill_dir_list()
     ag.filter.restore_filter_settings()
 
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
         restore_sorting()
+
+    hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
+    ag.history.set_history(*hist)
+    ag.hist_folder = not hist[0]
+    _history_folder(hist[-1])
 
 def fill_dir_list():
     """
@@ -300,7 +300,7 @@ def file_loading(root_path: str, ext: list[str]):
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if self.is_busy or not ag.db['Conn']:
+    if not ag.db['Conn'] or self.is_busy:
         return
     self.thread = QThread(self)
 
@@ -327,7 +327,7 @@ def finish_loading(has_new_ext: bool):
 @pyqtSlot()
 def show_lost_files():
     if workers.find_lost_files():
-        low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
+        ag.signals_.user_action_signal.emit('reload_dirs')
 
 @pyqtSlot()
 def run_update0_files():

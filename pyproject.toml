@@ -1,16 +1,16 @@
 [tool.poetry]
 name = "fileo"
-version = "0.9.3"
+version = "0.9.4"
 description = "Yet another file organizer"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
 packages = [
 {include = "entry_point.py"},
-{include = "fileo", from = "src"},
+{include = "src"},
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 loguru = "^0.6.0"
 pypdf2 = "^3.0.1"
 pyqt6 = "^6.4.0"

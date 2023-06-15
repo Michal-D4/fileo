@@ -1,8 +1,10 @@
+from loguru import logger
 from pathlib import Path
 
 from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QLineEdit, QSpinBox, QHBoxLayout,  QVBoxLayout,
     QDialogButtonBox, QSizePolicy, QSpacerItem,
+    QCheckBox,
 )
 
 from ..core import utils, app_globals as ag
@@ -30,6 +32,7 @@ class Preferencies(QDialog):
         form_layout.addRow('Default path to DBs:', self.db_path)
         form_layout.addRow('Default export path:', self.export_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
+        form_layout.addRow('Allow single instance only:', self.single_instance)
 
         v_layout = QVBoxLayout(self)
         v_layout.setContentsMargins(9, 9, 9, 9)
@@ -51,11 +54,13 @@ class Preferencies(QDialog):
             "DEFAULT_DB_PATH": self.db_path.text(),
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
+            "SINGLE_INSTANCE": int(self.single_instance.isChecked())
         }
         utils.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
         create_dir(Path(self.export_path.text()))
         ag.history.set_limit(settings["FOLDER_HISTORY_DEPTH"])
+        ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         self.close()
 
     def set_inputs(self):
@@ -74,3 +79,7 @@ class Preferencies(QDialog):
         val = utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setValue(val)
         ag.history.set_limit(val)
+        self.single_instance = QCheckBox()
+        self.single_instance.setChecked(
+            utils.get_app_setting('SINGLE_INSTANCE', 0)
+        )

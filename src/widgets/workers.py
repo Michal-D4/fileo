@@ -20,7 +20,7 @@ def sha256sum(filename: Path) -> str:
             while n := f.readinto(mv):
                 h.update(mv[:n])
         return h.hexdigest()
-    except FileNotFoundError:
+    except (FileNotFoundError, PermissionError) as ex:
         return ''
 
 def update0_files():

@@ -2,7 +2,6 @@ from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QRect, pyqtSignal, pyqtSlot, QPoint
 from PyQt6.QtGui import (QGuiApplication, QKeySequence, QShortcut,
-    QTextCursor,
 )
 from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,

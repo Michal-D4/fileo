@@ -47,6 +47,8 @@ def exec_user_actions():
         "Setup Preferencies": set_preferencies,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
+        "Enable_buttons": enable_buttons,
+        "reload_dirs": reload_cur_dir,
       }
 
     @pyqtSlot(str)
@@ -67,6 +69,17 @@ def exec_user_actions():
             dlg.exec()
 
     return execute_action
+
+@pyqtSlot()
+def reload_cur_dir():
+    reload_dirs_changed(ag.dir_list.currentIndex())
+
+@pyqtSlot()
+def enable_buttons():
+    ag.app.ui.btn_search.setEnabled(True)
+    ag.app.refresh_tree.setEnabled(True)
+    ag.app.show_hidden.setEnabled(True)
+    ag.app.collapse_btn.setEnabled(True)
 
 @pyqtSlot()
 def rename_file():
@@ -248,7 +261,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
-    def set_history():
+    def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
         else:       # new history item
@@ -264,8 +277,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         show_folder_files()
-        # logger.info(f'{ag.hist_folder=}, {file_row=}')
-        set_history()
+        new_history_item()
         set_current_file(ag.file_row)
 
 def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
@@ -316,6 +328,8 @@ def dir_list_setup():
 @pyqtSlot(ag.appMode)
 def app_mode_changed(old_mode: ag.appMode):
     if ag.mode is ag.appMode.FILTER_SETUP:
+        return
+    if not ag.db['Conn']:
         return
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})

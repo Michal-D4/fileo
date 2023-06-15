@@ -8,7 +8,7 @@ from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget, QCheckBox,
+                             QFrame, QWidget,
 )
 
 from ..ui.ui_main import Ui_Sho
@@ -20,7 +20,7 @@ from .compact_list import aBrowser
 from ..widgets.file_notes import notesBrowser
 
 from .filename_editor import fileEditorDelegate
-from . import icons, utils, db_ut, bk_ut
+from . import icons, utils, db_ut, bk_ut, history, low_bk
 from . import app_globals as ag
 
 
@@ -63,7 +63,7 @@ class shoWindow(QMainWindow):
         self.set_extra_widgets()
 
         self.setup_global_widgets()
-        self.restote_settings()
+        self.restore_settings()
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
@@ -76,8 +76,12 @@ class shoWindow(QMainWindow):
         self.fold_layout.addWidget(self.container)
         self.container.set_qss_fold(ag.dyn_qss['decorator'])
 
-    def restote_settings(self):
-        self.connect_db(utils.get_app_setting("DB_NAME", ""))
+    def restore_settings(self):
+        execute_user_action = low_bk.exec_user_actions()
+        ag.signals_.user_action_signal.connect(execute_user_action)
+
+        if ag.db['restore']:
+            self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
         self.restore_comment_height()
         self.restore_geometry()
@@ -85,17 +89,26 @@ class shoWindow(QMainWindow):
         ag.notes = notesBrowser()
         ag.notes.setObjectName("file_notes")
         add_widget_into_frame(self.ui.noteHolder, ag.notes)
+        ag.history = history.History(
+            utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
+        )
+
         if ag.db['Conn']:
             ag.notes.set_data()
 
     def set_busy(self, val: bool):
         self.is_busy = val
         self.ui.busy.setPixmap(icons.get_other_icon("busy", int(val)))
+        self.ui.busy.setToolTip(
+            'Background thread is working' if val else 'No active background thread'
+        )
 
-    def connect_db(self, path: str):
+    def connect_db(self, path: str) -> bool:
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
+            return True
+        return False
 
     def restore_container(self):
         state = utils.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
@@ -143,16 +156,19 @@ class shoWindow(QMainWindow):
         self.btn_next.clicked.connect(bk_ut.to_next_folder)
         self.btn_next.setDisabled(True)
 
-        btn = self._create_button('refresh', 'refresh', 'Refresh folder list')
-        btn.clicked.connect(bk_ut.show_hidden_dirs)
+        self.refresh_tree = self._create_button('refresh', 'refresh', 'Refresh folder list')
+        self.refresh_tree.clicked.connect(bk_ut.show_hidden_dirs)
+        self.refresh_tree.setDisabled(True)
 
         self.show_hidden = self._create_button('show_hide', 'show_hide', 'Show hidden folders')
         self.show_hidden.setCheckable(True)
         self.show_hidden.clicked.connect(self.show_hide_click)
+        self.show_hidden.setDisabled(True)
 
         self.collapse_btn = self._create_button('collapse_all', 'collapse_all', 'Collapse/expand tree')
         self.collapse_btn.setCheckable(True)
         self.collapse_btn.clicked.connect(bk_ut.toggle_collapse)
+        self.collapse_btn.setDisabled(True)
 
     def _create_button(self, icon_name: str, o_name: str, tool_tip: str) -> QToolButton:
         btn = QToolButton()
@@ -212,6 +228,7 @@ class shoWindow(QMainWindow):
             btn.setIcon(icon[btn.isChecked()])
         self.ui.btn_search.setIcon(icons.get_other_icon('search'))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
+        self.ui.btn_search.setDisabled(True)
 
     def connect_slots(self):
         self.ui.close.clicked.connect(self.close_app)
@@ -249,8 +266,8 @@ class shoWindow(QMainWindow):
             return
 
         bk_ut.save_bk_settings()
-        self.connect_db(db_name)
-        bk_ut.populate_all()
+        if self.connect_db(db_name):
+            bk_ut.populate_all()
 
     @pyqtSlot()
     def show_db_list(self):
@@ -385,6 +402,8 @@ class shoWindow(QMainWindow):
         self.toggle_filter_show()
 
     def toggle_filter_show(self):
+        if not ag.db['Conn']:
+            return
         if self.ui.btnFilterSetup.isChecked():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
             self.filter_setup.show()
@@ -404,6 +423,8 @@ class shoWindow(QMainWindow):
         search for files with a given extension
         in the selected folder and its subfolders
         """
+        if not ag.db['Conn']:
+            return
         srch_files = fileSearch(self)
         srch_files.move(
             (self.width()-srch_files.width()) // 4,
@@ -440,8 +461,9 @@ class shoWindow(QMainWindow):
             "container": self.container.save_state(),
             "appMode": self.mode.value,
             "commentHeight": self.ui.noteHolder.height(),
-            "DB_NAME": ag.db['Path'],
         }
+        if ag.db['Path']:
+            settings["DB_NAME"] = ag.db['Path']
 
         utils.save_app_setting(**settings)
         bk_ut.save_bk_settings()

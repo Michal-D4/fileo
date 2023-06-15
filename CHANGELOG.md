@@ -1,6 +1,13 @@
 # Change Log
 
-## 0.9.3 - 06 June, 2023-06-06
+## 0.9.4 - 15 June, 2023
+
+* single instance - set in Preference dialog
+* in case of single instance, activate existing app. screen (in Linux, Windows was done before)
+* fix some bugs when the DB didn't open on startup, eg. in the second instance
+* fix some bags with folder history
+
+## 0.9.3 - 08 June, 2023
 
 * fix problems with collapse/expand the folder tree:
   - collapsed status should be reset if some branch is expanded manually
@@ -10,10 +17,10 @@
 * fix problem with restoring appMode
 * refactoring of working with icons
 
-## 0.9.2 - 06 June, 2023-06-06
+## 0.9.2 - 06 June, 2023
 
 * only one application instance may be started.
   On Windows, when trying start second instance, the first one gets the focus; Linux hasn't implemented this yet.
 * copy list of selected filenames with path (full filename) and without path
-* fix save/restore folder history error
+* fix save/restore folder history bag
 * fix SQLite database search for files with non-ASCII characters in the name
