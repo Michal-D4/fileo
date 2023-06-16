@@ -248,6 +248,7 @@ def expand_branch(branch: list) -> QModelIndex:
 
 #region  Dirs
 def set_dir_model():
+    ag.hist_folder = True
     model: TreeModel = TreeModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
@@ -261,13 +262,12 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
+    # logger.info(f'{ag.hist_folder=}')
     def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
         else:       # new history item
             add_history_item(file_row)
-            save_file_row_in_model(file_row, prev_idx)
-            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
 
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
@@ -277,7 +277,9 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         show_folder_files()
+        save_file_row_in_model(file_row, prev_idx)
         new_history_item()
+        ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
         set_current_file(ag.file_row)
 
 def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
@@ -287,11 +289,9 @@ def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
 
 def add_history_item(file_row: int):
     ag.history.set_file_id(file_row)
-    branch = get_branch(ag.dir_list.currentIndex())
-    ag.history.add_item(branch, 0)
-
-def current_dir_path():
-    return get_branch(ag.dir_list.currentIndex())
+    ag.history.add_item(
+        get_branch(ag.dir_list.currentIndex()), 0
+    )
 
 def restore_path(path: list) -> QModelIndex:
     """
