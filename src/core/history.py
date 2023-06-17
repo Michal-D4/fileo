@@ -71,7 +71,7 @@ class History(object):
         '''
         set file_id in the history item to be left
         '''
-        if self.curr.path:
+        if self.curr.path and row_no >= 0:
             self.curr.file_id = row_no
             db_ut.update_file_id(self.curr.path, row_no)
 
