@@ -253,7 +253,7 @@ def set_dir_model():
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    ag.dir_list.selectionModel().selectionChanged.connect(ag.filter.dir_selection_changed)
+    ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
@@ -350,7 +350,7 @@ def filtered_files():
     """
     create a list of files by filter
     """
-    files = ag.filter.get_file_list()
+    files = ag.filter_dlg.get_file_list()
     show_files(files)
 
 def filter_changed():

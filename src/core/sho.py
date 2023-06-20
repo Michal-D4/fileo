@@ -416,7 +416,7 @@ class shoWindow(QMainWindow):
         ag.tag_list.change_selection.connect(self.filter_setup.tag_selection_changed)
         ag.ext_list.change_selection.connect(self.filter_setup.ext_selection_changed)
         ag.author_list.change_selection.connect(self.filter_setup.author_selection_changed)
-        ag.filter = self.filter_setup
+        ag.filter_dlg = self.filter_setup
 
     @pyqtSlot()
     def click_scan(self):

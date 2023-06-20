@@ -215,7 +215,7 @@ def populate_all():
     self.show_hidden.setIcon(icons.get_other_icon('show_hide', hide_state))
 
     fill_dir_list()
-    ag.filter.restore_filter_settings()
+    ag.filter_dlg.restore_filter_settings()
 
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
