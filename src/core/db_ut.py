@@ -213,6 +213,15 @@ def lost_files() -> bool:
     sql5 = "select 1 from dirs where id = 1"
     # create @@Lost dir
     sql6 = "insert into dirs values (1, '@@Lost')"
+    # clear @Lost from files that has copies in other dir(s)
+    sql7 = (
+        'with x(id, cnt) as (select file, count(*) '
+        'from filedir where file in (select file '
+        'from filedir where dir = 1) group by file) '
+        'delete from filedir where dir = 1 and file '
+        'in (select id from x where cnt > 1)'
+    )
+
 
     def add_lost_in_tree():
         '''
@@ -237,6 +246,7 @@ def lost_files() -> bool:
             has_lost = conn.cursor().execute(sql0).fetchone()
             # logger.info(f'{has_lost=}')
             if not has_lost:
+                conn.cursor().execute(sql7).fetchone()
                 return False
 
             create_lost_dir()
