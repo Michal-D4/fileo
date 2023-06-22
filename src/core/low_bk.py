@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox,
 )
 
-from . import db_ut, app_globals as ag, utils
+from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
@@ -44,6 +44,7 @@ def exec_user_actions():
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
         "Setup About": show_about,
+        "Setup Report duplicate files": report_duplicates,
         "Setup Preferencies": set_preferencies,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
@@ -69,6 +70,37 @@ def exec_user_actions():
             dlg.exec()
 
     return execute_action
+
+@pyqtSlot()
+def report_duplicates():
+    rep_creator = dup.Duplicates()
+    rep = rep_creator.get_report()
+    if rep:
+        save_report(rep)
+
+def save_report(rep):
+    pp = Path('~/fileo/report').expanduser()
+    path = utils.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+    logger.info(f'{path=}, {pp=}')
+    file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
+        caption='Open file to save duplicate files report',
+        directory=(Path(path) / 'untitled').as_posix(),
+        filter='File list (*.filedups *.txt)'
+    )
+
+    if ok:
+        _save_report(rep, file_name)
+
+def _save_report(rep: dict[list], filename: str):
+
+    with open(filename, "w") as out:
+        for key,rr in rep.items():
+            logger.info(key)
+            logger.info(rr)
+            out.write(f"{'-='*20}-\n")
+            for r in rr:
+                out.write(f"File:  {r[0]}\n")
+                out.write(f"  {'; '.join(r[1:])}\n")
 
 @pyqtSlot()
 def reload_cur_dir():
@@ -113,7 +145,12 @@ def enable_next_prev(param: str):
 
 @pyqtSlot()
 def find_files_by_name(param: str):
-    pp = param.split(',')
+    def split3():
+        pp = param.split(',')
+        return ','.join(pp[:-2]), *pp[-2:]
+
+    pp = split3()
+    logger.info(f'{param}, {pp=}')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
 
@@ -268,6 +305,8 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
             ag.hist_folder = False
         else:       # new history item
             add_history_item(file_row)
+            save_file_row_in_model(file_row, prev_idx)
+            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
 
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
@@ -277,9 +316,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         show_folder_files()
-        save_file_row_in_model(file_row, prev_idx)
         new_history_item()
-        ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
         set_current_file(ag.file_row)
 
 def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):

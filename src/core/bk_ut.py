@@ -151,6 +151,8 @@ def set_field_menu():
 @pyqtSlot()
 def click_setup_button():
     menu = QMenu(self)
+    menu.addAction('Report duplicate files')
+    menu.addSeparator()
     menu.addAction('Preferencies')
     menu.addSeparator()
     menu.addAction('About')

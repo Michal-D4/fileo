@@ -31,6 +31,7 @@ class Preferencies(QDialog):
 
         form_layout.addRow('Default path to DBs:', self.db_path)
         form_layout.addRow('Default export path:', self.export_path)
+        form_layout.addRow('Default report path:', self.report_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
         form_layout.addRow('Allow single instance only:', self.single_instance)
 
@@ -53,12 +54,14 @@ class Preferencies(QDialog):
         settings = {
             "DEFAULT_DB_PATH": self.db_path.text(),
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
+            "DEFAULT_REPORT_PATH": self.report_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
             "SINGLE_INSTANCE": int(self.single_instance.isChecked())
         }
         utils.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
         create_dir(Path(self.export_path.text()))
+        create_dir(Path(self.report_path.text()))
         ag.history.set_limit(settings["FOLDER_HISTORY_DEPTH"])
         ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         self.close()
@@ -72,6 +75,10 @@ class Preferencies(QDialog):
         self.export_path = QLineEdit()
         self.export_path.setText(
             utils.get_app_setting('DEFAULT_EXPORT_PATH', str(pp / 'export'))
+        )
+        self.report_path = QLineEdit()
+        self.report_path.setText(
+            utils.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
         )
         self.folder_history_depth = QSpinBox()
         self.folder_history_depth.setMinimum(2)
