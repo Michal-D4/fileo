@@ -62,14 +62,25 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            dlg = QMessageBox(ag.app)
-            dlg.setWindowTitle('Action not implemented')
-            dlg.setText(f'Action name "{err}" not implemented')
-            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-            dlg.setIcon(QMessageBox.Icon.Warning)
-            dlg.exec()
+            show_message_box(
+                'Action not implemented',
+                f'Action name "{err}" not implemented',
+                icon=QMessageBox.Icon.Warning
+            )
 
     return execute_action
+
+def show_message_box(title: str, msg: str,
+                     btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
+                     icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+                     details: str = '') -> int:
+    dlg = QMessageBox(ag.app)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.setDetailedText(details)
+    dlg.setStandardButtons(btn)
+    dlg.setIcon(icon)
+    return dlg.exec()
 
 @pyqtSlot()
 def report_duplicates():
@@ -77,6 +88,11 @@ def report_duplicates():
     rep = rep_creator.get_report()
     if rep:
         save_report(rep)
+    else:
+        show_message_box(
+            "No duplicates found",
+            "No file duplicates found in DB"
+        )
 
 def save_report(rep):
     pp = Path('~/fileo/report').expanduser()
@@ -95,8 +111,8 @@ def _save_report(rep: dict[list], filename: str):
 
     with open(filename, "w") as out:
         for key,rr in rep.items():
-            logger.info(key)
-            logger.info(rr)
+            # logger.info(key)
+            # logger.info(rr)
             out.write(f"{'-='*20}-\n")
             for r in rr:
                 out.write(f"File:  {r[0]}\n")
@@ -129,13 +145,12 @@ def rename_in_file_system(new_name: str):
     if new_path.name == new_name:
         ag.app.ui.current_filename.setText(new_name)
     else:
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('Error renaming file')
-        dlg.setText(f'File {ag.file_path.name} was not renamed')
-        dlg.setDetailedText(ag.file_path.as_posix())
-        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-        dlg.setIcon(QMessageBox.Icon.Critical)
-        dlg.exec()
+        show_message_box(
+            'Error renaming file',
+            f'File {ag.file_path.name} was not renamed',
+            icon=QMessageBox.Icon.Critical,
+            details=ag.file_path.as_posix()
+        )
 
 @pyqtSlot()
 def enable_next_prev(param: str):
@@ -146,18 +161,21 @@ def enable_next_prev(param: str):
 @pyqtSlot()
 def find_files_by_name(param: str):
     def split3():
+        """
+        split by commas but into 3 parts
+        all pats are merged into one except the 2 last
+        """
         pp = param.split(',')
         return ','.join(pp[:-2]), *pp[-2:]
 
     pp = split3()
-    logger.info(f'{param}, {pp=}')
+    # logger.info(f'{param}, {pp=}')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
 
 @pyqtSlot()
 def set_preferencies():
     pref = preferencies.Preferencies(ag.app)
-    pref.resize(499, 184)
     pref.show()
 
 @pyqtSlot()
@@ -547,13 +565,12 @@ def delete_files():
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    dlg = QMessageBox(ag.app)
-    dlg.setWindowTitle('delete file from DB')
-    dlg.setText(f'Selected files will be deleted. Please confirm')
-    dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
-        QMessageBox.StandardButton.Cancel)
-    dlg.setIcon(QMessageBox.Icon.Question)
-    res = dlg.exec()
+    res = show_message_box(
+        'delete file from DB',
+        f'Selected files will be deleted. Please confirm',
+        QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+        QMessageBox.Icon.Question
+    )
 
     if res == QMessageBox.StandardButton.Ok:
         row = ag.file_list.model().rowCount()
