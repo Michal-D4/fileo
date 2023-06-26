@@ -10,6 +10,7 @@ EXE/
 .qt_for_python/
 .eggs/
 tmp/
+try/
 tests/
 .venv/
 .vscode/
