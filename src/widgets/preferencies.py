@@ -1,6 +1,7 @@
 from loguru import logger
 from pathlib import Path
 
+from PyQt6 import QtCore
 from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QLineEdit, QSpinBox, QHBoxLayout,  QVBoxLayout,
     QDialogButtonBox, QSizePolicy, QSpacerItem,
@@ -48,7 +49,11 @@ class Preferencies(QDialog):
         h_layout.addWidget(self.buttonBox)
         v_layout.addWidget(form)
         v_layout.addLayout(h_layout)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         self.setModal(True)
+
+    def sizeHint(self) -> QtCore.QSize:
+        return QtCore.QSize(499,184)
 
     def accept(self):
         settings = {
