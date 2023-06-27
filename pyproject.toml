@@ -16,7 +16,8 @@ pypdf2 = "^3.0.1"
 pyqt6 = "^6.4.0"
 qtawesome = "^1.2.2"
 apsw = "^3.40.1.0"
-pywinauto = "^0.6.8"
+pywinauto = [
+    {platform = 'windows', version="^0.6.8"}]
 
 
 [build-system]
