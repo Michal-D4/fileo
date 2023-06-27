@@ -107,6 +107,7 @@ class shoWindow(QMainWindow):
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
+            bk_ut.set_field_menu()
             return True
         return False
 
