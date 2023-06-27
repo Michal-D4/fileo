@@ -821,17 +821,25 @@ def move_dir(new: int, old: int, id: int) -> bool:
             return False   # dir can't be moved here, already exists
 
 def get_file_notes(file_id: int) -> apsw.Cursor:
-    sql_hash = "select hash from files where id = ?"
-    sql = (
+    hash_sql = "select hash from files where id = ?"
+    sql_hash = (
         "select comment, id, modified, created from Comments "
         "where fileID in (select id from files where hash = ?) "
         "order by modified desc;"
     )
+    sql_id = (
+        "select comment, id, modified, created from Comments "
+        "where fileID  = ? order by modified desc;"
+    )
     if file_id < 0:
         return []
     with ag.db['Conn'] as conn:
-        hash = conn.cursor().execute(sql_hash, (file_id,)).fetchone()
-        return conn.cursor().execute(sql, (hash[0],))
+        hash = conn.cursor().execute(hash_sql, (file_id,)).fetchone()
+        # logger.info(f'{hash=}')
+        if hash[0]:
+            return conn.cursor().execute(sql_hash, (hash[0],))
+        else:
+            return conn.cursor().execute(sql_id, (file_id,))
 
 def get_note(file: int, note: int) -> str:
     sql = 'select comment from comments where fileid = ? and id = ?;'
