@@ -31,11 +31,11 @@ def collect_all_icons():
     other_icons["cancel2"] = (qta.icon('mdi.window-close', color=ag.qss_params["$CarmineColor"]),)
 
     other_icons["toEdit"] = (qta.icon('mdi.pencil-outline', color=ag.qss_params["$navigatorColor"]),)
-    other_icons['plus'] = (qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"]),)
+    other_icons["plus"] = (qta.icon('mdi.plus', color=ag.qss_params["$navigatorColor"]),)
 
-    other_icons['right'] = (qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"]),)
-    other_icons['down'] = (qta.icon('mdi.chevron-down', color=ag.qss_params["$navigatorColor"]),)
-    other_icons['up'] = (qta.icon('mdi.chevron-up', color=ag.qss_params["$navigatorColor"]),)
+    other_icons["right"] = (qta.icon('mdi.chevron-right', color=ag.qss_params["$navigatorColor"]),)
+    other_icons["down"] = (qta.icon('mdi.chevron-down', color=ag.qss_params["$navigatorColor"]),)
+    other_icons["up"] = (qta.icon('mdi.chevron-up', color=ag.qss_params["$navigatorColor"]),)
     other_icons["collapse_all"] = (qta.icon('mdi.collapse-all-outline', color=ag.qss_params["$topBarColor"]),)
     other_icons["refresh"] = (qta.icon('mdi.refresh', color=ag.qss_params["$topBarColor"]),)
     other_icons["open_db"] = (qta.icon('mdi.folder-open-outline', color=ag.qss_params["$topBarColor"]),)
@@ -107,7 +107,7 @@ def _collect_toolbar_icons():
     )
 
     toolbar_icons["close"] = (
-        qta.icon('mdi.close', color=ag.qss_params["$topBarColor"],
+        qta.icon('mdi.window-close', color=ag.qss_params["$topBarColor"],
             color_active=ag.qss_params["$ToolButtonActiveColor"]),
     )
 

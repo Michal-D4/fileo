@@ -186,4 +186,4 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     except ImportError:
         pass
 
-    app.setWindowIcon(icons.get_other_icon('app'))
+    app.setWindowIcon(icons.get_other_icon("app"))

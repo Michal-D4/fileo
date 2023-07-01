@@ -212,7 +212,7 @@ def populate_all():
 
     hide_state = low_bk.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
-    self.show_hidden.setIcon(icons.get_other_icon('show_hide', hide_state))
+    self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
     fill_dir_list()
     ag.filter_dlg.restore_filter_settings()

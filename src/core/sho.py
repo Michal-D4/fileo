@@ -149,24 +149,24 @@ class shoWindow(QMainWindow):
         self.container.ui.app_mode.setText(f"{val}")
 
     def set_extra_widgets(self):
-        self.btn_prev = self._create_button('prev_folder', 'btn_prev', 'Previous folder')
+        self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Previous folder')
         self.btn_prev.clicked.connect(bk_ut.to_prev_folder)
         self.btn_prev.setDisabled(True)
 
-        self.btn_next = self._create_button('next_folder', 'btn_next', 'Next folder')
+        self.btn_next = self._create_button("next_folder", 'btn_next', 'Next folder')
         self.btn_next.clicked.connect(bk_ut.to_next_folder)
         self.btn_next.setDisabled(True)
 
-        self.refresh_tree = self._create_button('refresh', 'refresh', 'Refresh folder list')
+        self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')
         self.refresh_tree.clicked.connect(bk_ut.show_hidden_dirs)
         self.refresh_tree.setDisabled(True)
 
-        self.show_hidden = self._create_button('show_hide', 'show_hide', 'Show hidden folders')
+        self.show_hidden = self._create_button("show_hide", 'show_hide', 'Show hidden folders')
         self.show_hidden.setCheckable(True)
         self.show_hidden.clicked.connect(self.show_hide_click)
         self.show_hidden.setDisabled(True)
 
-        self.collapse_btn = self._create_button('collapse_all', 'collapse_all', 'Collapse/expand tree')
+        self.collapse_btn = self._create_button("collapse_all", 'collapse_all', 'Collapse/expand tree')
         self.collapse_btn.setCheckable(True)
         self.collapse_btn.clicked.connect(bk_ut.toggle_collapse)
         self.collapse_btn.setDisabled(True)
@@ -186,7 +186,7 @@ class shoWindow(QMainWindow):
     def show_hide_click(self, state: bool):
         # logger.info(f'{state=}')
         bk_ut.show_hidden_dirs()
-        self.show_hidden.setIcon(icons.get_other_icon('show_hide', int(state)))
+        self.show_hidden.setIcon(icons.get_other_icon("show_hide", int(state)))
 
     def setup_global_widgets(self):
         ag.app = bk_ut.self = self
@@ -228,7 +228,7 @@ class shoWindow(QMainWindow):
         for btn_name, icon in self.icons.items():
             btn: QToolButton  = getattr(self.ui, btn_name)
             btn.setIcon(icon[btn.isChecked()])
-        self.ui.btn_search.setIcon(icons.get_other_icon('search'))
+        self.ui.btn_search.setIcon(icons.get_other_icon("search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         self.ui.btn_search.setDisabled(True)
 
@@ -388,14 +388,20 @@ class shoWindow(QMainWindow):
 
     def click_checkable_button(self, state: bool, bt_key: ag.appMode):
         """
+        state = True if clicked button checked
+        bt_key - here the key of checkable_btn dict
         there are three checkable buttons on left tool bar:
         btnDir, btnFilter, btnFilterSetup
         click button changes state of application
         change icon of checkable button depending on its state
         """
         old_mode = ag.mode.value
-        for key, btn in self.checkable_btn.items():
-            btn.setIcon(self.icons[btn.objectName()][state and key is bt_key])
+        if state:
+            # need loop to find button to upcheck
+            for key, btn in self.checkable_btn.items():
+                btn.setIcon(self.icons[btn.objectName()][key is bt_key])
+        else:
+            self.checkable_btn[bt_key].setIcon[bt_key][0]
 
         self.mode = bt_key
         self.checkable_btn[self.mode].setChecked(True)

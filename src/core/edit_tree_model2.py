@@ -112,10 +112,10 @@ class TreeModel(QAbstractItemModel):
         elif role == Qt.ItemDataRole.DecorationRole:
             u_dat = self.getItem(index).user_data()
             if u_dat.hidden:
-                return icons.get_other_icon('hidden')
+                return icons.get_other_icon("hidden")
             if u_dat.is_copy:
-                return icons.get_other_icon('copy')
-            return icons.get_other_icon('folder')
+                return icons.get_other_icon("copy")
+            return icons.get_other_icon("folder")
 
         return None
 
