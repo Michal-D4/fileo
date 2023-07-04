@@ -1,11 +1,6 @@
-import os, sys
+import sys
 
 from loguru import logger
-
-# os.environ['PYTHONBREAKPOINT'] = 'web_pdb.set_trace'
-# from PyQt6.QtCore import pyqtRemoveInputHook
-# pyqtRemoveInputHook()
-os.environ['PYTHONBREAKPOINT'] = '0'
 
 from PyQt6.QtCore import Qt, pyqtSlot, QLockFile, QDir
 from PyQt6.QtGui import QKeySequence, QShortcut
