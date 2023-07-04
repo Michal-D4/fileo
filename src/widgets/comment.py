@@ -5,20 +5,18 @@ from PyQt6.QtCore  import QUrl, pyqtSignal, pyqtSlot, QSize
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QWidget
 
-from core import icons, app_globals as ag, db_ut
+from ..core import icons, app_globals as ag, db_ut
 from .ui_comment import Ui_comment
 
 MIN_HEIGHT = 50
+TIME_FORMAT = "%Y-%m-%d %H:%M"
+
 
 class Comment(QWidget):
 
-    delete_note = pyqtSignal(int)
-    start_edit = pyqtSignal(int)
-    finsih_edit = pyqtSignal(int)   # not iterate all items
-
-    def __init__(self, id: int,
-                 modified: int,
-                 created: int,
+    def __init__(self, id: int=0,
+                 modified: int=0,
+                 created: int=0,
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
@@ -28,31 +26,26 @@ class Comment(QWidget):
 
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
-        # logger.info(f'{id=}, {self.visible_height=}')
+        logger.info(f'{id=}, {self.visible_height=}')
 
         self.ui = Ui_comment()
 
         self.ui.setupUi(self)
         self.ui.edit.setIcon(icons.get_other_icon("toEdit"))
         self.ui.remove.setIcon(icons.get_other_icon("cancel2"))
+        self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
+        self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
         self.ui.textBrowser.setOpenLinks(False)
 
         self.ui.collapse.clicked.connect(self.collapse_item)
         self.ui.edit.clicked.connect(self.edit_note)
         self.ui.remove.clicked.connect(self.remove_note)
-        ag.signals_.finish_edit.connect(self.edit_finish)
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
         self.set_collapse_icon(False)
 
-    @pyqtSlot(int)
-    def edit_finish(self, id: int):
-
-        logger.info(f'{self.id} == {id}, not iterate all items')
-        if self.id == id:
-            self.set_note_text(self.ui.textEdit.toPlainText())
-            self.ui.textBrowser.show()
-            self.ui.textEdit.hide()
+    def get_note_text(self) -> str:
+        return self.ui.textBrowser.toPlainText()
 
     def set_note_text(self, note: str):
         self.ui.textBrowser.setMarkdown(note)
@@ -61,13 +54,20 @@ class Comment(QWidget):
 
     def set_height_by_text(self):
         size = self.ui.textBrowser.document().size().toSize()
-        self.visible_height = size.height() + self.ui.item_header.height()
+        logger.info(f'{size=}, {size.height()=} {self.ui.textBrowser.toPlainText()}')
+        self.visible_height = max(size.height() + self.ui.item_header.height(), MIN_HEIGHT)
 
     def set_note_id(self, id: int):
         self.id = id
 
     def get_note_id(self) -> int:
         return self.id
+
+    def set_created(self, created: int):
+        self.created = datetime.fromtimestamp(created)
+
+    def set_modified(self, modified: int):
+        self.modified = datetime.fromtimestamp(modified)
 
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
@@ -94,11 +94,11 @@ class Comment(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        self.start_edit.emit(self.id)
+        ag.signals_.start_edit_note.emit(self.id)
 
     @pyqtSlot()
     def remove_note(self):
-        self.delete_note.emit(self.id)
+        ag.signals_.delete_note.emit(self.id)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
