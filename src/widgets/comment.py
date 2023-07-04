@@ -1,45 +1,55 @@
 from loguru import logger
-from typing import List
-from PyQt6 import QtCore, QtGui
+from datetime import datetime
+
+from PyQt6.QtCore  import QUrl, pyqtSignal, pyqtSlot, QSize
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QWidget
 
-from core import icons, app_globals as ag
+from core import icons, app_globals as ag, db_ut
 from .ui_comment import Ui_comment
 
 MIN_HEIGHT = 50
 
 class Comment(QWidget):
 
-    del_note_signal = QtCore.pyqtSignal(int)
-    start_edit = QtCore.pyqtSignal(int)
+    delete_note = pyqtSignal(int)
+    start_edit = pyqtSignal(int)
+    finsih_edit = pyqtSignal(int)   # not iterate all items
 
-    def __init__(self, id: int, parent: QWidget=None) -> None:
+    def __init__(self, id: int,
+                 modified: int,
+                 created: int,
+                 parent: QWidget=None) -> None:
         super().__init__(parent)
+
+        self.id = id
+        self.modified = datetime.fromtimestamp(modified)
+        self.created = datetime.fromtimestamp(created)
+
+        self.visible_height = MIN_HEIGHT
+        self.expanded_height = 0
+        # logger.info(f'{id=}, {self.visible_height=}')
 
         self.ui = Ui_comment()
 
         self.ui.setupUi(self)
         self.ui.edit.setIcon(icons.get_other_icon("toEdit"))
         self.ui.remove.setIcon(icons.get_other_icon("cancel2"))
-        self.ui.textEdit.hide()
-
-        self.visible_height = MIN_HEIGHT
-        self.expanded_height = 0
-        # logger.info(f'{id=}, {self.visible_height=}')
-
-        self.id = id
+        self.ui.textBrowser.setOpenLinks(False)
 
         self.ui.collapse.clicked.connect(self.collapse_item)
         self.ui.edit.clicked.connect(self.edit_note)
         self.ui.remove.clicked.connect(self.remove_note)
-
         ag.signals_.finish_edit.connect(self.edit_finish)
+        self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
+
         self.set_collapse_icon(False)
 
-    @QtCore.pyqtSlot(int)
+    @pyqtSlot(int)
     def edit_finish(self, id: int):
+
+        logger.info(f'{self.id} == {id}, not iterate all items')
         if self.id == id:
-            self.ui.edit.setEnabled(True)
             self.set_note_text(self.ui.textEdit.toPlainText())
             self.ui.textBrowser.show()
             self.ui.textEdit.hide()
@@ -59,10 +69,10 @@ class Comment(QWidget):
     def get_note_id(self) -> int:
         return self.id
 
-    def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(0, self.visible_height)
+    def sizeHint(self) -> QSize:
+        return QSize(0, self.visible_height)
 
-    @QtCore.pyqtSlot(bool)
+    @pyqtSlot(bool)
     def collapse_item(self, state: bool):
         active = self.ui.textBrowser if self.ui.edit.isEnabled() else self.ui.textEdit
 
@@ -82,16 +92,16 @@ class Comment(QWidget):
             else icons.get_other_icon("down")
         )
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def edit_note(self):
-        self.ui.edit.setEnabled(False)
-        self.ui.textBrowser.hide()
-        self.ui.textEdit.setMinimumHeight(self.ui.textBrowser.height()+20)
-        self.ui.textEdit.setText(self.ui.textBrowser.toPlainText())
-        self.ui.textEdit.show()
         self.start_edit.emit(self.id)
-        self.visible_height = self.height()
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def remove_note(self):
-        self.del_note_signal.emit(self.id)
+        self.delete_note.emit(self.id)
+
+    @pyqtSlot(QUrl)
+    def ref_clicked(self, href: QUrl):
+        tref = href.toString()
+        if tref.startswith('http'):
+            QDesktopServices.openUrl(href)

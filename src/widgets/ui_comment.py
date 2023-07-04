@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_comment(object):
     def setupUi(self, comment):
         comment.setObjectName("comment")
-        comment.resize(302, 76)
+        comment.resize(302, 50)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -73,6 +73,7 @@ class Ui_comment(object):
         self.modified.setWhatsThis("")
         self.modified.setAccessibleName("")
         self.modified.setAccessibleDescription("")
+        self.modified.setText("")
         self.modified.setObjectName("modified")
         self.horizontalLayout_2.addWidget(self.modified)
         self.created = QtWidgets.QLabel(self.item_header)
@@ -81,6 +82,7 @@ class Ui_comment(object):
         self.created.setWhatsThis("")
         self.created.setAccessibleName("")
         self.created.setAccessibleDescription("")
+        self.created.setText("")
         self.created.setObjectName("created")
         self.horizontalLayout_2.addWidget(self.created)
         self.btns = QtWidgets.QFrame(self.item_header)
@@ -95,7 +97,7 @@ class Ui_comment(object):
         self.btns.setObjectName("btns")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.btns)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
-        self.horizontalLayout.setSpacing(0)
+        self.horizontalLayout.setSpacing(6)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.edit = QtWidgets.QToolButton(self.btns)
         self.edit.setMinimumSize(QtCore.QSize(24, 24))
@@ -145,37 +147,10 @@ class Ui_comment(object):
         self.textBrowser.setPlaceholderText("")
         self.textBrowser.setObjectName("textBrowser")
         self.verticalLayout_2.addWidget(self.textBrowser)
-        self.textEdit = QtWidgets.QTextEdit(self.outerFrame)
-        self.textEdit.setEnabled(True)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.textEdit.sizePolicy().hasHeightForWidth())
-        self.textEdit.setSizePolicy(sizePolicy)
-        self.textEdit.setMinimumSize(QtCore.QSize(0, 26))
-        self.textEdit.setToolTip("")
-        self.textEdit.setStatusTip("")
-        self.textEdit.setWhatsThis("")
-        self.textEdit.setAccessibleName("")
-        self.textEdit.setAccessibleDescription("")
-        self.textEdit.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
-        self.textEdit.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
-        self.textEdit.setDocumentTitle("")
-        self.textEdit.setMarkdown("")
-        self.textEdit.setHtml("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>")
-        self.textEdit.setPlaceholderText("")
-        self.textEdit.setObjectName("textEdit")
-        self.verticalLayout_2.addWidget(self.textEdit)
         self.verticalLayout.addWidget(self.outerFrame)
 
         self.retranslateUi(comment)
         QtCore.QMetaObject.connectSlotsByName(comment)
 
     def retranslateUi(self, comment):
-        _translate = QtCore.QCoreApplication.translate
-        self.modified.setText(_translate("comment", "Modified: "))
-        self.created.setText(_translate("comment", "Created:"))
+        pass

@@ -209,8 +209,7 @@ def get_setting(key: str, default=None):
     try:
         vv = pickle.loads(val) if val else None
     except:
-        vv = default
-    # logger.info(f'{key=}, {vv=}')
+        vv = None
 
     return vv if vv else default
 
@@ -854,6 +853,6 @@ def delete_authors(authors: str):
 
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
+    logger.info(f'{f_dat=}')
     if f_dat:
-        ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)
