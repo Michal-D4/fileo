@@ -1,13 +1,11 @@
-import typing
 from loguru import logger
-from datetime import datetime
 
 from PyQt6.QtCore import Qt, QDateTime, QSize, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
     QVBoxLayout, QHBoxLayout, QToolButton, QFrame,
-    QScrollArea, QAbstractScrollArea, QSizePolicy, QBoxLayout
+    QScrollArea, QAbstractScrollArea, QSizePolicy
 )
 
 from .ui_notes import Ui_FileNotes
@@ -273,14 +271,6 @@ class Locations(QTextBrowser):
         return ' > '.join(ww), is_copy, hidden
 
 
-def clear_layout(layout: QBoxLayout):
-    logger.info(f'{layout.count()=}')
-    while item := layout.takeAt(0):
-        pass
-        if item:
-            logger.info(f'{item=}')
-        # item.widget().deleteLater()
-
 class notesContainer(QScrollArea):
     def __init__(self, editor: noteEditor, parent: QWidget=None) -> None:
         super().__init__(parent)
@@ -306,7 +296,6 @@ class notesContainer(QScrollArea):
         )
         self.setObjectName("container")
         self.scrollWidget = QWidget()
-        # self.scrollWidget.setGeometry(QRect(0, 0, 364, 598)) # ?
         self.scrollWidget.setObjectName("scrollWidget")
         self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
@@ -317,17 +306,22 @@ class notesContainer(QScrollArea):
         self.set_notes_data()
 
     def set_notes_data(self):
-        clear_layout(self.scroll_layout)
-        logger.info(f'{self.scroll_layout.count()=}, {self.file_id=}')
+        self.clear_layout()
         self.scroll_layout.addStretch(1)
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
             logger.info(f'{row=}')
-            id = row[1]
+            note_id = row[1]
             note = Comment(*row[1:])
             note.set_note_text(row[0])
-            self.notes[id] = note
+            self.notes[note_id] = note
             self.add_item(note)
+
+    def clear_layout(self):
+        logger.info(f'{self.scroll_layout.count()=}, {self.scroll_layout.geometry()}')
+        while item := self.scroll_layout.takeAt(0):
+            if item.widget():
+                item.widget().deleteLater()
 
     def add_item(self, item: Comment):
         item.setSizePolicy(
@@ -483,7 +477,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         for lbl in self.page_selectors:
             lbl.setStyleSheet(ss)
 
-        self.verticalLayout.addWidget(self.stackedWidget)
+        self.main_layout.addWidget(self.stackedWidget)
         self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
@@ -549,7 +543,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.l_comments_press(None)
 
     def note_changed(self):
-        icons.get_other_icon("more")
         note = self.editor.get_note_id()
         logger.info(f'{note=}')
         self.notes.finish_editing(note)

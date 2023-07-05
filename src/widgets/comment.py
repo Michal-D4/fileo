@@ -50,7 +50,6 @@ class Comment(QWidget):
     def set_note_text(self, note: str):
         nnote = note.replace(r'\n', '<br>')
         self.ui.textBrowser.setMarkdown(nnote)
-        logger.info(nnote)
         self.set_height_by_text()
         self.updateGeometry()
 
@@ -76,16 +75,16 @@ class Comment(QWidget):
 
     @pyqtSlot(bool)
     def collapse_item(self, state: bool):
-        active = self.ui.textBrowser if self.ui.edit.isEnabled() else self.ui.textEdit
-
         if state:
-            self.expanded_height = self.height()
-            self.visible_height -= active.height()
-            active.hide()
+            if self.ui.textBrowser.verticalScrollBar().isVisible():
+                self.set_height_by_text()
+            self.expanded_height = self.visible_height
+            self.visible_height = self.ui.item_header.height()
+            self.ui.textBrowser.hide()
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
-            active.show()
+            self.ui.textBrowser.show()
         self.set_collapse_icon(state)
 
     def set_collapse_icon(self, collapse: bool):
