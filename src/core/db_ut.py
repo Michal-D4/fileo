@@ -835,7 +835,7 @@ def get_file_notes(file_id: int) -> apsw.Cursor:
         return []
     with ag.db['Conn'] as conn:
         hash = conn.cursor().execute(hash_sql, (file_id,)).fetchone()
-        logger.info(f'{hash=}')
+        # logger.info(f'{hash=}')
         if hash[0]:
             return conn.cursor().execute(sql_hash, (hash[0],))
         else:
