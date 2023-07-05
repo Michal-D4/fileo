@@ -45,17 +45,19 @@ class Comment(QWidget):
         self.set_collapse_icon(False)
 
     def get_note_text(self) -> str:
-        return self.ui.textBrowser.toPlainText()
+        return self.ui.textBrowser.toMarkdown()
 
     def set_note_text(self, note: str):
-        self.ui.textBrowser.setMarkdown(note)
+        nnote = note.replace(r'\n', '<br>')
+        self.ui.textBrowser.setMarkdown(nnote)
+        logger.info(nnote)
         self.set_height_by_text()
         self.updateGeometry()
 
     def set_height_by_text(self):
         size = self.ui.textBrowser.document().size().toSize()
-        logger.info(f'{size=}, {size.height()=} {self.ui.textBrowser.toPlainText()}')
-        self.visible_height = max(size.height() + self.ui.item_header.height(), MIN_HEIGHT)
+        logger.info(f'{size=}, {size.height()=} {self.ui.textBrowser.toMarkdown()}')
+        self.visible_height = size.height() + self.ui.item_header.height()
 
     def set_note_id(self, id: int):
         self.id = id
