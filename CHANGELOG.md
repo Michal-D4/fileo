@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.9.41 - 06 July, 2023
+
+* show each comment/note to file in a separated widget. All file note widgets in one container. The previous solution (show all notes in one `QTextBrowser` widget) was fragile, eg. buttons for editing and deleting notes often lost icons.
+* fix bug with restoring/saving settings of file list fields
+* about dialog. Now can show (F11) python version and the user version of DB (
+  see SqLite "`PRAGMA user_version`").
+* working with duplicate files: report on duplicates, merging all notes to a file from all duplicates, moving comments when deleting a duplicate file to one of the remaining duplicates, the total number of file openings and the maximum rating of the file.
+* fix bug when walking through folder history (next/previous)
+
 ## 0.9.4 - 15 June, 2023
 
 * single instance - set in Preference dialog
