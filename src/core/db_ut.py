@@ -89,6 +89,19 @@ def get_ext_list() -> apsw.Cursor:
     return ag.db['Conn'].cursor().execute(sql)
 
 #region files
+def file_duplicates():
+    sql = (
+        'with x(hash, cnt) as (select hash, count(*) '
+        'from files group by hash) '
+        'select f.hash, f.filename, p.path, d.name '
+        'from files f join filedir fd on f.id = fd.file '
+        'join dirs d on fd.dir = d.id '
+        'join paths p on p.id = f.path '
+        'join x on x.hash = f.hash '
+        'where x.cnt > 1 order by f.filename, d.name '
+    )
+    return ag.db['Conn'].cursor().execute(sql)
+
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     """
     case - if True case sensitive
@@ -200,12 +213,22 @@ def lost_files() -> bool:
     sql5 = "select 1 from dirs where id = 1"
     # create @@Lost dir
     sql6 = "insert into dirs values (1, '@@Lost')"
+    # clear @Lost from files that has copies in other dir(s)
+    sql7 = (
+        'with x(id, cnt) as (select file, count(*) '
+        'from filedir where file in (select file '
+        'from filedir where dir = 1) group by file) '
+        'delete from filedir where dir = 1 and file '
+        'in (select id from x where cnt > 1)'
+    )
+
 
     def add_lost_in_tree():
         '''
         add @@Lost link into dir tree if doesn't exist
         '''
         res = conn.cursor().execute(sql2).fetchone()
+        # logger.info(f'{res=}')
         if not res:
             conn.cursor().execute(sql3)
 
@@ -214,13 +237,16 @@ def lost_files() -> bool:
         create @@Lost dir if doesn't exist
         '''
         id1 = conn.cursor().execute(sql5).fetchone()
+        # logger.info(f'{id1=}')
         if not id1:
             conn.cursor().execute(sql6).fetchone()
 
     try:
         with ag.db['Conn'] as conn:
             has_lost = conn.cursor().execute(sql0).fetchone()
+            # logger.info(f'{has_lost=}')
             if not has_lost:
+                conn.cursor().execute(sql7).fetchone()
                 return False
 
             create_lost_dir()
@@ -474,8 +500,94 @@ def assemble_filter_sql(cond, sqlist) -> str:
     return sql
 
 def delete_file(id: int):
-    sql = 'delete from files where id = ?'
-    ag.db['Conn'].cursor().execute(sql, (id,))
+    """
+    delete file, esential info about file
+    will be tied to one of its duplicates if any
+    """
+    sql_hash = 'select hash from files where id = :be_removed'
+    sql_sta = (
+        'select count(*), sum(nopen), max(rating), max(modified), '
+        'max(opened) from files where hash = ?'
+    )
+    sql_preserve_id = (
+        'select id from files where hash = :hash and id != :be_removed'
+    )
+    sql_max_id = 'select max(id) from comments where fileid = :preserved'
+    sql_upd_comments = (
+        'update comments set fileid = :preserved, '
+        'id = id+:max_id where fileid = :be_removed '
+    )
+    sql_upd_file = (
+        'update files set nopen = :num, rating = :rate, '
+        'modified = :modi, opened = :opnd where id = :preserved'
+    )
+    sql_upd_tags = (
+        'update filetag set fileid = :preserved '
+        'where fileid = :be_removed'
+    )
+    sql_upd_authors = (
+        'update fileauthor set fileid = :preserved '
+        'where fileid = :be_removed'
+    )
+    sql_del = 'delete from files where id = ?'
+
+    def update_preserve():
+        """
+        comments, rating and number of openings will be
+        tied to one of the saved files among its duplicates
+        """
+        hash = curs.execute(sql_hash, {'be_removed': id}).fetchone()
+        if not hash:
+            return
+        sta = curs.execute(sql_sta, (hash[0],)).fetchone()
+        # logger.info(f'{sta=}')
+        if sta[0] > 1:  # if duplicates exists
+            preserve_id = curs.execute(
+                sql_preserve_id,
+                {'hash': hash[0], 'be_removed': id}
+            ).fetchone()[0]
+            _id = curs.execute(
+                sql_max_id, {'preserved': preserve_id}
+            ).fetchone()[0]
+            max_id = _id if _id else 0
+            # logger.info(f'{id=}, {preserve_id=}, {max_id=}, {_id=}')
+            curs.execute(
+                sql_upd_comments,
+                {
+                    'preserved': preserve_id,
+                    'max_id': max_id,
+                    'be_removed': id
+                }
+            )
+            curs.execute(
+                sql_upd_file,
+                {
+                    'num': sta[1],
+                    'rate': sta[2],
+                    'modi': sta[3],
+                    'opnd': sta[4],
+                    'preserved': preserve_id
+                }
+            )
+            curs.execute(
+                sql_upd_tags,
+                {
+                    'preserved': preserve_id,
+                    'be_removed': id
+                }
+            )
+            curs.execute(
+                sql_upd_authors,
+                {
+                    'preserved': preserve_id,
+                    'be_removed': id
+                }
+            )
+
+    with ag.db['Conn'] as conn:
+        curs = conn.cursor()
+        update_preserve()
+        curs.execute(sql_del, (id,))
 
 def delete_file_dir_link(id: int, dir_id: int):
     sql = 'delete from filedir where file = ? and dir = ?'
@@ -709,11 +821,25 @@ def move_dir(new: int, old: int, id: int) -> bool:
             return False   # dir can't be moved here, already exists
 
 def get_file_notes(file_id: int) -> apsw.Cursor:
-    sql = (
+    hash_sql = "select hash from files where id = ?"
+    sql_hash = (
         "select comment, id, modified, created from Comments "
-        "where fileID = ? order by modified desc;"
+        "where fileID in (select id from files where hash = ?) "
+        "order by modified;"
     )
-    return ag.db['Conn'].cursor().execute(sql, (file_id,))
+    sql_id = (
+        "select comment, id, modified, created from Comments "
+        "where fileID  = ? order by modified;"
+    )
+    if file_id < 0:
+        return []
+    with ag.db['Conn'] as conn:
+        hash = conn.cursor().execute(hash_sql, (file_id,)).fetchone()
+        # logger.info(f'{hash=}')
+        if hash[0]:
+            return conn.cursor().execute(sql_hash, (hash[0],))
+        else:
+            return conn.cursor().execute(sql_id, (file_id,))
 
 def get_note(file: int, note: int) -> str:
     sql = 'select comment from comments where fileid = ? and id = ?;'
@@ -740,7 +866,7 @@ def insert_note(fileid: int, note: str) -> int:
                 'created': ts[0]
             }
         )
-        return ts[0]
+        return ts[0], conn.last_insert_rowid()
 
 def update_note(fileid: int, id: int, note: str) -> int:
     sql0 = 'select modified from comments where fileid=:fileid and id=:id'
@@ -757,7 +883,7 @@ def update_note(fileid: int, id: int, note: str) -> int:
             }
         )
         ts = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
-
+        logger.info(f'{ts=}')
         return ts[0] if ts[0] > ts0[0] else -1
 
 def delete_note(file: int, note: int):

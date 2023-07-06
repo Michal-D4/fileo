@@ -56,8 +56,8 @@ class AboutDialog(QDialog):
         v_layout.addWidget(self.buttonBox)
         self.setModal(True)
 
-        db_ver = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
-        db_ver.activated.connect(self.get_db_user_version)
+        py_db_ver = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
+        py_db_ver.activated.connect(self.get_py_db_versions)
 
     def get_info_icon(self) -> QPixmap:
         ico = QStyle.standardIcon(
@@ -66,12 +66,17 @@ class AboutDialog(QDialog):
         )
         return ico.pixmap(QSize(32, 32))
 
-    def get_db_user_version(self):
+    def get_py_db_versions(self):
+        import platform
+        py_ver = platform.python_version()
         if ag.db['Conn']:
-            self.set_title(ag.db['Conn'].execute('PRAGMA user_version').fetchone()[0])
+            db_ver = ag.db['Conn'].execute('PRAGMA user_version').fetchone()[0]
+        else:
+            db_ver = ''
+        self.set_title((py_ver, db_ver))
 
-    def set_title(self, db_ver: str = ''):
-        if db_ver:
-            self.setWindowTitle(f'About Fileo, DB v.{db_ver}')
+    def set_title(self, ver: tuple=None):
+        if ver:
+            self.setWindowTitle(f'About Fileo, Python {ver[0]}, DB v.{ver[1]}')
         else:
             self.setWindowTitle('About Fileo')

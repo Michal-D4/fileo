@@ -16,24 +16,28 @@ class History(object):
     def __init__(self, limit: int = 20):
         self.curr: Item = Item()
         self.limit: int = limit
-        self.next = []
+        self.next_ = []
         self.prev = []
 
-    def set_history(self, next: list, prev: list, curr: Item):
+    def set_history(self, next_: list, prev: list, curr: Item):
         """
         used to restore history on startup
         """
-        self.next = next
+        self.next_ = next_
         self.prev = prev
         self.curr = curr
+        # logger.info(f'{self.next_=}')
+        # logger.info(f'{self.prev=}')
+        # logger.info(f'{self.curr=}')
+        # logger.info(f'{self.limit=}')
         ag.signals_.user_action_signal.emit(
             f'enable_next_prev/{self.has_next()},{self.has_prev()}'
         )
 
     def set_limit(self, limit: int):
         self.limit: int = limit
-        if len(self.next) > limit:
-            self.next = self.next[len(self.next)-limit:]
+        if len(self.next_) > limit:
+            self.next_ = self.next_[len(self.next_)-limit:]
         if len(self.prev) > limit:
             self.prev = self.prev[len(self.prev)-limit:]
 
@@ -41,19 +45,23 @@ class History(object):
         if len(self.prev) >= self.limit:
             self.prev = self.prev[len(self.prev)-self.limit-1:]
         self.prev.append(self.curr)
+        # logger.info(f'{self.prev=}')
 
-        self.curr = self.next.pop()
+        self.curr = self.next_.pop()
+        # logger.info(f'{self.curr=}')
         ag.signals_.user_action_signal.emit(
             f'enable_next_prev/{self.has_next()},yes'
         )
         return self.curr
 
     def prev_dir(self) -> Item:
-        if len(self.next) >= self.limit:
-            self.next = self.next[len(self.next)-self.limit-1:]
-        self.next.append(self.curr)
+        if len(self.next_) >= self.limit:
+            self.next_ = self.next_[len(self.next_)-self.limit-1:]
+        self.next_.append(self.curr)
+        # logger.info(f'{self.next_=}')
 
         self.curr = self.prev.pop()
+        # logger.info(f'{self.curr=}')
         ag.signals_.user_action_signal.emit(
             f'enable_next_prev/yes,{self.has_prev()}'
         )
@@ -63,30 +71,33 @@ class History(object):
         '''
         set file_id in the history item to be left
         '''
-        if self.curr.path:
+        if self.curr.path and row_no >= 0:
             self.curr.file_id = row_no
             db_ut.update_file_id(self.curr.path, row_no)
 
     def has_next(self) -> str:
-        return 'yes' if self.next else 'no'
+        return 'yes' if self.next_ else 'no'
 
     def has_prev(self) -> str:
         return 'yes' if self.prev else 'no'
 
     def add_item(self, path, file_id):
+        # logger.info(f'{path=}, {file_id=}')
         if self.curr:
             if len(self.prev) >= self.limit:
                 self.prev = self.prev[len(self.prev)-self.limit-1:]
             self.prev.append(self.curr)
-        self.next.clear()
+            # logger.info(f'{self.prev=}')
+        self.next_.clear()
         ag.signals_.user_action_signal.emit(
             f'enable_next_prev/no,{self.has_prev()}'
         )
         self.curr = Item(path, file_id)
+        # logger.info(f'{self.curr=}')
 
     def get_history(self) -> list:
         """
         used to save histiry on close
         """
         self.set_file_id(ag.file_list.currentIndex().row())
-        return [self.next, self.prev, self.curr]
+        return [self.next_, self.prev, self.curr]

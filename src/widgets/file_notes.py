@@ -1,12 +1,11 @@
 from loguru import logger
-from dataclasses import dataclass
-from datetime import datetime
 
-from PyQt6.QtCore import QUrl, QDateTime, QSize, pyqtSlot
-from PyQt6.QtGui import QMouseEvent, QDesktopServices
+from PyQt6.QtCore import Qt, QDateTime, QSize, pyqtSlot
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QTextBrowser, QStackedWidget, QPlainTextEdit,
     QVBoxLayout, QHBoxLayout, QToolButton, QFrame,
+    QScrollArea, QAbstractScrollArea, QSizePolicy
 )
 
 from .ui_notes import Ui_FileNotes
@@ -14,34 +13,19 @@ from .ui_notes import Ui_FileNotes
 from ..core import icons, app_globals as ag, db_ut
 from ..core.compact_list import aBrowser
 from .file_info import fileInfo
-
-time_format = "%Y-%m-%d %H:%M"
-
-@dataclass(slots=True)
-class Note():
-    note: str
-    id: int
-    modified: datetime
-    created: datetime
-
-    def __post_init__(self):
-        try:
-            self.modified = datetime.fromtimestamp(self.modified)
-            self.created = datetime.fromtimestamp(self.created)
-        except:
-            pass
+from .comment import Comment
 
 
 class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
-        self.id = 0
+        self.note_id = 0
 
-    def set_note_id(self, id: int):
-        self.id = id
+    def set_note_id(self, note_id: int):
+        self.note_id = note_id
 
     def get_note_id(self) -> int:
-        return self.id
+        return self.note_id
 
 
 class tagBrowser(aBrowser):
@@ -287,6 +271,122 @@ class Locations(QTextBrowser):
         return ' > '.join(ww), is_copy, hidden
 
 
+class notesContainer(QScrollArea):
+    def __init__(self, editor: noteEditor, parent: QWidget=None) -> None:
+        super().__init__(parent)
+
+        self.editor = editor
+        self.set_ui()
+
+        self.file_id = 0
+        self.notes = {}
+
+        ag.signals_.delete_note.connect(self.remove_item)
+
+    def set_ui(self):
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizeAdjustPolicy(
+            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
+        )
+        self.setWidgetResizable(True)
+        self.setAlignment(
+            Qt.AlignmentFlag.AlignLeading|
+            Qt.AlignmentFlag.AlignLeft|
+            Qt.AlignmentFlag.AlignTop
+        )
+        self.setObjectName("container")
+        self.scrollWidget = QWidget()
+        self.scrollWidget.setObjectName("scrollWidget")
+        self.setWidget(self.scrollWidget)
+        self.scroll_layout = QVBoxLayout(self.scrollWidget)
+        self.scroll_layout.setObjectName('scroll_layout')
+
+    def set_file_id(self, id: int):
+        self.file_id = id
+        self.set_notes_data()
+
+    def set_notes_data(self):
+        self.clear_layout()
+        self.scroll_layout.addStretch(1)
+        data = db_ut.get_file_notes(self.file_id)
+        for row in data:
+            note_id = row[1]
+            note = Comment(*row[1:])
+            note.set_text(row[0])
+            self.notes[note_id] = note
+            self.add_item(note)
+
+    def clear_layout(self):
+        while item := self.scroll_layout.takeAt(0):
+            if item.widget():
+                item.widget().deleteLater()
+
+    def add_item(self, item: Comment):
+        item.setSizePolicy(
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.MinimumExpanding
+        )
+        self.scroll_layout.insertWidget(0, item)
+
+    def get_note(self, id: int) -> Comment:
+        """
+        id is correct key for dict self.notes or 0
+        otherwise must be used "id in self.notes"
+        """
+        return self.notes[id] if id else None
+
+    def finish_editing(self, note_id: int):
+        logger.info(f'{note_id=}')
+        if note_id:
+            note = self.notes[note_id]
+        else:
+            note = Comment()
+        self.update_note(note)
+        self.add_item(note)
+
+    def update_note(self, note: Comment):
+        txt = self.editor.toPlainText()
+        note_id = note.get_note_id()
+        # logger.info(f'{note_id=}, {len(txt)=}')
+        if note_id:
+            self.scroll_layout.removeWidget(note)
+            ts = db_ut.update_note(self.file_id, note_id, txt)
+        else:
+            ts, id = db_ut.insert_note(self.file_id, txt)
+            note.set_note_id(id)
+            note.set_created_date(ts)
+            self.notes[id] = note
+        note.set_modified_date(ts)
+        note.set_note_text(txt)
+
+        self.update_date_in_file_list(ts)
+
+    def update_date_in_file_list(self, ts: int):
+        if ts > 0:
+            a = QDateTime()
+            a.setSecsSinceEpoch(ts)
+            ag.file_list.model().update_field_by_name(
+                a, "Commented", ag.file_list.currentIndex()
+            )
+
+    @pyqtSlot(int)
+    def remove_item(self, note_id: int):
+        if self.confirm_note_deletion():
+            note = self.notes[note_id]
+            self.scroll_layout.removeWidget(note)
+            self.notes.pop(note, None)
+            db_ut.delete_note(self.file_id, note_id)
+
+    def confirm_note_deletion(self):
+        dlg = QMessageBox(ag.app)
+        dlg.setWindowTitle('delete file note')
+        dlg.setText(f'confirm deletion of note')
+        dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
+            QMessageBox.StandardButton.Cancel)
+        dlg.setIcon(QMessageBox.Icon.Question)
+        return dlg.exec() == QMessageBox.StandardButton.Ok
+
+
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
@@ -300,11 +400,14 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.page_selectors = [
             self.l_tags, self.l_authors,
             self.l_locations, self.l_file_info,
-            self.l_comments
+            self.l_comments, self.l_editor,
         ]
         self.set_stack_pages()
+        self.l_editor.hide()
 
-        self.expand.setIcon(icons.get_other_icon('up'))
+        ag.signals_.start_edit_note.connect(self.start_edit)
+
+        self.expand.setIcon(icons.get_other_icon("up"))
         self.expand.clicked.connect(self.up_down)
 
         self.plus.setIcon(icons.get_other_icon("plus"))
@@ -320,8 +423,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.plus.hide()
         self.tagEdit.editingFinished.connect(self.finish_edit_tag)
 
-        self.browser.anchorClicked.connect(self.ref_clicked)
-
         self.cur_page = 0
         self.l_comments_press(None)
 
@@ -330,6 +431,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.l_locations.mousePressEvent = self.l_locations_press
         self.l_file_info.mousePressEvent = self.l_file_info_press
         self.l_comments.mousePressEvent = self.l_comments_press
+        self.l_editor.mousePressEvent = self.l_editor_press
 
     def set_stack_pages(self):
         self.stackedWidget = QStackedWidget(self)
@@ -357,22 +459,22 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.file_info.setObjectName('file_info')
         self.stackedWidget.addWidget(self.file_info)
 
-        # add comments page (4)
-        self.browser = QTextBrowser(self)
-        self.stackedWidget.addWidget(self.browser)
-        self.browser.setOpenLinks(False)
-        self.browser.setObjectName('notes_browser')
-
-        # add comment editor page (5)
         self.editor = noteEditor()
-        self.stackedWidget.addWidget(self.editor)
         self.editor.setObjectName('note_editor')
+
+        self.notes = notesContainer(self.editor, self)
+        self.notes.setObjectName('notes_container')
+
+        # add comments page (4)
+        self.stackedWidget.addWidget(self.notes)
+        # add comment editor page (5)
+        self.stackedWidget.addWidget(self.editor)
 
         ss = ag.dyn_qss['passive_selector'][0]
         for lbl in self.page_selectors:
             lbl.setStyleSheet(ss)
 
-        self.verticalLayout.addWidget(self.stackedWidget)
+        self.main_layout.addWidget(self.stackedWidget)
         self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
@@ -400,14 +502,19 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.switch_page(4)
         self.plus.show()
 
+    def l_editor_press(self, e: QMouseEvent):
+        # editor page
+        self.switch_page(5)
+        self.plus.hide()
+        self.edit_btns.show()
+
     def switch_page(self, page_no: int):
-        if page_no < 5 and self.cur_page < 5:
-            self.page_selectors[self.cur_page].setStyleSheet(
-                ag.dyn_qss['passive_selector'][0]
-            )
-            self.page_selectors[page_no].setStyleSheet(
-                ag.dyn_qss['active_selector'][0]
-            )
+        self.page_selectors[self.cur_page].setStyleSheet(
+            ag.dyn_qss['passive_selector'][0]
+        )
+        self.page_selectors[page_no].setStyleSheet(
+            ag.dyn_qss['active_selector'][0]
+        )
         if self.cur_page == 5 and page_no != 5:
             self.edit_btns.hide()
         self.cur_page = page_no
@@ -415,13 +522,13 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def up_down(self):
         if self.maximized:
-            self.expand.setIcon(icons.get_other_icon('up'))
+            self.expand.setIcon(icons.get_other_icon("up"))
             ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
             ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
             ag.file_list.show()
         else:
             self.s_height = self.height()
-            self.expand.setIcon(icons.get_other_icon('down'))
+            self.expand.setIcon(icons.get_other_icon("down"))
             hh = ag.file_list.height() + self.s_height
             ag.app.ui.noteHolder.setMinimumHeight(hh)
             ag.app.ui.noteHolder.setMaximumHeight(hh)
@@ -429,23 +536,14 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.maximized = not self.maximized
 
     def cancel_note_editing(self):
+        self.l_editor.hide()
         self.l_comments_press(None)
 
     def note_changed(self):
-        id = self.editor.get_note_id()
-        txt = self.editor.toPlainText()
-        if id:
-            ts = db_ut.update_note(self.file_id, id, txt)
-        else:
-            ts = db_ut.insert_note(self.file_id, txt)
-
-        if ts > 0:
-            a = QDateTime()
-            a.setSecsSinceEpoch(ts)
-            ag.file_list.model().update_field_by_name(
-                a, "Commented", ag.file_list.currentIndex()
-            )
-            self.set_notes_data(db_ut.get_file_notes(self.file_id))
+        note_id = self.editor.get_note_id()
+        # logger.info(f'{note_id=}')
+        self.notes.finish_editing(note_id)
+        self.l_editor.hide()
         self.l_comments_press(None)
 
     def set_data(self):
@@ -455,7 +553,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
     @pyqtSlot()
     def update_tag_list(self):
         self.tag_selector.set_list(db_ut.get_tags())
-        self.set_file_id(self.file_id)
+        # self.set_file_id(self.file_id)    # ? this is common for tags and notes
 
     @pyqtSlot()
     def finish_edit_tag(self):
@@ -492,69 +590,19 @@ class notesBrowser(QWidget, Ui_FileNotes):
             db_ut.insert_tag_file(id, self.file_id)
         return inserted
 
-    def section_title(self, id: int, mod: str, cre: str) -> str:
-        btn1 = f'<span class="fa"><a class=t href=x,lnk{id}>&#xf00d;</a></span>'
-        btn2 = f'<span class="fa"><a class=t href=,,lnk{id}>&#xf044;</a></span>'
-        hdr = ('<style>td{text-align: center;} '
-            '*[href]{text-decoration: none; color: gray} '
-            'table{background-color:#FFFFE0;}</style>'
-            f'<table width="98%"><tr><td width="45%">modified: {mod}</td>'
-            f'<td width="45%">created: {cre}</td>'
-            f'<td align="right">{btn1}</td>'
-            f'<td align="right">{btn2}</td></tr></table>'
-        )
-        return hdr
-
-    def set_notes_data(self, data):
-        buf = []
-        for row in data:
-            note = Note(*row)
-            head = self.section_title(
-                note.id,
-                note.modified.strftime(time_format),
-                note.created.strftime(time_format)
-            )
-            buf.append('\n'.join((head, note.note)))
-        self.browser.setMarkdown('\n'.join(buf))
-
     def new_comment(self):
         self.start_edit(0)
 
-    def ref_clicked(self, href: QUrl):
-        tref = href.toString()
-        if tref.startswith("x,lnk"):
-            if self.confirm_note_deletion():
-                id = int(tref[5:])
-                self.delete_note(id)
-            return
-        if tref.startswith(",,lnk"):
-            id = int(tref[5:])
-            self.start_edit(id)
-            return
-        if tref.startswith('http'):
-            QDesktopServices.openUrl(href)
-            return
+    def start_edit(self, note_id: int):
+        note = self.notes.get_note(note_id)
+        txt = note.get_note_text() if note else ''
 
-    def confirm_note_deletion(self):
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('delete file note')
-        dlg.setText(f'confirm deletion of note')
-        dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
-            QMessageBox.StandardButton.Cancel)
-        dlg.setIcon(QMessageBox.Icon.Question)
-        return dlg.exec() == QMessageBox.StandardButton.Ok
+        self.editor.setMarkdown(txt)
+        self.editor.set_note_id(note_id)
 
-    def delete_note(self, id: int):
-        if id:
-            db_ut.delete_note(self.file_id, id)
-            self.set_notes_data(db_ut.get_file_notes(self.file_id))
-
-    def start_edit(self, id: int):
-        txt = db_ut.get_note(self.file_id, id) if id else ''
-        self.editor.setText(txt)
-        self.editor.set_note_id(id)
         self.plus.hide()
         self.edit_btns.show()
+        self.l_editor.show()
         self.switch_page(5)
 
     def set_file_id(self, id: int):
@@ -569,6 +617,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.file_info.set_file_id(id)
         self.author_selector.set_file_id(id)
         self.locator.set_file_id(id)
+        self.notes.set_file_id(id)
 
     @pyqtSlot(list)
     def update_tags(self, tags: list[str]):

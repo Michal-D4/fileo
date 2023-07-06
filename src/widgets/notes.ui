@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="main_layout">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -156,7 +156,14 @@
       <item>
        <widget class="QLabel" name="l_comments">
         <property name="text">
-         <string>Comments</string>
+         <string>Notes</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="l_editor">
+        <property name="text">
+         <string>Note editor</string>
         </property>
        </widget>
       </item>

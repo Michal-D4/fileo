@@ -96,8 +96,6 @@ def restore_sorting():
     ag.file_list.header().setSortIndicator(col, order)
 
 def bk_setup(main: 'shoWindow'):
-    set_field_menu()
-
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
@@ -126,7 +124,6 @@ def bk_setup(main: 'shoWindow'):
         lambda: ag.signals_.user_action_signal.emit("double click file"))
 
 def set_field_menu():
-    menu = QMenu(self)
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
     fields = ('File Name', 'Open Date', 'rating', 'Open#', 'Modified',
                 'Pages', 'Size', 'Published', 'Commented', 'Created',)
@@ -136,6 +133,7 @@ def set_field_menu():
         "Publication date(book),Last commented date,File creation date"
         )
 
+    menu = QMenu(self)
     for field,ch,tt in zip(fields, checked, tool_tips.split(',')):
         act = QAction(field, self, checkable=True)
         if tt:
@@ -151,6 +149,8 @@ def set_field_menu():
 @pyqtSlot()
 def click_setup_button():
     menu = QMenu(self)
+    menu.addAction('Report duplicate files')
+    menu.addSeparator()
     menu.addAction('Preferencies')
     menu.addSeparator()
     menu.addAction('About')
@@ -212,10 +212,10 @@ def populate_all():
 
     hide_state = low_bk.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
-    self.show_hidden.setIcon(icons.get_other_icon('show_hide', hide_state))
+    self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
     fill_dir_list()
-    ag.filter.restore_filter_settings()
+    ag.filter_dlg.restore_filter_settings()
 
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:

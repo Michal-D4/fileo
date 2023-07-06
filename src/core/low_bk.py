@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox,
 )
 
-from . import db_ut, app_globals as ag, utils
+from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
@@ -44,6 +44,7 @@ def exec_user_actions():
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
         "Setup About": show_about,
+        "Setup Report duplicate files": report_duplicates,
         "Setup Preferencies": set_preferencies,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
@@ -61,14 +62,61 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            dlg = QMessageBox(ag.app)
-            dlg.setWindowTitle('Action not implemented')
-            dlg.setText(f'Action name "{err}" not implemented')
-            dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-            dlg.setIcon(QMessageBox.Icon.Warning)
-            dlg.exec()
+            show_message_box(
+                'Action not implemented',
+                f'Action name "{err}" not implemented',
+                icon=QMessageBox.Icon.Warning
+            )
 
     return execute_action
+
+def show_message_box(title: str, msg: str,
+                     btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
+                     icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+                     details: str = '') -> int:
+    dlg = QMessageBox(ag.app)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.setDetailedText(details)
+    dlg.setStandardButtons(btn)
+    dlg.setIcon(icon)
+    return dlg.exec()
+
+@pyqtSlot()
+def report_duplicates():
+    rep_creator = dup.Duplicates()
+    rep = rep_creator.get_report()
+    if rep:
+        save_report(rep)
+    else:
+        show_message_box(
+            "No duplicates found",
+            "No file duplicates found in DB"
+        )
+
+def save_report(rep):
+    pp = Path('~/fileo/report').expanduser()
+    path = utils.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+    logger.info(f'{path=}, {pp=}')
+    file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
+        caption='Open file to save duplicate files report',
+        directory=(Path(path) / 'untitled').as_posix(),
+        filter='File list (*.filedups *.txt)'
+    )
+
+    if ok:
+        _save_report(rep, file_name)
+
+def _save_report(rep: dict[list], filename: str):
+
+    with open(filename, "w") as out:
+        for key,rr in rep.items():
+            # logger.info(key)
+            # logger.info(rr)
+            out.write(f"{'-='*20}-\n")
+            for r in rr:
+                out.write(f"File:  {r[0]}\n")
+                out.write(f"  {'; '.join(r[1:])}\n")
 
 @pyqtSlot()
 def reload_cur_dir():
@@ -97,13 +145,12 @@ def rename_in_file_system(new_name: str):
     if new_path.name == new_name:
         ag.app.ui.current_filename.setText(new_name)
     else:
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('Error renaming file')
-        dlg.setText(f'File {ag.file_path.name} was not renamed')
-        dlg.setDetailedText(ag.file_path.as_posix())
-        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-        dlg.setIcon(QMessageBox.Icon.Critical)
-        dlg.exec()
+        show_message_box(
+            'Error renaming file',
+            f'File {ag.file_path.name} was not renamed',
+            icon=QMessageBox.Icon.Critical,
+            details=ag.file_path.as_posix()
+        )
 
 @pyqtSlot()
 def enable_next_prev(param: str):
@@ -113,14 +160,22 @@ def enable_next_prev(param: str):
 
 @pyqtSlot()
 def find_files_by_name(param: str):
-    pp = param.split(',')
+    def split3():
+        """
+        split by commas but into 3 parts
+        all pats are merged into one except the 2 last
+        """
+        pp = param.split(',')
+        return ','.join(pp[:-2]), *pp[-2:]
+
+    pp = split3()
+    # logger.info(f'{param}, {pp=}')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
 
 @pyqtSlot()
 def set_preferencies():
     pref = preferencies.Preferencies(ag.app)
-    pref.resize(499, 184)
     pref.show()
 
 @pyqtSlot()
@@ -154,8 +209,7 @@ def get_setting(key: str, default=None):
     try:
         vv = pickle.loads(val) if val else None
     except:
-        vv = default
-    # logger.info(f'{key=}, {vv=}')
+        vv = None
 
     return vv if vv else default
 
@@ -248,11 +302,12 @@ def expand_branch(branch: list) -> QModelIndex:
 
 #region  Dirs
 def set_dir_model():
+    ag.hist_folder = True
     model: TreeModel = TreeModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    ag.dir_list.selectionModel().selectionChanged.connect(ag.filter.dir_selection_changed)
+    ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
@@ -261,6 +316,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     :@param curr_idx:
     :@return: None
     """
+    # logger.info(f'{ag.hist_folder=}')
     def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
@@ -287,11 +343,9 @@ def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
 
 def add_history_item(file_row: int):
     ag.history.set_file_id(file_row)
-    branch = get_branch(ag.dir_list.currentIndex())
-    ag.history.add_item(branch, 0)
-
-def current_dir_path():
-    return get_branch(ag.dir_list.currentIndex())
+    ag.history.add_item(
+        get_branch(ag.dir_list.currentIndex()), 0
+    )
 
 def restore_path(path: list) -> QModelIndex:
     """
@@ -350,7 +404,7 @@ def filtered_files():
     """
     create a list of files by filter
     """
-    files = ag.filter.get_file_list()
+    files = ag.filter_dlg.get_file_list()
     show_files(files)
 
 def filter_changed():
@@ -510,13 +564,12 @@ def delete_files():
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    dlg = QMessageBox(ag.app)
-    dlg.setWindowTitle('delete file from DB')
-    dlg.setText(f'Selected files will be deleted. Please confirm')
-    dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
-        QMessageBox.StandardButton.Cancel)
-    dlg.setIcon(QMessageBox.Icon.Question)
-    res = dlg.exec()
+    res = show_message_box(
+        'delete file from DB',
+        f'Selected files will be deleted. Please confirm',
+        QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+        QMessageBox.Icon.Question
+    )
 
     if res == QMessageBox.StandardButton.Ok:
         row = ag.file_list.model().rowCount()
@@ -800,6 +853,6 @@ def delete_authors(authors: str):
 
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
+    logger.info(f'{f_dat=}')
     if f_dat:
-        ag.notes.set_notes_data(db_ut.get_file_notes(f_dat.id))
         ag.notes.set_file_id(f_dat.id)

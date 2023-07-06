@@ -1,11 +1,6 @@
-import os, sys
+import sys
 
 from loguru import logger
-
-# os.environ['PYTHONBREAKPOINT'] = 'web_pdb.set_trace'
-# from PyQt6.QtCore import pyqtRemoveInputHook
-# pyqtRemoveInputHook()
-os.environ['PYTHONBREAKPOINT'] = '0'
 
 from PyQt6.QtCore import Qt, pyqtSlot, QLockFile, QDir
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -31,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.4'
+    return '0.9.41'
 
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():
