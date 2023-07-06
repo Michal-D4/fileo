@@ -1,11 +1,11 @@
 from loguru import logger
 from datetime import datetime
 
-from PyQt6.QtCore  import QUrl, pyqtSignal, pyqtSlot, QSize
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtCore  import QUrl, pyqtSlot, QSize
+from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import QWidget
 
-from ..core import icons, app_globals as ag, db_ut
+from ..core import icons, app_globals as ag
 from .ui_comment import Ui_comment
 
 MIN_HEIGHT = 50
@@ -23,6 +23,7 @@ class Comment(QWidget):
         self.id = id
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
+        self.text = ''
 
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
@@ -48,14 +49,16 @@ class Comment(QWidget):
         return self.ui.textBrowser.toMarkdown()
 
     def set_note_text(self, note: str):
-        nnote = note.replace(r'\n', '<br>')
-        self.ui.textBrowser.setMarkdown(nnote)
+        self.text = note
+
+    def set_browser_text(self):
+        self.ui.textBrowser.setMarkdown(self.text)
         self.set_height_by_text()
         self.updateGeometry()
 
     def set_height_by_text(self):
+        self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
         size = self.ui.textBrowser.document().size().toSize()
-        logger.info(f'{size=}, {size.height()=} {self.ui.textBrowser.toMarkdown()}')
         self.visible_height = size.height() + self.ui.item_header.height()
 
     def set_note_id(self, id: int):
@@ -64,11 +67,13 @@ class Comment(QWidget):
     def get_note_id(self) -> int:
         return self.id
 
-    def set_created(self, created: int):
+    def set_created_date(self, created: int):
         self.created = datetime.fromtimestamp(created)
+        self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
 
-    def set_modified(self, modified: int):
+    def set_modified_date(self, modified: int):
         self.modified = datetime.fromtimestamp(modified)
+        self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
 
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
@@ -76,8 +81,6 @@ class Comment(QWidget):
     @pyqtSlot(bool)
     def collapse_item(self, state: bool):
         if state:
-            if self.ui.textBrowser.verticalScrollBar().isVisible():
-                self.set_height_by_text()
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.item_header.height()
             self.ui.textBrowser.hide()
@@ -106,3 +109,7 @@ class Comment(QWidget):
         tref = href.toString()
         if tref.startswith('http'):
             QDesktopServices.openUrl(href)
+
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        self.set_browser_text()
+        return super().resizeEvent(a0)
