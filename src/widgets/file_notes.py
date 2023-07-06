@@ -310,15 +310,13 @@ class notesContainer(QScrollArea):
         self.scroll_layout.addStretch(1)
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
-            logger.info(f'{row=}')
             note_id = row[1]
             note = Comment(*row[1:])
-            note.set_note_text(row[0])
+            note.set_text(row[0])
             self.notes[note_id] = note
             self.add_item(note)
 
     def clear_layout(self):
-        logger.info(f'{self.scroll_layout.count()=}, {self.scroll_layout.geometry()}')
         while item := self.scroll_layout.takeAt(0):
             if item.widget():
                 item.widget().deleteLater()
@@ -349,22 +347,21 @@ class notesContainer(QScrollArea):
     def update_note(self, note: Comment):
         txt = self.editor.toPlainText()
         note_id = note.get_note_id()
-        logger.info(f'{note_id=}, {txt=}')
+        # logger.info(f'{note_id=}, {len(txt)=}')
         if note_id:
             self.scroll_layout.removeWidget(note)
             ts = db_ut.update_note(self.file_id, note_id, txt)
         else:
             ts, id = db_ut.insert_note(self.file_id, txt)
             note.set_note_id(id)
-            note.set_created(ts)
+            note.set_created_date(ts)
             self.notes[id] = note
-        note.set_modified(ts)
+        note.set_modified_date(ts)
         note.set_note_text(txt)
 
         self.update_date_in_file_list(ts)
 
     def update_date_in_file_list(self, ts: int):
-        logger.info(f'{ts=}')
         if ts > 0:
             a = QDateTime()
             a.setSecsSinceEpoch(ts)
@@ -543,9 +540,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.l_comments_press(None)
 
     def note_changed(self):
-        note = self.editor.get_note_id()
-        logger.info(f'{note=}')
-        self.notes.finish_editing(note)
+        note_id = self.editor.get_note_id()
+        # logger.info(f'{note_id=}')
+        self.notes.finish_editing(note_id)
         self.l_editor.hide()
         self.l_comments_press(None)
 
@@ -599,8 +596,10 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def start_edit(self, note_id: int):
         note = self.notes.get_note(note_id)
         txt = note.get_note_text() if note else ''
-        self.editor.setText(txt)
+
+        self.editor.setMarkdown(txt)
         self.editor.set_note_id(note_id)
+
         self.plus.hide()
         self.edit_btns.show()
         self.l_editor.show()

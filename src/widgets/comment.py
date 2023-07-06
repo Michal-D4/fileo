@@ -48,8 +48,12 @@ class Comment(QWidget):
     def get_note_text(self) -> str:
         return self.ui.textBrowser.toMarkdown()
 
+    def set_text(self, note: str):
+        self.text = note
+
     def set_note_text(self, note: str):
         self.text = note
+        self.set_browser_text()
 
     def set_browser_text(self):
         self.ui.textBrowser.setMarkdown(self.text)
