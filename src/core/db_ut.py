@@ -825,11 +825,11 @@ def get_file_notes(file_id: int) -> apsw.Cursor:
     sql_hash = (
         "select comment, id, modified, created from Comments "
         "where fileID in (select id from files where hash = ?) "
-        "order by modified desc;"
+        "order by modified;"
     )
     sql_id = (
         "select comment, id, modified, created from Comments "
-        "where fileID  = ? order by modified desc;"
+        "where fileID  = ? order by modified;"
     )
     if file_id < 0:
         return []
