@@ -738,7 +738,7 @@ def delete_folders():
     cur_idx = ag.dir_list.currentIndex()
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        if u_dat.is_copy:
+        if u_dat.is_link:
             db_ut.remove_dir_copy(u_dat.id, u_dat.parent_id)
             continue
         if visited := delete_tree(u_dat):
@@ -758,7 +758,7 @@ def delete_tree(u_dat: ag.DirData, visited=None):
     children = db_ut.dir_children(u_dat.id)
     for child in children:
         dir_dat: ag.DirData = ag.DirData(*child)
-        if dir_dat.is_copy:
+        if dir_dat.is_link:
             db_ut.remove_dir_copy(dir_dat.id, dir_dat.parent_id)
             continue
         if dir_dat in visited:

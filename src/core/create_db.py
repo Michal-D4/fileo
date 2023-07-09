@@ -53,7 +53,7 @@ FOREIGN KEY (file) REFERENCES files (id) on delete cascade
 CREATE TABLE parentdir (
 parent integer NOT NULL,
 id integer NOT NULL,
-is_copy integer not null default 0,
+is_link integer not null default 0,
 hide integer not null default 0,
 file_id integer not null default 0,
 PRIMARY KEY(parent, id)
@@ -108,7 +108,7 @@ extension text
 """,
 )
 APP_ID = 1718185071
-USER_VER = 6
+USER_VER = 7
 
 def is_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -145,10 +145,13 @@ def adjust_user_schema(db_name: str) -> int:
                 v = (4,)
             if v[0] == 4 or v[0] == 5:
                 initialize_settings(conn)
-                conn.cursor().execute(
-                    'PRAGMA user_version=6;'
-                )
                 v = (6,)
+            if v[0] == 6:
+                conn.cursor().execute(
+                    'ALTER TABLE parentdir RENAME COLUMN is_copy TO is_link;'
+                    'PRAGMA user_version=7;'
+                )
+                v = (7,)
             return v[0]
         except apsw.SQLError as err:
             # logger.info(err)

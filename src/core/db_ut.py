@@ -7,7 +7,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list:
-    sql2 = ('select p.parent, d.id, p.is_copy, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
                'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')

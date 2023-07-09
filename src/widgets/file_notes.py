@@ -182,8 +182,15 @@ class authorBrowser(QWidget):
             self.set_authors()
             ag.signals_.user_action_signal.emit("author_inserted")
 
-def dir_attrs(dd: ag.DirData):
-    tt = f'{"C" if dd.is_copy else ""}{"H" if dd.hidden else ""}'
+def dir_type(dd: ag.DirData):
+    """
+    returns:
+       '(L)' if folder is link to another folder,
+       '(H)' if folder is hidden
+       '(LH) if folder is link and is hidden
+       empty string - otherwise
+    """
+    tt = f'{"C" if dd.is_link else ""}{"H" if dd.hidden else ""}'
     return f'({tt})' if tt else ''
 
 class Locations(QTextBrowser):
@@ -206,7 +213,7 @@ class Locations(QTextBrowser):
         self.branches.clear()
         self.curr = 0
         for dd in self.dirs:
-            self.branches.append([(dd.id, dir_attrs(dd)), dd.parent_id])
+            self.branches.append([(dd.id, dir_type(dd)), dd.parent_id])
             self.build_branches()
 
     def get_file_dirs(self, dir_ids):
@@ -219,7 +226,7 @@ class Locations(QTextBrowser):
     def build_branches(self):
         def add_dir_parent(qq: ag.DirData, tt: list) -> list:
             ss = [*tt[:-1]]
-            tt[-1] = (qq.id, dir_attrs(qq))
+            tt[-1] = (qq.id, dir_type(qq))
             tt.append(qq.parent_id)
             return ss
 
@@ -239,7 +246,7 @@ class Locations(QTextBrowser):
                         first = False
                         continue
                     self.branches.append(
-                        [*ss, (qq.id, dir_attrs(qq)), qq.parent_id]
+                        [*ss, (qq.id, dir_type(qq)), qq.parent_id]
                     )
             self.curr += 1
 
@@ -262,13 +269,13 @@ class Locations(QTextBrowser):
     def branch_names(self, bb: list) -> str:
         tt = bb[:-1]
         tt.reverse()
-        is_copy = 'Y' if bb[0][0] else ''
+        is_link = 'Y' if bb[0][0] else ''
         hidden = 'Y' if bb[0][1] else ''
         ww = []
         for id in tt:
             name = db_ut.get_dir_name(id[0])
             ww.append(f'{name}{id[1]}')
-        return ' > '.join(ww), is_copy, hidden
+        return ' > '.join(ww), is_link, hidden
 
 
 class notesContainer(QScrollArea):
