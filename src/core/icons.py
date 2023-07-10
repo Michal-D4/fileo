@@ -23,7 +23,7 @@ def collect_all_icons():
                  opacity=0.8, scale_factor = 1.3,),
     )
 
-    other_icons["copy"] = (qta.icon('mdi.alpha-c', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
+    other_icons["link"] = (qta.icon('mdi.alpha-l', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
     other_icons["folder"] = (qta.icon('mdi.alpha-f', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
     other_icons["hidden"] = (qta.icon('mdi.alpha-h', color=ag.qss_params["$LimeGreen"], scale_factor = 2),)
 

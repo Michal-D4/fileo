@@ -27,6 +27,9 @@ class noteEditor(QTextEdit):
     def get_note_id(self) -> int:
         return self.note_id
 
+    def get_text(self):
+        return self.toPlainText()
+
 
 class tagBrowser(aBrowser):
     def __init__(self, parent=None) -> None:
@@ -182,8 +185,15 @@ class authorBrowser(QWidget):
             self.set_authors()
             ag.signals_.user_action_signal.emit("author_inserted")
 
-def dir_attrs(dd: ag.DirData):
-    tt = f'{"C" if dd.is_copy else ""}{"H" if dd.hidden else ""}'
+def dir_type(dd: ag.DirData):
+    """
+    returns:
+       '(L)' if folder is link to another folder,
+       '(H)' if folder is hidden
+       '(LH) if folder is link and is hidden
+       empty string - otherwise
+    """
+    tt = f'{"L" if dd.is_link else ""}{"H" if dd.hidden else ""}'
     return f'({tt})' if tt else ''
 
 class Locations(QTextBrowser):
@@ -206,7 +216,7 @@ class Locations(QTextBrowser):
         self.branches.clear()
         self.curr = 0
         for dd in self.dirs:
-            self.branches.append([(dd.id, dir_attrs(dd)), dd.parent_id])
+            self.branches.append([(dd.id, dir_type(dd)), dd.parent_id])
             self.build_branches()
 
     def get_file_dirs(self, dir_ids):
@@ -219,7 +229,7 @@ class Locations(QTextBrowser):
     def build_branches(self):
         def add_dir_parent(qq: ag.DirData, tt: list) -> list:
             ss = [*tt[:-1]]
-            tt[-1] = (qq.id, dir_attrs(qq))
+            tt[-1] = (qq.id, dir_type(qq))
             tt.append(qq.parent_id)
             return ss
 
@@ -239,7 +249,7 @@ class Locations(QTextBrowser):
                         first = False
                         continue
                     self.branches.append(
-                        [*ss, (qq.id, dir_attrs(qq)), qq.parent_id]
+                        [*ss, (qq.id, dir_type(qq)), qq.parent_id]
                     )
             self.curr += 1
 
@@ -262,13 +272,13 @@ class Locations(QTextBrowser):
     def branch_names(self, bb: list) -> str:
         tt = bb[:-1]
         tt.reverse()
-        is_copy = 'Y' if bb[0][0] else ''
+        is_link = 'Y' if bb[0][0] else ''
         hidden = 'Y' if bb[0][1] else ''
         ww = []
         for id in tt:
             name = db_ut.get_dir_name(id[0])
             ww.append(f'{name}{id[1]}')
-        return ' > '.join(ww), is_copy, hidden
+        return ' > '.join(ww), is_link, hidden
 
 
 class notesContainer(QScrollArea):
@@ -310,7 +320,7 @@ class notesContainer(QScrollArea):
         self.scroll_layout.addStretch(1)
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
-            note_id = row[1]
+            note_id = row[2]
             note = Comment(*row[1:])
             note.set_text(row[0])
             self.notes[note_id] = note
@@ -336,21 +346,21 @@ class notesContainer(QScrollArea):
         return self.notes[id] if id else None
 
     def finish_editing(self, note_id: int):
-        logger.info(f'{note_id=}')
+        # logger.info(f'{note_id=}')
         if note_id:
             note = self.notes[note_id]
         else:
-            note = Comment()
+            note = Comment(file_id=self.file_id)
         self.update_note(note)
         self.add_item(note)
 
     def update_note(self, note: Comment):
-        txt = self.editor.toPlainText()
+        txt = self.editor.get_text()
         note_id = note.get_note_id()
         # logger.info(f'{note_id=}, {len(txt)=}')
         if note_id:
             self.scroll_layout.removeWidget(note)
-            ts = db_ut.update_note(self.file_id, note_id, txt)
+            ts = db_ut.update_note(note.get_file_id(), note_id, txt)
         else:
             ts, id = db_ut.insert_note(self.file_id, txt)
             note.set_note_id(id)
@@ -595,9 +605,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def start_edit(self, note_id: int):
         note = self.notes.get_note(note_id)
-        txt = note.get_note_text() if note else ''
+        txt = db_ut.get_note(note.get_file_id(), note_id)
 
-        self.editor.setMarkdown(txt)
+        self.editor.setText(txt)
         self.editor.set_note_id(note_id)
 
         self.plus.hide()

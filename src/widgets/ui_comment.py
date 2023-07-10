@@ -45,7 +45,7 @@ class Ui_comment(object):
         sizePolicy.setHeightForWidth(self.item_header.sizePolicy().hasHeightForWidth())
         self.item_header.setSizePolicy(sizePolicy)
         self.item_header.setMinimumSize(QtCore.QSize(0, 24))
-        self.item_header.setMaximumSize(QtCore.QSize(16777215, 21))
+        self.item_header.setMaximumSize(QtCore.QSize(16777215, 24))
         self.item_header.setStyleSheet("")
         self.item_header.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         self.item_header.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)

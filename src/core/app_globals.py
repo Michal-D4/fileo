@@ -49,12 +49,12 @@ class appMode(Enum):
 class DirData():
     parent_id: int
     id: int
-    is_copy: bool
+    is_link: bool
     hidden: bool
     file_row: int = 0
 
     def __post_init__(self):
-        self.is_copy = bool(self.is_copy)
+        self.is_link = bool(self.is_link)
         self.hidden = bool(self.hidden)
 
 @dataclass(slots=True)

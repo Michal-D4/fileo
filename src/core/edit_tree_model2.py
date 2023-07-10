@@ -113,8 +113,8 @@ class TreeModel(QAbstractItemModel):
             u_dat = self.getItem(index).user_data()
             if u_dat.hidden:
                 return icons.get_other_icon("hidden")
-            if u_dat.is_copy:
-                return icons.get_other_icon("copy")
+            if u_dat.is_link:
+                return icons.get_other_icon("link")
             return icons.get_other_icon("folder")
 
         return None

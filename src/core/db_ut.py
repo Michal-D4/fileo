@@ -7,7 +7,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list:
-    sql2 = ('select p.parent, d.id, p.is_copy, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
                'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
@@ -823,12 +823,12 @@ def move_dir(new: int, old: int, id: int) -> bool:
 def get_file_notes(file_id: int) -> apsw.Cursor:
     hash_sql = "select hash from files where id = ?"
     sql_hash = (
-        "select comment, id, modified, created from Comments "
+        "select comment, fileid, id, modified, created from Comments "
         "where fileID in (select id from files where hash = ?) "
         "order by modified;"
     )
     sql_id = (
-        "select comment, id, modified, created from Comments "
+        "select comment, fileid, id, modified, created from Comments "
         "where fileID  = ? order by modified;"
     )
     if file_id < 0:
