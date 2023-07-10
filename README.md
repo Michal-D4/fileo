@@ -149,12 +149,12 @@ Note is a markdown text. You can insert web links here, but the links to files i
 
 The current file "Environment Variables in Linux.md" has 5 locations (Paths/Folder Tree branches).
 
-The letters "C" and "H" in brackets means "Copy" and "Hidden". "Copy" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a copy of the folder "fileo" in the path 1; the folder "Linux" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
+The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a link to the folder "fileo" in the path 1; the folder "Linux" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
 
 ![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg)
 
 1. The "FOLDERS" box
-2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "fileo" and "New folder1" in the folder "New folder2" are copies. The only difference between folder and its copies is that when you delete folder all its copies and all its children will be deleted too, whereas deletion of any copy of folder does not impact any other folder.
+2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "A folder" and "fileo" in the folder "my" are links. The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
 3. The current file. "Environment Variables in Linux.md"
 
 ### File info

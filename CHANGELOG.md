@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.9.42 - 10 July, 2023
+
+* fix issue with copying note text into editor
+* fix bug with collapsed note size
+* change term "folder copy" to "folder link" as more suitable in code and DB
+
 ## 0.9.41 - 06 July, 2023
 
 * show each comment/note to file in a separated widget. All file note widgets in one container. The previous solution (show all notes in one `QTextBrowser` widget) was fragile, eg. buttons for editing and deleting notes often lost icons.
