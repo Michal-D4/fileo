@@ -14,12 +14,14 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 class Comment(QWidget):
 
-    def __init__(self, id: int=0,
+    def __init__(self, file_id: int=0,
+                 id: int=0,
                  modified: int=0,
                  created: int=0,
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
+        self.file_id = file_id
         self.id = id
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -27,7 +29,7 @@ class Comment(QWidget):
 
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
-        logger.info(f'{id=}, {self.visible_height=}')
+        # logger.info(f'{id=}, {file_id=}, {self.visible_height=}')
 
         self.ui = Ui_comment()
 
@@ -44,9 +46,6 @@ class Comment(QWidget):
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
         self.set_collapse_icon(False)
-
-    def get_note_text(self) -> str:
-        return self.ui.textBrowser.toMarkdown()
 
     def set_text(self, note: str):
         self.text = note
@@ -70,6 +69,9 @@ class Comment(QWidget):
 
     def get_note_id(self) -> int:
         return self.id
+
+    def get_file_id(self) -> int:
+        return self.file_id
 
     def set_created_date(self, created: int):
         self.created = datetime.fromtimestamp(created)

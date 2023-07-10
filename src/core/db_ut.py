@@ -823,12 +823,12 @@ def move_dir(new: int, old: int, id: int) -> bool:
 def get_file_notes(file_id: int) -> apsw.Cursor:
     hash_sql = "select hash from files where id = ?"
     sql_hash = (
-        "select comment, id, modified, created from Comments "
+        "select comment, fileid, id, modified, created from Comments "
         "where fileID in (select id from files where hash = ?) "
         "order by modified;"
     )
     sql_id = (
-        "select comment, id, modified, created from Comments "
+        "select comment, fileid, id, modified, created from Comments "
         "where fileID  = ? order by modified;"
     )
     if file_id < 0:
