@@ -193,7 +193,7 @@ def dir_type(dd: ag.DirData):
        '(LH) if folder is link and is hidden
        empty string - otherwise
     """
-    tt = f'{"C" if dd.is_link else ""}{"H" if dd.hidden else ""}'
+    tt = f'{"L" if dd.is_link else ""}{"H" if dd.hidden else ""}'
     return f'({tt})' if tt else ''
 
 class Locations(QTextBrowser):

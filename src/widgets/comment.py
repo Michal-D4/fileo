@@ -117,5 +117,6 @@ class Comment(QWidget):
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        self.set_browser_text()
+        if not self.ui.collapse.isChecked():
+            self.set_browser_text()
         return super().resizeEvent(a0)
