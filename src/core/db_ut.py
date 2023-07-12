@@ -866,7 +866,7 @@ def insert_note(fileid: int, note: str) -> int:
                 'created': ts[0]
             }
         )
-        return ts[0], conn.last_insert_rowid()
+        return ts[0], id
 
 def update_note(fileid: int, id: int, note: str) -> int:
     sql0 = 'select modified from comments where fileid=:fileid and id=:id'

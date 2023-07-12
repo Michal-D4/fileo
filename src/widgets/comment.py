@@ -23,6 +23,7 @@ class Comment(QWidget):
 
         self.file_id = file_id
         self.id = id
+        # logger.info(f'{self.file_id=}, {self.id=}')
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
         self.text = ''
@@ -66,6 +67,7 @@ class Comment(QWidget):
 
     def set_note_id(self, id: int):
         self.id = id
+        # logger.info(f'{self.file_id=}, {self.id=}, "{self.text}"')
 
     def get_note_id(self) -> int:
         return self.id

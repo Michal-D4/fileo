@@ -551,7 +551,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
 
     def note_changed(self):
         note_id = self.editor.get_note_id()
-        # logger.info(f'{note_id=}')
+        logger.info(f'{note_id=}')
         self.notes.finish_editing(note_id)
         self.l_editor.hide()
         self.l_comments_press(None)
@@ -601,12 +601,14 @@ class notesBrowser(QWidget, Ui_FileNotes):
         return inserted
 
     def new_comment(self):
-        self.start_edit(0)
+        self.show_editor(0, '')
 
     def start_edit(self, note_id: int):
         note = self.notes.get_note(note_id)
         txt = db_ut.get_note(note.get_file_id(), note_id)
+        self.show_editor(note_id, txt)
 
+    def show_editor(self, note_id: int, txt: str):
         self.editor.setText(txt)
         self.editor.set_note_id(note_id)
 
