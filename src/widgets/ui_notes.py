@@ -115,6 +115,7 @@ class Ui_FileNotes(object):
         self.l_file_info.setText(_translate("FileNotes", "File info"))
         self.l_comments.setText(_translate("FileNotes", "Notes"))
         self.l_editor.setText(_translate("FileNotes", "Note editor"))
+        self.plus.setToolTip(_translate("FileNotes", "Create new note"))
         self.plus.setText(_translate("FileNotes", "..."))
         self.save.setToolTip(_translate("FileNotes", "Save note"))
         self.save.setText(_translate("FileNotes", "..."))

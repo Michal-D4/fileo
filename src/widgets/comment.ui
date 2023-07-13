@@ -251,7 +251,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string notr="true"/>
+               <string notr="true">Edit note</string>
               </property>
               <property name="statusTip">
                <string notr="true"/>
@@ -282,7 +282,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string notr="true"/>
+               <string notr="true">Delete note</string>
               </property>
               <property name="statusTip">
                <string notr="true"/>

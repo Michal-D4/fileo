@@ -182,6 +182,9 @@
       </item>
       <item>
        <widget class="QToolButton" name="plus">
+        <property name="toolTip">
+         <string>Create new note</string>
+        </property>
         <property name="text">
          <string>...</string>
         </property>
