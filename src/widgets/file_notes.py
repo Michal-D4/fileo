@@ -339,11 +339,7 @@ class notesContainer(QScrollArea):
         self.scroll_layout.insertWidget(0, item)
 
     def get_note(self, id: int) -> Comment:
-        """
-        id is correct key for dict self.notes or 0
-        otherwise must be used "id in self.notes"
-        """
-        return self.notes[id] if id else None
+        return self.notes.get(id, None)
 
     def finish_editing(self, note_id: int):
         # logger.info(f'{note_id=}')
@@ -382,10 +378,9 @@ class notesContainer(QScrollArea):
     @pyqtSlot(int)
     def remove_item(self, note_id: int):
         if self.confirm_note_deletion():
-            note = self.notes[note_id]
+            note = self.notes.pop(note_id, None)
             self.scroll_layout.removeWidget(note)
-            self.notes.pop(note, None)
-            db_ut.delete_note(self.file_id, note_id)
+            db_ut.delete_note(note.get_file_id(), note_id)
 
     def confirm_note_deletion(self):
         dlg = QMessageBox(ag.app)
