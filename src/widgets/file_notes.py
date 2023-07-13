@@ -183,7 +183,7 @@ class authorBrowser(QWidget):
                 inserted = True
         if inserted:
             self.set_authors()
-            ag.signals_.user_action_signal.emit("author_inserted")
+            ag.signals_.user_signal.emit("author_inserted")
 
 def dir_type(dd: ag.DirData):
     """
@@ -258,6 +258,7 @@ class Locations(QTextBrowser):
             '<table><tr><td><b>Path(Folder Tree branch)</b></td>',
         ]
         for a,b,c in self.names:
+            # TODO create referencies to go to filder with popup menu
             txt.append(
                 f'<tr><td>{a}</td>'
             )
@@ -558,7 +559,6 @@ class notesBrowser(QWidget, Ui_FileNotes):
     @pyqtSlot()
     def update_tag_list(self):
         self.tag_selector.set_list(db_ut.get_tags())
-        # self.set_file_id(self.file_id)    # ? this is common for tags and notes
 
     @pyqtSlot()
     def finish_edit_tag(self):
@@ -570,7 +570,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.remove_tags(old, new)
         if self.add_tags(old, new):
             self.update_tag_list()
-            ag.signals_.user_action_signal.emit("tag_inserted")
+            ag.signals_.user_signal.emit("tag_inserted")
 
     def new_tag_list(self):
         """

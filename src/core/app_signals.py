@@ -12,7 +12,7 @@ class AppSignals(QObject):
 
     start_file_search = pyqtSignal(str, list, name="start_file_search")
 
-    user_action_signal = pyqtSignal(str, name="user_action_signal")
+    user_signal = pyqtSignal(str, name="user_signal")
 
     app_mode_changed = pyqtSignal(int)
 

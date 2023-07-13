@@ -30,7 +30,7 @@ class History(object):
         # logger.info(f'{self.prev=}')
         # logger.info(f'{self.curr=}')
         # logger.info(f'{self.limit=}')
-        ag.signals_.user_action_signal.emit(
+        ag.signals_.user_signal.emit(
             f'enable_next_prev/{self.has_next()},{self.has_prev()}'
         )
 
@@ -49,7 +49,7 @@ class History(object):
 
         self.curr = self.next_.pop()
         # logger.info(f'{self.curr=}')
-        ag.signals_.user_action_signal.emit(
+        ag.signals_.user_signal.emit(
             f'enable_next_prev/{self.has_next()},yes'
         )
         return self.curr
@@ -62,7 +62,7 @@ class History(object):
 
         self.curr = self.prev.pop()
         # logger.info(f'{self.curr=}')
-        ag.signals_.user_action_signal.emit(
+        ag.signals_.user_signal.emit(
             f'enable_next_prev/yes,{self.has_prev()}'
         )
         return self.curr
@@ -89,7 +89,7 @@ class History(object):
             self.prev.append(self.curr)
             # logger.info(f'{self.prev=}')
         self.next_.clear()
-        ag.signals_.user_action_signal.emit(
+        ag.signals_.user_signal.emit(
             f'enable_next_prev/no,{self.has_prev()}'
         )
         self.curr = Item(path, file_id)

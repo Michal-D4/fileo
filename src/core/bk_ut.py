@@ -121,7 +121,7 @@ def bk_setup(main: 'shoWindow'):
     ag.author_list.delete_items.connect(low_bk.delete_authors)
 
     ag.file_list.doubleClicked.connect(
-        lambda: ag.signals_.user_action_signal.emit("double click file"))
+        lambda: ag.signals_.user_signal.emit("double click file"))
 
 def set_field_menu():
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
@@ -160,7 +160,7 @@ def click_setup_button():
         pos + QPoint(53, 26 - sz.height())
     ))
     if action:
-        ag.signals_.user_action_signal.emit(f"Setup {action.text()}")
+        ag.signals_.user_signal.emit(f"Setup {action.text()}")
 
 def field_list_changed():
     resize_columns(0)
@@ -270,7 +270,7 @@ def dir_menu(pos):
 
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:
-        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
+        ag.signals_.user_signal.emit(f"Dirs {action.text()}")
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
@@ -292,7 +292,7 @@ def file_menu(pos):
         menu.addAction("Delete file(s) from DB")
         action = menu.exec(ag.file_list.mapToGlobal(pos))
         if action:
-            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
+            ag.signals_.user_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):
@@ -321,13 +321,13 @@ def finish_loading(has_new_ext: bool):
     self.ui.btnScan.setEnabled(True)
     self.set_busy(False)
     if has_new_ext:
-        ag.signals_.user_action_signal.emit("ext inserted")
+        ag.signals_.user_signal.emit("ext inserted")
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
 def show_lost_files():
     if workers.find_lost_files():
-        ag.signals_.user_action_signal.emit('reload_dirs')
+        ag.signals_.user_signal.emit('reload_dirs')
 
 @pyqtSlot()
 def run_update0_files():

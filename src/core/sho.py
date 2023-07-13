@@ -78,7 +78,7 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self):
         execute_user_action = low_bk.exec_user_actions()
-        ag.signals_.user_action_signal.connect(execute_user_action)
+        ag.signals_.user_signal.connect(execute_user_action)
 
         self.restore_container()
         self.restore_comment_height()
