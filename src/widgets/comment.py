@@ -1,7 +1,7 @@
 from loguru import logger
 from datetime import datetime
 
-from PyQt6.QtCore  import QUrl, pyqtSlot, QSize
+from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import QWidget
 
@@ -40,6 +40,7 @@ class Comment(QWidget):
         self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
         self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
         self.ui.textBrowser.setOpenLinks(False)
+        self.ui.textBrowser.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.ui.collapse.clicked.connect(self.collapse_item)
         self.ui.edit.clicked.connect(self.edit_note)
