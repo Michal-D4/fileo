@@ -32,7 +32,7 @@ def exec_user_actions():
         "Dirs Import files": import_files,
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
-        "author inserted": populate_author_list,
+        "author_inserted": populate_author_list,
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_file,
