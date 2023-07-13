@@ -80,8 +80,6 @@ class shoWindow(QMainWindow):
         execute_user_action = low_bk.exec_user_actions()
         ag.signals_.user_action_signal.connect(execute_user_action)
 
-        if ag.db['restore']:
-            self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
         self.restore_comment_height()
         self.restore_geometry()
@@ -93,8 +91,8 @@ class shoWindow(QMainWindow):
             utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         )
 
-        if ag.db['Conn']:
-            ag.notes.set_data()
+        if ag.db['restore']:     # start app with restoring DB connection - 1st app instance
+            self.connect_db(utils.get_app_setting("DB_NAME", ""))
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -108,6 +106,7 @@ class shoWindow(QMainWindow):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
             bk_ut.set_field_menu()
+            ag.notes.set_data()
             return True
         return False
 
