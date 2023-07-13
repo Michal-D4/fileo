@@ -146,10 +146,10 @@ QFrame#status QLabel:hover {
    background-clip: padding;
    background-color: $statusLabelHover;
 }
-/* QFrame#navi_header {
+QFrame#item_header {
    background-color: $navigatorBackground;
    color: $navigatorColor;
-} */
+}
 QFrame#header {
    background-color: $navigatorBackground;
    color: $navigatorColor;
