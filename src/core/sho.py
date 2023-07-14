@@ -17,7 +17,7 @@ from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
 from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
-from ..widgets.file_notes import notesBrowser
+from ..widgets.file_data import fileDataDemo
 
 from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut, history, low_bk
@@ -84,7 +84,7 @@ class shoWindow(QMainWindow):
         self.restore_comment_height()
         self.restore_geometry()
 
-        ag.notes = notesBrowser()
+        ag.notes = fileDataDemo()
         ag.notes.setObjectName("file_notes")
         set_widget_to_frame(self.ui.noteHolder, ag.notes)
         ag.history = history.History(
