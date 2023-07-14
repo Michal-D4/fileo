@@ -287,6 +287,7 @@ class notesContainer(QScrollArea):
         super().__init__(parent)
 
         self.editor = editor
+        self.editing = False
         self.set_ui()
 
         self.file_id = 0
@@ -311,6 +312,12 @@ class notesContainer(QScrollArea):
         self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
         self.scroll_layout.setObjectName('scroll_layout')
+
+    def is_editing(self):
+        return self.editing
+
+    def set_editing(self):
+        self.editing = True
 
     def set_file_id(self, id: int):
         self.file_id = id
@@ -350,6 +357,7 @@ class notesContainer(QScrollArea):
             note = Comment(file_id=self.file_id)
         self.update_note(note)
         self.add_item(note)
+        self.editing = False
 
     def update_note(self, note: Comment):
         txt = self.editor.get_text()
@@ -604,10 +612,18 @@ class notesBrowser(QWidget, Ui_FileNotes):
         return inserted
 
     def new_comment(self):
+        if self.notes.is_editing():
+            self.switch_page(5)
+            return
+        self.notes.set_editing()
         self.show_editor(0, '')
 
     def start_edit(self, note_id: int):
+        if self.notes.is_editing():
+            self.switch_page(5)
+            return
         note = self.notes.get_note(note_id)
+        self.notes.set_editing()
         txt = db_ut.get_note(note.get_file_id(), note_id)
         self.show_editor(note_id, txt)
 
