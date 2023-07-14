@@ -63,7 +63,7 @@ class Ui_comment(object):
         self.collapse.setAccessibleName("")
         self.collapse.setAccessibleDescription("")
         self.collapse.setText("")
-        self.collapse.setCheckable(True)
+        self.collapse.setCheckable(False)
         self.collapse.setAutoRaise(True)
         self.collapse.setObjectName("collapse")
         self.horizontalLayout_2.addWidget(self.collapse)

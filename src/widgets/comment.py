@@ -23,6 +23,7 @@ class Comment(QWidget):
 
         self.file_id = file_id
         self.id = id
+        self.collapsed = False
         # logger.info(f'{self.file_id=}, {self.id=}')
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -42,7 +43,7 @@ class Comment(QWidget):
         self.ui.textBrowser.setOpenLinks(False)
         self.ui.textBrowser.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        self.ui.collapse.clicked.connect(self.collapse_item)
+        self.ui.collapse.clicked.connect(self.toggle_collapse)
         self.ui.edit.clicked.connect(self.edit_note)
         self.ui.remove.clicked.connect(self.remove_note)
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
@@ -87,9 +88,13 @@ class Comment(QWidget):
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
 
-    @pyqtSlot(bool)
-    def collapse_item(self, state: bool):
-        if state:
+    @pyqtSlot()
+    def toggle_collapse(self):
+        self.collapsed = not self.collapsed
+        self.collapse_item()
+
+    def collapse_item(self):
+        if self.collapsed:
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.item_header.height()
             self.ui.textBrowser.hide()
@@ -97,7 +102,17 @@ class Comment(QWidget):
             self.visible_height = self.expanded_height
             self.expanded_height = 0
             self.ui.textBrowser.show()
-        self.set_collapse_icon(state)
+        logger.info(f'{self.collapsed=}, {self.visible_height=}, {self.expanded_height=}')
+        self.set_collapse_icon(self.collapsed)
+
+    @pyqtSlot()
+    def check_collapse_button(self):
+        logger.info(f'{self.id=}, {self.collapsed=}')
+        if self.collapsed:
+            return
+        self.collapsed = True
+        # self.set_collapse_icon(True)
+        self.collapse_item()
 
     def set_collapse_icon(self, collapse: bool):
         self.ui.collapse.setIcon(
@@ -120,6 +135,7 @@ class Comment(QWidget):
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        if not self.ui.collapse.isChecked():
+        logger.info(f'{a0.size().height()=}')
+        if not self.collapsed:
             self.set_browser_text()
         return super().resizeEvent(a0)

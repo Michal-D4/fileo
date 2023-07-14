@@ -392,6 +392,11 @@ class notesContainer(QScrollArea):
         dlg.setIcon(QMessageBox.Icon.Question)
         return dlg.exec() == QMessageBox.StandardButton.Ok
 
+    def collapse_all(self):
+        for note in self.notes.values():
+            note: Comment
+            note.check_collapse_button()
+
 
 class notesBrowser(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
@@ -419,6 +424,9 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_comment)
 
+        self.collapse_all.setIcon(icons.get_other_icon("collapse_all"))
+        self.collapse_all.clicked.connect(self.notes.collapse_all)
+
         self.save.setIcon(icons.get_other_icon("ok"))
         self.save.clicked.connect(self.note_changed)
 
@@ -426,7 +434,7 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.cancel.clicked.connect(self.cancel_note_editing)
 
         self.edit_btns.hide()
-        self.plus.hide()
+        self.note_btns.hide()
         self.tagEdit.editingFinished.connect(self.finish_edit_tag)
 
         self.cur_page = 0
@@ -486,32 +494,32 @@ class notesBrowser(QWidget, Ui_FileNotes):
     def l_tags_press(self, e: QMouseEvent):
         # tag selector page
         self.switch_page(0)
-        self.plus.hide()
+        self.note_btns.hide()
 
     def l_authors_press(self, e: QMouseEvent):
         # author selector page
         self.switch_page(1)
-        self.plus.hide()
+        self.note_btns.hide()
 
     def l_locations_press(self, e: QMouseEvent):
         # file locations page
         self.switch_page(2)
-        self.plus.hide()
+        self.note_btns.hide()
 
     def l_file_info_press(self, e: QMouseEvent):
         # file info page
         self.switch_page(3)
-        self.plus.hide()
+        self.note_btns.hide()
 
     def l_comments_press(self, e: QMouseEvent):
         # comments page
         self.switch_page(4)
-        self.plus.show()
+        self.note_btns.show()
 
     def l_editor_press(self, e: QMouseEvent):
         # editor page
         self.switch_page(5)
-        self.plus.hide()
+        self.note_btns.hide()
         self.edit_btns.show()
 
     def switch_page(self, page_no: int):
@@ -607,10 +615,11 @@ class notesBrowser(QWidget, Ui_FileNotes):
         self.editor.setText(txt)
         self.editor.set_note_id(note_id)
 
-        self.plus.hide()
+        self.note_btns.hide()
         self.edit_btns.show()
         self.l_editor.show()
         self.switch_page(5)
+        self.editor.setFocus()
 
     def set_file_id(self, id: int):
         self.file_id = id
