@@ -122,11 +122,11 @@ class Comment(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        ag.signals_.start_edit_note.emit(self.id)
+        ag.signals_.start_edit_note.emit(self.id, self.file_id)
 
     @pyqtSlot()
     def remove_note(self):
-        ag.signals_.delete_note.emit(self.id)
+        ag.signals_.delete_note.emit(self.id, self.file_id)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
