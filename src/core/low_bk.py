@@ -62,25 +62,13 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            show_message_box(
+            utils.show_message_box(
                 'Action not implemented',
                 f'Action name "{err}" not implemented',
                 icon=QMessageBox.Icon.Warning
             )
 
     return execute_action
-
-def show_message_box(title: str, msg: str,
-                     btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
-                     icon: QMessageBox.Icon = QMessageBox.Icon.Information,
-                     details: str = '') -> int:
-    dlg = QMessageBox(ag.app)
-    dlg.setWindowTitle(title)
-    dlg.setText(msg)
-    dlg.setDetailedText(details)
-    dlg.setStandardButtons(btn)
-    dlg.setIcon(icon)
-    return dlg.exec()
 
 @pyqtSlot()
 def report_duplicates():
@@ -89,7 +77,7 @@ def report_duplicates():
     if rep:
         save_report(rep)
     else:
-        show_message_box(
+        utils.show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )
@@ -145,7 +133,7 @@ def rename_in_file_system(new_name: str):
     if new_path.name == new_name:
         ag.app.ui.current_filename.setText(new_name)
     else:
-        show_message_box(
+        utils.show_message_box(
             'Error renaming file',
             f'File {ag.file_path.name} was not renamed',
             icon=QMessageBox.Icon.Critical,
@@ -564,7 +552,7 @@ def delete_files():
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    res = show_message_box(
+    res = utils.show_message_box(
         'delete file from DB',
         f'Selected files will be deleted. Please confirm',
         QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
