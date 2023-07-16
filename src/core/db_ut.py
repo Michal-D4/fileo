@@ -622,12 +622,12 @@ def save_to_temp(key: str, val):
     ag.db['Conn'].cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
-def save_branch_in_temp(path):
+def save_branch_in_temp_table(path):
     sql = 'update aux set val = :path where key = :key'
     key = 'TREE_PATH'
     ag.db['Conn'].cursor().execute(sql, {'path': path, 'key': key})
 
-def get_branch_from_temp() -> str:
+def get_branch_from_temp_table() -> str:
     sql = 'select val from aux where key = ?'
     key = 'TREE_PATH'
     res = ag.db['Conn'].cursor().execute(sql, (key,)).fetchone()
