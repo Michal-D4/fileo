@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox,    QVBoxLayout, QScrollArea, QAbstractScrollArea,
 )
 
-from ..core import app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut, utils
 from .comment import Comment
 
 
@@ -13,12 +13,21 @@ class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.note_id = 0
+        self.file_id = 0
+        self.branch = None
 
-    def set_note_id(self, note_id: int):
+    def start_edit(self, note_id: int, file_id: int):
         self.note_id = note_id
+        self.file_id = file_id
+
+    def get_file_id(self) -> int:
+        return self.file_id
 
     def get_note_id(self) -> int:
         return self.note_id
+
+    def get_branch(self) -> str:
+        return self.branch
 
     def get_text(self):
         return self.toPlainText()
@@ -58,8 +67,17 @@ class notesContainer(QScrollArea):
     def is_editing(self):
         return self.editing
 
-    def set_editing(self):
-        self.editing = True
+    def set_editing(self, state: bool):
+        self.editing = state
+        self.edited_file_in_statusbar(state)
+
+    def edited_file_in_statusbar(self, show: bool):
+        if show:
+            file_id = self.editor.get_file_id()
+            filename = db_ut.get_file_name(file_id)
+            ag.app.ui.edited_file.setText(filename)
+        else:
+            ag.app.ui.edited_file.clear()
 
     def set_file_id(self, id: int):
         self.file_id = id
@@ -126,8 +144,19 @@ class notesContainer(QScrollArea):
                 a, "Commented", ag.file_list.currentIndex()
             )
 
-    @pyqtSlot(int)
-    def remove_item(self, note_id: int):
+    @pyqtSlot(int, int)
+    def remove_item(self, note_id: int, file_id: int):
+        logger.info(f'{self.editing=}')
+        if (self.editing and
+            self.editor.get_note_id() == note_id and
+            self.editor.get_file_id() == file_id):
+            utils.show_message_box(
+                'Note is editing now',
+                "The note can't be deleted right now.",
+                icon=QMessageBox.Icon.Warning,
+                details="It is editing!"
+                )
+            return
         if self.confirm_note_deletion():
             note = self.notes.pop(note_id, None)
             self.scroll_layout.removeWidget(note)

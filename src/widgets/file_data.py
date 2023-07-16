@@ -167,6 +167,7 @@ class fileDataDemo(QWidget, Ui_FileNotes):
 
     def cancel_note_editing(self):
         self.l_editor.hide()
+        self.notes.set_editing(False)
         self.l_comments_press(None)
 
     def note_changed(self):
@@ -174,6 +175,7 @@ class fileDataDemo(QWidget, Ui_FileNotes):
         logger.info(f'{note_id=}')
         self.notes.finish_editing(note_id)
         self.l_editor.hide()
+        self.notes.set_editing(False)
         self.l_comments_press(None)
 
     def set_data(self):
@@ -223,21 +225,21 @@ class fileDataDemo(QWidget, Ui_FileNotes):
         if self.notes.is_editing():
             self.switch_page(5)
             return
-        self.notes.set_editing()
-        self.show_editor(0, '')
+        self.show_editor(0, self.file_id, '')
 
-    def start_edit(self, note_id: int):
+    def start_edit(self, note_id: int, file_id: int):
         if self.notes.is_editing():
             self.switch_page(5)
             return
-        note = self.notes.get_note(note_id)
-        self.notes.set_editing()
-        txt = db_ut.get_note(note.get_file_id(), note_id)
-        self.show_editor(note_id, txt)
 
-    def show_editor(self, note_id: int, txt: str):
+        txt = db_ut.get_note(file_id, note_id)
+        self.show_editor(note_id, file_id, txt)
+
+    def show_editor(self, note_id: int, file_id: int, txt: str):
+        self.editor.start_edit(note_id, file_id)
         self.editor.setText(txt)
-        self.editor.set_note_id(note_id)
+
+        self.notes.set_editing(True)
 
         self.note_btns.hide()
         self.edit_btns.show()

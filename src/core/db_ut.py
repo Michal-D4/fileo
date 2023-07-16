@@ -102,6 +102,11 @@ def file_duplicates():
     )
     return ag.db['Conn'].cursor().execute(sql)
 
+def get_file_name(id: int) -> str:
+    sql = 'select filename from files where id = ?'
+    res = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    return res[0] if res else ''
+
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     """
     case - if True case sensitive
@@ -175,7 +180,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
         res = conn.execute(sql, (nn,)).fetchone()
         return res[0] > 0
 
-def get_files(did: int, parent: int) -> apsw.Cursor:
+def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '
         'from comments group by fileid) '
@@ -187,7 +192,7 @@ def get_files(did: int, parent: int) -> apsw.Cursor:
         'join parentdir p on fd.dir = p.id '      # to avoid duplications
         'where fd.dir = :id and p.parent = :pid;'
     )
-    return ag.db['Conn'].cursor().execute(sql, {'id': did, 'pid': parent})
+    return ag.db['Conn'].cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
 def lost_files() -> bool:
     """
