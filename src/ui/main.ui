@@ -925,6 +925,16 @@
         </spacer>
        </item>
        <item>
+        <widget class="QLabel" name="edited_file">
+         <property name="toolTip">
+          <string>filename of the note being edited</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="folder_path">
          <property name="toolTip">
           <string>Current branch of folder tree</string>
