@@ -26,7 +26,7 @@ def save_bk_settings():
 
     try:
         settings = {
-            "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
+            "TREE_PATH": low_bk.define_branch(ag.dir_list.currentIndex()),
             "FIELDS_STATE": [int(a.isChecked()) for a in actions],
             "COLUMN_WIDTH": low_bk.get_columns_width(),
             "TAG_SEL_LIST": low_bk.tag_selection(),

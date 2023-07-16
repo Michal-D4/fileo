@@ -220,20 +220,20 @@ def get_tmp_setting(key: str, default=None):
     return vv if vv else default
 
 def save_branch():
-    save_settings(TREE_PATH=get_branch(ag.dir_list.currentIndex()))
+    save_settings(TREE_PATH=define_branch(ag.dir_list.currentIndex()))
 
 def restore_branch() -> QModelIndex:
     return expand_branch(get_setting('TREE_PATH', []))
 
 def save_branch_in_temp(index: QModelIndex):
-    branch = get_branch(index)
-    db_ut.save_branch_in_temp(pickle.dumps(branch))
+    branch = define_branch(index)
+    db_ut.save_branch_in_temp_table(pickle.dumps(branch))
 
 def restore_branch_from_temp() -> QModelIndex:
-    val = db_ut.get_branch_from_temp()
+    val = db_ut.get_branch_from_temp_table()
     return expand_branch(pickle.loads(val) if val else [])
 
-def get_branch(index: QModelIndex) -> list[int]:
+def define_branch(index: QModelIndex) -> list[int]:
     """
     return branch - a list of node ids from root to index
     """
@@ -332,7 +332,7 @@ def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
 def add_history_item(file_row: int):
     ag.history.set_file_id(file_row)
     ag.history.add_item(
-        get_branch(ag.dir_list.currentIndex()), 0
+        define_branch(ag.dir_list.currentIndex()), 0
     )
 
 def restore_path(path: list) -> QModelIndex:
@@ -630,7 +630,7 @@ def import_files():
         _import_files(file_name)
 
 def _import_files(filename):
-    branch = get_branch(ag.dir_list.currentIndex())
+    branch = define_branch(ag.dir_list.currentIndex())
     exist_dir = 0
 
     with open(filename, "r") as fp:
@@ -758,7 +758,7 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
     if index.isValid():
-        branch = get_branch(index)
+        branch = define_branch(index)
         if last_id:
             branch.append(last_id)
         idx = expand_branch(branch)
