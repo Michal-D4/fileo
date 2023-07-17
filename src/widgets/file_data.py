@@ -14,7 +14,7 @@ from .file_tags import tagBrowser
 from .locations import Locations
 
 
-class fileDataDemo(QWidget, Ui_FileNotes):
+class fileDataAssistant(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
