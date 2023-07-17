@@ -14,7 +14,7 @@ from .file_tags import tagBrowser
 from .locations import Locations
 
 
-class fileDataAssistant(QWidget, Ui_FileNotes):
+class fileDataHolder(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
@@ -250,7 +250,7 @@ class fileDataAssistant(QWidget, Ui_FileNotes):
     def set_file_id(self, id: int):
         self.file_id = id
         self.tag_selector.set_selection(
-            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+            (int(s[0]) for s in db_ut.get_file_tagid(id))
         )
         self.tagEdit.setText(', '.join(
             self.tag_selector.get_selected()

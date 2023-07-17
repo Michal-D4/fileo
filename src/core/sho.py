@@ -17,7 +17,7 @@ from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
 from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
-from ..widgets.file_data import fileDataAssistant
+from ..widgets.file_data import fileDataHolder
 
 from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut, history, low_bk
@@ -84,9 +84,9 @@ class shoWindow(QMainWindow):
         self.restore_comment_height()
         self.restore_geometry()
 
-        ag.notes = fileDataAssistant()
-        ag.notes.setObjectName("file_notes")
-        set_widget_to_frame(self.ui.noteHolder, ag.notes)
+        ag.file_data_holder = fileDataHolder()
+        ag.file_data_holder.setObjectName("file_notes")
+        set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
             utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         )
@@ -106,7 +106,7 @@ class shoWindow(QMainWindow):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
             bk_ut.set_field_menu()
-            ag.notes.set_data()
+            ag.file_data_holder.set_data()
             return True
         return False
 

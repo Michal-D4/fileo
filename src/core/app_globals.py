@@ -10,7 +10,7 @@ from .app_signals import AppSignals
 if TYPE_CHECKING:
     from .compact_list import aBrowser
     from .sho import shoWindow
-    from ..widgets.file_data import fileDataAssistant
+    from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
 
@@ -24,7 +24,7 @@ ext_list: 'aBrowser' = None
 file_list: QTreeView = None
 author_list: 'aBrowser' = None
 field_menu: QToolButton = None
-notes: 'fileDataAssistant' = None
+file_data_holder: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 history: 'History' = None
 hist_folder = True
