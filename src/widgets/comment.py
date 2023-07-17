@@ -135,7 +135,6 @@ class Comment(QWidget):
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        logger.info(f'{a0.size().height()=}')
         if not self.collapsed:
             self.set_browser_text()
         return super().resizeEvent(a0)

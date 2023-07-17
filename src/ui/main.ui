@@ -926,6 +926,9 @@
        </item>
        <item>
         <widget class="QLabel" name="edited_file">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="toolTip">
           <string>filename of the note being edited</string>
          </property>

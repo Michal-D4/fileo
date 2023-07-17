@@ -324,6 +324,7 @@ class Ui_Sho(object):
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem2)
         self.edited_file = QtWidgets.QLabel(self.status)
+        self.edited_file.setEnabled(False)
         self.edited_file.setText("")
         self.edited_file.setObjectName("edited_file")
         self.horizontalLayout_3.addWidget(self.edited_file)

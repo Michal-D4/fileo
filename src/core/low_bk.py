@@ -50,6 +50,8 @@ def exec_user_actions():
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
         "reload_dirs": reload_cur_dir,
+        "file-note: Go to file": goto_edited_file,
+        "notes - branch request": notes_branch_request,
       }
 
     @pyqtSlot(str)
@@ -69,6 +71,17 @@ def exec_user_actions():
             )
 
     return execute_action
+
+@pyqtSlot(str)
+def notes_branch_request(param: str):
+    logger.info(f'{param=}')
+    ag.file_data_holder.set_branch(
+        define_branch(ag.dir_list.currentIndex())
+    )
+
+@pyqtSlot(str)
+def goto_edited_file(param: str):
+    logger.info(f'{param=}')
 
 @pyqtSlot()
 def report_duplicates():
@@ -843,4 +856,4 @@ def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     logger.info(f'{f_dat=}')
     if f_dat:
-        ag.notes.set_file_id(f_dat.id)
+        ag.file_data_holder.set_file_id(f_dat.id)

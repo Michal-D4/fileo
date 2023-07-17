@@ -1,8 +1,10 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
-    QMessageBox,    QVBoxLayout, QScrollArea, QAbstractScrollArea,
+    QMessageBox, QVBoxLayout, QScrollArea, QAbstractScrollArea,
+    QMenu,
 )
 
 from ..core import app_globals as ag, db_ut, utils
@@ -19,6 +21,10 @@ class noteEditor(QTextEdit):
     def start_edit(self, note_id: int, file_id: int):
         self.note_id = note_id
         self.file_id = file_id
+
+    def set_branch(self, branch):
+        logger.info(f'{branch=}')
+        self.branch = branch
 
     def get_file_id(self) -> int:
         return self.file_id
@@ -64,6 +70,21 @@ class notesContainer(QScrollArea):
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
         self.scroll_layout.setObjectName('scroll_layout')
 
+    def go_menu(self, e: QMouseEvent):
+        if e.buttons() == Qt.MouseButton.RightButton:
+            menu = QMenu(ag.app)
+            menu.addAction('Go to file')
+            act = menu.exec(ag.app.ui.edited_file.mapToGlobal(e.pos()))
+            if act:
+                self.go_action(act.text())
+
+    def go_action(self, act_text: str):
+        file_id = self.editor.get_file_id()
+        branch = self.editor.get_branch()
+        ag.signals_.user_signal.emit(
+            f"file-note: {act_text}/{file_id}-{branch}"
+            )
+
     def is_editing(self):
         return self.editing
 
@@ -76,11 +97,15 @@ class notesContainer(QScrollArea):
             file_id = self.editor.get_file_id()
             filename = db_ut.get_file_name(file_id)
             ag.app.ui.edited_file.setText(filename)
+            ag.app.ui.edited_file.setEnabled(True)
+            ag.app.ui.edited_file.mousePressEvent = self.go_menu
         else:
             ag.app.ui.edited_file.clear()
+            ag.app.ui.edited_file.setEnabled(False)
 
     def set_file_id(self, id: int):
         self.file_id = id
+        ag.signals_.user_signal.emit(f'notes - branch request/{id}')
         self.set_notes_data()
 
     def set_notes_data(self):
