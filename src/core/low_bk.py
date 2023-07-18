@@ -81,7 +81,20 @@ def notes_branch_request(param: str):
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):
-    logger.info(f'{param=}')
+    file_id, branch = param.split('-')
+    # logger.info(f'{file_id=}, {branch}')
+    idx = expand_branch(
+        (int(it) for it in branch.split(','))
+    )
+    # logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}, {idx.data(Qt.ItemDataRole.UserRole)}')
+    if idx.isValid():
+        ag.dir_list.setCurrentIndex(idx)
+        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+
+        model = ag.file_list.model()
+        row = model.get_row_by_id(int(file_id))
+        # logger.info(f'{row=}')
+        set_current_file(row)
 
 @pyqtSlot()
 def report_duplicates():
@@ -285,9 +298,11 @@ def expand_branch(branch: list) -> QModelIndex:
     parent = QModelIndex()
     item: TreeItem = model.rootItem
     for it in branch:
+        # logger.info(f'{it=}')
         if parent.isValid():
             if not ag.dir_list.isExpanded(parent):
                 ag.dir_list.setExpanded(parent, True)
+            # logger.info(f'{item.data(0)}, {item.user_data()}')
         for i,child in enumerate(item.children):
             ud = child.user_data()
             if it == ud.id:
@@ -296,7 +311,7 @@ def expand_branch(branch: list) -> QModelIndex:
                 break
         else:
             parent = QModelIndex()
-            break
+            break    # outer loop
 
     return parent
 #endregion
@@ -347,28 +362,6 @@ def add_history_item(file_row: int):
     ag.history.add_item(
         define_branch(ag.dir_list.currentIndex()), 0
     )
-
-def restore_path(path: list) -> QModelIndex:
-    """
-    restore expand state and current index of dir_list
-    :return: current index
-    """
-    model: TreeModel = ag.dir_list.model()
-    parent = QModelIndex()
-
-    try:
-        for id in path:
-            if parent.isValid():
-                if not ag.dir_list.isExpanded(parent):
-                    ag.dir_list.setExpanded(parent, True)
-            parent = model.index(int(id), 0, parent)
-    except IndexError:
-        if model.rowCount(QModelIndex()) > 0:
-            parent = model.index(0, 0, QModelIndex())
-
-    ag.dir_list.setCurrentIndex(parent)
-    ag.dir_list.scrollTo(parent, QAbstractItemView.ScrollHint.PositionAtCenter)
-    return parent
 
 def dir_list_setup():
     ag.dir_list.header().hide()

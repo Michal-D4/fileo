@@ -21,6 +21,7 @@ class noteEditor(QTextEdit):
     def start_edit(self, note_id: int, file_id: int):
         self.note_id = note_id
         self.file_id = file_id
+        ag.signals_.user_signal.emit(f'notes - branch request/{file_id}')
 
     def set_branch(self, branch):
         logger.info(f'{branch=}')
@@ -33,7 +34,7 @@ class noteEditor(QTextEdit):
         return self.note_id
 
     def get_branch(self) -> str:
-        return self.branch
+        return ','.join((str(it) for it in self.branch))
 
     def get_text(self):
         return self.toPlainText()
@@ -83,7 +84,7 @@ class notesContainer(QScrollArea):
         branch = self.editor.get_branch()
         ag.signals_.user_signal.emit(
             f"file-note: {act_text}/{file_id}-{branch}"
-            )
+        )
 
     def is_editing(self):
         return self.editing
@@ -105,7 +106,6 @@ class notesContainer(QScrollArea):
 
     def set_file_id(self, id: int):
         self.file_id = id
-        ag.signals_.user_signal.emit(f'notes - branch request/{id}')
         self.set_notes_data()
 
     def set_notes_data(self):

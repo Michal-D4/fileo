@@ -59,6 +59,10 @@ class ProxyModel2(ProxyModel):
     def update_field_by_name(self, val, name: str, index: QModelIndex):
         self.sourceModel().update_field_by_name(val, name, self.mapToSource(index))
 
+    def get_row_by_id(self, id: int) -> int:
+        idx = self.sourceModel().get_index_by_id(id)
+        return self.mapFromSource(idx).row()
+
 
 class TableModel(QAbstractTableModel):
 
@@ -157,6 +161,12 @@ class TableModel(QAbstractTableModel):
         if row >= 0 & row < self.rowCount():
             return self.rows[row], self.user_data[row]
         return ()
+
+    def get_index_by_id(self, id: int) -> QModelIndex:
+        for i,ud in enumerate(self.user_data):
+            if ud.id == id:
+                return self.index(i, 0, QModelIndex())
+        return QModelIndex()
 
     def update_opened(self, ts: int, index: QModelIndex):
         """
