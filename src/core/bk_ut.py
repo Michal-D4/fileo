@@ -55,6 +55,7 @@ def to_prev_folder():
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.prev_dir()
+    logger.info(f'{folder.file_id=}')
     go_to_history_folder(folder)
 
 @pyqtSlot()
@@ -63,6 +64,7 @@ def to_next_folder():
     ag.history.set_file_id(row)
     low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
     folder: history.Item = ag.history.next_dir()
+    logger.info(f'{folder.file_id=}')
     go_to_history_folder(folder)
 
 def go_to_history_folder(folder: history.Item):
@@ -75,8 +77,10 @@ def _history_folder(folder: history.Item):
     idx = low_bk.expand_branch(folder.path)
     if idx.isValid():
         ag.file_row = folder.file_id
+        logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+        logger.info(f'{ag.file_row=}')
         low_bk.set_current_file(ag.file_row)
 
 @pyqtSlot(bool)
@@ -88,6 +92,8 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
+        logger.info('>>> re-connect "cur_dir_changed"')
+        logger.info('>>> dir_list.setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
@@ -102,6 +108,7 @@ def bk_setup(main: 'shoWindow'):
     set_context_menu()
 
     if ag.db['Conn']:
+        logger.info(f"{ag.db['Path']=}")
         populate_all()
 
         QTimer.singleShot(10 * 1000, show_lost_files)
@@ -166,11 +173,14 @@ def field_list_changed():
     resize_columns(0)
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
+    logger.info(f'{idx.row()=}')
     low_bk.set_current_file(idx.row())
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
+    logger.info(f'{curr.data(Qt.ItemDataRole.UserRole)}, {prev.data(Qt.ItemDataRole.UserRole)}')
     if curr.isValid():
+        logger.info(f'{curr.row()=}, {prev.row()=}')
         ag.file_list.scrollTo(curr)
         self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
@@ -217,6 +227,7 @@ def populate_all():
     fill_dir_list()
     ag.filter_dlg.restore_filter_settings()
 
+    logger.info('>>>')
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
         restore_sorting()
@@ -233,7 +244,10 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    ag.dir_list.setCurrentIndex(idx)
+    logger.info('>>> connect "cur_dir_changed"')
+    if idx.isValid():
+        logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
+        ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot()
 def show_hidden_dirs():
