@@ -51,33 +51,33 @@ def search_files():
 
 @pyqtSlot()
 def to_prev_folder():
-    row = ag.file_list.currentIndex().row()
-    ag.history.set_file_id(row)
-    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
-    folder: history.Item = ag.history.prev_dir()
-    logger.info(f'{folder.file_id=}')
-    go_to_history_folder(folder)
+    low_bk.save_file_row_in_dir_model(
+        ag.file_list.currentIndex().row(),
+        ag.dir_list.currentIndex()
+    )
+    branch = ag.history.prev_dir()
+    go_to_history_folder(branch)
 
 @pyqtSlot()
 def to_next_folder():
-    row = ag.file_list.currentIndex().row()
-    ag.history.set_file_id(row)
-    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
-    folder: history.Item = ag.history.next_dir()
-    logger.info(f'{folder.file_id=}')
-    go_to_history_folder(folder)
+    low_bk.save_file_row_in_dir_model(
+        ag.file_list.currentIndex().row(),
+        ag.dir_list.currentIndex()
+    )
+    branch = ag.history.next_dir()
+    go_to_history_folder(branch)
 
-def go_to_history_folder(folder: history.Item):
+def go_to_history_folder(folder: list):
     if not folder.path:
         return
     ag.hist_folder = True
     _history_folder(folder)
 
-def _history_folder(folder: history.Item):
+def _history_folder(folder: list):
     idx = low_bk.expand_branch(folder.path)
     if idx.isValid():
-        ag.file_row = folder.file_id
-        logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
+        # ag.file_row = folder.file_id
+        ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
         logger.info(f'{ag.file_row=}')
@@ -92,8 +92,6 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-        logger.info('>>> re-connect "cur_dir_changed"')
-        logger.info('>>> dir_list.setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
 
 def restore_sorting():
@@ -108,7 +106,6 @@ def bk_setup(main: 'shoWindow'):
     set_context_menu()
 
     if ag.db['Conn']:
-        logger.info(f"{ag.db['Path']=}")
         populate_all()
 
         QTimer.singleShot(10 * 1000, show_lost_files)
@@ -173,14 +170,14 @@ def field_list_changed():
     resize_columns(0)
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
-    logger.info(f'{idx.row()=}')
     low_bk.set_current_file(idx.row())
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    logger.info(f'{curr.data(Qt.ItemDataRole.UserRole)}, {prev.data(Qt.ItemDataRole.UserRole)}')
+    logger.info(f'{curr.data(Qt.ItemDataRole.UserRole)}')
+    logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}')
     if curr.isValid():
-        logger.info(f'{curr.row()=}, {prev.row()=}')
+        logger.info(f'{curr.row()=}')
         ag.file_list.scrollTo(curr)
         self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
@@ -227,12 +224,11 @@ def populate_all():
     fill_dir_list()
     ag.filter_dlg.restore_filter_settings()
 
-    logger.info('>>>')
     low_bk.populate_file_list()
     if ag.file_list.model().rowCount() > 0:
         restore_sorting()
 
-    hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
+    hist = low_bk.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
     ag.history.set_history(*hist)
     ag.hist_folder = not hist[0]
     _history_folder(hist[-1])
@@ -244,7 +240,6 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    logger.info('>>> connect "cur_dir_changed"')
     if idx.isValid():
         logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
         ag.dir_list.setCurrentIndex(idx)
