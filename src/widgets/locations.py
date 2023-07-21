@@ -27,6 +27,7 @@ class Locations(QTextBrowser):
     def set_file_id(self, id: int):
         self.file_id = id
         self.get_locations()
+        self.build_branches()
         self.build_branch_data()
         self.show_branches()
 
@@ -34,35 +35,41 @@ class Locations(QTextBrowser):
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         self.get_file_dirs(dir_ids)
         self.branches.clear()
-        self.curr = 0
         for dd in self.dirs:
+            # logger.info(f'{dd=}')
             self.branches.append([(dd.id, dir_type(dd)), dd.parent_id])
-            self.build_branches()
 
     def get_file_dirs(self, dir_ids):
         self.dirs.clear()
         for id in dir_ids:
             parents = db_ut.dir_parents(id[0])
             for pp in parents:
+                # logger.info(f'{id=}, {pp=}')
                 self.dirs.append(ag.DirData(*pp))
 
     def build_branches(self):
         def add_dir_parent(qq: ag.DirData, tt: list) -> list:
-            ss = [*tt[:-1]]
+            # logger.info(f'{qq=}, {tt=}')
+            ss = tt[:-1]          # [*tt[:-1]] is the same as tt[:-1] ?
             tt[-1] = (qq.id, dir_type(qq))
             tt.append(qq.parent_id)
             return ss
 
+        curr = 0
+        # logger.info(f'{curr=}, {len(self.branches)=}')
         while 1:
-            if self.curr >= len(self.branches):
+            if curr >= len(self.branches):
                 break
-            tt = self.branches[self.curr]
+            tt = self.branches[curr]
+            # logger.info(f'{tt=}')
+
             while 1:
                 if tt[-1] == 0:
                     break
                 parents = db_ut.dir_parents(tt[-1])
                 first = True
                 for pp in parents:
+                    # logger.info(f'{pp}')
                     qq = ag.DirData(*pp)
                     if first:
                         ss = add_dir_parent(qq, tt)
@@ -71,11 +78,11 @@ class Locations(QTextBrowser):
                     self.branches.append(
                         [*ss, (qq.id, dir_type(qq)), qq.parent_id]
                     )
-            self.curr += 1
+            curr += 1
 
     def show_branches(self):
         txt = [
-            '<table><tr><td><b>Path(Folder Tree branch)</b></td>',
+            '<table>',
         ]
         for a,b,c in self.names:
             # TODO create referencies to go to filder with popup menu
