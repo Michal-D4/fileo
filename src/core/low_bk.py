@@ -333,7 +333,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, {curr_idx.data(Qt.ItemDataRole.UserRole)}')
     def new_history_item():
         logger.info(f'BEG: {ag.hist_folder=}, {ag.file_row=}, {file_row=}')
-        logger.info(f'{file_row=}, curr_file_row:{curr_idx.data(Qt.ItemDataRole.UserRole).file_row}')
+        logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, curr_file_row:{curr_idx.data(Qt.ItemDataRole.UserRole).file_row}')
         if ag.hist_folder:
             ag.hist_folder = False
             set_current_file(
@@ -353,13 +353,13 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         save_file_row(file_row, prev_idx)
-        show_folder_files()
+        show_folder_files("cur_dir_changed")
         new_history_item()
         # set_current_file(ag.file_row)
 
-def save_file_row(file_row: int, prev_idx: QModelIndex):
-    if prev_idx.isValid():
-        u_dat = update_file_row_in_dir_model(file_row, prev_idx)
+def save_file_row(file_row: int, dir_idx: QModelIndex):
+    if dir_idx.isValid():
+        u_dat = update_file_row_in_dir_model(file_row, dir_idx)
         db_ut.update_file_row(u_dat, file_row)
 
 def update_file_row_in_dir_model(file_row: int, idx: QModelIndex) -> ag.DirData:
@@ -397,33 +397,70 @@ def app_mode_changed(old_mode: ag.appMode):
 
     {ag.appMode.DIR: show_folder_files,
      ag.appMode.FILTER: filtered_files,
-    } [ag.mode]()
+    } [ag.mode]("app_mode_changed")
     if ag.file_list.model().rowCount() > 0:
         set_current_file(row, 'app_mode_changed')
 
 def populate_file_list():
     logger.info(f'{ag.mode=}')
-    if ag.mode is ag.appMode.DIR:
-        show_folder_files()
-    else:             # appMode.FILTER or appMode.FILTER_SETUP
-        filtered_files()
+    hist = get_setting('HISTORY', [[], [], []])  # next_, prev, curr
 
-def filtered_files():
+    if ag.mode is ag.appMode.DIR:
+        ag.history.set_history(*hist)
+        ag.hist_folder = True
+        _history_folder(hist[-1])
+    else:             # appMode.FILTER or appMode.FILTER_SETUP
+        filtered_files("populate_file_list")
+
+@pyqtSlot()
+def to_prev_folder():
+    # save_file_row(
+    #     ag.file_list.currentIndex().row(),
+    #     ag.dir_list.currentIndex()
+    # )
+    branch = ag.history.prev_dir()
+    go_to_history_folder(branch)
+
+@pyqtSlot()
+def to_next_folder():
+    # save_file_row(
+    #     ag.file_list.currentIndex().row(),
+    #     ag.dir_list.currentIndex()
+    # )
+    branch = ag.history.next_dir()
+    go_to_history_folder(branch)
+
+def go_to_history_folder(branch: list):
+    if not branch:
+        return
+    ag.hist_folder = True
+    _history_folder(branch)
+
+def _history_folder(branch: list):
+    idx = expand_branch(branch)
+    if idx.isValid():
+        ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row
+        logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}')
+        ag.dir_list.setCurrentIndex(idx)
+        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+        # set_current_file(ag.file_row, '_history_folder')
+
+def filtered_files(called_from: str):
     """
     create a list of files by filter
     """
     files = ag.filter_dlg.get_file_list()
-    logger.info('<<< Filter >>>')
+    logger.info('<<< "{called_from}" >>>')
     show_files(files)
 
 def filter_changed():
-    filtered_files()
+    filtered_files("filter_changed")
     set_current_file(0, 'filter_changed')
 
-def show_folder_files():
+def show_folder_files(called_from: str):
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-    logger.info(f'{u_dat=}')
+    logger.info(f'"{called_from}", {u_dat=}')
 
     files = db_ut.get_files(u_dat.id, u_dat.parent_id) if u_dat else []
     show_files(files)
@@ -433,6 +470,12 @@ def show_files(files):
     populate file's model
     :@param files
     """
+    model = fill_file_model(files)
+    set_file_model(model)
+    header_restore(model)
+    model.model_data_changed.connect(rename_in_file_system)
+
+def fill_file_model(files) -> TableModel:
     model: TableModel = TableModel()
     field_idx = field_indexes()
 
@@ -442,17 +485,16 @@ def show_files(files):
             ff1.append(field_val(typ, ff[i]))
         model.append_row(ff1, ag.FileData(*ff[-3:]))
 
-    ag.app.ui.file_count.setText(f"files: {model.rowCount()}")
+    rows = model.rowCount()
+    ag.app.ui.file_count.setText(f"files: {rows}")
 
-    if model.rowCount() == 0:
+    if rows == 0:
         row = ["THERE ARE NO FILES HERE"]
         for _,typ in field_idx[1:]:
             row.append(field_val(typ))
         model.append_row(row, ag.FileData(-1,0,0))
 
-    set_file_model(model)
-    header_restore(model)
-    model.model_data_changed.connect(rename_in_file_system)
+    return model
 
 def set_current_file(row: int, called_from: str):
     logger.info(f'{row=}, "{called_from}"')
@@ -489,7 +531,9 @@ def set_file_model(model: TableModel):
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     model.setHeaderData(0, Qt.Orientation.Horizontal, field_titles())
+    logger.info('before "file_list.setModel"')
     ag.file_list.setModel(proxy_model)
+    logger.info('after "file_list.setModel"')
 
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
@@ -669,7 +713,7 @@ def _import_files(filename):
         logger.info('>>> dir_list.setCurrentIndex')
         ag.dir_list.setCurrentIndex(idx)
     else:
-        show_folder_files()
+        show_folder_files("_import_files")
 
 def load_file(fl: dict) -> int:
     file_ = fl['file']

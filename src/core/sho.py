@@ -150,11 +150,11 @@ class shoWindow(QMainWindow):
 
     def set_extra_widgets(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Previous folder')
-        self.btn_prev.clicked.connect(bk_ut.to_prev_folder)
+        self.btn_prev.clicked.connect(low_bk.to_prev_folder)
         self.btn_prev.setDisabled(True)
 
         self.btn_next = self._create_button("next_folder", 'btn_next', 'Next folder')
-        self.btn_next.clicked.connect(bk_ut.to_next_folder)
+        self.btn_next.clicked.connect(low_bk.to_next_folder)
         self.btn_next.setDisabled(True)
 
         self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')

@@ -51,39 +51,6 @@ def search_files():
     ff.show()
     ff.srch_pattern.setFocus()
 
-@pyqtSlot()
-def to_prev_folder():
-    low_bk.save_file_row(
-        ag.file_list.currentIndex().row(),
-        ag.dir_list.currentIndex()
-    )
-    branch = ag.history.prev_dir()
-    go_to_history_folder(branch)
-
-@pyqtSlot()
-def to_next_folder():
-    low_bk.save_file_row(
-        ag.file_list.currentIndex().row(),
-        ag.dir_list.currentIndex()
-    )
-    branch = ag.history.next_dir()
-    go_to_history_folder(branch)
-
-def go_to_history_folder(branch: list):
-    if not branch:
-        return
-    ag.hist_folder = True
-    _history_folder(branch)
-
-def _history_folder(branch: list):
-    idx = low_bk.expand_branch(branch)
-    if idx.isValid():
-        # ag.file_row = folder.file_id
-        ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row
-        ag.dir_list.setCurrentIndex(idx)
-        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-        low_bk.set_current_file(ag.file_row, '_history_folder')
-
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
     if collapse:
@@ -229,11 +196,6 @@ def populate_all():
     if ag.file_list.model().rowCount() > 0:
         restore_sorting()
 
-    hist = low_bk.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
-    ag.history.set_history(*hist)
-    ag.hist_folder = not hist[0]
-    _history_folder(hist[-1])
-
 def fill_dir_list():
     """
     populating directory tree
@@ -241,9 +203,9 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    if idx.isValid():
-        logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
-        ag.dir_list.setCurrentIndex(idx)
+    # if idx.isValid():  # because it done in folders history
+    #     logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
+    #     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot()
 def show_hidden_dirs():
