@@ -352,19 +352,23 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
-        save_file_row_in_dir_model(file_row, prev_idx)
+        save_file_row(file_row, prev_idx)
         show_folder_files()
         new_history_item()
         # set_current_file(ag.file_row)
 
-def save_file_row_in_dir_model(file_row: int, prev_idx: QModelIndex):
+def save_file_row(file_row: int, prev_idx: QModelIndex):
     if prev_idx.isValid():
-        db_ut.update_file_id(
-            prev_idx.data(Qt.ItemDataRole.UserRole), file_row
-        )
+        u_dat = update_file_row_in_dir_model(file_row, prev_idx)
+        db_ut.update_file_row(u_dat, file_row)
+
+def update_file_row_in_dir_model(file_row: int, idx: QModelIndex) -> ag.DirData:
         model = ag.dir_list.model()
-        dir_item = model.getItem(prev_idx)
-        dir_item.userData.file_row = file_row
+        dir_item = model.getItem(idx)
+        logger.info(f'{dir_item.userData}')
+        u_data: ag.DirData = dir_item.userData
+        u_data.file_row = file_row
+        return u_data
 
 def add_history_item(file_row: int):
     ag.history.add_item(
