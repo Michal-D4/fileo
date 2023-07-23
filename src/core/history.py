@@ -54,15 +54,6 @@ class History(object):
         )
         return self.curr
 
-    def set_file_id(self, row_no: int):
-        '''
-        set file_id in the history item to be left
-        '''
-        if self.curr.path and row_no >= 0:
-            self.curr.file_id = row_no
-            # logger.info(f'{self.curr.path=}, {row_no=}')
-            # db_ut.update_file_id(self.curr.path, row_no)
-
     def has_next(self) -> str:
         return 'yes' if self.next_ else 'no'
 
@@ -87,5 +78,4 @@ class History(object):
         """
         used to save histiry on close
         """
-        self.set_file_id(ag.file_list.currentIndex().row())
         return [self.next_, self.prev, self.curr]

@@ -67,14 +67,14 @@ def to_next_folder():
     branch = ag.history.next_dir()
     go_to_history_folder(branch)
 
-def go_to_history_folder(folder: list):
-    if not folder.path:
+def go_to_history_folder(branch: list):
+    if not branch:
         return
     ag.hist_folder = True
-    _history_folder(folder)
+    _history_folder(branch)
 
-def _history_folder(folder: list):
-    idx = low_bk.expand_branch(folder.path)
+def _history_folder(branch: list):
+    idx = low_bk.expand_branch(branch)
     if idx.isValid():
         # ag.file_row = folder.file_id
         ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row

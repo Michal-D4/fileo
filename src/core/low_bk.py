@@ -93,8 +93,7 @@ def goto_edited_file(param: str):
 
         model = ag.file_list.model()
         row = model.get_row_by_id(int(file_id))
-        logger.info(f'{row=}')
-        set_current_file(row)
+        set_current_file(row, 'goto_edited_file')
 
 @pyqtSlot()
 def report_duplicates():
@@ -321,32 +320,30 @@ def set_dir_model():
     ag.hist_folder = True
     model: TreeModel = TreeModel()
     model.set_model_data()
-    logger.info('>>> before "ag.dir_list.setModel(model)"')
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    logger.info('>>> after "ag.dir_list.setFocus()"')
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     """
     currentRowChanged signal in dirTree
-    :@param curr_idx:
     :@return: None
     """
-    # logger.info(f'{ag.hist_folder=}')
-    logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, {prev_idx.data(Qt.ItemDataRole.DisplayRole)}')
-    logger.info(f'{curr_idx.data(Qt.ItemDataRole.UserRole)}, {prev_idx.data(Qt.ItemDataRole.UserRole)}')
+    logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, {curr_idx.data(Qt.ItemDataRole.UserRole)}')
     def new_history_item():
-        logger.info(f'{ag.hist_folder=}, {ag.file_row=}')
+        logger.info(f'BEG: {ag.hist_folder=}, {ag.file_row=}, {file_row=}')
+        logger.info(f'{file_row=}, curr_file_row:{curr_idx.data(Qt.ItemDataRole.UserRole).file_row}')
         if ag.hist_folder:
             ag.hist_folder = False
+            set_current_file(
+                curr_idx.data(Qt.ItemDataRole.UserRole).file_row,
+                'new_history_item'
+            )
         else:       # new history item
-            logger.info(f'{file_row=}, {ag.file_row=}')
             add_history_item(file_row)
-            save_file_row_in_model(file_row, prev_idx)
             ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
-        logger.info(f'{ag.hist_folder=}, {ag.file_row=}')
+        logger.info(f'END: {ag.hist_folder=}, {ag.file_row=}')
 
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
@@ -355,21 +352,23 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
-        logger.info(f'{ag.hist_folder=}, {ag.file_row=}, {file_row=}')
+        save_file_row_in_dir_model(file_row, prev_idx)
         show_folder_files()
         new_history_item()
-        logger.info(f'{ag.file_row=}')
         # set_current_file(ag.file_row)
 
-def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
-    model = ag.dir_list.model()
-    dir_item = model.getItem(prev_idx)
-    dir_item.userData.file_row = file_row
+def save_file_row_in_dir_model(file_row: int, prev_idx: QModelIndex):
+    if prev_idx.isValid():
+        db_ut.update_file_id(
+            prev_idx.data(Qt.ItemDataRole.UserRole), file_row
+        )
+        model = ag.dir_list.model()
+        dir_item = model.getItem(prev_idx)
+        dir_item.userData.file_row = file_row
 
 def add_history_item(file_row: int):
-    ag.history.set_file_id(file_row)
     ag.history.add_item(
-        define_branch(ag.dir_list.currentIndex()), 0
+        define_branch(ag.dir_list.currentIndex())
     )
 
 def dir_list_setup():
@@ -396,7 +395,7 @@ def app_mode_changed(old_mode: ag.appMode):
      ag.appMode.FILTER: filtered_files,
     } [ag.mode]()
     if ag.file_list.model().rowCount() > 0:
-        set_current_file(row)
+        set_current_file(row, 'app_mode_changed')
 
 def populate_file_list():
     logger.info(f'{ag.mode=}')
@@ -415,8 +414,7 @@ def filtered_files():
 
 def filter_changed():
     filtered_files()
-    logger.info('>>> 0')
-    set_current_file(0)
+    set_current_file(0, 'filter_changed')
 
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
@@ -452,10 +450,11 @@ def show_files(files):
     header_restore(model)
     model.model_data_changed.connect(rename_in_file_system)
 
-def set_current_file(row: int):
-    logger.info(f'{row=}')
+def set_current_file(row: int, called_from: str):
+    logger.info(f'{row=}, "{called_from}"')
     idx = ag.file_list.model().index(row, 0)
     if idx.isValid():
+        logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(
             idx, QAbstractItemView.ScrollHint.PositionAtCenter
@@ -613,8 +612,7 @@ def post_delete_file(row: int):
     model = ag.file_list.model()
     row -= int(row >= model.rowCount())
 
-    logger.info(f'{row=}')
-    set_current_file(row)
+    set_current_file(row, 'post_delete_file')
 #endregion
 
 #region  export-import
