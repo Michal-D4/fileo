@@ -25,8 +25,9 @@ def save_bk_settings():
     actions = ag.field_menu.menu().actions()
 
     try:
+        curr_dir_idx = ag.dir_list.currentIndex()
         settings = {
-            "TREE_PATH": low_bk.define_branch(ag.dir_list.currentIndex()),
+            "TREE_PATH": low_bk.define_branch(curr_dir_idx),
             "FIELDS_STATE": [int(a.isChecked()) for a in actions],
             "COLUMN_WIDTH": low_bk.get_columns_width(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
@@ -38,6 +39,7 @@ def save_bk_settings():
             "HISTORY": ag.history.get_history(),
         }
         low_bk.save_settings(**settings)
+        low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
         self.filter_setup.save_filter_settings()
     except:
         pass
@@ -51,7 +53,7 @@ def search_files():
 
 @pyqtSlot()
 def to_prev_folder():
-    low_bk.save_file_row_in_dir_model(
+    low_bk.save_file_row(
         ag.file_list.currentIndex().row(),
         ag.dir_list.currentIndex()
     )
@@ -60,7 +62,7 @@ def to_prev_folder():
 
 @pyqtSlot()
 def to_next_folder():
-    low_bk.save_file_row_in_dir_model(
+    low_bk.save_file_row(
         ag.file_list.currentIndex().row(),
         ag.dir_list.currentIndex()
     )
@@ -80,8 +82,7 @@ def _history_folder(branch: list):
         ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-        logger.info(f'{ag.file_row=}')
-        low_bk.set_current_file(ag.file_row)
+        low_bk.set_current_file(ag.file_row, '_history_folder')
 
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
@@ -170,7 +171,7 @@ def field_list_changed():
     resize_columns(0)
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
-    low_bk.set_current_file(idx.row())
+    low_bk.set_current_file(idx.row(), 'field_list_changed')
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
