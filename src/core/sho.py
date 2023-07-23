@@ -28,6 +28,7 @@ MIN_COMMENT_HEIGHT = 75
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400
+DEFAULT_HISTORY_DEPTH = 15
 
 def set_widget_to_frame(frame: QFrame, widget: QWidget):
     frame.setLayout(QVBoxLayout())
@@ -88,7 +89,7 @@ class shoWindow(QMainWindow):
         ag.file_data_holder.setObjectName("file_notes")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
-            utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
+            utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
         )
 
         if ag.db['restore']:     # start app with restoring DB connection - 1st app instance
