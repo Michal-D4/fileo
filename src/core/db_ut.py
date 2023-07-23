@@ -734,11 +734,13 @@ def update_dir_name(name: str, id: int):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (name, id))
 
-def update_file_id(dirs: list, row_id: int):
+def update_file_row(d_data: ag.DirData, row_id: int):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
-    p_d = dirs[-2:] if len(dirs) > 1 else (0, dirs[0])
+    logger.info(f'{d_data.parent_id=}, {d_data.id}, {row_id=}, {d_data.file_row=}')
     with ag.db['Conn'] as conn:
-        conn.cursor().execute(sql, (row_id, *p_d))
+        conn.cursor().execute(
+            sql, (row_id, d_data.parent_id, d_data.id)
+        )
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
