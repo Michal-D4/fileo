@@ -24,14 +24,13 @@ class Comment(QWidget):
         self.file_id = file_id
         self.id = id
         self.collapsed = False
-        # logger.info(f'{self.file_id=}, {self.id=}')
+
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
         self.text = ''
 
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
-        # logger.info(f'{id=}, {file_id=}, {self.visible_height=}')
 
         self.ui = Ui_comment()
 
@@ -69,7 +68,6 @@ class Comment(QWidget):
 
     def set_note_id(self, id: int):
         self.id = id
-        # logger.info(f'{self.file_id=}, {self.id=}, "{self.text}"')
 
     def get_note_id(self) -> int:
         return self.id
@@ -102,16 +100,13 @@ class Comment(QWidget):
             self.visible_height = self.expanded_height
             self.expanded_height = 0
             self.ui.textBrowser.show()
-        logger.info(f'{self.collapsed=}, {self.visible_height=}, {self.expanded_height=}')
         self.set_collapse_icon(self.collapsed)
 
     @pyqtSlot()
     def check_collapse_button(self):
-        logger.info(f'{self.id=}, {self.collapsed=}')
         if self.collapsed:
             return
         self.collapsed = True
-        # self.set_collapse_icon(True)
         self.collapse_item()
 
     def set_collapse_icon(self, collapse: bool):

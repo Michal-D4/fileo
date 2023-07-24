@@ -24,7 +24,6 @@ class noteEditor(QTextEdit):
         ag.signals_.user_signal.emit(f'notes - branch request/{file_id}')
 
     def set_branch(self, branch):
-        logger.info(f'{branch=}')
         self.branch = branch
 
     def get_file_id(self) -> int:
@@ -138,7 +137,6 @@ class notesContainer(QScrollArea):
         return self.notes.get(id, None)
 
     def finish_editing(self, note_id: int):
-        # logger.info(f'{note_id=}')
         if note_id:
             note = self.notes[note_id]
         else:
@@ -150,7 +148,6 @@ class notesContainer(QScrollArea):
     def update_note(self, note: Comment):
         txt = self.editor.get_text()
         note_id = note.get_note_id()
-        # logger.info(f'{note_id=}, {len(txt)=}')
         if note_id:
             self.scroll_layout.removeWidget(note)
             ts = db_ut.update_note(note.get_file_id(), note_id, txt)
@@ -174,7 +171,6 @@ class notesContainer(QScrollArea):
 
     @pyqtSlot(int, int)
     def remove_item(self, note_id: int, file_id: int):
-        logger.info(f'{self.editing=}')
         if (self.editing and
             self.editor.get_note_id() == note_id and
             self.editor.get_file_id() == file_id):

@@ -189,7 +189,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
-        'join parentdir p on fd.dir = p.id '      # to avoid duplications
+        'join parentdir p on fd.dir = p.id '      # to avoid duplication
         'where fd.dir = :id and p.parent = :pid;'
     )
     return ag.db['Conn'].cursor().execute(sql, {'id': dir_id, 'pid': parent})
@@ -736,7 +736,6 @@ def update_dir_name(name: str, id: int):
 
 def update_file_row(d_data: ag.DirData):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
-    logger.info(f'{d_data.parent_id=}, {d_data.id=}, {d_data.file_row=}')
     with ag.db['Conn'] as conn:
         conn.cursor().execute(
             sql, (d_data.file_row, d_data.parent_id, d_data.id)
