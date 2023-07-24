@@ -28,7 +28,6 @@ file_data_holder: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 history: 'History' = None
 hist_folder = True
-file_row = 0
 file_path: Path = None
 single_instance = False
 

@@ -736,7 +736,7 @@ def update_dir_name(name: str, id: int):
 
 def update_file_row(d_data: ag.DirData, row_id: int):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
-    logger.info(f'{d_data.parent_id=}, {d_data.id}, {row_id=}, {d_data.file_row=}')
+    logger.info(f'{d_data.parent_id=}, {d_data.id=}, {row_id=}, {d_data.file_row=}')
     with ag.db['Conn'] as conn:
         conn.cursor().execute(
             sql, (row_id, d_data.parent_id, d_data.id)

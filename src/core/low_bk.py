@@ -330,20 +330,19 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     currentRowChanged signal in dirTree
     :@return: None
     """
-    logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, {curr_idx.data(Qt.ItemDataRole.UserRole)}')
+    logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)} <- {prev_idx.data(Qt.ItemDataRole.DisplayRole)}')
     def new_history_item():
-        logger.info(f'BEG: {ag.hist_folder=}, {ag.file_row=}, {file_row=}')
+        logger.info(f'BEG: {ag.hist_folder=}, {file_row=}')
         logger.info(f'{curr_idx.data(Qt.ItemDataRole.DisplayRole)}, curr_file_row:{curr_idx.data(Qt.ItemDataRole.UserRole).file_row}')
         if ag.hist_folder:
             ag.hist_folder = False
-            set_current_file(
-                curr_idx.data(Qt.ItemDataRole.UserRole).file_row,
-                'new_history_item'
-            )
         else:       # new history item
             add_history_item(file_row)
-            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
-        logger.info(f'END: {ag.hist_folder=}, {ag.file_row=}')
+        set_current_file(
+            curr_idx.data(Qt.ItemDataRole.UserRole).file_row,
+            'new_history_item'
+        )
+        logger.info(f'END: {ag.hist_folder=}, ')
 
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.section_resized:   # save column widths if changed
@@ -439,11 +438,9 @@ def go_to_history_folder(branch: list):
 def _history_folder(branch: list):
     idx = expand_branch(branch)
     if idx.isValid():
-        ag.file_row = idx.data(Qt.ItemDataRole.UserRole).file_row
         logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}')
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-        # set_current_file(ag.file_row, '_history_folder')
 
 def filtered_files(called_from: str):
     """
@@ -460,7 +457,7 @@ def filter_changed():
 def show_folder_files(called_from: str):
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-    logger.info(f'"{called_from}", {u_dat=}')
+    logger.info(f'"{called_from}", parent_id:{u_dat.parent_id}, id:{u_dat.id}, file_row:{u_dat.file_row}')
 
     files = db_ut.get_files(u_dat.id, u_dat.parent_id) if u_dat else []
     show_files(files)
