@@ -62,11 +62,6 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
 
-def restore_sorting():
-    col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
-    order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.header().setSortIndicator(col, order)
-
 def bk_setup(main: 'shoWindow'):
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
@@ -142,10 +137,7 @@ def field_list_changed():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    logger.info(f'{curr.data(Qt.ItemDataRole.UserRole)}')
-    logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}')
     if curr.isValid():
-        logger.info(f'{curr.row()=}')
         ag.file_list.scrollTo(curr)
         self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
@@ -193,8 +185,8 @@ def populate_all():
     ag.filter_dlg.restore_filter_settings()
 
     low_bk.populate_file_list()
-    if ag.file_list.model().rowCount() > 0:
-        restore_sorting()
+    # if ag.file_list.model().rowCount() > 0:
+    #     restore_sorting()
 
 def fill_dir_list():
     """
@@ -203,9 +195,6 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    # if idx.isValid():  # because it done in folders history
-    #     logger.info(f'>>> dir_list.setCurrentIndex {idx.data(Qt.ItemDataRole.DisplayRole)}')
-    #     ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot()
 def show_hidden_dirs():

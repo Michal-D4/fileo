@@ -32,10 +32,8 @@ class History(object):
         if len(self.prev) >= self.limit:
             self.prev = self.prev[len(self.prev)-self.limit-1:]
         self.prev.append(self.curr)
-        # logger.info(f'{self.prev=}')
 
         self.curr = self.next_.pop()
-        # logger.info(f'{self.curr=}')
         ag.signals_.user_signal.emit(
             f'enable_next_prev/{self.has_next()},yes'
         )
@@ -45,10 +43,8 @@ class History(object):
         if len(self.next_) >= self.limit:
             self.next_ = self.next_[len(self.next_)-self.limit-1:]
         self.next_.append(self.curr)
-        # logger.info(f'{self.next_=}')
 
         self.curr = self.prev.pop()
-        # logger.info(f'{self.curr=}')
         ag.signals_.user_signal.emit(
             f'enable_next_prev/yes,{self.has_prev()}'
         )
@@ -61,7 +57,6 @@ class History(object):
         return 'yes' if self.prev else 'no'
 
     def add_item(self, path):
-        # logger.info(f'{path=}')
         if self.curr:
             if len(self.prev) >= self.limit:
                 self.prev = self.prev[len(self.prev)-self.limit-1:]
@@ -72,7 +67,6 @@ class History(object):
             f'enable_next_prev/no,{self.has_prev()}'
         )
         self.curr = path
-        # logger.info(f'{self.curr=}')
 
     def get_history(self) -> list:
         """
