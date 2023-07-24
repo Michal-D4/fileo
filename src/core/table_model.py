@@ -69,7 +69,7 @@ class TableModel(QAbstractTableModel):
     model_data_changed = pyqtSignal(str)
 
     def __init__(self, parent=None, *args):
-        super(TableModel, self).__init__(parent)
+        super().__init__(parent)
         self.header = ()
         self.rows = []
         self.user_data = []

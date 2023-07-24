@@ -184,7 +184,6 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def show_hide_click(self, state: bool):
-        # logger.info(f'{state=}')
         bk_ut.show_hidden_dirs()
         self.show_hidden.setIcon(icons.get_other_icon("show_hide", int(state)))
 
