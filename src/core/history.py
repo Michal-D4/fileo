@@ -30,7 +30,7 @@ class History(object):
 
     def next_dir(self) -> list:
         if len(self.prev) >= self.limit:
-            self.prev = self.prev[len(self.prev)-self.limit-1:]
+            self.prev = self.prev[len(self.prev)-self.limit+1:]
         self.prev.append(self.curr)
 
         self.curr = self.next_.pop()
@@ -41,7 +41,7 @@ class History(object):
 
     def prev_dir(self) -> list:
         if len(self.next_) >= self.limit:
-            self.next_ = self.next_[len(self.next_)-self.limit-1:]
+            self.next_ = self.next_[len(self.next_)-self.limit+1:]
         self.next_.append(self.curr)
 
         self.curr = self.prev.pop()
@@ -59,9 +59,8 @@ class History(object):
     def add_item(self, path):
         if self.curr:
             if len(self.prev) >= self.limit:
-                self.prev = self.prev[len(self.prev)-self.limit-1:]
+                self.prev = self.prev[len(self.prev) - self.limit + 1:]
             self.prev.append(self.curr)
-            # logger.info(f'{self.prev=}')
         self.next_.clear()
         ag.signals_.user_signal.emit(
             f'enable_next_prev/no,{self.has_prev()}'
