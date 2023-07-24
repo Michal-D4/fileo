@@ -138,7 +138,7 @@ def field_list_changed():
     resize_columns(0)
     idx = ag.file_list.currentIndex()
     low_bk.populate_file_list()
-    low_bk.set_current_file(idx.row(), 'field_list_changed')
+    low_bk.set_current_file(idx.row())
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):

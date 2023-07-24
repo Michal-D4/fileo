@@ -138,7 +138,7 @@ def start_drag_files(action):
         Qt.DropAction.CopyAction)
 
     if bb is Qt.DropAction.MoveAction:
-        low_bk.show_folder_files("update_file_list")
+        low_bk.show_folder_files()
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):
@@ -221,7 +221,7 @@ def update_file_list(target: int):
     if idx.isValid():
         if (ag.mode is ag.appMode.DIR and
             idx.data(Qt.ItemDataRole.UserRole).id == target):
-            low_bk.show_folder_files("update_file_list")
+            low_bk.show_folder_files()
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
