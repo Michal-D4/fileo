@@ -167,6 +167,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def set_branch(self, branch):
         self.editor.set_branch(branch)
+        self.locator.set_current_branch(branch)
 
     def cancel_note_editing(self):
         self.l_editor.hide()

@@ -21,7 +21,6 @@ class noteEditor(QTextEdit):
     def start_edit(self, note_id: int, file_id: int):
         self.note_id = note_id
         self.file_id = file_id
-        ag.signals_.user_signal.emit(f'notes - branch request/{file_id}')
 
     def set_branch(self, branch):
         self.branch = branch

@@ -51,7 +51,6 @@ def exec_user_actions():
         "Enable_buttons": enable_buttons,
         "reload_dirs": reload_cur_dir,
         "file-note: Go to file": goto_edited_file,
-        "notes - branch request": notes_branch_request,
       }
 
     @pyqtSlot(str)
@@ -71,12 +70,6 @@ def exec_user_actions():
             )
 
     return execute_action
-
-@pyqtSlot(str)
-def notes_branch_request(param: str):
-    ag.file_data_holder.set_branch(
-        define_branch(ag.dir_list.currentIndex())
-    )
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):
@@ -888,4 +881,7 @@ def delete_authors(authors: str):
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
     if f_dat:
+        ag.file_data_holder.set_branch(
+            define_branch(ag.dir_list.currentIndex())
+        )
         ag.file_data_holder.set_file_id(f_dat.id)

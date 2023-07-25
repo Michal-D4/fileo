@@ -20,43 +20,43 @@ class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
+        self.cur_branch = []
         self.branches = []
         self.dirs = []
         self.names = []
 
     def set_file_id(self, id: int):
         self.file_id = id
-        self.get_locations()
+        self.get_leaves()
         self.build_branches()
         self.build_branch_data()
         self.show_branches()
 
-    def get_locations(self):
+    def get_leaves(self):
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         self.get_file_dirs(dir_ids)
         self.branches.clear()
         for dd in self.dirs:
-            # logger.info(f'{dd=}')
             self.branches.append([(dd.id, dir_type(dd)), dd.parent_id])
+            logger.info(f'{self.branches[-1]=}')
 
     def get_file_dirs(self, dir_ids):
         self.dirs.clear()
         for id in dir_ids:
             parents = db_ut.dir_parents(id[0])
             for pp in parents:
-                # logger.info(f'{id=}, {pp=}')
                 self.dirs.append(ag.DirData(*pp))
+                logger.info(f'{self.dirs[-1]=}')
 
     def build_branches(self):
-        def add_dir_parent(qq: ag.DirData, tt: list) -> list:
-            # logger.info(f'{qq=}, {tt=}')
-            ss = tt[:-1]          # [*tt[:-1]] is the same as tt[:-1] ?
-            tt[-1] = (qq.id, dir_type(qq))
-            tt.append(qq.parent_id)
+        def add_dir_parent(d_data: ag.DirData, tt: list) -> list:
+            # logger.info(f'{d_data=}, {tt=}')
+            ss = tt[:-1]
+            tt[-1] = (d_data.id, dir_type(d_data))
+            tt.append(d_data.parent_id)
             return ss
 
         curr = 0
-        # logger.info(f'{curr=}, {len(self.branches)=}')
         while 1:
             if curr >= len(self.branches):
                 break
@@ -78,6 +78,7 @@ class Locations(QTextBrowser):
                     self.branches.append(
                         [*ss, (qq.id, dir_type(qq)), qq.parent_id]
                     )
+                    logger.info(f'{self.branches[-1]=}')
             curr += 1
 
     def show_branches(self):
@@ -100,10 +101,10 @@ class Locations(QTextBrowser):
     def branch_names(self, bb: list) -> str:
         tt = bb[:-1]
         tt.reverse()
-        is_link = 'Y' if bb[0][0] else ''
-        hidden = 'Y' if bb[0][1] else ''
+        logger.info(f'{tt=}')
         ww = []
+        vv = []
         for id in tt:
             name = db_ut.get_dir_name(id[0])
             ww.append(f'{name}{id[1]}')
-        return ' > '.join(ww), is_link, hidden
+        return ' > '.join(ww)
