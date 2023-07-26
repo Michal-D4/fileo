@@ -51,6 +51,7 @@ def exec_user_actions():
         "Enable_buttons": enable_buttons,
         "reload_dirs": reload_cur_dir,
         "file-note: Go to file": goto_edited_file,
+        "remove_file_from_location": remove_file_from_location
       }
 
     @pyqtSlot(str)
@@ -75,7 +76,7 @@ def exec_user_actions():
 def goto_edited_file(param: str):
     file_id, branch = param.split('-')
     idx = expand_branch(
-        (int(it) for it in branch.split(','))
+        (int(it) for it in branch[1:-1].split(', '))
     )
 
     if idx.isValid():
@@ -316,7 +317,6 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     currentRowChanged signal in dirTree
     :@return: None
     """
-    logger.info(f'{curr_idx.data(Qt.ItemDataRole.UserRole).id}, {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
@@ -613,6 +613,11 @@ def remove_files():
         dir_id = get_dir_id(id)
         db_ut.delete_file_dir_link(id, dir_id)
     post_delete_file(row)
+
+def remove_file_from_location(param: str):
+    dir_id, id = param.split(',')
+    db_ut.delete_file_dir_link(id, dir_id)
+    ag.file_data_holder.set_file_id(int(id))
 
 def get_dir_id(file: int) -> int:
     """

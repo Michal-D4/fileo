@@ -3,7 +3,7 @@ from loguru import logger
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import (
     QMouseEvent, QTextCursor, QAction,
-    QKeySequence, QShortcut,
+    QKeySequence,
 )
 from PyQt6.QtWidgets import QTextBrowser, QMenu
 
@@ -41,8 +41,6 @@ class Locations(QTextBrowser):
         self.cur_pos = QPoint()
         self.setTabChangesFocus(False)
         self.mousePressEvent = self.loc_menu
-        sel_all = QShortcut(MENU_TITLES[4][2], self)
-        sel_all.activated.connect(self.select_all)
 
     def loc_menu(self, e: QMouseEvent):
         self.cur_pos = e.pos()
@@ -62,21 +60,23 @@ class Locations(QTextBrowser):
                     MENU_TITLES[0][1]: self.copy,
                     MENU_TITLES[1][1]: self.go_file,
                     MENU_TITLES[2][1]: self.delete_file,
-                    MENU_TITLES[4][1]: self.select_all,
+                    MENU_TITLES[4][1]: self.selectAll,
                 }[action.text()]()
 
     def go_file(self):
         txt_cursor = self.select_line_under_mouse(self.cur_pos)
         branch = self.names.get(txt_cursor.selectedText(), False)
-        logger.info(f'++++ 1, {branch}')
+        ag.signals_.user_signal.emit(
+            f'file-note: Go to file/{self.file_id}-{branch}'
+        )
+        self.set_file_id(self.file_id)
 
     def delete_file(self):
         txt_cursor = self.select_line_under_mouse(self.cur_pos)
         branch = self.names.get(txt_cursor.selectedText(), False)
-        logger.info(f'++++ 2, {branch}')
-
-    def select_all(self):
-        logger.info('++++ 4')
+        ag.signals_.user_signal.emit(
+            f'remove_file_from_location/{branch[-1]},{self.file_id}'
+        )
 
     def select_line_under_mouse(self, pos: QPoint) -> QTextCursor:
         txt_cursor = self.cursorForPosition(pos)
@@ -154,14 +154,18 @@ class Locations(QTextBrowser):
 
     def show_branches(self):
         txt = [
-            '<table width="98%">',
+            '<HEAD><STYLE type="text/css"> p, li {text-align: left; '
+            'text-indent:-28px; line-height: 66%} </STYLE> </HEAD> <BODY> '
         ]
         for key, val in self.names.items():
-            b = '*' if val == self.cur_branch else ''
-            txt.append(
-                f'<tr><td width="13">{b}</td><td><span>{key}</span></td></tr>'
-            )
-        txt.append('</table>')
+            if val == self.cur_branch:
+                tmp = f'<ul><li type="circle">{key}</li></ul>'
+            else:
+                tmp = f'<p><blockquote>{key}</p>'
+            txt.append(tmp)
+
+        txt.append('<p/></BODY>')
+        logger.info(''.join(txt))
         self.setHtml(''.join(txt))
 
     def build_branch_data(self):

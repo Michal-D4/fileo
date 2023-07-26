@@ -32,7 +32,7 @@ class noteEditor(QTextEdit):
         return self.note_id
 
     def get_branch(self) -> str:
-        return ','.join((str(it) for it in self.branch))
+        return self.branch
 
     def get_text(self):
         return self.toPlainText()
