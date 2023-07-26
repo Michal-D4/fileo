@@ -166,7 +166,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.maximized = not self.maximized
 
     def set_branch(self, branch):
-        self.editor.set_branch(branch)
+        if not self.notes.is_editing():
+            self.editor.set_branch(branch)
         self.locator.set_current_branch(branch)
 
     def cancel_note_editing(self):
