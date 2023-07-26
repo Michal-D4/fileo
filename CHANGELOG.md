@@ -1,10 +1,19 @@
 # Change Log
 
+## 0.9.43 - 26 July, 2023
+
+* on "Locations" tab: 
+  * remove file from location
+  * navigate to a specific file location
+* add possibility to walk through  folders-files and notes to different files while editing the note  to the particular file, and possibility to return to that particular file at any moment
+* fix bug with restoring first item in folder history
+* some changes to improve and clean up the code (quite a lot)
+
 ## 0.9.42 - 10 July, 2023
 
 * fix issue with copying note text into editor
 * fix bug with collapsed note size
-* change term "folder copy" to "folder link" as more suitable in code and DB
+* change the term "folder copy" to "folder link" in code and DB as more suitable
 
 ## 0.9.41 - 06 July, 2023
 
