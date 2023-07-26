@@ -1,8 +1,21 @@
 from loguru import logger
 
-from PyQt6.QtWidgets import QTextBrowser
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import (
+    QMouseEvent, QTextCursor, QAction,
+    QKeySequence, QShortcut,
+)
+from PyQt6.QtWidgets import QTextBrowser, QMenu
 
 from ..core import icons, app_globals as ag, db_ut
+
+MENU_TITLES = (
+    (True, "Copy", QKeySequence.StandardKey.Copy),
+    (False, "go to this location", None),
+    (False, "delete file from this location", None),
+    (True, "", None),       # addSeparator
+    (True, "Select All", QKeySequence.StandardKey.SelectAll),
+)
 
 
 def dir_type(dd: ag.DirData):
@@ -23,7 +36,71 @@ class Locations(QTextBrowser):
         self.cur_branch = []
         self.branches = []
         self.dirs = []
-        self.names = []
+        self.names = {}
+
+        self.cur_pos = QPoint()
+        self.setTabChangesFocus(False)
+        self.mousePressEvent = self.loc_menu
+        sel_all = QShortcut(MENU_TITLES[4][2], self)
+        sel_all.activated.connect(self.select_all)
+
+    def loc_menu(self, e: QMouseEvent):
+        self.cur_pos = e.pos()
+        if e.buttons() is Qt.MouseButton.LeftButton:
+            self.select_line_under_mouse(self.cur_pos)
+            return
+        if e.buttons() is Qt.MouseButton.RightButton:
+            txt_cursor = self.textCursor()
+            if not txt_cursor.hasSelection():
+                txt_cursor = self.select_line_under_mouse(self.cur_pos)
+            line = txt_cursor.selectedText()
+            branch = self.names.get(line, False)
+            menu = self.create_menu(branch)
+            action = menu.exec(self.mapToGlobal(self.cur_pos))
+            if action:
+                {
+                    MENU_TITLES[0][1]: self.copy,
+                    MENU_TITLES[1][1]: self.go_file,
+                    MENU_TITLES[2][1]: self.delete_file,
+                    MENU_TITLES[4][1]: self.select_all,
+                }[action.text()]()
+
+    def go_file(self):
+        txt_cursor = self.select_line_under_mouse(self.cur_pos)
+        branch = self.names.get(txt_cursor.selectedText(), False)
+        logger.info(f'++++ 1, {branch}')
+
+    def delete_file(self):
+        txt_cursor = self.select_line_under_mouse(self.cur_pos)
+        branch = self.names.get(txt_cursor.selectedText(), False)
+        logger.info(f'++++ 2, {branch}')
+
+    def select_all(self):
+        logger.info('++++ 4')
+
+    def select_line_under_mouse(self, pos: QPoint) -> QTextCursor:
+        txt_cursor = self.cursorForPosition(pos)
+        txt_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+        self.setTextCursor(txt_cursor)
+        return txt_cursor
+
+    def create_menu(self, branch) -> QMenu:
+        menu = QMenu(self)
+        actions = []
+        for cond, name, key in MENU_TITLES:
+            if cond or branch:
+                if name:
+                    actions.append(QAction(name, self))
+                    if key:
+                        actions[-1].setShortcut(key)
+                else:
+                    actions.append(QAction(self))
+                    actions[-1].setSeparator(True)
+        menu.addActions(actions)
+        return menu
+
+    def set_current_branch(self, branch):
+        self.cur_branch = branch
 
     def set_file_id(self, id: int):
         self.file_id = id
@@ -38,7 +115,6 @@ class Locations(QTextBrowser):
         self.branches.clear()
         for dd in self.dirs:
             self.branches.append([(dd.id, dir_type(dd)), dd.parent_id])
-            logger.info(f'{self.branches[-1]=}')
 
     def get_file_dirs(self, dir_ids):
         self.dirs.clear()
@@ -46,11 +122,9 @@ class Locations(QTextBrowser):
             parents = db_ut.dir_parents(id[0])
             for pp in parents:
                 self.dirs.append(ag.DirData(*pp))
-                logger.info(f'{self.dirs[-1]=}')
 
     def build_branches(self):
         def add_dir_parent(d_data: ag.DirData, tt: list) -> list:
-            # logger.info(f'{d_data=}, {tt=}')
             ss = tt[:-1]
             tt[-1] = (d_data.id, dir_type(d_data))
             tt.append(d_data.parent_id)
@@ -61,7 +135,6 @@ class Locations(QTextBrowser):
             if curr >= len(self.branches):
                 break
             tt = self.branches[curr]
-            # logger.info(f'{tt=}')
 
             while 1:
                 if tt[-1] == 0:
@@ -69,7 +142,6 @@ class Locations(QTextBrowser):
                 parents = db_ut.dir_parents(tt[-1])
                 first = True
                 for pp in parents:
-                    # logger.info(f'{pp}')
                     qq = ag.DirData(*pp)
                     if first:
                         ss = add_dir_parent(qq, tt)
@@ -78,17 +150,16 @@ class Locations(QTextBrowser):
                     self.branches.append(
                         [*ss, (qq.id, dir_type(qq)), qq.parent_id]
                     )
-                    logger.info(f'{self.branches[-1]=}')
             curr += 1
 
     def show_branches(self):
         txt = [
-            '<table>',
+            '<table width="98%">',
         ]
-        for a,b,c in self.names:
-            # TODO create referencies to go to filder with popup menu
+        for key, val in self.names.items():
+            b = '*' if val == self.cur_branch else ''
             txt.append(
-                f'<tr><td>{a}</td>'
+                f'<tr><td width="13">{b}</td><td><span>{key}</span></td></tr>'
             )
         txt.append('</table>')
         self.setHtml(''.join(txt))
@@ -96,15 +167,16 @@ class Locations(QTextBrowser):
     def build_branch_data(self):
         self.names.clear()
         for bb in self.branches:
-            self.names.append(self.branch_names(bb))
+            key, val = self.branch_names(bb)
+            self.names[key] = val
 
     def branch_names(self, bb: list) -> str:
         tt = bb[:-1]
         tt.reverse()
-        logger.info(f'{tt=}')
         ww = []
         vv = []
         for id in tt:
             name = db_ut.get_dir_name(id[0])
             ww.append(f'{name}{id[1]}')
-        return ' > '.join(ww)
+            vv.append(id[0])
+        return ' > '.join(ww), vv
