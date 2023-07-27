@@ -17,7 +17,7 @@ from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
 from ..widgets.file_search import fileSearch
 from .compact_list import aBrowser
-from ..widgets.file_notes import notesBrowser
+from ..widgets.file_data import fileDataHolder
 
 from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut, history, low_bk
@@ -28,6 +28,7 @@ MIN_COMMENT_HEIGHT = 75
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400
+DEFAULT_HISTORY_DEPTH = 15
 
 def set_widget_to_frame(frame: QFrame, widget: QWidget):
     frame.setLayout(QVBoxLayout())
@@ -78,23 +79,21 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self):
         execute_user_action = low_bk.exec_user_actions()
-        ag.signals_.user_action_signal.connect(execute_user_action)
+        ag.signals_.user_signal.connect(execute_user_action)
 
-        if ag.db['restore']:
-            self.connect_db(utils.get_app_setting("DB_NAME", ""))
         self.restore_container()
         self.restore_comment_height()
         self.restore_geometry()
 
-        ag.notes = notesBrowser()
-        ag.notes.setObjectName("file_notes")
-        set_widget_to_frame(self.ui.noteHolder, ag.notes)
+        ag.file_data_holder = fileDataHolder()
+        ag.file_data_holder.setObjectName("file_notes")
+        set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
-            utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
+            utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
         )
 
-        if ag.db['Conn']:
-            ag.notes.set_data()
+        if ag.db['restore']:     # start app with restoring DB connection - 1st app instance
+            self.connect_db(utils.get_app_setting("DB_NAME", ""))
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -108,6 +107,7 @@ class shoWindow(QMainWindow):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
             bk_ut.set_field_menu()
+            ag.file_data_holder.set_data()
             return True
         return False
 
@@ -150,11 +150,11 @@ class shoWindow(QMainWindow):
 
     def set_extra_widgets(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Previous folder')
-        self.btn_prev.clicked.connect(bk_ut.to_prev_folder)
+        self.btn_prev.clicked.connect(low_bk.to_prev_folder)
         self.btn_prev.setDisabled(True)
 
         self.btn_next = self._create_button("next_folder", 'btn_next', 'Next folder')
-        self.btn_next.clicked.connect(bk_ut.to_next_folder)
+        self.btn_next.clicked.connect(low_bk.to_next_folder)
         self.btn_next.setDisabled(True)
 
         self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')
@@ -184,7 +184,6 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def show_hide_click(self, state: bool):
-        # logger.info(f'{state=}')
         bk_ut.show_hidden_dirs()
         self.show_hidden.setIcon(icons.get_other_icon("show_hide", int(state)))
 

@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['entry_point.py'],
+    ['fileo.py'],
     pathex=[],
     binaries=[],
     datas=[('src/qss', 'src/qss')],
@@ -45,5 +45,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='entry_point',
+    name='fileo',
 )

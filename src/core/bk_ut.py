@@ -25,8 +25,9 @@ def save_bk_settings():
     actions = ag.field_menu.menu().actions()
 
     try:
+        curr_dir_idx = ag.dir_list.currentIndex()
         settings = {
-            "TREE_PATH": low_bk.get_branch(ag.dir_list.currentIndex()),
+            "TREE_PATH": low_bk.define_branch(curr_dir_idx),
             "FIELDS_STATE": [int(a.isChecked()) for a in actions],
             "COLUMN_WIDTH": low_bk.get_columns_width(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
@@ -38,6 +39,7 @@ def save_bk_settings():
             "HISTORY": ag.history.get_history(),
         }
         low_bk.save_settings(**settings)
+        low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
         self.filter_setup.save_filter_settings()
     except:
         pass
@@ -49,36 +51,6 @@ def search_files():
     ff.show()
     ff.srch_pattern.setFocus()
 
-@pyqtSlot()
-def to_prev_folder():
-    row = ag.file_list.currentIndex().row()
-    ag.history.set_file_id(row)
-    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
-    folder: history.Item = ag.history.prev_dir()
-    go_to_history_folder(folder)
-
-@pyqtSlot()
-def to_next_folder():
-    row = ag.file_list.currentIndex().row()
-    ag.history.set_file_id(row)
-    low_bk.save_file_row_in_model(row, ag.dir_list.currentIndex())
-    folder: history.Item = ag.history.next_dir()
-    go_to_history_folder(folder)
-
-def go_to_history_folder(folder: history.Item):
-    if not folder.path:
-        return
-    ag.hist_folder = True
-    _history_folder(folder)
-
-def _history_folder(folder: history.Item):
-    idx = low_bk.expand_branch(folder.path)
-    if idx.isValid():
-        ag.file_row = folder.file_id
-        ag.dir_list.setCurrentIndex(idx)
-        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-        low_bk.set_current_file(ag.file_row)
-
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
     if collapse:
@@ -89,11 +61,6 @@ def toggle_collapse(collapse: bool):
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
-
-def restore_sorting():
-    col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
-    order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.header().setSortIndicator(col, order)
 
 def bk_setup(main: 'shoWindow'):
     low_bk.dir_list_setup()
@@ -121,7 +88,7 @@ def bk_setup(main: 'shoWindow'):
     ag.author_list.delete_items.connect(low_bk.delete_authors)
 
     ag.file_list.doubleClicked.connect(
-        lambda: ag.signals_.user_action_signal.emit("double click file"))
+        lambda: ag.signals_.user_signal.emit("double click file"))
 
 def set_field_menu():
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
@@ -160,7 +127,7 @@ def click_setup_button():
         pos + QPoint(53, 26 - sz.height())
     ))
     if action:
-        ag.signals_.user_action_signal.emit(f"Setup {action.text()}")
+        ag.signals_.user_signal.emit(f"Setup {action.text()}")
 
 def field_list_changed():
     resize_columns(0)
@@ -218,13 +185,8 @@ def populate_all():
     ag.filter_dlg.restore_filter_settings()
 
     low_bk.populate_file_list()
-    if ag.file_list.model().rowCount() > 0:
-        restore_sorting()
-
-    hist = low_bk.get_setting('HISTORY', [[], [], history.Item()])
-    ag.history.set_history(*hist)
-    ag.hist_folder = not hist[0]
-    _history_folder(hist[-1])
+    # if ag.file_list.model().rowCount() > 0:
+    #     restore_sorting()
 
 def fill_dir_list():
     """
@@ -233,7 +195,6 @@ def fill_dir_list():
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
     ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
-    ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot()
 def show_hidden_dirs():
@@ -270,7 +231,7 @@ def dir_menu(pos):
 
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:
-        ag.signals_.user_action_signal.emit(f"Dirs {action.text()}")
+        ag.signals_.user_signal.emit(f"Dirs {action.text()}")
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
@@ -292,7 +253,7 @@ def file_menu(pos):
         menu.addAction("Delete file(s) from DB")
         action = menu.exec(ag.file_list.mapToGlobal(pos))
         if action:
-            ag.signals_.user_action_signal.emit(f"Files {action.text()}")
+            ag.signals_.user_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):
@@ -321,13 +282,13 @@ def finish_loading(has_new_ext: bool):
     self.ui.btnScan.setEnabled(True)
     self.set_busy(False)
     if has_new_ext:
-        ag.signals_.user_action_signal.emit("ext inserted")
+        ag.signals_.user_signal.emit("ext inserted")
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
 def show_lost_files():
     if workers.find_lost_files():
-        ag.signals_.user_action_signal.emit('reload_dirs')
+        ag.signals_.user_signal.emit('reload_dirs')
 
 @pyqtSlot()
 def run_update0_files():

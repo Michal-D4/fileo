@@ -102,6 +102,11 @@ def file_duplicates():
     )
     return ag.db['Conn'].cursor().execute(sql)
 
+def get_file_name(id: int) -> str:
+    sql = 'select filename from files where id = ?'
+    res = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    return res[0] if res else ''
+
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     """
     case - if True case sensitive
@@ -175,7 +180,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
         res = conn.execute(sql, (nn,)).fetchone()
         return res[0] > 0
 
-def get_files(did: int, parent: int) -> apsw.Cursor:
+def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     sql = (
         'with x(fileid, commented) as (select fileid, max(modified) '
         'from comments group by fileid) '
@@ -184,10 +189,10 @@ def get_files(did: int, parent: int) -> apsw.Cursor:
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
-        'join parentdir p on fd.dir = p.id '      # to avoid duplications
+        'join parentdir p on fd.dir = p.id '      # to avoid duplication
         'where fd.dir = :id and p.parent = :pid;'
     )
-    return ag.db['Conn'].cursor().execute(sql, {'id': did, 'pid': parent})
+    return ag.db['Conn'].cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
 def lost_files() -> bool:
     """
@@ -617,12 +622,12 @@ def save_to_temp(key: str, val):
     ag.db['Conn'].cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
-def save_branch_in_temp(path):
+def save_branch_in_temp_table(path):
     sql = 'update aux set val = :path where key = :key'
     key = 'TREE_PATH'
     ag.db['Conn'].cursor().execute(sql, {'path': path, 'key': key})
 
-def get_branch_from_temp() -> str:
+def get_branch_from_temp_table() -> str:
     sql = 'select val from aux where key = ?'
     key = 'TREE_PATH'
     res = ag.db['Conn'].cursor().execute(sql, (key,)).fetchone()
@@ -729,11 +734,12 @@ def update_dir_name(name: str, id: int):
     with ag.db['Conn'] as conn:
         conn.cursor().execute(sql, (name, id))
 
-def update_file_id(dirs: list, row_id: int):
+def update_file_row(d_data: ag.DirData):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
-    p_d = dirs[-2:] if len(dirs) > 1 else (0, dirs[0])
     with ag.db['Conn'] as conn:
-        conn.cursor().execute(sql, (row_id, *p_d))
+        conn.cursor().execute(
+            sql, (d_data.file_row, d_data.parent_id, d_data.id)
+        )
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
@@ -866,7 +872,7 @@ def insert_note(fileid: int, note: str) -> int:
                 'created': ts[0]
             }
         )
-        return ts[0], conn.last_insert_rowid()
+        return ts[0], id
 
 def update_note(fileid: int, id: int, note: str) -> int:
     sql0 = 'select modified from comments where fileid=:fileid and id=:id'
@@ -966,7 +972,7 @@ def create_connection(path: str) -> bool:
     conn: apsw.Connection = apsw.Connection(path)
     ag.db['Path'] = path
     ag.db['Conn'] = conn
-    ag.signals_.user_action_signal.emit('Enable_buttons')
+    ag.signals_.user_signal.emit('Enable_buttons')
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

@@ -32,7 +32,7 @@ def exec_user_actions():
         "Dirs Import files": import_files,
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
-        "author inserted": populate_author_list,
+        "author_inserted": populate_author_list,
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_file,
@@ -50,6 +50,8 @@ def exec_user_actions():
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
         "reload_dirs": reload_cur_dir,
+        "file-note: Go to file": goto_edited_file,
+        "remove_file_from_location": remove_file_from_location
       }
 
     @pyqtSlot(str)
@@ -62,7 +64,7 @@ def exec_user_actions():
             else:
                 data_methods[act](action[pos+1:])
         except KeyError as err:
-            show_message_box(
+            utils.show_message_box(
                 'Action not implemented',
                 f'Action name "{err}" not implemented',
                 icon=QMessageBox.Icon.Warning
@@ -70,17 +72,20 @@ def exec_user_actions():
 
     return execute_action
 
-def show_message_box(title: str, msg: str,
-                     btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
-                     icon: QMessageBox.Icon = QMessageBox.Icon.Information,
-                     details: str = '') -> int:
-    dlg = QMessageBox(ag.app)
-    dlg.setWindowTitle(title)
-    dlg.setText(msg)
-    dlg.setDetailedText(details)
-    dlg.setStandardButtons(btn)
-    dlg.setIcon(icon)
-    return dlg.exec()
+@pyqtSlot(str)
+def goto_edited_file(param: str):
+    file_id, branch = param.split('-')
+    idx = expand_branch(
+        (int(it) for it in branch[1:-1].split(', '))
+    )
+
+    if idx.isValid():
+        ag.dir_list.setCurrentIndex(idx)
+        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+
+        model = ag.file_list.model()
+        row = model.get_row_by_id(int(file_id))
+        set_current_file(row)
 
 @pyqtSlot()
 def report_duplicates():
@@ -89,7 +94,7 @@ def report_duplicates():
     if rep:
         save_report(rep)
     else:
-        show_message_box(
+        utils.show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )
@@ -97,7 +102,6 @@ def report_duplicates():
 def save_report(rep):
     pp = Path('~/fileo/report').expanduser()
     path = utils.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
-    logger.info(f'{path=}, {pp=}')
     file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
         caption='Open file to save duplicate files report',
         directory=(Path(path) / 'untitled').as_posix(),
@@ -111,8 +115,6 @@ def _save_report(rep: dict[list], filename: str):
 
     with open(filename, "w") as out:
         for key,rr in rep.items():
-            # logger.info(key)
-            # logger.info(rr)
             out.write(f"{'-='*20}-\n")
             for r in rr:
                 out.write(f"File:  {r[0]}\n")
@@ -145,7 +147,7 @@ def rename_in_file_system(new_name: str):
     if new_path.name == new_name:
         ag.app.ui.current_filename.setText(new_name)
     else:
-        show_message_box(
+        utils.show_message_box(
             'Error renaming file',
             f'File {ag.file_path.name} was not renamed',
             icon=QMessageBox.Icon.Critical,
@@ -169,7 +171,6 @@ def find_files_by_name(param: str):
         return ','.join(pp[:-2]), *pp[-2:]
 
     pp = split3()
-    # logger.info(f'{param}, {pp=}')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     show_files(files)
 
@@ -232,20 +233,20 @@ def get_tmp_setting(key: str, default=None):
     return vv if vv else default
 
 def save_branch():
-    save_settings(TREE_PATH=get_branch(ag.dir_list.currentIndex()))
+    save_settings(TREE_PATH=define_branch(ag.dir_list.currentIndex()))
 
 def restore_branch() -> QModelIndex:
     return expand_branch(get_setting('TREE_PATH', []))
 
 def save_branch_in_temp(index: QModelIndex):
-    branch = get_branch(index)
-    db_ut.save_branch_in_temp(pickle.dumps(branch))
+    branch = define_branch(index)
+    db_ut.save_branch_in_temp_table(pickle.dumps(branch))
 
 def restore_branch_from_temp() -> QModelIndex:
-    val = db_ut.get_branch_from_temp()
+    val = db_ut.get_branch_from_temp_table()
     return expand_branch(pickle.loads(val) if val else [])
 
-def get_branch(index: QModelIndex) -> list[int]:
+def define_branch(index: QModelIndex) -> list[int]:
     """
     return branch - a list of node ids from root to index
     """
@@ -287,6 +288,7 @@ def expand_branch(branch: list) -> QModelIndex:
         if parent.isValid():
             if not ag.dir_list.isExpanded(parent):
                 ag.dir_list.setExpanded(parent, True)
+
         for i,child in enumerate(item.children):
             ud = child.user_data()
             if it == ud.id:
@@ -295,7 +297,7 @@ def expand_branch(branch: list) -> QModelIndex:
                 break
         else:
             parent = QModelIndex()
-            break
+            break    # outer loop
 
     return parent
 #endregion
@@ -313,61 +315,49 @@ def set_dir_model():
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     """
     currentRowChanged signal in dirTree
-    :@param curr_idx:
     :@return: None
     """
-    # logger.info(f'{ag.hist_folder=}')
     def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
         else:       # new history item
-            add_history_item(file_row)
-            save_file_row_in_model(file_row, prev_idx)
-            ag.file_row = curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+            add_history_item()
+        set_current_file(
+            curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+        )
 
     ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-    if ag.section_resized:   # save column widths if changed
-        save_settings(COLUMN_WIDTH=get_columns_width())
-        ag.section_resized = False
+
+    save_columns_width()
+
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
+        save_file_row(file_row, prev_idx)
         show_folder_files()
         new_history_item()
-        set_current_file(ag.file_row)
 
-def save_file_row_in_model(file_row: int, prev_idx: QModelIndex):
-    model = ag.dir_list.model()
-    dir_item = model.getItem(prev_idx)
-    dir_item.userData.file_row = file_row
+def save_columns_width():
+    if ag.section_resized:   # save column widths if changed
+        save_settings(COLUMN_WIDTH=get_columns_width())
+        ag.section_resized = False
 
-def add_history_item(file_row: int):
-    ag.history.set_file_id(file_row)
+def save_file_row(file_row: int, dir_idx: QModelIndex):
+    if dir_idx.isValid():
+        u_dat = update_file_row_in_dir_model(file_row, dir_idx)
+        db_ut.update_file_row(u_dat)
+
+def update_file_row_in_dir_model(file_row: int, idx: QModelIndex) -> ag.DirData:
+        model = ag.dir_list.model()
+        dir_item = model.getItem(idx)
+        u_data: ag.DirData = dir_item.userData
+        u_data.file_row = file_row
+        return u_data
+
+def add_history_item():
     ag.history.add_item(
-        get_branch(ag.dir_list.currentIndex()), 0
+        define_branch(ag.dir_list.currentIndex())
     )
-
-def restore_path(path: list) -> QModelIndex:
-    """
-    restore expand state and current index of dir_list
-    :return: current index
-    """
-    model: TreeModel = ag.dir_list.model()
-    parent = QModelIndex()
-
-    try:
-        for id in path:
-            if parent.isValid():
-                if not ag.dir_list.isExpanded(parent):
-                    ag.dir_list.setExpanded(parent, True)
-            parent = model.index(int(id), 0, parent)
-    except IndexError:
-        if model.rowCount(QModelIndex()) > 0:
-            parent = model.index(0, 0, QModelIndex())
-
-    ag.dir_list.setCurrentIndex(parent)
-    ag.dir_list.scrollTo(parent, QAbstractItemView.ScrollHint.PositionAtCenter)
-    return parent
 
 def dir_list_setup():
     ag.dir_list.header().hide()
@@ -395,10 +385,42 @@ def app_mode_changed(old_mode: ag.appMode):
         set_current_file(row)
 
 def populate_file_list():
+    restore_sorting()
+    hist = get_setting('HISTORY', [[], [], []])  # next_, prev, curr
+
     if ag.mode is ag.appMode.DIR:
-        show_folder_files()
+        ag.history.set_history(*hist)
+        ag.hist_folder = True
+        _history_folder(hist[-1])
     else:             # appMode.FILTER or appMode.FILTER_SETUP
         filtered_files()
+
+def restore_sorting():
+    col = get_setting("FILE_SORT_COLUMN", 0)
+    order = get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
+    ag.file_list.header().setSortIndicator(col, order)
+
+@pyqtSlot()
+def to_prev_folder():
+    branch = ag.history.prev_dir()
+    go_to_history_folder(branch)
+
+@pyqtSlot()
+def to_next_folder():
+    branch = ag.history.next_dir()
+    go_to_history_folder(branch)
+
+def go_to_history_folder(branch: list):
+    if not branch:
+        return
+    ag.hist_folder = True
+    _history_folder(branch)
+
+def _history_folder(branch: list):
+    idx = expand_branch(branch)
+    if idx.isValid():
+        ag.dir_list.setCurrentIndex(idx)
+        ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
 def filtered_files():
     """
@@ -423,6 +445,12 @@ def show_files(files):
     populate file's model
     :@param files
     """
+    model = fill_file_model(files)
+    set_file_model(model)
+    header_restore(model)
+    model.model_data_changed.connect(rename_in_file_system)
+
+def fill_file_model(files) -> TableModel:
     model: TableModel = TableModel()
     field_idx = field_indexes()
 
@@ -432,17 +460,16 @@ def show_files(files):
             ff1.append(field_val(typ, ff[i]))
         model.append_row(ff1, ag.FileData(*ff[-3:]))
 
-    ag.app.ui.file_count.setText(f"files: {model.rowCount()}")
+    rows = model.rowCount()
+    ag.app.ui.file_count.setText(f"files: {rows}")
 
-    if model.rowCount() == 0:
+    if rows == 0:
         row = ["THERE ARE NO FILES HERE"]
         for _,typ in field_idx[1:]:
             row.append(field_val(typ))
         model.append_row(row, ag.FileData(-1,0,0))
 
-    set_file_model(model)
-    header_restore(model)
-    model.model_data_changed.connect(rename_in_file_system)
+    return model
 
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
@@ -564,7 +591,7 @@ def delete_files():
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    res = show_message_box(
+    res = utils.show_message_box(
         'delete file from DB',
         f'Selected files will be deleted. Please confirm',
         QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -586,6 +613,11 @@ def remove_files():
         dir_id = get_dir_id(id)
         db_ut.delete_file_dir_link(id, dir_id)
     post_delete_file(row)
+
+def remove_file_from_location(param: str):
+    dir_id, id = param.split(',')
+    db_ut.delete_file_dir_link(id, dir_id)
+    ag.file_data_holder.set_file_id(int(id))
 
 def get_dir_id(file: int) -> int:
     """
@@ -642,7 +674,7 @@ def import_files():
         _import_files(file_name)
 
 def _import_files(filename):
-    branch = get_branch(ag.dir_list.currentIndex())
+    branch = define_branch(ag.dir_list.currentIndex())
     exist_dir = 0
 
     with open(filename, "r") as fp:
@@ -770,7 +802,7 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
     if index.isValid():
-        branch = get_branch(index)
+        branch = define_branch(index)
         if last_id:
             branch.append(last_id)
         idx = expand_branch(branch)
@@ -853,6 +885,8 @@ def delete_authors(authors: str):
 
 def file_notes_show(file: QModelIndex):
     f_dat: ag.FileData = file.data(Qt.ItemDataRole.UserRole)
-    logger.info(f'{f_dat=}')
     if f_dat:
-        ag.notes.set_file_id(f_dat.id)
+        ag.file_data_holder.set_branch(
+            define_branch(ag.dir_list.currentIndex())
+        )
+        ag.file_data_holder.set_file_id(f_dat.id)

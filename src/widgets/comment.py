@@ -1,7 +1,7 @@
 from loguru import logger
 from datetime import datetime
 
-from PyQt6.QtCore  import QUrl, pyqtSlot, QSize
+from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import QWidget
 
@@ -23,13 +23,14 @@ class Comment(QWidget):
 
         self.file_id = file_id
         self.id = id
+        self.collapsed = False
+
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
         self.text = ''
 
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
-        # logger.info(f'{id=}, {file_id=}, {self.visible_height=}')
 
         self.ui = Ui_comment()
 
@@ -39,8 +40,9 @@ class Comment(QWidget):
         self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
         self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
         self.ui.textBrowser.setOpenLinks(False)
+        self.ui.textBrowser.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        self.ui.collapse.clicked.connect(self.collapse_item)
+        self.ui.collapse.clicked.connect(self.toggle_collapse)
         self.ui.edit.clicked.connect(self.edit_note)
         self.ui.remove.clicked.connect(self.remove_note)
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
@@ -84,9 +86,13 @@ class Comment(QWidget):
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
 
-    @pyqtSlot(bool)
-    def collapse_item(self, state: bool):
-        if state:
+    @pyqtSlot()
+    def toggle_collapse(self):
+        self.collapsed = not self.collapsed
+        self.collapse_item()
+
+    def collapse_item(self):
+        if self.collapsed:
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.item_header.height()
             self.ui.textBrowser.hide()
@@ -94,7 +100,14 @@ class Comment(QWidget):
             self.visible_height = self.expanded_height
             self.expanded_height = 0
             self.ui.textBrowser.show()
-        self.set_collapse_icon(state)
+        self.set_collapse_icon(self.collapsed)
+
+    @pyqtSlot()
+    def check_collapse_button(self):
+        if self.collapsed:
+            return
+        self.collapsed = True
+        self.collapse_item()
 
     def set_collapse_icon(self, collapse: bool):
         self.ui.collapse.setIcon(
@@ -104,11 +117,11 @@ class Comment(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        ag.signals_.start_edit_note.emit(self.id)
+        ag.signals_.start_edit_note.emit(self.id, self.file_id)
 
     @pyqtSlot()
     def remove_note(self):
-        ag.signals_.delete_note.emit(self.id)
+        ag.signals_.delete_note.emit(self.id, self.file_id)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
@@ -117,6 +130,6 @@ class Comment(QWidget):
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        if not self.ui.collapse.isChecked():
+        if not self.collapsed:
             self.set_browser_text()
         return super().resizeEvent(a0)

@@ -79,7 +79,7 @@ class findFile(QWidget):
             return
 
         if db_ut.exists_file_with_name(name, case, word):
-            ag.signals_.user_action_signal.emit(
+            ag.signals_.user_signal.emit(
                 f'find_files_by_name/{name},{int(case)},{int(word)}'
             )
             low_bk.save_settings(SEARCH_FILE=(name, case, word))

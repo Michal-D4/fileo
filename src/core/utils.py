@@ -6,7 +6,7 @@ from importlib import resources
 
 from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant
 from PyQt6.QtGui import QMouseEvent, QPixmap
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from . import icons, app_globals as ag
 from .. import qss as style_sheets
@@ -187,3 +187,15 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
         pass
 
     app.setWindowIcon(icons.get_other_icon("app"))
+
+def show_message_box(title: str, msg: str,
+                     btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
+                     icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+                     details: str = '') -> int:
+    dlg = QMessageBox(ag.app)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.setDetailedText(details)
+    dlg.setStandardButtons(btn)
+    dlg.setIcon(icon)
+    return dlg.exec()
