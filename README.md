@@ -110,7 +110,7 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 
 ### How to make notes to the file
 
-![fileo-comments](https://github.com/Michal-D4/fileo/raw/main/img/fileo-comments.jpg)
+![fileo-comments](https://github.com/Michal-D4/fileo/raw/main/img/file-notes.jpg)
 
 1. "+"  plus button - add new note and open it in the editor
 6. "x" button - delete the note
@@ -129,7 +129,7 @@ Note is a markdown text. You can insert web links here, but the links to files i
 
 ![tag-selector](https://github.com/Michal-D4/fileo/raw/main/img/tag-selector.jpg)
 
-1. The list of tags associated with the current file. You can input here a list of tags separated by commas. It is the only place where the new tag can be created. The new tags will appear in the list 2 and 4.
+1. The list of tags associated with the current file. You can input here a list of tags separated by commas. *It is the only place where the new tag can be created.* The new tags will appear in the list 2 and 4.
 2. The list of tags. The tags selected in this list apply to the file filter.
 3. The context menu in the list of tags. Selected tags are highlighted ('Linux' and 'package'). The tag  'package' is a current tag (last selected).
 4. The tag selector. The tags selected here will appear in the list 1.
@@ -147,15 +147,21 @@ Note is a markdown text. You can insert web links here, but the links to files i
 
 ![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
-The current file "Environment Variables in Linux.md" has 5 locations (Paths/Folder Tree branches).
+1-4 are locations of the current file, 5 is a context menu.
 
-The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a link to the folder "fileo" in the path 1; the folder "Linux" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
+The location marked with bullet is a current location.
+
+All 4 locations end with the Poetry folder. This means that the file exists only in this folder (Poetry), the folder Poetry is presented in 4 branches. That's why the file has 4 locations.
+
+The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a link to the folder "fileo"[^1] in the path 1; the folder "A folder"  in folder "my" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
 
 ![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg)
 
-1. The "FOLDERS" box
+1. The current folder (Poetry).
 2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "A folder" and "fileo" in the folder "my" are links. The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
 3. The current file. "Environment Variables in Linux.md"
+
+[^1]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another folder. This other folder becomes its parent. 
 
 ### File info
 
@@ -179,3 +185,6 @@ Almost all operations with files are shown in the context menu on the picture.
 Besides them you can copy / move files from one folder to another.
 
 You can also open files by double clicking on "File name". If the file is executable, it will be executed, not opened. Thus, the application can be used as a "Start Menu", it can be even more convenient than the standard "Start Menu".
+
+> **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, you can find it by searching by name or part of the name, or with a filter, or at least it will appear in (hidden) folder "@@Lost".
+> If you delete a file from the DB, it will be deleted from all folders, and all notes for this file and its links to tags and authors will be lost.
