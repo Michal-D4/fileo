@@ -165,7 +165,6 @@ class Locations(QTextBrowser):
             txt.append(tmp)
 
         txt.append('<p/></BODY>')
-        logger.info(''.join(txt))
         self.setHtml(''.join(txt))
 
     def build_branch_data(self):

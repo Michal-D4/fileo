@@ -71,7 +71,6 @@ class notesContainer(QScrollArea):
 
     def go_menu(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.RightButton:
-            logger.info(f'{self.editor.get_file_id()=}, {self.file_id=}')
             if self.editor.get_file_id() == self.file_id:
                 return
             menu = QMenu(ag.app)

@@ -889,7 +889,6 @@ def update_note(fileid: int, id: int, note: str) -> int:
             }
         )
         ts = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
-        logger.info(f'{ts=}')
         return ts[0] if ts[0] > ts0[0] else -1
 
 def delete_note(file: int, note: int):

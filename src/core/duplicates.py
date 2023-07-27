@@ -6,7 +6,6 @@ from . import app_globals as ag, db_ut
 class Duplicates():
     def __init__(self) -> None:
         self.report = defaultdict(list)
-        logger.info(self.report)
         self.create_rep()
 
     def create_rep(self):

@@ -177,7 +177,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def note_changed(self):
         note_id = self.editor.get_note_id()
-        logger.info(f'{note_id=}')
         self.notes.finish_editing(note_id)
         self.l_editor.hide()
         self.notes.set_editing(False)
