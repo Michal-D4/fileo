@@ -707,7 +707,7 @@ def load_file(fl: dict) -> int:
         db_ut.copy_file(id, dir_id)
 
     db_ut.insert_tags(id, fl['tags'])
-    db_ut.insert_comments(id, fl['comments'])
+    db_ut.insert_filenotes(id, fl['notes'])
     db_ut.insert_authors(id, fl['authors'])
     return existed
 #endregion

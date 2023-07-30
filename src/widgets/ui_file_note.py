@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\comment.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\file_note.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.0
 #
@@ -9,28 +9,28 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 
-class Ui_comment(object):
-    def setupUi(self, comment):
-        comment.setObjectName("comment")
-        comment.resize(302, 50)
+class Ui_fileNote(object):
+    def setupUi(self, fileNote):
+        fileNote.setObjectName("fileNote")
+        fileNote.resize(302, 50)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(comment.sizePolicy().hasHeightForWidth())
-        comment.setSizePolicy(sizePolicy)
-        comment.setMinimumSize(QtCore.QSize(0, 0))
-        comment.setWindowTitle("Form")
-        comment.setToolTip("")
-        comment.setStatusTip("")
-        comment.setWhatsThis("")
-        comment.setAccessibleName("")
-        comment.setAccessibleDescription("")
-        comment.setWindowFilePath("")
-        self.verticalLayout = QtWidgets.QVBoxLayout(comment)
+        sizePolicy.setHeightForWidth(fileNote.sizePolicy().hasHeightForWidth())
+        fileNote.setSizePolicy(sizePolicy)
+        fileNote.setMinimumSize(QtCore.QSize(0, 0))
+        fileNote.setWindowTitle("Form")
+        fileNote.setToolTip("")
+        fileNote.setStatusTip("")
+        fileNote.setWhatsThis("")
+        fileNote.setAccessibleName("")
+        fileNote.setAccessibleDescription("")
+        fileNote.setWindowFilePath("")
+        self.verticalLayout = QtWidgets.QVBoxLayout(fileNote)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.outerFrame = QtWidgets.QFrame(comment)
+        self.outerFrame = QtWidgets.QFrame(fileNote)
         self.outerFrame.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         self.outerFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         self.outerFrame.setObjectName("outerFrame")
@@ -149,8 +149,8 @@ class Ui_comment(object):
         self.verticalLayout_2.addWidget(self.textBrowser)
         self.verticalLayout.addWidget(self.outerFrame)
 
-        self.retranslateUi(comment)
-        QtCore.QMetaObject.connectSlotsByName(comment)
+        self.retranslateUi(fileNote)
+        QtCore.QMetaObject.connectSlotsByName(fileNote)
 
-    def retranslateUi(self, comment):
+    def retranslateUi(self, fileNote):
         pass

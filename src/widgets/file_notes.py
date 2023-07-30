@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
 )
 
 from ..core import app_globals as ag, db_ut, utils
-from .comment import Comment
+from .file_note import fileNote
 
 
 class noteEditor(QTextEdit):
@@ -114,7 +114,7 @@ class notesContainer(QScrollArea):
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
             note_id = row[2]
-            note = Comment(*row[1:])
+            note = fileNote(*row[1:])
             note.set_text(row[0])
             self.notes[note_id] = note
             self.add_item(note)
@@ -124,26 +124,26 @@ class notesContainer(QScrollArea):
             if item.widget():
                 item.widget().deleteLater()
 
-    def add_item(self, item: Comment):
+    def add_item(self, item: fileNote):
         item.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.MinimumExpanding
         )
         self.scroll_layout.insertWidget(0, item)
 
-    def get_note(self, id: int) -> Comment:
+    def get_note(self, id: int) -> fileNote:
         return self.notes.get(id, None)
 
     def finish_editing(self, note_id: int):
         if note_id:
             note = self.notes[note_id]
         else:
-            note = Comment(file_id=self.file_id)
+            note = fileNote(file_id=self.file_id)
         self.update_note(note)
         self.add_item(note)
         self.editing = False
 
-    def update_note(self, note: Comment):
+    def update_note(self, note: fileNote):
         txt = self.editor.get_text()
         note_id = note.get_note_id()
         if note_id:
@@ -152,9 +152,9 @@ class notesContainer(QScrollArea):
         else:
             ts, id = db_ut.insert_note(self.file_id, txt)
             note.set_note_id(id)
-            note.set_created_date(ts)
+            note.set_creation_date(ts)
             self.notes[id] = note
-        note.set_modified_date(ts)
+        note.set_modification_date(ts)
         note.set_note_text(txt)
 
         self.update_date_in_file_list(ts)
@@ -164,7 +164,7 @@ class notesContainer(QScrollArea):
             a = QDateTime()
             a.setSecsSinceEpoch(ts)
             ag.file_list.model().update_field_by_name(
-                a, "Commented", ag.file_list.currentIndex()
+                a, "Date of last note", ag.file_list.currentIndex()
             )
 
     @pyqtSlot(int, int)
@@ -195,5 +195,5 @@ class notesContainer(QScrollArea):
 
     def collapse_all(self):
         for note in self.notes.values():
-            note: Comment
+            note: fileNote
             note.check_collapse_button()

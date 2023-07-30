@@ -154,7 +154,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="l_comments">
+       <widget class="QLabel" name="l_file_notes">
         <property name="text">
          <string>Notes</string>
         </property>

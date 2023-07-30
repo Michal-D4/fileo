@@ -93,11 +93,11 @@ def bk_setup(main: 'shoWindow'):
 def set_field_menu():
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
     fields = ('File Name', 'Open Date', 'rating', 'Open#', 'Modified',
-                'Pages', 'Size', 'Published', 'Commented', 'Created',)
+                'Pages', 'Size', 'Published', 'Date of last note', 'Created',)
     tool_tips = (
         ",Last opening date,rating of file,number of file openings,"
         "Last modified date,Number of pages(in book),Size of file,"
-        "Publication date(book),Last commented date,File creation date"
+        "Publication date(book),Date of last note,File creation date"
         )
 
     menu = QMenu(self)

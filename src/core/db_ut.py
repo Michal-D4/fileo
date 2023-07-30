@@ -113,10 +113,10 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
     exact - if True look for an exact match
     """
     sql = (
-        'with x(fileid, commented) as (select fileid, max(modified) '
-        'from comments group by fileid) '
+        'with x(fileid, last_note_date) as (select fileid, max(modified) '
+        'from filenotes group by fileid) '
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
+        'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id'
     )
@@ -182,10 +182,10 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
 
 def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     sql = (
-        'with x(fileid, commented) as (select fileid, max(modified) '
-        'from comments group by fileid) '
+        'with x(fileid, last_note_date) as (select fileid, max(modified) '
+        'from filenotes group by fileid) '
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
+        'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
@@ -345,23 +345,27 @@ def tag_author_insert(conn: apsw.Connection, sqls: list, item: str, id: int):
         t_id = conn.last_insert_rowid()
         cursor.execute(sqls[2], (id, t_id))
 
-def insert_comments(id: int, comments: list):
+def insert_filenotes(id: int, file_notes: list):
     """
     id - file id
     """
     sql3 = (
-        'insert into comments values (?,?,?,?,?)'
+        'insert into filenotes values (?,?,?,?,?)'
     )
 
-    def get_max_comment_id(cursor: apsw.Cursor) -> int:
-        sql = 'select max(id) from comments where fileid = ?'
+    def get_max_note_id(cursor: apsw.Cursor) -> int:
+        sql = 'select max(id) from filenotes where fileid = ?'
 
         tt = cursor.execute(sql, (id,)).fetchone()
         return tt[0] if tt[0] else 0
 
-    def comment_already_exists(cursor: apsw.Cursor, rec: list) -> bool:
+    def note_already_exists(cursor: apsw.Cursor, rec: list) -> bool:
+        """
+        suppose that there can't be more than one note
+        for the same file created at the same time
+        """
         sql = (
-            'select 1 from comments where fileid = ? '
+            'select 1 from filenotes where fileid = ? '
             'and created = ? and modified = ?'
         )
         tt = cursor.execute(sql, (id, rec[2], rec[3])).fetchone()
@@ -369,13 +373,13 @@ def insert_comments(id: int, comments: list):
 
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
-        max_comment_id = get_max_comment_id(curs)
+        max_note_id = get_max_note_id(curs)
 
-        for rec in comments:
-            if comment_already_exists(curs, rec):
+        for rec in file_notes:
+            if note_already_exists(curs, rec):
                 continue
-            max_comment_id += 1
-            curs.execute(sql3, (id, max_comment_id, *rec[1:]))
+            max_note_id += 1
+            curs.execute(sql3, (id, max_note_id, *rec[1:]))
 
 def recent_loaded_files() -> apsw.Cursor:
     sql = (
@@ -433,10 +437,10 @@ def filter_sqls(key: str, field: str='') -> str:
             "(select val from aux where key = 'author')"
         ),
         'sql0': (
-            'with x(fileid, commented) as (select fileid, max(modified) '
-            'from comments group by fileid) '
+            'with x(fileid, last_note_date) as (select fileid, max(modified) '
+            'from filenotes group by fileid) '
             'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-            'f.size, f.published, COALESCE(x.commented, -62135596800), f.created, '
+            'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
             'f.id, f.extid, f.path from files f '
             'left join x on x.fileid = f.id '
         ),
@@ -517,9 +521,9 @@ def delete_file(id: int):
     sql_preserve_id = (
         'select id from files where hash = :hash and id != :be_removed'
     )
-    sql_max_id = 'select max(id) from comments where fileid = :preserved'
-    sql_upd_comments = (
-        'update comments set fileid = :preserved, '
+    sql_max_id = 'select max(id) from filenotes where fileid = :preserved'
+    sql_upd_filenotes = (
+        'update filenotes set fileid = :preserved, '
         'id = id+:max_id where fileid = :be_removed '
     )
     sql_upd_file = (
@@ -538,7 +542,7 @@ def delete_file(id: int):
 
     def update_preserve():
         """
-        comments, rating and number of openings will be
+        file notes, rating and number of openings will be
         tied to one of the saved files among its duplicates
         """
         hash = curs.execute(sql_hash, {'be_removed': id}).fetchone()
@@ -557,7 +561,7 @@ def delete_file(id: int):
             max_id = _id if _id else 0
             # logger.info(f'{id=}, {preserve_id=}, {max_id=}, {_id=}')
             curs.execute(
-                sql_upd_comments,
+                sql_upd_filenotes,
                 {
                     'preserved': preserve_id,
                     'max_id': max_id,
@@ -691,8 +695,8 @@ def get_export_data(fileid: int) -> dict:
         'on p.id = f.path where f.id = ?'
     )
     sql2 = (
-        'select id, comment, created, modified '
-        'from comments where fileid = ?'
+        'select id, filenote, created, modified '
+        'from filenotes where fileid = ?'
     )
     sql3 = (
         'select t.tag from tags t join filetag f on '
@@ -714,7 +718,7 @@ def get_export_data(fileid: int) -> dict:
         tt = []
         for cc in cursor.execute(sql2, (fileid,)):
             tt.append(cc)
-        res['comments'] = tt
+        res['notes'] = tt
 
         tt = []
         for cc in cursor.execute(sql3, (fileid,)):
@@ -829,12 +833,12 @@ def move_dir(new: int, old: int, id: int) -> bool:
 def get_file_notes(file_id: int) -> apsw.Cursor:
     hash_sql = "select hash from files where id = ?"
     sql_hash = (
-        "select comment, fileid, id, modified, created from Comments "
+        "select filenote, fileid, id, modified, created from filenotes "
         "where fileID in (select id from files where hash = ?) "
         "order by modified;"
     )
     sql_id = (
-        "select comment, fileid, id, modified, created from Comments "
+        "select filenote, fileid, id, modified, created from filenotes "
         "where fileID  = ? order by modified;"
     )
     if file_id < 0:
@@ -848,14 +852,14 @@ def get_file_notes(file_id: int) -> apsw.Cursor:
             return conn.cursor().execute(sql_id, (file_id,))
 
 def get_note(file: int, note: int) -> str:
-    sql = 'select comment from comments where fileid = ? and id = ?;'
+    sql = 'select filenote from filenotes where fileid = ? and id = ?;'
     note_text = ag.db['Conn'].cursor().execute(sql, (file, note)).fetchone()
     return '' if (note_text is None) else note_text[0]
 
 def insert_note(fileid: int, note: str) -> int:
-    sql1 = 'select max(id) from comments where fileid=?;'
-    sql2 = ('insert into comments (fileid, id, comment, modified, '
-        'created) values (:fileid, :id, :comment, :modified, :created);')
+    sql1 = 'select max(id) from filenotes where fileid=?;'
+    sql2 = ('insert into filenotes (fileid, id, filenote, modified, '
+        'created) values (:fileid, :id, :filenote, :modified, :created);')
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
         tmp = curs.execute(sql1, (fileid,)).fetchone()
@@ -867,7 +871,7 @@ def insert_note(fileid: int, note: str) -> int:
             {
                 'fileid': fileid,
                 'id': id,
-                'comment': note,
+                'filenote': note,
                 'modified': ts[0],
                 'created': ts[0]
             }
@@ -875,8 +879,8 @@ def insert_note(fileid: int, note: str) -> int:
         return ts[0], id
 
 def update_note(fileid: int, id: int, note: str) -> int:
-    sql0 = 'select modified from comments where fileid=:fileid and id=:id'
-    sql1 = ('update comments set (comment, modified) = (:comment, unixepoch()) '
+    sql0 = 'select modified from filenotes where fileid=:fileid and id=:id'
+    sql1 = ('update filenotes set (filenote, modified) = (:filenote, unixepoch()) '
         'where fileid=:fileid and id=:id')
     with ag.db['Conn'] as conn:
         curs = conn.cursor()
@@ -885,14 +889,14 @@ def update_note(fileid: int, id: int, note: str) -> int:
             {
                 'fileid': fileid,
                 'id': id,
-                'comment': note,
+                'filenote': note,
             }
         )
         ts = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
         return ts[0] if ts[0] > ts0[0] else -1
 
 def delete_note(file: int, note: int):
-    sql = 'delete from comments where fileid = ? and id = ?;'
+    sql = 'delete from filenotes where fileid = ? and id = ?;'
     ag.db['Conn'].cursor().execute(sql, (file, note))
 
 def get_tags() -> apsw.Cursor:
