@@ -311,6 +311,9 @@ def set_dir_model():
     ag.dir_list.setFocus()
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
+    ag.dir_list.setCurrentIndex(QModelIndex())
+    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
+
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     """
@@ -387,9 +390,9 @@ def app_mode_changed(old_mode: ag.appMode):
 def populate_file_list():
     restore_sorting()
     hist = get_setting('HISTORY', [[], [], []])  # next_, prev, curr
+    ag.history.set_history(*hist)
 
     if ag.mode is ag.appMode.DIR:
-        ag.history.set_history(*hist)
         ag.hist_folder = True
         _history_folder(hist[-1])
     else:             # appMode.FILTER or appMode.FILTER_SETUP
@@ -685,7 +688,6 @@ def _import_files(filename):
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
-        ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
     else:
         show_folder_files()
@@ -800,7 +802,6 @@ def delete_tree(u_dat: ag.DirData, visited=None):
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
-    ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
     if index.isValid():
         branch = define_branch(index)
         if last_id:

@@ -57,9 +57,7 @@ def toggle_collapse(collapse: bool):
         low_bk.save_branch_in_temp(ag.dir_list.currentIndex())
         ag.dir_list.collapseAll()
     else:
-        ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
-        ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
 
 def bk_setup(main: 'shoWindow'):
@@ -194,7 +192,6 @@ def fill_dir_list():
     """
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
-    ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
 
 @pyqtSlot()
 def show_hidden_dirs():

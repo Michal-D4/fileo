@@ -224,7 +224,7 @@ class TreeModel(QAbstractItemModel):
             enroll_item(row[0], u_dat.id, it)
 
         for key in items_dict:
-            # sort by dir name
+            # sort by dir name case insensitive
             items_dict[key].sort(key=lambda item:  item.itemData[0].upper())
             parents[key].children = items_dict[key]
 
