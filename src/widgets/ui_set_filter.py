@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\fileo\widgets\set_filter.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\set_filter.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.0
 #
@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_filterSetup(object):
     def setupUi(self, filterSetup):
         filterSetup.setObjectName("filterSetup")
-        filterSetup.resize(356, 419)
+        filterSetup.resize(362, 419)
         self.verticalLayout = QtWidgets.QVBoxLayout(filterSetup)
         self.verticalLayout.setObjectName("verticalLayout")
         self.form = QtWidgets.QFrame(filterSetup)
@@ -277,7 +277,7 @@ class Ui_filterSetup(object):
         self.date_type.setItemText(0, _translate("filterSetup", "opened"))
         self.date_type.setItemText(1, _translate("filterSetup", "modified"))
         self.date_type.setItemText(2, _translate("filterSetup", "published"))
-        self.date_type.setItemText(3, _translate("filterSetup", "commented"))
+        self.date_type.setItemText(3, _translate("filterSetup", "last_note_date"))
         self.after.setText(_translate("filterSetup", "after"))
         self.before.setText(_translate("filterSetup", "before"))
         self.all_btn.setText(_translate("filterSetup", "all"))

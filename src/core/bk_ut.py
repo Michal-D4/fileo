@@ -57,9 +57,7 @@ def toggle_collapse(collapse: bool):
         low_bk.save_branch_in_temp(ag.dir_list.currentIndex())
         ag.dir_list.collapseAll()
     else:
-        ag.dir_list.selectionModel().currentRowChanged.disconnect(low_bk.cur_dir_changed)
         idx = low_bk.restore_branch_from_temp()
-        ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
         ag.dir_list.setCurrentIndex(idx)
 
 def bk_setup(main: 'shoWindow'):
@@ -93,11 +91,11 @@ def bk_setup(main: 'shoWindow'):
 def set_field_menu():
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
     fields = ('File Name', 'Open Date', 'rating', 'Open#', 'Modified',
-                'Pages', 'Size', 'Published', 'Commented', 'Created',)
+                'Pages', 'Size', 'Published', 'Date of last note', 'Created',)
     tool_tips = (
         ",Last opening date,rating of file,number of file openings,"
         "Last modified date,Number of pages(in book),Size of file,"
-        "Publication date(book),Last commented date,File creation date"
+        "Publication date(book),Date of last note,File creation date"
         )
 
     menu = QMenu(self)
@@ -194,7 +192,6 @@ def fill_dir_list():
     """
     low_bk.set_dir_model()
     idx = low_bk.restore_branch()
-    ag.dir_list.selectionModel().currentRowChanged.connect(low_bk.cur_dir_changed)
 
 @pyqtSlot()
 def show_hidden_dirs():

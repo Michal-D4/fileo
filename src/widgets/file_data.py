@@ -27,7 +27,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.page_selectors = [
             self.l_tags, self.l_authors,
             self.l_locations, self.l_file_info,
-            self.l_comments, self.l_editor,
+            self.l_file_notes, self.l_editor,
         ]
         self.set_stack_pages()
         self.l_editor.hide()
@@ -38,7 +38,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.expand.clicked.connect(self.up_down)
 
         self.plus.setIcon(icons.get_other_icon("plus"))
-        self.plus.clicked.connect(self.new_comment)
+        self.plus.clicked.connect(self.new_file_note)
 
         self.collapse_all.setIcon(icons.get_other_icon("collapse_all"))
         self.collapse_all.clicked.connect(self.notes.collapse_all)
@@ -54,13 +54,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.tagEdit.editingFinished.connect(self.finish_edit_tag)
 
         self.cur_page = 0
-        self.l_comments_press(None)
+        self.l_file_notes_press(None)
 
         self.l_tags.mousePressEvent = self.l_tags_press
         self.l_authors.mousePressEvent = self.l_authors_press
         self.l_locations.mousePressEvent = self.l_locations_press
         self.l_file_info.mousePressEvent = self.l_file_info_press
-        self.l_comments.mousePressEvent = self.l_comments_press
+        self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
 
     def set_stack_pages(self):
@@ -95,9 +95,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.notes = notesContainer(self.editor, self)
         self.notes.setObjectName('notes_container')
 
-        # add comments page (4)
+        # add file notes page (4)
         self.stackedWidget.addWidget(self.notes)
-        # add comment editor page (5)
+        # add note editor page (5)
         self.stackedWidget.addWidget(self.editor)
 
         ss = ag.dyn_qss['passive_selector'][0]
@@ -127,8 +127,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.switch_page(3)
         self.note_btns.hide()
 
-    def l_comments_press(self, e: QMouseEvent):
-        # comments page
+    def l_file_notes_press(self, e: QMouseEvent):
+        # file notes page
         self.switch_page(4)
         self.note_btns.show()
 
@@ -173,15 +173,14 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def cancel_note_editing(self):
         self.l_editor.hide()
         self.notes.set_editing(False)
-        self.l_comments_press(None)
+        self.l_file_notes_press(None)
 
     def note_changed(self):
         note_id = self.editor.get_note_id()
-        logger.info(f'{note_id=}')
         self.notes.finish_editing(note_id)
         self.l_editor.hide()
         self.notes.set_editing(False)
-        self.l_comments_press(None)
+        self.l_file_notes_press(None)
 
     def set_data(self):
         self.tag_selector.set_list(db_ut.get_tags())
@@ -226,7 +225,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             db_ut.insert_tag_file(id, self.file_id)
         return inserted
 
-    def new_comment(self):
+    def new_file_note(self):
         if self.notes.is_editing():
             self.switch_page(5)
             return

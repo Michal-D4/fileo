@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
+    <width>362</width>
     <height>419</height>
    </rect>
   </property>
@@ -345,7 +345,7 @@
             </item>
             <item>
              <property name="text">
-              <string>commented</string>
+              <string>last_note_date</string>
              </property>
             </item>
            </widget>

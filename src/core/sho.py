@@ -24,7 +24,7 @@ from . import icons, utils, db_ut, bk_ut, history, low_bk
 from . import app_globals as ag
 
 
-MIN_COMMENT_HEIGHT = 75
+MIN_NOTE_HEIGHT = 75
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
 MAX_WIDTH_DB_DIALOG = 400
@@ -82,7 +82,7 @@ class shoWindow(QMainWindow):
         ag.signals_.user_signal.connect(execute_user_action)
 
         self.restore_container()
-        self.restore_comment_height()
+        self.restore_note_height()
         self.restore_geometry()
 
         ag.file_data_holder = fileDataHolder()
@@ -123,8 +123,8 @@ class shoWindow(QMainWindow):
         )
         self.click_checkable_button(True, self.mode)
 
-    def restore_comment_height(self):
-        hh = utils.get_app_setting("commentHeight", MIN_COMMENT_HEIGHT)
+    def restore_note_height(self):
+        hh = utils.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
         self.ui.noteHolder.setMinimumHeight(int(hh))
         self.ui.noteHolder.setMaximumHeight(int(hh))
 
@@ -304,18 +304,18 @@ class shoWindow(QMainWindow):
             cur_pos = self.mapFromGlobal(cur_pos)
 
             self.setUpdatesEnabled(False)
-            y: int = self.comment_resize(cur_pos.y())
+            y: int = self.note_holder_resize(cur_pos.y())
             self.setUpdatesEnabled(True)
 
             self.start_pos.setY(y)
             e.accept()
 
-    def comment_resize(self, y: int) -> int:
+    def note_holder_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
         delta = y0 - y
         cur_height = self.ui.noteHolder.height()
-        h = max(cur_height + delta, MIN_COMMENT_HEIGHT)
-        h = min(h, self.ui.fileFrame.height() - MIN_COMMENT_HEIGHT - 35)
+        h = max(cur_height + delta, MIN_NOTE_HEIGHT)
+        h = min(h, self.ui.fileFrame.height() - MIN_NOTE_HEIGHT - 35)
         self.ui.noteHolder.setMinimumHeight(h)
         self.ui.noteHolder.setMaximumHeight(h)
 
@@ -467,7 +467,7 @@ class shoWindow(QMainWindow):
             "MainWindowGeometry": self.saveGeometry(),
             "container": self.container.save_state(),
             "appMode": self.mode.value,
-            "commentHeight": self.ui.noteHolder.height(),
+            "noteHolderHeight": self.ui.noteHolder.height(),
         }
         if ag.db['Path']:
             settings["DB_NAME"] = ag.db['Path']

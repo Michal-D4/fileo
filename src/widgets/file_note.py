@@ -6,13 +6,13 @@ from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import QWidget
 
 from ..core import icons, app_globals as ag
-from .ui_comment import Ui_comment
+from .ui_file_note import Ui_fileNote
 
 MIN_HEIGHT = 50
 TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 
-class Comment(QWidget):
+class fileNote(QWidget):
 
     def __init__(self, file_id: int=0,
                  id: int=0,
@@ -32,7 +32,7 @@ class Comment(QWidget):
         self.visible_height = MIN_HEIGHT
         self.expanded_height = 0
 
-        self.ui = Ui_comment()
+        self.ui = Ui_fileNote()
 
         self.ui.setupUi(self)
         self.ui.edit.setIcon(icons.get_other_icon("toEdit"))
@@ -75,11 +75,11 @@ class Comment(QWidget):
     def get_file_id(self) -> int:
         return self.file_id
 
-    def set_created_date(self, created: int):
+    def set_creation_date(self, created: int):
         self.created = datetime.fromtimestamp(created)
         self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
 
-    def set_modified_date(self, modified: int):
+    def set_modification_date(self, modified: int):
         self.modified = datetime.fromtimestamp(modified)
         self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
 

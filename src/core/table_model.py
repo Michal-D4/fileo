@@ -88,7 +88,7 @@ class TableModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.DisplayRole:
                 # row length > current column
                 if len(self.rows[index.row()]) > col:
-                    if self.header[col] in ('Commented','Modified','Open Date',):
+                    if self.header[col] in ('Date of last note','Modified','Open Date',):
                         return self.rows[index.row()][col].toString("yyyy-MM-dd hh:mm")
                     if self.header[col] == 'Created':
                         return self.rows[index.row()][col].toString("yyyy-MM-dd")
