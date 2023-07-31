@@ -1,8 +1,14 @@
 # Change Log
 
+## 0.9.44 - 31 July, 2023
+* the terms "note" and "comment" were used interchangeably,
+  currently used only note, Pragma "user_version" is set to 8.
+* fix bug with loading file list when switching DB
+* fix bug with saving file note: correct credentials are saved in editor
+
 ## 0.9.43 - 26 July, 2023
 
-* on "Locations" tab: 
+* on "Locations" tab:
   * remove file from location
   * navigate to a specific file location
 * add possibility to walk through  folders-files and notes to different files while editing the note  to the particular file, and possibility to return to that particular file at any moment
