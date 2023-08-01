@@ -1,9 +1,11 @@
+from loguru import logger
 import apsw
 from collections import defaultdict
 import json
-from loguru import logger
 from pathlib import Path
 import pickle
+import sys
+import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
@@ -17,6 +19,23 @@ from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
+
+if sys.platform.startswith("win"):
+    def reveal_file(path: str):
+        # subprocess.run(['explorer.exe', '/select,', os.path.normpath(path)])
+        subprocess.run(['explorer.exe', '/select,', path])
+elif sys.platform.startswith("linux"):
+    def reveal_file(path: str):
+        cmd = [
+            'dbus-send', '--session', '--dest=org.freedesktop.FileManager1',
+            '--type=method_call', '/org/freedesktop/FileManager1',
+            'org.freedesktop.FileManager1.ShowItems',
+            f'array:string:file:////{path}', 'string:',
+        ]
+        subprocess.run(cmd)
+else:
+    def reveal_file(path: str):
+        raise NotImplemented(f"doesn't support {sys.platform} system")
 
 def exec_user_actions():
     """
@@ -555,9 +574,8 @@ def copy_full_file_name():
 def open_folder():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
-        path_id = idx.data(Qt.ItemDataRole.UserRole).path
-        path = db_ut.get_file_path(path_id)
-        open_file_or_folder(path)
+        path = full_file_name(idx)
+        reveal_file(path)
 
 def full_file_name(index: QModelIndex) -> str:
     path_id = index.data(Qt.ItemDataRole.UserRole).path
