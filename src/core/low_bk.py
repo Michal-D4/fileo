@@ -19,7 +19,7 @@ from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
 
-DEFAULT_FIELD_WIDTH = 100
+DEFAULT_FIELD_WIDTH = 65
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -458,6 +458,7 @@ def show_files(files):
     """
     model = fill_file_model(files)
     set_file_model(model)
+    header_restore(model)
     model.model_data_changed.connect(rename_in_file_system)
 
 def fill_file_model(files) -> TableModel:
@@ -508,14 +509,14 @@ def field_indexes() -> list:
     for i,a in enumerate(acts):
         if a.isChecked():
             af_no.append((i, field_types[i]))
-    logger.info(f'active fields: {af_no}')
+
     return af_no
 
 def set_file_model(model: TableModel):
     proxy_model = ProxyModel2()
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-    header_restore(model)
+    model.setHeaderData(0, Qt.Orientation.Horizontal, field_titles())
     ag.file_list.setModel(proxy_model)
 
 def header_restore(model: QAbstractTableModel):

@@ -27,7 +27,6 @@ def save_bk_settings():
     try:
         curr_dir_idx = ag.dir_list.currentIndex()
         settings = {
-            "TREE_PATH": low_bk.define_branch(curr_dir_idx),
             "FIELDS_STATE": [int(a.isChecked()) for a in actions],
             "COLUMN_WIDTH": low_bk.get_columns_width(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
@@ -90,13 +89,15 @@ def bk_setup(main: 'shoWindow'):
 
 def set_field_menu():
     checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
-    fields = ('File Name', 'Open Date', 'rating', 'Open#', 'Modified',
-                'Pages', 'Size', 'Published', 'Date of last note', 'Created',)
+    fields = (
+        'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
+        'Pages', 'Size', 'Published', 'Date of last note', 'Created',
+    )
     tool_tips = (
         ",Last opening date,rating of file,number of file openings,"
         "Last modified date,Number of pages(in book),Size of file,"
         "Publication date(book),Date of last note,File creation date"
-        )
+    )
 
     menu = QMenu(self)
     for field,ch,tt in zip(fields, checked, tool_tips.split(',')):
@@ -104,7 +105,7 @@ def set_field_menu():
         if tt:
             act.setToolTip(tt)
         act.setChecked(int(ch))
-        act.triggered.connect(field_list_changed)
+        act.triggered.connect(lambda state, fld=field: field_list_changed(state, field=fld))
         menu.addAction(act)
 
     menu.actions()[0].setEnabled(False)
@@ -127,11 +128,22 @@ def click_setup_button():
     if action:
         ag.signals_.user_signal.emit(f"Setup {action.text()}")
 
-def field_list_changed():
-    resize_columns(0)
+def field_list_changed(state, field):
     idx = ag.file_list.currentIndex()
-    low_bk.populate_file_list()
+
+    low_bk.refresh_file_list()
+    toggle_collumn(state, field)
     low_bk.set_current_file(idx.row())
+
+def toggle_collumn(state: bool, field: str):
+    width = low_bk.get_columns_width()
+
+    w_fld = width[field]
+    w0 = ag.file_list.columnWidth(0)
+    if state:
+        ag.file_list.setColumnWidth(0, max(w0 - w_fld, 200))
+    else:
+        ag.file_list.setColumnWidth(0, w0 + w_fld)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -165,9 +177,6 @@ def resize_columns(delta: int):
     ag.file_list.setColumnWidth(0, max(width0 + dd, 200))
 
 def populate_all():
-    """
-    populating all widgets
-    """
     if not ag.db['Conn']:
         return
 
@@ -179,27 +188,33 @@ def populate_all():
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
-    fill_dir_list()
+    low_bk.set_dir_model()
+
     ag.filter_dlg.restore_filter_settings()
 
-    low_bk.populate_file_list()
-    # if ag.file_list.model().rowCount() > 0:
-    #     restore_sorting()
+    restore_history()
+    idx = low_bk.expand_branch(ag.history.get_current())
+    ag.dir_list.setCurrentIndex(idx)
 
-def fill_dir_list():
-    """
-    populating directory tree
-    """
-    low_bk.set_dir_model()
-    idx = low_bk.restore_branch()
+def restore_history():
+    restore_sorting()
+    hist = low_bk.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
+    ag.history.set_history(*hist)
+
+def restore_sorting():
+    col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
+    order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
+    ag.file_list.header().setSortIndicator(col, order)
 
 @pyqtSlot()
 def show_hidden_dirs():
     """
     QCheckBox stateChanged signal handler
     """
-    low_bk.save_branch()
-    fill_dir_list()
+    branch = low_bk.define_branch(ag.dir_list.currentIndex())
+    low_bk.set_dir_model()
+    idx = low_bk.expand_branch(branch)
+    ag.dir_list.setCurrentIndex(idx)
 
 def set_context_menu():
     """
