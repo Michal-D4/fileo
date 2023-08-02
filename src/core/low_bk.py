@@ -1,6 +1,5 @@
 from loguru import logger
 import apsw
-from collections import defaultdict
 import json
 from pathlib import Path
 import pickle
@@ -19,6 +18,8 @@ from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
+
+DEFAULT_FIELD_WIDTH = 100
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -251,12 +252,6 @@ def get_tmp_setting(key: str, default=None):
 
     return vv if vv else default
 
-def save_branch():
-    save_settings(TREE_PATH=define_branch(ag.dir_list.currentIndex()))
-
-def restore_branch() -> QModelIndex:
-    return expand_branch(get_setting('TREE_PATH', []))
-
 def save_branch_in_temp(index: QModelIndex):
     branch = define_branch(index)
     db_ut.save_branch_in_temp_table(pickle.dumps(branch))
@@ -315,7 +310,6 @@ def expand_branch(branch: list) -> QModelIndex:
                 item = child
                 break
         else:
-            parent = QModelIndex()
             break    # outer loop
 
     return parent
@@ -400,27 +394,22 @@ def app_mode_changed(old_mode: ag.appMode):
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
 
-    {ag.appMode.DIR: show_folder_files,
-     ag.appMode.FILTER: filtered_files,
-    } [ag.mode]()
+    refresh_file_list()
     if ag.file_list.model().rowCount() > 0:
         set_current_file(row)
 
-def populate_file_list():
-    restore_sorting()
-    hist = get_setting('HISTORY', [[], [], []])  # next_, prev, curr
-    ag.history.set_history(*hist)
-
+def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
-        ag.hist_folder = True
-        _history_folder(hist[-1])
-    else:             # appMode.FILTER or appMode.FILTER_SETUP
+        show_folder_files()
+    else:
         filtered_files()
 
-def restore_sorting():
-    col = get_setting("FILE_SORT_COLUMN", 0)
-    order = get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.header().setSortIndicator(col, order)
+def populate_file_list():
+    if ag.mode is ag.appMode.DIR:
+        ag.hist_folder = True
+        _history_folder(ag.history.get_current())
+    else:             # appMode.FILTER or appMode.FILTER_SETUP
+        filtered_files()
 
 @pyqtSlot()
 def to_prev_folder():
@@ -469,7 +458,6 @@ def show_files(files):
     """
     model = fill_file_model(files)
     set_file_model(model)
-    header_restore(model)
     model.model_data_changed.connect(rename_in_file_system)
 
 def fill_file_model(files) -> TableModel:
@@ -511,31 +499,32 @@ def field_val(typ:str, val=0):
     return a
 
 def field_indexes() -> list:
-    field_types = ('str', 'date', 'int', 'int', 'date',
-                'int', 'int', 'date', 'date', 'date',)
+    field_types = (
+        'str', 'date', 'int', 'int', 'date',
+        'int', 'int', 'date', 'date', 'date',
+    )
     acts = ag.field_menu.menu().actions()
     af_no = []
     for i,a in enumerate(acts):
         if a.isChecked():
             af_no.append((i, field_types[i]))
-
+    logger.info(f'active fields: {af_no}')
     return af_no
 
 def set_file_model(model: TableModel):
     proxy_model = ProxyModel2()
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-    model.setHeaderData(0, Qt.Orientation.Horizontal, field_titles())
+    header_restore(model)
     ag.file_list.setModel(proxy_model)
 
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
     model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
-    ww = get_setting("COLUMN_WIDTH", {})
-    width = defaultdict(lambda: 100, ww)
+    width = get_setting("COLUMN_WIDTH", {})
 
     for i,field in enumerate(hdr):
-        ww = width[field]
+        ww = width[field] or DEFAULT_FIELD_WIDTH
         ag.file_list.setColumnWidth(i, int(ww))
     ag.file_list.header().sectionResized.connect(section_resized)
 
@@ -544,19 +533,18 @@ def section_resized(idx: int, old_sz: int, new_sz: int):
 
 def get_columns_width() -> dict[int]:
     hdr = field_titles()
+    logger.info(hdr)
+
     width = get_setting("COLUMN_WIDTH", {})
+    logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
+    logger.info(width)
     return width
 
 def field_titles() -> list:
     acts = ag.field_menu.menu().actions()
-    af_name = []
-    for i,a in enumerate(acts):
-        if a.isChecked():
-            af_name.append(a.text())
-
-    return af_name
+    return [a.text() for a in acts if a.isChecked()]
 
 def copy_file_name():
     files = []
