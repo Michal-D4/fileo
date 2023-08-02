@@ -77,7 +77,6 @@ setting_names = (     # DB settings only
     "FIELDS_STATE",
     "FILE_ID",
     "TAG_SEL_LIST",
-    "TREE_PATH",
     "DIR_CHECK",
     "TAG_CHECK",
     "IS_ALL",
