@@ -205,35 +205,6 @@ def show_about():
     dlg.show()
 
 #region Common
-def save_settings(**kwargs):
-    """
-    used to save settings on DB level
-    """
-    if not ag.db["Conn"]:
-        return
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
-    sql = "update settings set value = :value where key = :key;"
-
-    for key, val in kwargs.items():
-        cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
-
-def get_setting(key: str, default=None):
-    """
-    used to restore settings on DB level
-    """
-    if not ag.db["Conn"]:
-        return default
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
-    sql = "select value from settings where key = :key;"
-
-    val = cursor.execute(sql, {"key": key}).fetchone()[0]
-    try:
-        vv = pickle.loads(val) if val else None
-    except:
-        vv = None
-
-    return vv if vv else default
-
 def save_tmp_settings(**kwargs):
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql0 = "delete from aux where key = :key"
@@ -355,7 +326,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
 
 def save_columns_width():
     if ag.section_resized:   # save column widths if changed
-        save_settings(COLUMN_WIDTH=get_columns_width())
+        ag.save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
 
 def save_file_row(file_row: int, dir_idx: QModelIndex):
@@ -522,7 +493,7 @@ def set_file_model(model: TableModel):
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
     model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
-    width = get_setting("COLUMN_WIDTH", {})
+    width = ag.get_setting("COLUMN_WIDTH", {})
 
     for i,field in enumerate(hdr):
         ww = width[field] or DEFAULT_FIELD_WIDTH
@@ -536,7 +507,7 @@ def get_columns_width() -> dict[int]:
     hdr = field_titles()
     logger.info(hdr)
 
-    width = get_setting("COLUMN_WIDTH", {})
+    width = ag.get_setting("COLUMN_WIDTH", {})
     logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
@@ -833,7 +804,7 @@ def toggle_hidden_state():
 #region  Tags
 def populate_tag_list():
     ag.tag_list.set_list(db_ut.get_tags())
-    sel = get_setting("TAG_SEL_LIST", [])
+    sel = ag.get_setting("TAG_SEL_LIST", [])
     ag.tag_list.set_selection(sel)
 
 def tag_selection() -> list:
@@ -859,7 +830,7 @@ def delete_tags(tags: str):
 
 def populate_ext_list():
     ag.ext_list.set_list(db_ut.get_ext_list())
-    sel = get_setting("EXT_SEL_LIST", [])
+    sel = ag.get_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
 def ext_selection() -> list:
@@ -868,7 +839,7 @@ def ext_selection() -> list:
 #region  Authors
 def populate_author_list():
     ag.author_list.set_list(db_ut.get_authors())
-    sel = get_setting("AUTHOR_SEL_LIST", [])
+    sel = ag.get_setting("AUTHOR_SEL_LIST", [])
     ag.author_list.set_selection(sel)
 
 def author_selection() -> list:

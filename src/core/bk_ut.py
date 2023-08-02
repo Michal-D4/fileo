@@ -37,7 +37,7 @@ def save_bk_settings():
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "HISTORY": ag.history.get_history(),
         }
-        low_bk.save_settings(**settings)
+        ag.save_settings(**settings)
         low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
         self.filter_setup.save_filter_settings()
     except:
@@ -88,7 +88,7 @@ def bk_setup(main: 'shoWindow'):
         lambda: ag.signals_.user_signal.emit("double click file"))
 
 def set_field_menu():
-    checked = low_bk.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
+    checked = ag.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
     fields = (
         'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
         'Pages', 'Size', 'Published', 'Date of last note', 'Created',
@@ -184,7 +184,7 @@ def populate_all():
     low_bk.populate_ext_list()
     low_bk.populate_author_list()
 
-    hide_state = low_bk.get_setting("SHOW_HIDDEN", 0)
+    hide_state = ag.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
@@ -198,12 +198,12 @@ def populate_all():
 
 def restore_history():
     restore_sorting()
-    hist = low_bk.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
+    hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
     ag.history.set_history(*hist)
 
 def restore_sorting():
-    col = low_bk.get_setting("FILE_SORT_COLUMN", 0)
-    order = low_bk.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
+    col = ag.get_setting("FILE_SORT_COLUMN", 0)
+    order = ag.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
     ag.file_list.header().setSortIndicator(col, order)
 
 @pyqtSlot()
