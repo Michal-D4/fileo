@@ -1,9 +1,10 @@
-import apsw
-from collections import defaultdict
-import json
 from loguru import logger
+import apsw
+import json
 from pathlib import Path
 import pickle
+import sys
+import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
@@ -17,6 +18,25 @@ from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferencies
+
+DEFAULT_FIELD_WIDTH = 65
+
+if sys.platform.startswith("win"):
+    def reveal_file(path: str):
+        # subprocess.run(['explorer.exe', '/select,', os.path.normpath(path)])
+        subprocess.run(['explorer.exe', '/select,', path])
+elif sys.platform.startswith("linux"):
+    def reveal_file(path: str):
+        cmd = [
+            'dbus-send', '--session', '--dest=org.freedesktop.FileManager1',
+            '--type=method_call', '/org/freedesktop/FileManager1',
+            'org.freedesktop.FileManager1.ShowItems',
+            f'array:string:file:////{path}', 'string:',
+        ]
+        subprocess.run(cmd)
+else:
+    def reveal_file(path: str):
+        raise NotImplemented(f"doesn't support {sys.platform} system")
 
 def exec_user_actions():
     """
@@ -185,35 +205,6 @@ def show_about():
     dlg.show()
 
 #region Common
-def save_settings(**kwargs):
-    """
-    used to save settings on DB level
-    """
-    if not ag.db["Conn"]:
-        return
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
-    sql = "update settings set value = :value where key = :key;"
-
-    for key, val in kwargs.items():
-        cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
-
-def get_setting(key: str, default=None):
-    """
-    used to restore settings on DB level
-    """
-    if not ag.db["Conn"]:
-        return default
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
-    sql = "select value from settings where key = :key;"
-
-    val = cursor.execute(sql, {"key": key}).fetchone()[0]
-    try:
-        vv = pickle.loads(val) if val else None
-    except:
-        vv = None
-
-    return vv if vv else default
-
 def save_tmp_settings(**kwargs):
     cursor: apsw.Cursor = ag.db["Conn"].cursor()
     sql0 = "delete from aux where key = :key"
@@ -231,12 +222,6 @@ def get_tmp_setting(key: str, default=None):
     vv = pickle.loads(val[0]) if val else None
 
     return vv if vv else default
-
-def save_branch():
-    save_settings(TREE_PATH=define_branch(ag.dir_list.currentIndex()))
-
-def restore_branch() -> QModelIndex:
-    return expand_branch(get_setting('TREE_PATH', []))
 
 def save_branch_in_temp(index: QModelIndex):
     branch = define_branch(index)
@@ -296,7 +281,6 @@ def expand_branch(branch: list) -> QModelIndex:
                 item = child
                 break
         else:
-            parent = QModelIndex()
             break    # outer loop
 
     return parent
@@ -342,7 +326,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
 
 def save_columns_width():
     if ag.section_resized:   # save column widths if changed
-        save_settings(COLUMN_WIDTH=get_columns_width())
+        ag.save_settings(COLUMN_WIDTH=get_columns_width())
         ag.section_resized = False
 
 def save_file_row(file_row: int, dir_idx: QModelIndex):
@@ -381,27 +365,22 @@ def app_mode_changed(old_mode: ag.appMode):
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
 
-    {ag.appMode.DIR: show_folder_files,
-     ag.appMode.FILTER: filtered_files,
-    } [ag.mode]()
+    refresh_file_list()
     if ag.file_list.model().rowCount() > 0:
         set_current_file(row)
 
-def populate_file_list():
-    restore_sorting()
-    hist = get_setting('HISTORY', [[], [], []])  # next_, prev, curr
-    ag.history.set_history(*hist)
-
+def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
-        ag.hist_folder = True
-        _history_folder(hist[-1])
-    else:             # appMode.FILTER or appMode.FILTER_SETUP
+        show_folder_files()
+    else:
         filtered_files()
 
-def restore_sorting():
-    col = get_setting("FILE_SORT_COLUMN", 0)
-    order = get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.header().setSortIndicator(col, order)
+def populate_file_list():
+    if ag.mode is ag.appMode.DIR:
+        ag.hist_folder = True
+        _history_folder(ag.history.get_current())
+    else:             # appMode.FILTER or appMode.FILTER_SETUP
+        filtered_files()
 
 @pyqtSlot()
 def to_prev_folder():
@@ -492,8 +471,10 @@ def field_val(typ:str, val=0):
     return a
 
 def field_indexes() -> list:
-    field_types = ('str', 'date', 'int', 'int', 'date',
-                'int', 'int', 'date', 'date', 'date',)
+    field_types = (
+        'str', 'date', 'int', 'int', 'date',
+        'int', 'int', 'date', 'date', 'date',
+    )
     acts = ag.field_menu.menu().actions()
     af_no = []
     for i,a in enumerate(acts):
@@ -512,11 +493,10 @@ def set_file_model(model: TableModel):
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
     model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
-    ww = get_setting("COLUMN_WIDTH", {})
-    width = defaultdict(lambda: 100, ww)
+    width = ag.get_setting("COLUMN_WIDTH", {})
 
     for i,field in enumerate(hdr):
-        ww = width[field]
+        ww = width[field] or DEFAULT_FIELD_WIDTH
         ag.file_list.setColumnWidth(i, int(ww))
     ag.file_list.header().sectionResized.connect(section_resized)
 
@@ -525,19 +505,18 @@ def section_resized(idx: int, old_sz: int, new_sz: int):
 
 def get_columns_width() -> dict[int]:
     hdr = field_titles()
-    width = get_setting("COLUMN_WIDTH", {})
+    logger.info(hdr)
+
+    width = ag.get_setting("COLUMN_WIDTH", {})
+    logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
+    logger.info(width)
     return width
 
 def field_titles() -> list:
     acts = ag.field_menu.menu().actions()
-    af_name = []
-    for i,a in enumerate(acts):
-        if a.isChecked():
-            af_name.append(a.text())
-
-    return af_name
+    return [a.text() for a in acts if a.isChecked()]
 
 def copy_file_name():
     files = []
@@ -555,9 +534,8 @@ def copy_full_file_name():
 def open_folder():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
-        path_id = idx.data(Qt.ItemDataRole.UserRole).path
-        path = db_ut.get_file_path(path_id)
-        open_file_or_folder(path)
+        path = full_file_name(idx)
+        reveal_file(path)
 
 def full_file_name(index: QModelIndex) -> str:
     path_id = index.data(Qt.ItemDataRole.UserRole).path
@@ -826,7 +804,7 @@ def toggle_hidden_state():
 #region  Tags
 def populate_tag_list():
     ag.tag_list.set_list(db_ut.get_tags())
-    sel = get_setting("TAG_SEL_LIST", [])
+    sel = ag.get_setting("TAG_SEL_LIST", [])
     ag.tag_list.set_selection(sel)
 
 def tag_selection() -> list:
@@ -852,7 +830,7 @@ def delete_tags(tags: str):
 
 def populate_ext_list():
     ag.ext_list.set_list(db_ut.get_ext_list())
-    sel = get_setting("EXT_SEL_LIST", [])
+    sel = ag.get_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
 def ext_selection() -> list:
@@ -861,7 +839,7 @@ def ext_selection() -> list:
 #region  Authors
 def populate_author_list():
     ag.author_list.set_list(db_ut.get_authors())
-    sel = get_setting("AUTHOR_SEL_LIST", [])
+    sel = ag.get_setting("AUTHOR_SEL_LIST", [])
     ag.author_list.set_selection(sel)
 
 def author_selection() -> list:

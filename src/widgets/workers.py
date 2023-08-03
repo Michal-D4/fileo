@@ -33,8 +33,8 @@ def update0_files():
         db_ut.update_file_data(id, pp.stat(), hash)
 
 def update_touched_files():
-    last_scan = low_bk.get_setting('LAST_SCAN_OPENED', -62135596800)
-    low_bk.save_settings(
+    last_scan = ag.get_setting('LAST_SCAN_OPENED', -62135596800)
+    ag.save_settings(
         LAST_SCAN_OPENED=int(datetime.now().timestamp())
     )
     files = db_ut.files_toched(last_scan)

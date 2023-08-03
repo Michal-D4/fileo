@@ -28,6 +28,9 @@ class History(object):
         if len(self.prev) > limit:
             self.prev = self.prev[len(self.prev)-limit:]
 
+    def get_current(self):
+        return self.curr
+
     def next_dir(self) -> list:
         if len(self.prev) >= self.limit:
             self.prev = self.prev[len(self.prev)-self.limit+1:]

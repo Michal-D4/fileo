@@ -131,18 +131,21 @@ class notesContainer(QScrollArea):
         )
         self.scroll_layout.insertWidget(0, item)
 
-    def get_note(self, id: int) -> fileNote:
-        return self.notes.get(id, None)
+    def get_edited_note(self) -> fileNote:
+        file_id = self.editor.get_file_id()
+        note_id = self.editor.get_note_id()
+        if not (note := self.notes.get(note_id, None)):
+            note = fileNote(file_id=file_id, id=note_id)
+        return file_id, note_id, note
 
-    def finish_editing(self, note_id: int):
-        note = fileNote(file_id=self.editor.get_file_id(), id=note_id)
-        self.update_note(note)
+    def finish_editing(self):
+        self.update_note()
         self.editing = False
 
-    def update_note(self, note: fileNote):
+    def update_note(self):
+        file_id, note_id, note = self.get_edited_note()
+        # logger.info(f'{note_id=}, {file_id=}')
         txt = self.editor.get_text()
-        note_id = note.get_note_id()
-        file_id = note.get_file_id()
         if note_id:
             self.scroll_layout.removeWidget(note)
             ts = db_ut.update_note(file_id, note_id, txt)

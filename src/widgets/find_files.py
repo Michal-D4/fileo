@@ -45,7 +45,7 @@ class findFile(QWidget):
         self.word.setIcon(icons.get_other_icon('match_word'))
         self.word.setToolTip('Exact match')
 
-        name, case, word = low_bk.get_setting('SEARCH_FILE', ('',0,0))
+        name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
         self.srch_pattern.setText(name)
         self.case.setChecked(case)
         self.word.setChecked(word)
@@ -82,7 +82,7 @@ class findFile(QWidget):
             ag.signals_.user_signal.emit(
                 f'find_files_by_name/{name},{int(case)},{int(word)}'
             )
-            low_bk.save_settings(SEARCH_FILE=(name, case, word))
+            ag.save_settings(SEARCH_FILE=(name, case, word))
             self.close()
         else:
             self.search_err_msg(f'File "{name}" not found')

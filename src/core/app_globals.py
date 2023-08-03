@@ -1,7 +1,9 @@
+import apsw
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 from pathlib import Path
+import pickle
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QToolButton
@@ -77,7 +79,6 @@ setting_names = (     # DB settings only
     "FIELDS_STATE",
     "FILE_ID",
     "TAG_SEL_LIST",
-    "TREE_PATH",
     "DIR_CHECK",
     "TAG_CHECK",
     "IS_ALL",
@@ -100,7 +101,46 @@ setting_names = (     # DB settings only
     "SHOW_HIDDEN",
     "HISTORY",
     "SEARCH_FILE",
+    "APP_VERSION",
 )
 
 dyn_qss = defaultdict(list)
 qss_params = {}
+
+def save_settings(**kwargs):
+    """
+    used to save settings on DB level
+    """
+    if not db["Conn"]:
+        return
+    cursor: apsw.Cursor = db["Conn"].cursor()
+    sql = "update settings set value = :value where key = :key;"
+
+    for key, val in kwargs.items():
+        cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
+
+def get_setting(key: str, default=None):
+    """
+    used to restore settings on DB level
+    """
+    if not db["Conn"]:
+        return default
+    cursor: apsw.Cursor = db["Conn"].cursor()
+    sql = "select value from settings where key = :key;"
+
+    try:
+        val = cursor.execute(sql, {"key": key}).fetchone()[0]
+        vv = pickle.loads(val) if val else None
+    except:
+        vv = None
+
+    return vv if vv else default
+
+def app_name() -> str:
+    return "fileo"
+
+def app_version() -> str:
+    """
+    if version changed here then also change it in the "pyproject.toml" file
+    """
+    return '0.9.45'
