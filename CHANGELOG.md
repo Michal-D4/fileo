@@ -1,12 +1,18 @@
 # Change Log
 
-## 0.9.44 - 31 July, 2023
+## 0.9.45 - 2023, August 02
+* remake "Reveal file in explorer"
+* fix bug, duplicating a file note in the list of notes when saving after editing
+* fix bug, changing file list fields not working
+* customize of existing DB for new app version
+
+## 0.9.44 - 2023, July 31
 * the terms "note" and "comment" were used interchangeably,
   currently used only note, Pragma "user_version" is set to 8.
 * fix bug with loading file list when switching DB
 * fix bug with saving file note: correct credentials are saved in editor
 
-## 0.9.43 - 26 July, 2023
+## 0.9.43 - 2023, July 26
 
 * on "Locations" tab:
   * remove file from location
@@ -15,13 +21,13 @@
 * fix bug with restoring first item in folder history
 * some changes to improve and clean up the code (quite a lot)
 
-## 0.9.42 - 10 July, 2023
+## 0.9.42 - 2023, July 10
 
 * fix issue with copying note text into editor
 * fix bug with collapsed note size
 * change the term "folder copy" to "folder link" in code and DB as more suitable
 
-## 0.9.41 - 06 July, 2023
+## 0.9.41 - 2023, July 06
 
 * show each comment/note to file in a separated widget. All file note widgets in one container. The previous solution (show all notes in one `QTextBrowser` widget) was fragile, eg. buttons for editing and deleting notes often lost icons.
 * fix bug with restoring/saving settings of file list fields
@@ -30,14 +36,14 @@
 * working with duplicate files: report on duplicates, merging all notes to a file from all duplicates, moving comments when deleting a duplicate file to one of the remaining duplicates, the total number of file openings and the maximum rating of the file.
 * fix bug when walking through folder history (next/previous)
 
-## 0.9.4 - 15 June, 2023
+## 0.9.4 - 2023, June 15
 
 * single instance - set in Preference dialog
 * in case of single instance, activate existing app. screen (in Linux, Windows was done before)
 * fix some bugs when the DB didn't open on startup, eg. in the second instance
 * fix some bags with folder history
 
-## 0.9.3 - 08 June, 2023
+## 0.9.3 - 2023, June 08
 
 * fix problems with collapse/expand the folder tree:
   - collapsed status should be reset if some branch is expanded manually
@@ -47,7 +53,7 @@
 * fix problem with restoring appMode
 * refactoring of working with icons
 
-## 0.9.2 - 06 June, 2023
+## 0.9.2 - 2023, June 06
 
 * only one application instance may be started.
   On Windows, when trying start second instance, the first one gets the focus; Linux hasn't implemented this yet.
