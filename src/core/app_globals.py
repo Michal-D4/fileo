@@ -128,10 +128,19 @@ def get_setting(key: str, default=None):
     cursor: apsw.Cursor = db["Conn"].cursor()
     sql = "select value from settings where key = :key;"
 
-    val = cursor.execute(sql, {"key": key}).fetchone()[0]
     try:
+        val = cursor.execute(sql, {"key": key}).fetchone()[0]
         vv = pickle.loads(val) if val else None
     except:
         vv = None
 
     return vv if vv else default
+
+def app_name() -> str:
+    return "fileo"
+
+def app_version() -> str:
+    """
+    if version changed here then also change it in the "pyproject.toml" file
+    """
+    return '0.9.45'

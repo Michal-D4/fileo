@@ -19,15 +19,6 @@ else:
 
 app: QApplication = None
 
-def app_name() -> str:
-    return "fileo"
-
-def app_version() -> str:
-    """
-    if version changed here then also change it in the "pyproject.toml" file
-    """
-    return '0.9.44'
-
 @pyqtSlot(QWidget, QWidget)
 def tab_pressed():
     global app
@@ -46,7 +37,7 @@ def set_logger(file):
     else:
         logger.add(file, format=fmt)
     logger.info("START ==============================>")
-    logger.info(f'{app_name()=}, {app_version()=}')
+    logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
 
 def main():
     # from datetime import datetime as dt

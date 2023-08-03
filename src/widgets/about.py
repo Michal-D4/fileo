@@ -35,10 +35,8 @@ class AboutDialog(QDialog):
         ico.setPixmap(self.get_info_icon())
         h_layout.addWidget(ico)
 
-        from ..main import app_version
-
         app_info = QLabel(self)
-        app_info.setText(f'Fileo v.{app_version()} - yet another file keeper')
+        app_info.setText(f'Fileo v.{ag.app_version()} - yet another file keeper')
         h_layout.addWidget(app_info)
 
         self.git_repo = QLabel(self)

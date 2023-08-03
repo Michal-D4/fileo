@@ -969,13 +969,13 @@ def create_connection(path: str) -> bool:
     if not path:
         return False
 
-    if not create_db.adjust_user_schema(path):
-        return False
-
     conn: apsw.Connection = apsw.Connection(path)
     ag.db['Path'] = path
     ag.db['Conn'] = conn
     ag.signals_.user_signal.emit('Enable_buttons')
+
+    if not create_db.tune_new_version():
+        return False
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

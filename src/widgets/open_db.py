@@ -166,7 +166,7 @@ class OpenDB(QWidget):
         if file_.exists():
             if file_.is_file():
                 if create_db.is_app_schema(str(file_)):
-                    u_ver = create_db.adjust_user_schema(str(file_))
+                    u_ver = create_db.tune_new_version(str(file_))
                     if u_ver == create_db.USER_VER:
                         return True
                     else:
