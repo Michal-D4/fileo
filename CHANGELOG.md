@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.9.49 - 2023, August 04
+* had to create 2 new versions to put the homepage in PYPi
+
 ## 0.9.47 - 2023, August 02
 * fix small bug
 * change version to publish in PyPi
