@@ -95,9 +95,9 @@ First you should setup the filter:
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14`.
+With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14 00:00:00`. 
 
-> **Note.** Here "after" and "before" include the date in the input fields 2022-09-14 and 2022-11-14. That is, if "after" and "before" are the same, then the filter will show files with this date.
+> **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`. 
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 

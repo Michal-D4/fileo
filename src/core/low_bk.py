@@ -376,13 +376,6 @@ def refresh_file_list():
     else:
         filtered_files()
 
-def populate_file_list():
-    if ag.mode is ag.appMode.DIR:
-        ag.hist_folder = True
-        _history_folder(ag.history.get_current())
-    else:             # appMode.FILTER or appMode.FILTER_SETUP
-        filtered_files()
-
 @pyqtSlot()
 def to_prev_folder():
     branch = ag.history.prev_dir()
@@ -611,7 +604,6 @@ def get_dir_id(file: int) -> int:
     return db_ut.get_dir_id_for_file(file)
 
 def post_delete_file(row: int):
-    # populate_file_list()
     refresh_file_list()
     model = ag.file_list.model()
     row -= int(row >= model.rowCount())

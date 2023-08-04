@@ -4,9 +4,10 @@ from PyQt6.QtWidgets import QWidget
 from ..core import app_globals as ag, low_bk, db_ut
 from .ui_set_filter import Ui_filterSetup
 
+UNIX_EPOCH = 2440588   # julian date of 1970-01-01
+
 def unix_date(ts: float) -> int:
-    unix_epoch = 2440587.5   # julian date of 1970-01-01
-    return int((ts - unix_epoch) * 86400)
+    return int((ts - UNIX_EPOCH) * 86400)
 
 
 class FilterSetup(QWidget):

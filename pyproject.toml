@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "md4_fileo"
-version = "0.9.47"
+version = "0.9.48"
 description = "Yet another file organizer"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
 readme = "README.md"
@@ -8,6 +8,9 @@ packages = [
 {include = "fileo.py"},
 {include = "src"},
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/Michal-D4/fileo"
 
 [tool.poetry.dependencies]
 python = "^3.10"
