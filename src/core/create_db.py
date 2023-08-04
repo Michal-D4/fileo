@@ -198,13 +198,11 @@ def save_version(connection):
 def tune_app_version(conn: apsw.Connection):
     curr_ver = ag.get_setting('APP_VERSION')
     new_ver = ag.app_version()
-    logger.info(f'{curr_ver=}, {new_ver=}')
     if curr_ver == new_ver:
         return
 
     if not curr_ver or curr_ver == '0.9.44':
         col_width: dict = ag.get_setting('COLUMN_WIDTH')
-        logger.info(f'{col_width.get("Commented")=}')
         col_width.pop('Commented', None)
         ag.save_settings(COLUMN_WIDTH=col_width)
         save_version(conn)

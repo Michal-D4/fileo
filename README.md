@@ -26,7 +26,7 @@ The graphical interface is shown in the image below.
 7. list of selected files (by filter, folder, etc.)
 8. current database name
 9. folder tree branch from root to current folder
-10. panel for displaying/editing file data: comments (notes), tags, authors (for books), links (links to a file can be located in several folders).
+10. panel for displaying/editing file data: notes, tags, authors (for books), links (links to a file locations, file can be located in several folders).
 
 The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
@@ -37,7 +37,7 @@ In FILTER mode, the list of files depends on the filter options set in FILTER_SE
 As said, the app is about files. Files have a number of attributes:
 
 1. name
-2. path, the user practically does not see it, only by opening the directory or copying the full file name and on the "File Information" page
+2. path, the user practically does not see it, only by opening the directory or copying the full file name and on the "File Info" page
 3. file extension
 4. tags
 5. rating
@@ -47,6 +47,7 @@ As said, the app is about files. Files have a number of attributes:
     2. reading
     3. creation
     4. publication (books)
+    5. date of last created/modified note to the file
 8. rating
 9. file opened (times)
 10. size in bytes
@@ -55,7 +56,7 @@ As said, the app is about files. Files have a number of attributes:
 The following attributes are used in filter: all dates (but only one can be used at a time), extension, tags, rating, authors, and folder which was intentionally not included in the file attributes.
 
 Folders are not associated with file system directories, the path is used for that. You can freely create, move, copy and delete folders in the folder tree, the files will remain intact. You can, for example, create multiple folder hierarchies, this can be handy. Of course, if you delete all folders it will be impossible to access files using folder tree, but they remain accessible by filter. The next time the **`@@Lost`** folder will appear, it can be used to access files that are not in any other folder.
-You can also *copy/move files from one folder to another*. **Copying** is done by dragging *with the left mouse button pressed*, dragging *with the right mouse button pressed* allows you to choose whether to **move** or **copy** *selected files*.
+You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
 
 
 
@@ -94,9 +95,9 @@ First you should setup the filter:
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14`.
+With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14 00:00:00`. 
 
-> **Note.** Here "after" and "before" include the date in the input fields 2022-09-14 and 2022-11-14. That is, if "after" and "before" are the same, then the filter will show files with this date.
+> **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`. 
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
@@ -113,15 +114,19 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 ![fileo-comments](https://github.com/Michal-D4/fileo/raw/main/img/file-notes.jpg)
 
 1. "+"  plus button - add new note and open it in the editor
-6. "x" button - delete the note
 8.  the button to open the note in the editor
+3. start editing of the note
+4. "x" button - delete the note
+5. external (http) reference, can be open in the system web browser
 
 #### Note editor
 
 ![edit-comment](https://github.com/Michal-D4/fileo/raw/main/img/edit-comment.jpg)
 
-1. the save changes button
-2. the button to discard changes
+1. the save changes button, save changes and close editor
+2. the button to discard changes 
+
+> pressing any of these buttons closes the editor
 
 Note is a markdown text. You can insert web links here, but the links to files in the application are not implemented (and not planned yet)
 
@@ -153,7 +158,7 @@ The location marked with bullet is a current location.
 
 All 4 locations end with the Poetry folder. This means that the file exists only in this folder (Poetry), the folder Poetry is presented in 4 branches. That's why the file has 4 locations.
 
-The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the path 2 is a link to the folder "fileo"[^1] in the path 1; the folder "A folder"  in folder "my" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
+The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the branch 2 is a link to the folder "fileo"[^1] in the branch 1; the folder "A folder"  in folder "my" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
 
 ![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg)
 

@@ -16,6 +16,15 @@ if TYPE_CHECKING:
     from ..widgets.filter_setup import FilterSetup
     from .history import History
 
+def app_name() -> str:
+    return "fileo"
+
+def app_version() -> str:
+    """
+    if version changed here then also change it in the "pyproject.toml" file
+    """
+    return '0.9.49'
+
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
 
@@ -135,12 +144,3 @@ def get_setting(key: str, default=None):
         vv = None
 
     return vv if vv else default
-
-def app_name() -> str:
-    return "fileo"
-
-def app_version() -> str:
-    """
-    if version changed here then also change it in the "pyproject.toml" file
-    """
-    return '0.9.45'

@@ -131,7 +131,7 @@ def save_report(rep):
     if ok:
         _save_report(rep, file_name)
 
-def _save_report(rep: dict[list], filename: str):
+def _save_report(rep: dict, filename: str):
 
     with open(filename, "w") as out:
         for key,rr in rep.items():
@@ -231,7 +231,7 @@ def restore_branch_from_temp() -> QModelIndex:
     val = db_ut.get_branch_from_temp_table()
     return expand_branch(pickle.loads(val) if val else [])
 
-def define_branch(index: QModelIndex) -> list[int]:
+def define_branch(index: QModelIndex) -> list:
     """
     return branch - a list of node ids from root to index
     """
@@ -248,7 +248,7 @@ def define_branch(index: QModelIndex) -> list[int]:
     branch.reverse()
     return branch
 
-def get_dir_names_path(index: QModelIndex) -> list[str]:
+def get_dir_names_path(index: QModelIndex) -> list:
     """
     return:  a list of node names from root to index
     """
@@ -304,6 +304,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     currentRowChanged signal in dirTree
     :@return: None
     """
+    ag.app.collapse_btn.setChecked(False)
     def new_history_item():
         if ag.hist_folder:
             ag.hist_folder = False
@@ -373,13 +374,6 @@ def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
         show_folder_files()
     else:
-        filtered_files()
-
-def populate_file_list():
-    if ag.mode is ag.appMode.DIR:
-        ag.hist_folder = True
-        _history_folder(ag.history.get_current())
-    else:             # appMode.FILTER or appMode.FILTER_SETUP
         filtered_files()
 
 @pyqtSlot()
@@ -503,15 +497,12 @@ def header_restore(model: QAbstractTableModel):
 def section_resized(idx: int, old_sz: int, new_sz: int):
     ag.section_resized = True
 
-def get_columns_width() -> dict[int]:
+def get_columns_width() -> dict:
     hdr = field_titles()
-    logger.info(hdr)
 
     width = ag.get_setting("COLUMN_WIDTH", {})
-    logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
-    logger.info(width)
     return width
 
 def field_titles() -> list:
@@ -613,7 +604,7 @@ def get_dir_id(file: int) -> int:
     return db_ut.get_dir_id_for_file(file)
 
 def post_delete_file(row: int):
-    populate_file_list()
+    refresh_file_list()
     model = ag.file_list.model()
     row -= int(row >= model.rowCount())
 
