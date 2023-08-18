@@ -44,14 +44,13 @@ As said, the app is about files. Files have a number of attributes:
 6. author(s) - usually for books
 7. dates of:
     1. modification
-    2. reading
+    2. last opening
     3. creation
     4. publication (books)
     5. date of last created/modified note to the file
-8. rating
-9. file opened (times)
-10. size in bytes
-11. number of pages - usually for books
+8. number of file openings
+9. size in bytes
+10. number of pages - usually for books
 
 The following attributes are used in filter: all dates (but only one can be used at a time), extension, tags, rating, authors, and folder which was intentionally not included in the file attributes.
 
@@ -95,9 +94,9 @@ First you should setup the filter:
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14 00:00:00`. 
+With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14 00:00:00`.
 
-> **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`. 
+> **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`.
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
@@ -124,7 +123,7 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 ![edit-comment](https://github.com/Michal-D4/fileo/raw/main/img/edit-comment.jpg)
 
 1. the save changes button, save changes and close editor
-2. the button to discard changes 
+2. the button to discard changes
 
 > pressing any of these buttons closes the editor
 
@@ -166,7 +165,7 @@ The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidde
 2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "A folder" and "fileo" in the folder "my" are links. The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
 3. The current file. "Environment Variables in Linux.md"
 
-[^1]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another folder. This other folder becomes its parent. 
+[^1]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another folder. This other folder becomes its parent.
 
 ### File info
 
