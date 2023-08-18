@@ -181,19 +181,16 @@ class notesContainer(QScrollArea):
                 details="It is editing!"
                 )
             return
-        if self.confirm_note_deletion():
+        if utils.show_message_box(
+            'delete file note',
+            'confirm deletion of note',
+            QMessageBox.StandardButton.Ok |
+            QMessageBox.StandardButton.Cancel,
+            QMessageBox.Icon.Question
+        ) == QMessageBox.StandardButton.Ok:
             note = self.notes.pop(note_id, None)
             self.scroll_layout.removeWidget(note)
             db_ut.delete_note(note.get_file_id(), note_id)
-
-    def confirm_note_deletion(self):
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('delete file note')
-        dlg.setText(f'confirm deletion of note')
-        dlg.setStandardButtons(QMessageBox.StandardButton.Ok |
-            QMessageBox.StandardButton.Cancel)
-        dlg.setIcon(QMessageBox.Icon.Question)
-        return dlg.exec() == QMessageBox.StandardButton.Ok
 
     def collapse_all(self):
         for note in self.notes.values():

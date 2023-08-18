@@ -272,6 +272,21 @@ def registered_file_id(path: str, filename: str) -> int:
     res = ag.db['Conn'].cursor().execute(sql, (filename, path)).fetchone()
     return res[0] if res else 0
 
+def get_path_id(path: str) -> int:
+    sql1 = 'select id from paths where path = ?'
+    sql2 = 'insert into paths (path) values (?)'
+    with ag.db['Conn'] as conn:
+        curs = conn.cursor()
+        res = curs.execute(sql1, (path,)).fetchone()
+        if res:
+            return res[0]
+        curs.execute(sql2, (path,)).fetchone()
+        return conn.last_insert_rowid()
+
+def update_file_name_path(file_id: int, path_id: int, file_name: str):
+    sql = 'update files set (filename, path) = (?, ?) where id = ?'
+    ag.db['Conn'].cursor().execute(sql, (file_name, path_id, file_id))
+
 def insert_file(file_: list) -> int:
     sql = (
         'insert into files (path, extid, hash, filename, '
@@ -279,7 +294,7 @@ def insert_file(file_: list) -> int:
         'pages, published) values (?,?,?,?,?,?,?,?,?,?,?,?)'
     )
 
-    def get_path_id(conn: apsw.Connection) -> int:
+    def _get_path_id(conn: apsw.Connection) -> int:
         sql1 = 'select id from paths where path = ?'
         sql2 = 'insert into paths (path) values (?)'
         curs = conn.cursor()
@@ -289,7 +304,7 @@ def insert_file(file_: list) -> int:
         curs.execute(sql2, (file_[-1],)).fetchone()
         return conn.last_insert_rowid()
 
-    def get_ext_id(conn: apsw.Connection) -> int:
+    def _get_ext_id(conn: apsw.Connection) -> int:
         sql1 = 'select id from extensions where extension = ?'
         sql2 = 'insert into extensions (extension) values (?)'
         ext = PurePath(file_[1]).suffix.strip('.')
@@ -301,8 +316,8 @@ def insert_file(file_: list) -> int:
         return conn.last_insert_rowid()
 
     with ag.db['Conn'] as conn:
-        path_id = get_path_id(conn)
-        ext_id = get_ext_id(conn)
+        path_id = _get_path_id(conn)
+        ext_id = _get_ext_id(conn)
         conn.cursor().execute(sql, (path_id, ext_id, *file_[:-1]))
         return conn.last_insert_rowid()
 

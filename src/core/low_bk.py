@@ -55,7 +55,7 @@ def exec_user_actions():
         "author_inserted": populate_author_list,
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
-        "Files Open file": open_file,
+        "Files Open file": open_current_file,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
         "Files Delete file(s) from DB": delete_files,
@@ -542,19 +542,32 @@ def file_name(index: QModelIndex) -> str:
 def double_click_file():
     idx = ag.file_list.currentIndex()
     if idx.isValid() and (idx.column() == 0):
-        open_file0(idx)
+        open_file_by_model_index(idx)
 
-def open_file():
+def open_current_file():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
-        open_file0(idx)
+        open_file_by_model_index(idx)
 
-def open_file0(index: QModelIndex):
-    if open_file_or_folder(full_file_name(index)):
-        id = index.data(Qt.ItemDataRole.UserRole).id
-        ts = db_ut.update_opened_file(id)
-        if ts > 0:
-            ag.file_list.model().update_opened(ts, index)
+def open_file_by_model_index(index: QModelIndex):
+    if not open_with_url(index):
+        open_manualy(index)
+
+def open_with_url(index: QModelIndex) -> bool:
+    url = QUrl()
+    if QDesktopServices.openUrl(
+        url.fromLocalFile(full_file_name(index))
+    ):
+        update_open_date(index)
+        return True
+    else:
+        return False
+
+def update_open_date(index: QModelIndex):
+    id = index.data(Qt.ItemDataRole.UserRole).id
+    ts = db_ut.update_opened_file(id)
+    if ts > 0:
+        ag.file_list.model().update_opened(ts, index)
 
 def delete_files():
     """
@@ -684,14 +697,40 @@ def load_file(fl: dict) -> int:
 #endregion
 
 #region  Files - Dirs
-def open_file_or_folder(path: str) -> bool:
-    """
-    Open file with default programm
-    or folder with default file manager
-    @param: path
-    """
-    url = QUrl()
-    return QDesktopServices.openUrl(url.fromLocalFile(path))
+def open_manualy(index: QModelIndex):
+    btn = utils.show_message_box(
+        'File cannot be opened',
+        'Please, select file',
+        QMessageBox.StandardButton.Open |
+        QMessageBox.StandardButton.Cancel,
+        QMessageBox.Icon.Question
+    )
+
+    if btn == QMessageBox.StandardButton.Cancel:
+        return False
+    if btn == QMessageBox.StandardButton.Open:
+        path = full_file_name(index)
+        i_path = Path(path)
+        d_path = i_path.parent
+        while not d_path.exists():
+            d_path = d_path.parent
+        filename, ok = QFileDialog.getOpenFileName(ag.app,
+            directory=d_path.as_posix()
+        )
+
+        if ok:
+            f_path = Path(filename)
+            path_id = db_ut.get_path_id(f_path.parent.as_posix())
+            id = index.data(Qt.ItemDataRole.UserRole).id
+            db_ut.update_file_name_path(id, path_id, f_path.name)
+            model = ag.file_list.model()
+            user_data = model.get_user_data()
+            for it in user_data:
+                it: ag.FileData
+                if it.id == id:
+                    it.path = path_id
+                    break
+            open_with_url(index)
 
 def create_child_dir():
     cur_idx = ag.dir_list.selectionModel().currentIndex()
