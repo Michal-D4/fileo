@@ -67,7 +67,7 @@ class loadFiles(QObject):
         self.conn.close()
 
     def drop_file(self, filename: Path):
-        path_id = self.get_path_id(str(filename.parent))
+        path_id = self.get_path_id(filename.parent.as_posix())
 
         id = (
             self.find_file(path_id, filename.name) or
@@ -116,7 +116,7 @@ class loadFiles(QObject):
         :param full_file_name:
         :return: file_id if inserted new, 0 if already exists
         """
-        path_id = self.get_path_id(str(full_file_name.parent))
+        path_id = self.get_path_id(full_file_name.parent.as_posix())
 
         if self.find_file(path_id, full_file_name.name):
             return 0
@@ -127,7 +127,7 @@ class loadFiles(QObject):
         INSERT_FILE = ('insert into files (filename, extid, path) '
             'values (:file, :ext_id, :path);')
 
-        dir_id = self.get_dir_id(file_name.parent, path_id)
+        dir_id = self.get_dir_id(file_name.parent.as_posix(), path_id)
 
         ext_id = self.insert_extension(file_name)
 
@@ -156,14 +156,15 @@ class loadFiles(QObject):
         return id[0] if id else 0
 
     def get_dir_id(self, path: Path, path_id: int) -> int:
-        if str(path) in self.paths:
-            id = self.paths[str(path)].dirId
+        str_path = path.as_posix()
+        if str_path in self.paths:
+            id = self.paths[str_path].dirId
             if id:
                 return id
 
         parent_id = self.find_closest_parent(path)
         id = self._new_dir(path, parent_id)
-        self.paths[str(path)] = PathDir(path_id, id)
+        self.paths[str_path] = PathDir(path_id, id)
         return id
 
     def _new_dir(self, path: Path, parent_id: int):
@@ -223,7 +224,7 @@ class loadFiles(QObject):
         """
         # the first parent of "new_path / '@'" is a new_path itself
         for parent_path in (new_path / '@').parents:
-            str_parent = str(parent_path)
+            str_parent = parent_path.as_posix()
             if str_parent in self.paths:
                 return self.paths[str_parent].dirId or self.load_id
 
