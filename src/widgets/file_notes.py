@@ -113,14 +113,15 @@ class notesContainer(QScrollArea):
         self.scroll_layout.addStretch(1)
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
-            note_id = row[2]
             note = fileNote(*row[1:])
             note.set_text(row[0])
-            self.notes[note_id] = note
+            self.notes[row[1:3]] = note
             self.add_item(note)
 
     def clear_layout(self):
-        while item := self.scroll_layout.takeAt(0):
+        self.notes.clear()
+        for i in reversed(range(self.scroll_layout.count())):
+            item = self.scroll_layout.takeAt(i)
             if item.widget():
                 item.widget().deleteLater()
 
@@ -134,17 +135,19 @@ class notesContainer(QScrollArea):
     def get_edited_note(self) -> fileNote:
         file_id = self.editor.get_file_id()
         note_id = self.editor.get_note_id()
-        if not (note := self.notes.get(note_id, None)):
-            note = fileNote(file_id=file_id, id=note_id)
-        return file_id, note_id, note
+        if not (note := self.notes.get((file_id, note_id), None)):
+            note = fileNote(file_id=file_id, note_id=note_id)
+        return note
 
     def finish_editing(self):
         self.update_note()
         self.editing = False
 
     def update_note(self):
-        file_id, note_id, note = self.get_edited_note()
-        # logger.info(f'{note_id=}, {file_id=}')
+        note: fileNote = self.get_edited_note()
+        file_id = note.get_file_id()
+        note_id = note.get_note_id()
+        # logger.info(f'{file_id=}, {note_id=}')
         txt = self.editor.get_text()
         if note_id:
             self.scroll_layout.removeWidget(note)
@@ -156,8 +159,8 @@ class notesContainer(QScrollArea):
 
         note.set_modification_date(ts)
         if self.file_id == file_id:
-            note.set_text(txt)
-            self.notes[note_id] = note
+            note.set_note_text(txt)
+            self.notes[(file_id, note_id)] = note
             self.add_item(note)
             self.update_date_in_file_list(ts)
 
@@ -188,11 +191,10 @@ class notesContainer(QScrollArea):
             QMessageBox.StandardButton.Cancel,
             QMessageBox.Icon.Question
         ) == QMessageBox.StandardButton.Ok:
-            note = self.notes.pop(note_id, None)
+            note = self.notes.pop((file_id, note_id), None)
             self.scroll_layout.removeWidget(note)
-            db_ut.delete_note(note.get_file_id(), note_id)
+            db_ut.delete_note(file_id, note_id)
 
     def collapse_all(self):
         for note in self.notes.values():
-            note: fileNote
             note.check_collapse_button()
