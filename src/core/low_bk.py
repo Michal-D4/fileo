@@ -8,6 +8,7 @@ import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
+    QFile, QTextStream, QIODevice, QIODeviceBase
 )
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
@@ -635,18 +636,19 @@ def export_files():
     )
 
     if ok:
-        _export_files(file_name)
+        fl = QFile(file_name)
+        fl.open(QIODeviceBase.OpenModeFlag.WriteOnly)
+        _export_files(QTextStream(fl))
 
-def _export_files(filename: str):
-    with open(filename, "w") as out:
-        res = []
-        for idx in ag.file_list.selectionModel().selectedRows(0):
-            try:
-                id = idx.data(Qt.ItemDataRole.UserRole).id
-                file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
-            except TypeError:
-                continue
-            out.write(f"{json.dumps(file_data)}\n")
+def _export_files(out: QTextStream):
+    for idx in ag.file_list.selectionModel().selectedRows(0):
+        try:
+            id = idx.data(Qt.ItemDataRole.UserRole).id
+            file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
+        except TypeError:
+            continue
+        out << f"{json.dumps(file_data)}\n"
+        logger.info(file_data)
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
@@ -656,15 +658,18 @@ def import_files():
         directory=path,
         filter="File list (*.file_list *.json *.txt)")
     if ok:
-        _import_files(file_name)
+        fp = QFile(file_name)
+        fp.open(QIODeviceBase.OpenModeFlag.ReadOnly)
+        _import_files(QTextStream(fp))
 
-def _import_files(filename):
+def _import_files(fp: QTextStream):
     branch = define_branch(ag.dir_list.currentIndex())
     exist_dir = 0
 
-    with open(filename, "r") as fp:
-        for line in fp:
-            exist_dir = load_file(json.loads(line))
+    while not fp.atEnd():
+        line = fp.readLine()
+        logger.info(line)
+        exist_dir = load_file(json.loads(line))
 
     if exist_dir > 0:
         branch.append(exist_dir)
