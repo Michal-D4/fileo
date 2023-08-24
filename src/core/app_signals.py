@@ -1,4 +1,5 @@
 from PyQt6.QtCore import pyqtSignal, QObject
+from ..widgets.file_note import fileNote
 
 class AppSignals(QObject):
 
@@ -16,6 +17,6 @@ class AppSignals(QObject):
 
     app_mode_changed = pyqtSignal(int)
 
-    delete_note = pyqtSignal(int, int)
+    delete_note = pyqtSignal(fileNote)
 
-    start_edit_note = pyqtSignal(int, int)
+    start_edit_note = pyqtSignal(fileNote)
