@@ -1,3 +1,4 @@
+from loguru import logger
 import apsw
 from collections import defaultdict
 from dataclasses import dataclass
@@ -23,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.49'
+    return '0.9.50'
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
@@ -46,8 +47,9 @@ db = { 'Path': '', 'Conn': None, 'restore': True }
 
 class mimeType(Enum):
     folders = "folders"
-    files = "files"
-    uri = 'text/uri-list'
+    files_in = "files/drag-inside"
+    files_out = 'files/drag-outside'
+    files_uri = 'files/uri-list'
 
 @unique
 class appMode(Enum):

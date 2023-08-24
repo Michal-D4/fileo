@@ -17,7 +17,7 @@ def choose_drop_action(e: QDropEvent):
     and KeyboardModifier is not used.
     """
     if (ag.mode is ag.appMode.DIR or
-        not e.mimeData().hasFormat(ag.mimeType.files.value)):
+        not e.mimeData().hasFormat(ag.mimeType.files_in.value)):
         if not has_modifier(e):
             use_menu(e)
     else:

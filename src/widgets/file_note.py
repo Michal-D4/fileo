@@ -15,14 +15,14 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 class fileNote(QWidget):
 
     def __init__(self, file_id: int=0,
-                 id: int=0,
+                 note_id: int=0,
                  modified: int=0,
                  created: int=0,
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
         self.file_id = file_id
-        self.id = id
+        self.id = note_id
         self.collapsed = False
 
         self.modified = datetime.fromtimestamp(modified)
@@ -66,8 +66,8 @@ class fileNote(QWidget):
         size = self.ui.textBrowser.document().size().toSize()
         self.visible_height = size.height() + self.ui.item_header.height()
 
-    def set_note_id(self, id: int):
-        self.id = id
+    def set_note_id(self, note_id: int):
+        self.id = note_id
 
     def get_note_id(self) -> int:
         return self.id
@@ -117,11 +117,11 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        ag.signals_.start_edit_note.emit(self.id, self.file_id)
+        ag.signals_.start_edit_note.emit(self)
 
     @pyqtSlot()
     def remove_note(self):
-        ag.signals_.delete_note.emit(self.id, self.file_id)
+        ag.signals_.delete_note.emit(self)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):

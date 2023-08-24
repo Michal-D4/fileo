@@ -3,7 +3,8 @@ from collections import deque
 import sys
 
 from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
-    QModelIndex, QDataStream, QIODevice,
+    QModelIndex, QDataStream, QIODevice, QCoreApplication,
+    QTextStream,
 )
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )
@@ -38,12 +39,15 @@ def get_files_mime_data() -> QMimeData:
 def file_mime_data(indexes) -> QMimeData:
     """
     mimedata contains:
+    - Pid of current instance
     - number of selected files
     - for each file: id, dir_id
     """
-    model = ag.file_list.model()
     drag_data = QByteArray()
     data_stream = QDataStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
+    pid = QCoreApplication.applicationPid()
+    data_stream.writeInt(pid)
+
     if ag.mode is ag.appMode.DIR:
         dir_idx = ag.dir_list.currentIndex()
         dir_id = dir_idx.data(Qt.ItemDataRole.UserRole).id
@@ -52,6 +56,7 @@ def file_mime_data(indexes) -> QMimeData:
 
     data_stream.writeInt(dir_id)
     data_stream.writeInt(len(indexes))
+    model = ag.file_list.model()
     for idx in indexes:
         s_idx = model.mapToSource(idx)
         data_stream.writeInt(
@@ -61,8 +66,23 @@ def file_mime_data(indexes) -> QMimeData:
         )
 
     mime_data = QMimeData()
-    mime_data.setData(ag.mimeType.files.value, drag_data)
+    mime_data.setData(ag.mimeType.files_in.value, drag_data)
+    mime_data.setData(
+        ag.mimeType.files_out.value,
+        external_file_list(indexes)
+    )
     return mime_data
+
+def external_file_list(indexes) ->QMimeData:
+    """
+    create QMimeData to drag to another instance
+    .QtCore.QCoreApplication.applicationPid()
+    """
+    drag_data = QByteArray()
+    data_stream = QTextStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
+    low_bk._export_files(data_stream)
+
+    return drag_data
 
 def get_dir_mime_data() -> QMimeData:
     global dragged_ids
@@ -203,12 +223,12 @@ def drop_event(e: QDropEvent):
         e.ignore()
 
 def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    if data.hasFormat(ag.mimeType.uri.value):
+    if data.hasFormat(ag.mimeType.files_uri.value):
         drop_uri_list(data, target)
         update_file_list(target)
         return True
 
-    if data.hasFormat(ag.mimeType.files.value):
+    if data.hasFormat(ag.mimeType.files_in.value):
         return drop_files(data, act, target)
 
     if data.hasFormat(ag.mimeType.folders.value):
@@ -231,16 +251,21 @@ def drop_uri_list(data: QMimeData, target: int) -> bool:
     load.load_to_dir(target)
 
 def drop_files(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    if act is Qt.DropAction.CopyAction:
-        return copy_files(data, target)
-    if act is Qt.DropAction.MoveAction:
-        return move_files(data, target)
-    return False
-
-def copy_files(data: QMimeData, target: int) -> bool:
-    files_data = data.data(ag.mimeType.files.value)
+    files_data = data.data(ag.mimeType.files_in.value)
     stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
+    pid_from = stream.readInt()
+    if QCoreApplication.applicationPid() == pid_from:
+        if act is Qt.DropAction.CopyAction:
+            return copy_files(stream, target)
+        if act is Qt.DropAction.MoveAction:
+            return move_files(stream, target)
+        return False
+    else:
+        files_data = data.data(ag.mimeType.files_out.value)
+        stream = QTextStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
+        low_bk._import_files(stream)
 
+def copy_files(stream: QDataStream, target: int) -> bool:
     _ = stream.readInt()   # source dir_id - not used here
     count = stream.readInt()
 
@@ -250,10 +275,7 @@ def copy_files(data: QMimeData, target: int) -> bool:
 
     return True
 
-def move_files(data: QMimeData, target: int) -> bool:
-    files_data = data.data(ag.mimeType.files.value)
-    stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
-
+def move_files(stream: QDataStream, target: int) -> bool:
     dir_id = stream.readInt()   # source dir_id
     count = stream.readInt()
 
