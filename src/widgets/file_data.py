@@ -10,6 +10,7 @@ from ..core import icons, app_globals as ag, db_ut
 from .file_authors import authorBrowser
 from .file_info import fileInfo
 from .file_notes import noteEditor, notesContainer
+from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 
@@ -228,19 +229,17 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if self.notes.is_editing():
             self.switch_page(5)
             return
-        self.show_editor(0, self.file_id, '')
+        self.show_editor(fileNote(self.file_id, 0))
 
-    def start_edit(self, note_id: int, file_id: int):
+    def start_edit(self, note: fileNote):
         if self.notes.is_editing():
             self.switch_page(5)
             return
 
-        txt = db_ut.get_note(file_id, note_id)
-        self.show_editor(note_id, file_id, txt)
+        self.show_editor(note)
 
-    def show_editor(self, note_id: int, file_id: int, txt: str):
-        self.editor.start_edit(note_id, file_id)
-        self.editor.setText(txt)
+    def show_editor(self, note: fileNote):
+        self.editor.start_edit(note)
 
         self.notes.set_editing(True)
 

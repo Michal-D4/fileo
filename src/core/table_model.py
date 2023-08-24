@@ -63,6 +63,8 @@ class ProxyModel2(ProxyModel):
         idx = self.sourceModel().get_index_by_id(id)
         return self.mapFromSource(idx).row()
 
+    def get_user_data(self) -> list:
+        return self.sourceModel().get_user_data()
 
 class TableModel(QAbstractTableModel):
 
@@ -104,6 +106,9 @@ class TableModel(QAbstractTableModel):
                 if col:
                     return Qt.AlignmentFlag.AlignRight
                 return Qt.AlignmentFlag.AlignLeft
+
+    def get_user_data(self):
+        return self.user_data
 
     def delete_row(self, index):
         if index.isValid():

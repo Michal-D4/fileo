@@ -110,7 +110,6 @@ def is_app_schema(db_name: str) -> bool:
 def tune_new_version() -> int:
     conn = ag.db['Conn']
     try:
-
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
 
         if v[0] == 1:
@@ -201,11 +200,25 @@ def tune_app_version(conn: apsw.Connection):
     if curr_ver == new_ver:
         return
 
+    if curr_ver:
+        save_version(conn)
+    else:
+        initialize_settings(conn)
+
     if not curr_ver or curr_ver == '0.9.44':
         col_width: dict = ag.get_setting('COLUMN_WIDTH')
         col_width.pop('Commented', None)
         ag.save_settings(COLUMN_WIDTH=col_width)
-        save_version(conn)
+
+    if curr_ver == '0.9.49':
+        path_as_posix(conn)
+
+def path_as_posix(conn: apsw.Connection):
+    sql0 = 'select * from paths'
+    sql1 = 'update paths set path = ? where id = ?'
+    curs = conn.cursor().execute(sql0)
+    for line in curs:
+        conn.cursor().execute(sql1, (line[1].replace('\\', '/'), line[0]))
 
 def initiate_db(connection):
     connection.cursor().execute("insert into dirs values (0, null),(1, '@@Lost');")
