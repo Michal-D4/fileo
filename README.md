@@ -163,7 +163,7 @@ The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidde
 
 1. The current folder (Poetry).
 2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "A folder" and "fileo" in the folder "my" are links. The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
-3. The current file. "Environment Variables in Linux.md"
+3. The current file "Python Poetry.md".
 
 [^1]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another folder. This other folder becomes its parent.
 

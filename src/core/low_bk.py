@@ -648,7 +648,6 @@ def _export_files(out: QTextStream):
         except TypeError:
             continue
         out << f"{json.dumps(file_data)}\n"
-        logger.info(file_data)
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
@@ -668,7 +667,6 @@ def _import_files(fp: QTextStream):
 
     while not fp.atEnd():
         line = fp.readLine()
-        logger.info(line)
         exist_dir = load_file(json.loads(line))
 
     if exist_dir > 0:
