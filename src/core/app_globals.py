@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.50'
+    return '0.9.51'
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
@@ -49,7 +49,7 @@ class mimeType(Enum):
     folders = "folders"
     files_in = "files/drag-inside"
     files_out = 'files/drag-outside'
-    files_uri = 'files/uri-list'
+    files_uri = 'text/uri-list'
 
 @unique
 class appMode(Enum):

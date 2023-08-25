@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.9.51 - 2023, August 25
+* fix error in mimetype "text/uri-list"
+
+## 0.9.50 - 2023, August 24
+* drag files between app instances
+* always store the file path in posix format to avoid duplication of paths
+* in case the file has been moved to another directory, provide the option
+to open it manually to save the new path
+* fix bug in saving file notes at runtime due to duplicate notes reference
+
 ## 0.9.49 - 2023, August 04
 * had to create 2 new versions to put the homepage in PYPi
 

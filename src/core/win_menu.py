@@ -34,8 +34,8 @@ def choose_drop_action(e: QDropEvent):
             e.ignore()
     else:
         e.setDropAction(Qt.DropAction.CopyAction)
-    logger.info(e.dropAction())
-    logger.info(f'mimeType files_in: {e.mimeData().hasFormat(ag.mimeType.files_in.value)}')
-    logger.info(f'mimeType files_out: {e.mimeData().hasFormat(ag.mimeType.files_out.value)}')
-    logger.info(f'mimeType files_URI: {e.mimeData().hasFormat(ag.mimeType.files_uri.value)}')
-    logger.info(f'mimeType folders: {e.mimeData().hasFormat(ag.mimeType.folders.value)}')
+    # logger.info(e.dropAction())
+    # logger.info(f'mimeType files_in: {e.mimeData().hasFormat(ag.mimeType.files_in.value)}')
+    # logger.info(f'mimeType files_out: {e.mimeData().hasFormat(ag.mimeType.files_out.value)}')
+    # logger.info(f'mimeType files_URI: {e.mimeData().hasFormat(ag.mimeType.files_uri.value)}')
+    # logger.info(f'mimeType folders: {e.mimeData().hasFormat(ag.mimeType.folders.value)}')
