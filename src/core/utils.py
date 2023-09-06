@@ -178,6 +178,9 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     icons.add_other_icon(
         'match_word', QPixmap(ag.qss_params['$ico_match_word'])
     )
+    icons.add_other_icon(
+        'app', QPixmap(ag.qss_params['$ico_app'])
+    )
 
     try:
         from ctypes import windll  # to show icon on the taskbar - Windows only
