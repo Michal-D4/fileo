@@ -64,7 +64,8 @@ def main():
 
         try:
             thema_name = "default"
-            utils.apply_style(app, thema_name, to_save=True)
+            log_qss = utils.get_app_setting("LOG_QSS", False)
+            utils.apply_style(app, thema_name, to_save=log_qss)
         except KeyError as e:
             # message for developers
             logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")

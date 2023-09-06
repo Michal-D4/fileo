@@ -1,5 +1,6 @@
 from loguru import logger
 
+from pathlib import Path
 from typing import Any, Optional
 from importlib import resources
 
@@ -148,11 +149,17 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
         dyn_qss_add_lines(lines)
         return it
 
-    def save_qss(out_file: str):
+    def save_qss():
         """ save translated qss """
         from PyQt6.QtCore import QFile, QTextStream
         nonlocal qss
-        flqss = QFile(out_file)
+        pp = Path('~/fileo/report').expanduser()
+        path = get_app_setting(
+            'DEFAULT_REPORT_PATH', pp.as_posix()
+        )
+        path = Path(path) / 'QSS.log'
+
+        flqss = QFile(path.as_posix())
         flqss.open(QFile.WriteOnly)
         stream = QTextStream(flqss)
         stream << qss
@@ -165,7 +172,7 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     app.setStyleSheet(qss[:it])
 
     if to_save:
-        save_qss("out-qss.log")
+        save_qss()
 
     icons.collect_all_icons()
 

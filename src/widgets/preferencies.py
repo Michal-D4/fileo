@@ -35,6 +35,7 @@ class Preferencies(QDialog):
         form_layout.addRow('Default report path:', self.report_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
         form_layout.addRow('Allow single instance only:', self.single_instance)
+        form_layout.addRow('Write QSS to log file:', self.qss_log)
 
         v_layout = QVBoxLayout(self)
         v_layout.setContentsMargins(9, 9, 9, 9)
@@ -61,7 +62,8 @@ class Preferencies(QDialog):
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
-            "SINGLE_INSTANCE": int(self.single_instance.isChecked())
+            "SINGLE_INSTANCE": int(self.single_instance.isChecked()),
+            "LOG_QSS": int(self.qss_log.isChecked()),
         }
         utils.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
@@ -94,4 +96,8 @@ class Preferencies(QDialog):
         self.single_instance = QCheckBox()
         self.single_instance.setChecked(
             utils.get_app_setting('SINGLE_INSTANCE', 0)
+        )
+        self.qss_log = QCheckBox()
+        self.qss_log.setChecked(
+            utils.get_app_setting('LOG_QSS', 0)
         )
