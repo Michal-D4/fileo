@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.9.52 - 2023, September 07
+* change app icon format from SVG to ICO. SVG sometimes doesn't work properly
+* clear file list when switch to empty DB
+* fix bug in creation new DB
+
 ## 0.9.51 - 2023, August 25
 * fix error in mimetype "text/uri-list"
 
