@@ -182,7 +182,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.notes.set_editing(False)
         self.l_file_notes_press(None)
 
-    def set_data(self):
+    def set_tag_author_data(self):
         self.tag_selector.set_list(db_ut.get_tags())
         self.author_selector.set_authors()
 

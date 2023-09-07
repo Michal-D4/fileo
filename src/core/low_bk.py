@@ -39,7 +39,7 @@ else:
     def reveal_file(path: str):
         raise NotImplemented(f"doesn't support {sys.platform} system")
 
-def exec_user_actions():
+def set_user_actions_handler():
     """
     run methods for user_action_signal
     :@param action: string to select handle method
@@ -491,7 +491,7 @@ def header_restore(model: QAbstractTableModel):
     width = ag.get_setting("COLUMN_WIDTH", {})
 
     for i,field in enumerate(hdr):
-        ww = width[field] or DEFAULT_FIELD_WIDTH
+        ww = width.get(field, DEFAULT_FIELD_WIDTH)
         ag.file_list.setColumnWidth(i, int(ww))
     ag.file_list.header().sectionResized.connect(section_resized)
 

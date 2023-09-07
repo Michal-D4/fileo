@@ -78,8 +78,8 @@ class shoWindow(QMainWindow):
         self.container.set_qss_fold(ag.dyn_qss['decorator'])
 
     def restore_settings(self):
-        execute_user_action = low_bk.exec_user_actions()
-        ag.signals_.user_signal.connect(execute_user_action)
+        exec_user_action = low_bk.set_user_actions_handler()
+        ag.signals_.user_signal.connect(exec_user_action)
 
         self.restore_container()
         self.restore_note_height()
@@ -107,7 +107,7 @@ class shoWindow(QMainWindow):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
             bk_ut.set_field_menu()
-            ag.file_data_holder.set_data()
+            ag.file_data_holder.set_tag_author_data()
             return True
         return False
 

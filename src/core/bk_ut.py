@@ -193,13 +193,18 @@ def populate_all():
     ag.filter_dlg.restore_filter_settings()
 
     restore_history()
-    idx = low_bk.expand_branch(ag.history.get_current())
-    ag.dir_list.setCurrentIndex(idx)
 
 def restore_history():
     restore_sorting()
     hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
     ag.history.set_history(*hist)
+
+    idx = low_bk.expand_branch(ag.history.get_current())
+    logger.info(f'{idx.isValid()=}')
+    if idx.isValid():
+        ag.dir_list.setCurrentIndex(idx)
+    else:
+        low_bk.show_folder_files()
 
 def restore_sorting():
     col = ag.get_setting("FILE_SORT_COLUMN", 0)

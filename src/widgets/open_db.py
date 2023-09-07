@@ -1,4 +1,5 @@
 from pathlib import Path
+from loguru import logger
 
 from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -165,21 +166,20 @@ class OpenDB(QWidget):
         self.ui.input_path.setText(str(file_))
         if file_.exists():
             if file_.is_file():
-                if create_db.is_app_schema(str(file_)):
-                    u_ver = create_db.tune_new_version(str(file_))
-                    if u_ver == create_db.USER_VER:
-                        return True
-                    else:
-                        self.msg = f"wrong DB user version: {u_ver}"
-                        return False
-                elif file_.stat().st_size == 0:               # empty file
-                    create_db.create_tables(str(file_))
+                if create_db.check_app_schema(str(file_)):
+                    return True
+                if file_.stat().st_size == 0:               # empty file
+                    create_db.create_tables(
+                        create_db.create_db(str(file_))
+                    )
                     return True
                 else:
                     self.msg = f"not DB: {file_}"
                     return False
         elif file_.parent.exists and file_.parent.is_dir():   # file not exist
-            create_db.create_tables(str(file_))
+            create_db.create_tables(
+                create_db.create_db(str(file_))
+            )
             return True
         else:
             self.msg = f"bad path: {file_}"
