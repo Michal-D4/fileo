@@ -127,8 +127,6 @@ def save_settings(**kwargs):
     sql = "update settings set value = :value where key = :key;"
 
     for key, val in kwargs.items():
-        if key == "COLUMN_WIDTH":
-            logger.info(val)
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
 
 def get_setting(key: str, default=None):

@@ -486,9 +486,7 @@ def header_restore(model: QAbstractTableModel):
     restore_columns_width(hdr)
 
 def restore_columns_width(hdr: list):
-    ag.file_list.header().sectionResized.disconnect()
     width = ag.get_setting("COLUMN_WIDTH", {})
-    logger.info(width)
 
     w0 = 0
     for i,field in enumerate(hdr[1:]):
@@ -497,10 +495,10 @@ def restore_columns_width(hdr: list):
             ww = DEFAULT_FIELD_WIDTH
         w0 += ww
         ag.file_list.setColumnWidth(i+1, ww)
-    logger.info(f'{width[hdr[0]]=}, {w0=}, {ag.file_list.width()=}')
     ag.file_list.setColumnWidth(0, ag.file_list.width() - w0 - 21)
     ag.file_list.header().sectionResized.connect(column_resized)
 
+@pyqtSlot(int, int, int)
 def column_resized(idx: int, old_sz: int, new_sz: int):
     if idx:   # not filename column
         resize_filename_column(old_sz - new_sz)
@@ -521,10 +519,8 @@ def get_columns_width() -> dict:
     hdr = field_titles()
 
     width = ag.get_setting("COLUMN_WIDTH", {})
-    logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
-    logger.info(width)
     return width
 
 def field_titles() -> list:
