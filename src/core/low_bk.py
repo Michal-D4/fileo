@@ -8,11 +8,11 @@ import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
-    QFile, QTextStream, QIODevice, QIODeviceBase
+    QFile, QTextStream, QIODeviceBase,
 )
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QTreeView,
 )
 
 from . import db_ut, app_globals as ag, utils, duplicates as dup
@@ -253,8 +253,6 @@ def get_dir_names_path(index: QModelIndex) -> list:
     """
     return:  a list of node names from root to index
     """
-    if not index.isValid():
-        return []
     item: TreeItem = index.internalPointer()
     branch = []
     while 1:
@@ -305,31 +303,28 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     currentRowChanged signal in dirTree
     :@return: None
     """
+    def set_folder_path_label(idx: QModelIndex):
+        if idx.isValid():
+            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(idx)))
+
     ag.app.collapse_btn.setChecked(False)
-    def new_history_item():
-        if ag.hist_folder:
-            ag.hist_folder = False
-        else:       # new history item
-            add_history_item()
-        set_current_file(
-            curr_idx.data(Qt.ItemDataRole.UserRole).file_row
-        )
-
-    ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-
-    save_columns_width()
+    set_folder_path_label(curr_idx)
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
+        def new_history_item():
+            if ag.hist_folder:
+                ag.hist_folder = False
+            else:       # new history item
+                add_history_item()
+            set_current_file(
+                curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+            )
+
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         save_file_row(file_row, prev_idx)
         show_folder_files()
         new_history_item()
-
-def save_columns_width():
-    if ag.section_resized:   # save column widths if changed
-        ag.save_settings(COLUMN_WIDTH=get_columns_width())
-        ag.section_resized = False
 
 def save_file_row(file_row: int, dir_idx: QModelIndex):
     if dir_idx.isValid():
@@ -488,22 +483,48 @@ def set_file_model(model: TableModel):
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
     model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
+    restore_columns_width(hdr)
+
+def restore_columns_width(hdr: list):
+    ag.file_list.header().sectionResized.disconnect()
     width = ag.get_setting("COLUMN_WIDTH", {})
+    logger.info(width)
 
-    for i,field in enumerate(hdr):
+    w0 = 0
+    for i,field in enumerate(hdr[1:]):
         ww = width.get(field, DEFAULT_FIELD_WIDTH)
-        ag.file_list.setColumnWidth(i, int(ww))
-    ag.file_list.header().sectionResized.connect(section_resized)
+        if not ww:
+            ww = DEFAULT_FIELD_WIDTH
+        w0 += ww
+        ag.file_list.setColumnWidth(i+1, ww)
+    logger.info(f'{width[hdr[0]]=}, {w0=}, {ag.file_list.width()=}')
+    ag.file_list.setColumnWidth(0, ag.file_list.width() - w0 - 21)
+    ag.file_list.header().sectionResized.connect(column_resized)
 
-def section_resized(idx: int, old_sz: int, new_sz: int):
-    ag.section_resized = True
+def column_resized(idx: int, old_sz: int, new_sz: int):
+    if idx:   # not filename column
+        resize_filename_column(old_sz - new_sz)
+    ag.save_settings(COLUMN_WIDTH=get_columns_width())
+
+def file_list_resize(e: QResizeEvent):
+    resize_filename_column(e.size().width() - e.oldSize().width())
+    super(QTreeView, ag.file_list).resizeEvent(e)
+
+def resize_filename_column(delta: int):
+    if not (delta or ag.file_list.model()):
+        return
+
+    width0 = ag.file_list.columnWidth(0)     # width of first field "File name"
+    ag.file_list.setColumnWidth(0, max(width0 + delta, 200))
 
 def get_columns_width() -> dict:
     hdr = field_titles()
 
     width = ag.get_setting("COLUMN_WIDTH", {})
+    logger.info(width)
     for i,field in enumerate(hdr):
         width[field] = ag.file_list.columnWidth(i)
+    logger.info(width)
     return width
 
 def field_titles() -> list:

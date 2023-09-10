@@ -6,10 +6,10 @@ from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
 )
-from PyQt6.QtWidgets import QMenu, QTreeView, QAbstractItemView
+from PyQt6.QtWidgets import QMenu, QTreeView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, history, icons,
+    drag_drop as dd, icons,
 )
 from ..widgets import workers, find_files
 
@@ -60,6 +60,7 @@ def toggle_collapse(collapse: bool):
         ag.dir_list.setCurrentIndex(idx)
 
 def bk_setup(main: 'shoWindow'):
+    ag.file_list.resizeEvent = file_list_resize_0
     low_bk.dir_list_setup()
     ag.file_list.currentChanged = current_file_changed
 
@@ -75,7 +76,6 @@ def bk_setup(main: 'shoWindow'):
 
     dd.set_drag_drop_handlers()
 
-    ag.file_list.resizeEvent = file_list_resize
     ag.signals_.start_file_search.connect(file_loading)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
@@ -132,18 +132,7 @@ def field_list_changed(state, field):
     idx = ag.file_list.currentIndex()
 
     low_bk.refresh_file_list()
-    toggle_collumn(state, field)
     low_bk.set_current_file(idx.row())
-
-def toggle_collumn(state: bool, field: str):
-    width = low_bk.get_columns_width()
-
-    w_fld = width[field]
-    w0 = ag.file_list.columnWidth(0)
-    if state:
-        ag.file_list.setColumnWidth(0, max(w0 - w_fld, 200))
-    else:
-        ag.file_list.setColumnWidth(0, w0 + w_fld)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -152,29 +141,15 @@ def current_file_changed(curr: QModelIndex, prev: QModelIndex):
         self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
-def file_list_resize(e: QResizeEvent):
-    old_w = e.oldSize().width()
-    if old_w == -1:
-        return
-    delta = e.size().width() - old_w
+def file_list_resize_0(e: QResizeEvent):
+    low_bk.set_dir_model()
 
-    resize_columns(delta)
+    ag.filter_dlg.restore_filter_settings()
+
+    restore_history()
+
+    ag.file_list.resizeEvent = low_bk.file_list_resize
     super(QTreeView, ag.file_list).resizeEvent(e)
-
-def resize_columns(delta: int):
-    if not (model := ag.file_list.model()):
-        return
-
-    sw = sum(  # sum of field widths
-        (
-            ag.file_list.columnWidth(i) for i in
-            range(model.columnCount())
-        )
-    ) + 21   # left margin 12 + scroll bar 9
-
-    width0 = ag.file_list.columnWidth(0)     # width of first field "File name"
-    dd = delta + ag.file_list.width() - sw   # correction of delta by field widths
-    ag.file_list.setColumnWidth(0, max(width0 + dd, 200))
 
 def populate_all():
     if not ag.db['Conn']:
@@ -188,19 +163,12 @@ def populate_all():
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
-    low_bk.set_dir_model()
-
-    ag.filter_dlg.restore_filter_settings()
-
-    restore_history()
-
 def restore_history():
     restore_sorting()
     hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
     ag.history.set_history(*hist)
 
     idx = low_bk.expand_branch(ag.history.get_current())
-    logger.info(f'{idx.isValid()=}')
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
     else:

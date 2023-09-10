@@ -81,9 +81,9 @@ class shoWindow(QMainWindow):
         exec_user_action = low_bk.set_user_actions_handler()
         ag.signals_.user_signal.connect(exec_user_action)
 
+        self.restore_geometry()
         self.restore_container()
         self.restore_note_height()
-        self.restore_geometry()
 
         ag.file_data_holder = fileDataHolder()
         ag.file_data_holder.setObjectName("file_notes")
@@ -232,12 +232,12 @@ class shoWindow(QMainWindow):
         self.ui.btn_search.setDisabled(True)
 
     def connect_slots(self):
+        self.connect_checkable()
+
         self.ui.close.clicked.connect(self.close_app)
         self.ui.minimize.clicked.connect(self.minimize)
 
         self.ui.dataBase.clicked.connect(self.show_db_list)
-
-        self.connect_checkable()
 
         self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
