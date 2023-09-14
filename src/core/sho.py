@@ -92,7 +92,7 @@ class shoWindow(QMainWindow):
             utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
         )
 
-        if ag.db['restore']:     # start app with restoring DB connection - 1st app instance
+        if ag.DB.restore:     # start app with restoring DB connection - 1st app instance
             self.connect_db(utils.get_app_setting("DB_NAME", ""))
 
     def set_busy(self, val: bool):
@@ -263,12 +263,13 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(str)
     def get_db_name(self, db_name: str):
-        if db_name == ag.db['Path']:
+        if db_name == ag.DB.path:
             return
 
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
+            bk_ut.restore_dirs()
 
     @pyqtSlot()
     def show_db_list(self):
@@ -409,7 +410,7 @@ class shoWindow(QMainWindow):
         self.toggle_filter_show()
 
     def toggle_filter_show(self):
-        if not ag.db['Conn']:
+        if not ag.DB.conn:
             return
         if self.ui.btnFilterSetup.isChecked():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
@@ -430,7 +431,7 @@ class shoWindow(QMainWindow):
         search for files with a given extension
         in the selected folder and its subfolders
         """
-        if not ag.db['Conn']:
+        if not ag.DB.conn:
             return
         srch_files = fileSearch(self)
         srch_files.move(
@@ -469,8 +470,8 @@ class shoWindow(QMainWindow):
             "appMode": self.mode.value,
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
-        if ag.db['Path']:
-            settings["DB_NAME"] = ag.db['Path']
+        if ag.DB.path:
+            settings["DB_NAME"] = ag.DB.path
 
         utils.save_app_setting(**settings)
         bk_ut.save_bk_settings()
