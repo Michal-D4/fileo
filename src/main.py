@@ -57,7 +57,7 @@ def main():
 
                 sys.exit(0)
             else:
-                ag.db['restore'] = False
+                ag.DB.restore = False
 
         global app
         app = QApplication([])

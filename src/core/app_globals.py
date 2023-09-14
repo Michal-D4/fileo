@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.52'
+    return '0.9.53'
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
@@ -43,7 +43,11 @@ hist_folder = True
 file_path: Path = None
 single_instance = False
 
-db = { 'Path': '', 'Conn': None, 'restore': True }
+@dataclass(slots=True)
+class DB():
+    path: str = ''
+    conn: apsw.Connection = None
+    restore: bool = True
 
 class mimeType(Enum):
     folders = "folders"
@@ -121,9 +125,9 @@ def save_settings(**kwargs):
     """
     used to save settings on DB level
     """
-    if not db["Conn"]:
+    if not DB.conn:
         return
-    cursor: apsw.Cursor = db["Conn"].cursor()
+    cursor: apsw.Cursor = DB.conn.cursor()
     sql = "update settings set value = :value where key = :key;"
 
     for key, val in kwargs.items():
@@ -133,9 +137,9 @@ def get_setting(key: str, default=None):
     """
     used to restore settings on DB level
     """
-    if not db["Conn"]:
+    if not DB.conn:
         return default
-    cursor: apsw.Cursor = db["Conn"].cursor()
+    cursor: apsw.Cursor = DB.conn.cursor()
     sql = "select value from settings where key = :key;"
 
     try:

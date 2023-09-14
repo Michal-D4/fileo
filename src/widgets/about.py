@@ -67,8 +67,8 @@ class AboutDialog(QDialog):
     def get_py_db_versions(self):
         import platform
         py_ver = platform.python_version()
-        if ag.db['Conn']:
-            db_ver = ag.db['Conn'].execute('PRAGMA user_version').fetchone()[0]
+        if ag.DB.conn:
+            db_ver = ag.DB.conn.execute('PRAGMA user_version').fetchone()[0]
         else:
             db_ver = ''
         self.set_title((py_ver, db_ver))

@@ -13,7 +13,7 @@ def dir_tree_select() -> list:
                'and p.hide = 0')
     sql = sql2[0] if ag.app.show_hidden.isChecked() else ' '.join(sql2)
 
-    curs: apsw.Cursor = ag.db['Conn'].cursor()
+    curs: apsw.Cursor = ag.DB.conn.cursor()
 
     qu = deque()
     qu.append((0, []))
@@ -30,18 +30,18 @@ def dir_tree_select() -> list:
 
 def get_authors() -> apsw.Cursor:
     sql = 'select author, id from authors order by author COLLATE NOCASE;'
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 def get_file_author_id(id: int) -> apsw.Cursor:
     sql = "select aid from fileauthor where fileid = ?"
-    return ag.db['Conn'].cursor().execute(sql, (id,))
+    return ag.DB.conn.cursor().execute(sql, (id,))
 
 def get_file_authors(id: int) -> apsw.Cursor:
     sql = (
         'select author from authors a join fileauthor f on f.aid = a.id '
         'where f.fileid = ? order by author COLLATE NOCASE;'
     )
-    return ag.db['Conn'].cursor().execute(sql, (id,))
+    return ag.DB.conn.cursor().execute(sql, (id,))
 
 def add_author(id: int, author: str) -> int:
     """
@@ -56,7 +56,7 @@ def add_author(id: int, author: str) -> int:
     sql3 = 'insert into fileauthor (aid, fileid) values (:a_id, :id)'
 
     author_id = 0
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         cursor = conn.cursor()
         a_id = cursor.execute(sql1, (author,)).fetchone()
         if a_id:
@@ -70,15 +70,15 @@ def add_author(id: int, author: str) -> int:
 
 def break_file_authors_link(f_id: int, a_id: int):
     sql = 'delete from fileauthor where aid = :a_id and fileid = :f_id'
-    ag.db['Conn'].cursor().execute(sql, {'a_id': a_id, 'f_id': f_id})
+    ag.DB.conn.cursor().execute(sql, {'a_id': a_id, 'f_id': f_id})
 
 def update_author(id: int, val: str):
     sql = 'update authors set author = :name where id = :id'
-    ag.db['Conn'].cursor().execute(sql, {'id': id, 'name': val})
+    ag.DB.conn.cursor().execute(sql, {'id': id, 'name': val})
 
 def detele_author(id):
     sql = 'delete from authors where id = :id'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, {'id': id})
 
 def get_ext_list() -> apsw.Cursor:
@@ -86,7 +86,7 @@ def get_ext_list() -> apsw.Cursor:
         'select extension, id from extensions '
         'order by extension COLLATE NOCASE;'
     )
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 #region files
 def file_duplicates():
@@ -100,11 +100,11 @@ def file_duplicates():
         'join x on x.hash = f.hash '
         'where x.cnt > 1 order by f.filename, d.name '
     )
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 def get_file_name(id: int) -> str:
     sql = 'select filename from files where id = ?'
-    res = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    res = ag.DB.conn.cursor().execute(sql, (id,)).fetchone()
     return res[0] if res else ''
 
 def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
@@ -124,7 +124,7 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
 
     def get_nonascii_names() -> list:
         res = []
-        with ag.db['Conn'] as conn:
+        with ag.DB.conn as conn:
             for line in conn.cursor().execute(sql):
                 ll = line[0] if case else line[0].casefold()
                 if exact:
@@ -144,7 +144,7 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
 
     if not exact:
         nn = f'*{nn}*'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         return conn.execute(' '.join((sql, cond)), (nn,))
 
 def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
@@ -156,7 +156,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
 
     def exist_nonascii_name() -> bool:
         sql = f'select filename from files'
-        with ag.db['Conn'] as conn:
+        with ag.DB.conn as conn:
             for line in conn.cursor().execute(sql):
                 ll = line[0] if case else line[0].casefold()
                 if exact:
@@ -176,7 +176,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
     sql = f'select count(*) from files where {filename} glob ?'
     if not exact:
         nn = f'*{nn}*'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         res = conn.execute(sql, (nn,)).fetchone()
         return res[0] > 0
 
@@ -192,7 +192,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
         'join parentdir p on fd.dir = p.id '      # to avoid duplication
         'where fd.dir = :id and p.parent = :pid;'
     )
-    return ag.db['Conn'].cursor().execute(sql, {'id': dir_id, 'pid': parent})
+    return ag.DB.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
 def lost_files() -> bool:
     """
@@ -247,7 +247,7 @@ def lost_files() -> bool:
             conn.cursor().execute(sql6).fetchone()
 
     try:
-        with ag.db['Conn'] as conn:
+        with ag.DB.conn as conn:
             has_lost = conn.cursor().execute(sql0).fetchone()
             # logger.info(f'{has_lost=}')
             if not has_lost:
@@ -269,13 +269,13 @@ def registered_file_id(path: str, filename: str) -> int:
         'select f.id from files f join paths p on p.id = f.path '
         'where f.filename = ? and p.path = ?'
     )
-    res = ag.db['Conn'].cursor().execute(sql, (filename, path)).fetchone()
+    res = ag.DB.conn.cursor().execute(sql, (filename, path)).fetchone()
     return res[0] if res else 0
 
 def get_path_id(path: str) -> int:
     sql1 = 'select id from paths where path = ?'
     sql2 = 'insert into paths (path) values (?)'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         res = curs.execute(sql1, (path,)).fetchone()
         if res:
@@ -285,7 +285,7 @@ def get_path_id(path: str) -> int:
 
 def update_file_name_path(file_id: int, path_id: int, file_name: str):
     sql = 'update files set (filename, path) = (?, ?) where id = ?'
-    ag.db['Conn'].cursor().execute(sql, (file_name, path_id, file_id))
+    ag.DB.conn.cursor().execute(sql, (file_name, path_id, file_id))
 
 def insert_file(file_: list) -> int:
     sql = (
@@ -315,7 +315,7 @@ def insert_file(file_: list) -> int:
         curs.execute(sql2, (ext,)).fetchone()
         return conn.last_insert_rowid()
 
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         path_id = _get_path_id(conn)
         ext_id = _get_ext_id(conn)
         conn.cursor().execute(sql, (path_id, ext_id, *file_[:-1]))
@@ -330,7 +330,7 @@ def insert_tags(id, tags: list):
         'insert into tags (tag) values (?)',
         'insert into filetag values (?,?)',
     ]
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         for tag in tags:
             tag_author_insert(conn, sqls, tag, id)
 
@@ -343,7 +343,7 @@ def insert_authors(id: int, authors: list):
         'insert into authors (author) values (?)',
         'insert into fileauthor values (?,?)',
     ]
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         for author in authors:
             tag_author_insert(conn, sqls, author, id)
 
@@ -386,7 +386,7 @@ def insert_filenotes(id: int, file_notes: list):
         tt = cursor.execute(sql, (id, rec[2], rec[3])).fetchone()
         return bool(tt)
 
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         max_note_id = get_max_note_id(curs)
 
@@ -401,14 +401,14 @@ def recent_loaded_files() -> apsw.Cursor:
         'select f.id, f.filename, p.path from files f '
         'join paths p on p.id = f.path where f.size = 0'
     )
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 def files_toched(last_scan: int) -> apsw.Cursor:
     sql = (
         'select f.id, f.filename, p.path, f.hash from files f '
         'join paths p on p.id = f.path where f.opened > ?'
     )
-    return ag.db['Conn'].cursor().execute(sql, (last_scan,))
+    return ag.DB.conn.cursor().execute(sql, (last_scan,))
 
 def get_pdf_files() -> apsw.Cursor:
     sql = (
@@ -417,7 +417,7 @@ def get_pdf_files() -> apsw.Cursor:
         "join extensions e on e.id = f.extid "
         "where f.pages = 0 and e.extension = 'pdf'"
     )
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 def update_file_data(id, st, hash):
     hs = (', hash', ',?') if hash else ('','')
@@ -425,7 +425,7 @@ def update_file_data(id, st, hash):
         f'update files set (modified, created, size{hs[0]}) '
         f'= (?, ?, ?{hs[1]}) where id = ?'
     )
-    ag.db['Conn'].cursor().execute(
+    ag.DB.conn.cursor().execute(
         sql, (int(st.st_mtime), int(st.st_ctime),
         st.st_size, hash, id) if hash else
         (int(st.st_mtime), int(st.st_ctime), st.st_size, id)
@@ -435,7 +435,7 @@ def update_pdf_file(id, pages, p_date):
     sql = (
         'update files set (pages, published) = (?, ?) where id = ?'
     )
-    ag.db['Conn'].cursor().execute(sql, (pages, p_date))
+    ag.DB.conn.cursor().execute(sql, (pages, p_date))
 
 def filter_sqls(key: str, field: str='') -> str:
     return {
@@ -476,8 +476,8 @@ def filter_files(param: dict) -> apsw.Cursor:
     sql = assemble_filter_sql(cond, sqlist)
 
     return (
-        ag.db['Conn'].cursor().execute(sql, tuple(par))
-        if par else ag.db['Conn'].cursor().execute(sql)
+        ag.DB.conn.cursor().execute(sql, tuple(par))
+        if par else ag.DB.conn.cursor().execute(sql)
     )
 
 def filter_subsqls(param) -> list[str]:
@@ -608,22 +608,22 @@ def delete_file(id: int):
                 }
             )
 
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         update_preserve()
         curs.execute(sql_del, (id,))
 
 def delete_file_dir_link(id: int, dir_id: int):
     sql = 'delete from filedir where file = ? and dir = ?'
-    ag.db['Conn'].cursor().execute(sql, (id, dir_id))
+    ag.DB.conn.cursor().execute(sql, (id, dir_id))
 
 def get_file_dir_ids(file_id: int) -> apsw.Cursor:
     sql = 'select dir from filedir where file = ?'
-    return ag.db['Conn'].cursor().execute(sql, (file_id,))
+    return ag.DB.conn.cursor().execute(sql, (file_id,))
 
 def get_dir_id_for_file(file: int) -> int:
     sql = 'select dir from filedir where file = ?'
-    res = ag.db['Conn'].cursor().execute(sql, (file,)).fetchone()
+    res = ag.DB.conn.cursor().execute(sql, (file,)).fetchone()
     return res[0] if res else 0
 
 def temp_files_dir():
@@ -631,30 +631,30 @@ def temp_files_dir():
         "insert into aux(key, val) select 'files_dir', file from "
         "filedir where dir in (select val from aux where key = 'dir')"
     )
-    ag.db['Conn'].cursor().execute(sql)
+    ag.DB.conn.cursor().execute(sql)
 
 def clear_temp():
     sql = "delete from aux where key not like 'save%'"
-    ag.db['Conn'].cursor().execute(sql)
+    ag.DB.conn.cursor().execute(sql)
 
 def save_to_temp(key: str, val):
-    ag.db['Conn'].cursor().execute(
+    ag.DB.conn.cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
 def save_branch_in_temp_table(path):
     sql = 'update aux set val = :path where key = :key'
     key = 'TREE_PATH'
-    ag.db['Conn'].cursor().execute(sql, {'path': path, 'key': key})
+    ag.DB.conn.cursor().execute(sql, {'path': path, 'key': key})
 
 def get_branch_from_temp_table() -> str:
     sql = 'select val from aux where key = ?'
     key = 'TREE_PATH'
-    res = ag.db['Conn'].cursor().execute(sql, (key,)).fetchone()
+    res = ag.DB.conn.cursor().execute(sql, (key,)).fetchone()
     return res[0] if res else ''
 
 def get_file_path(id: int) -> str:
     sql = 'select path from paths where id = ?'
-    path = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    path = ag.DB.conn.cursor().execute(sql, (id,)).fetchone()
     return path[0] if path else ''
 
 def get_file_info(id: int) -> apsw.Cursor:
@@ -663,11 +663,11 @@ def get_file_info(id: int) -> apsw.Cursor:
         'f.published, f.nopen, f.rating, f.size, f.pages from files f '
         'join paths p on p.id = f.path where f.id = ?'
     )
-    return ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    return ag.DB.conn.cursor().execute(sql, (id,)).fetchone()
 
 def move_file(new_dir: int, old_dir: int, file: int):
     sql ='update filedir set dir = :new where dir = :old and file = :id;'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         try:
             conn.cursor().execute(
                 sql, {'new': new_dir, 'old': old_dir, 'id': file}
@@ -677,7 +677,7 @@ def move_file(new_dir: int, old_dir: int, file: int):
 
 def copy_file(id: int, dir: int):
     sql = 'insert into filedir (file, dir) values (?, ?);'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         try:
             conn.cursor().execute(sql, (id, dir))
         except apsw.ConstraintError:
@@ -689,7 +689,7 @@ def update_opened_file(id: int) -> int:
     """
     sql0 = "select opened from files where id = ?"
     sql1 = "update files set (opened, nopen) = (unixepoch(), nopen+1) where id = ?"
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         ts0 = curs.execute(sql0, (id,)).fetchone()
         curs.execute(sql1, (id,))
@@ -699,7 +699,7 @@ def update_opened_file(id: int) -> int:
 def update_files_field(id: int, field: str, val):
     #  rating, Pages, published
     sql = f'update files set {field} = ? where id = ?'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, (val, id))
 
 def get_export_data(fileid: int) -> dict:
@@ -723,7 +723,7 @@ def get_export_data(fileid: int) -> dict:
     )
 
     res = {}
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         cursor = conn.cursor()
         tt = cursor.execute(sql1, (fileid,)).fetchone()
         if not tt:
@@ -750,12 +750,12 @@ def get_export_data(fileid: int) -> dict:
 
 def update_dir_name(name: str, id: int):
     sql = 'update dirs set name = ? where id = ?'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, (name, id))
 
 def update_file_row(d_data: ag.DirData):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(
             sql, (d_data.file_row, d_data.parent_id, d_data.id)
         )
@@ -763,7 +763,7 @@ def update_file_row(d_data: ag.DirData):
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
     sql3 = 'insert into parentdir values (?, ?, 0, 0, 0);'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
         id = conn.last_insert_rowid()
@@ -778,29 +778,29 @@ def copy_existed(file_id: int, parent_dir: int) -> int:
         'select d.id from dirs d join parentdir p on '
         'p.id = d.id where p.parent = ? and d.name = ?'
     )
-    id = ag.db['Conn'].cursor().execute(sql, (parent_dir, 'Existed')).fetchone()
+    id = ag.DB.conn.cursor().execute(sql, (parent_dir, 'Existed')).fetchone()
     exist_id = id[0] if id else insert_dir('Existed', parent_dir)
     copy_file(file_id, exist_id)
     return exist_id
 
 def toggle_hidden_dir_state(id: int, parent: int, hidden: bool):
     sql = 'update parentdir set hide = :hide where (id,parent) = (:id,:parent)'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, {'hide':hidden, 'id':id, 'parent':parent})
 
 def dir_parents(id: int) -> apsw.Cursor:
     sql = 'select * from parentdir where id = ?'
-    return ag.db['Conn'].cursor().execute(sql, (id,))
+    return ag.DB.conn.cursor().execute(sql, (id,))
 
 def dir_children(id: int) -> apsw.Cursor:
     sql = 'select * from parentdir where parent = ?'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         return curs.execute(sql, (id,))
 
 def get_dir_name(id: int) -> str:
     sql = 'select name from dirs where id = ?'
-    res = ag.db['Conn'].cursor().execute(sql, (id,)).fetchone()
+    res = ag.DB.conn.cursor().execute(sql, (id,)).fetchone()
     return res[0] if res else ''
 
 def delete_dir(id: int, parent: int):
@@ -810,19 +810,19 @@ def delete_dir(id: int, parent: int):
     sql1 = 'delete from parentdir where id = ?'
     sql2 = 'delete from dirs where id = ?'
 
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs: apsw.Cursor = conn.cursor()
         curs.execute(sql1, (id,))
         curs.execute(sql2, (id,))
 
 def remove_dir_copy(id: int, parent: int):
     sql = 'delete from parentdir where (parent, id) = (?,?)'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, (parent, id))
 
 def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
     sql = 'insert into parentdir values (?, ?, 1, 0, ?);'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         try:
             conn.cursor().execute(
                 sql, (parent, dir_data.id, dir_data.file_row)
@@ -838,7 +838,7 @@ def move_dir(new: int, old: int, id: int) -> bool:
     id  - id of moved dir;
     """
     sql = 'update parentdir set parent = :new where parent = :old and id = :id;'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         try:
             conn.cursor().execute(sql, {"id": id, "old": old, "new": new})
             return True
@@ -858,9 +858,10 @@ def get_file_notes(file_id: int) -> apsw.Cursor:
     )
     if file_id < 0:
         return []
-    with ag.db['Conn'] as conn:
+    logger.info(f"{ag.DB.path}")
+    with ag.DB.conn as conn:
         hash = conn.cursor().execute(hash_sql, (file_id,)).fetchone()
-        # logger.info(f'{hash=}')
+        logger.info(f'{file_id=}, {hash=}')
         if hash[0]:
             return conn.cursor().execute(sql_hash, (hash[0],))
         else:
@@ -868,20 +869,20 @@ def get_file_notes(file_id: int) -> apsw.Cursor:
 
 def get_note(file: int, note: int) -> str:
     sql = 'select filenote from filenotes where fileid = ? and id = ?;'
-    note_text = ag.db['Conn'].cursor().execute(sql, (file, note)).fetchone()
+    note_text = ag.DB.conn.cursor().execute(sql, (file, note)).fetchone()
     return '' if (note_text is None) else note_text[0]
 
-def insert_note(fileid: int, note: str) -> int:
+def insert_note(fileid: int, note: str) -> tuple:
     sql1 = 'select max(id) from filenotes where fileid=?;'
     sql2 = ('insert into filenotes (fileid, id, filenote, modified, '
         'created) values (:fileid, :id, :filenote, :modified, :created);')
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         tmp = curs.execute(sql1, (fileid,)).fetchone()
         id = tmp[0]+1 if tmp[0] else 1
         ts = curs.execute('select unixepoch()').fetchone()
-        if not ts:
-            return -1
+        # if not ts:    # should never happen
+        #     return -1, 0
         curs.execute(sql2,
             {
                 'fileid': fileid,
@@ -897,7 +898,7 @@ def update_note(fileid: int, id: int, note: str) -> int:
     sql0 = 'select modified from filenotes where fileid=:fileid and id=:id'
     sql1 = ('update filenotes set (filenote, modified) = (:filenote, unixepoch()) '
         'where fileid=:fileid and id=:id')
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs = conn.cursor()
         ts0 = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
         curs.execute(sql1,
@@ -912,37 +913,37 @@ def update_note(fileid: int, id: int, note: str) -> int:
 
 def delete_note(file: int, note: int):
     sql = 'delete from filenotes where fileid = ? and id = ?;'
-    ag.db['Conn'].cursor().execute(sql, (file, note))
+    ag.DB.conn.cursor().execute(sql, (file, note))
 
 def get_tags() -> apsw.Cursor:
     sql = 'select Tag, ID from Tags order by Tag COLLATE NOCASE;'
-    return ag.db['Conn'].cursor().execute(sql)
+    return ag.DB.conn.cursor().execute(sql)
 
 def get_file_tags(file_id: int) -> apsw.Cursor:
     sql = ('select Tag, ID from Tags where ID in '
         '(select TagID from FileTag where FileID = ?);')
-    return ag.db['Conn'].cursor().execute(sql, (file_id,))
+    return ag.DB.conn.cursor().execute(sql, (file_id,))
 
 def get_file_tagid(file_id: int) -> apsw.Cursor:
     sql = 'select TagID from FileTag where FileID = ?'
-    return ag.db['Conn'].cursor().execute(sql, (file_id,))
+    return ag.DB.conn.cursor().execute(sql, (file_id,))
 
 def insert_tag(tag: str) -> int:
     sql = "insert into Tags (Tag) values (:tag);"
-    ag.db['Conn'].cursor().execute(sql, {'tag': tag})
-    return ag.db['Conn'].last_insert_rowid()
+    ag.DB.conn.cursor().execute(sql, {'tag': tag})
+    return ag.DB.conn.last_insert_rowid()
 
 def insert_tag_file(tag: int, file: int):
     sql = 'insert into filetag (tagid, fileid) values (:tag_id, :file_id);'
     try:
-        ag.db['Conn'].cursor().execute(sql, {'tag_id': tag, 'file_id': file})
+        ag.DB.conn.cursor().execute(sql, {'tag_id': tag, 'file_id': file})
     except apsw.ConstraintError:
         pass
 
 def delete_tag_file(tag: int, file: int):
     sql = 'delete from filetag where (tagid, fileid) = (:tag, :file)'
     try:
-        ag.db['Conn'].cursor().execute(sql, {'tag': tag, 'file': file})
+        ag.DB.conn.cursor().execute(sql, {'tag': tag, 'file': file})
     except apsw.ConstraintError:
         pass
 
@@ -953,7 +954,7 @@ def update_file_tag_links(file: int, tags: list[int]):
     """
     sql1 = 'select tagid from filetag where fileid = ?'
     sql2 = 'delete from filetag where (tagid, fileid) = (:tag, :file)'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         curs1: apsw.Cursor = conn.cursor()
         curs2: apsw.Cursor = conn.cursor()
         old_tags = curs1.execute(sql1, (file,))
@@ -964,17 +965,17 @@ def update_file_tag_links(file: int, tags: list[int]):
 
 def update_tag(id: int, val: str):
     sql = 'update tags set tag = :tag where id = :id'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, {'id': id, 'tag': val})
 
 def detele_tag(id):
     sql = 'delete from tags where id = :id'
-    with ag.db['Conn'] as conn:
+    with ag.DB.conn as conn:
         conn.cursor().execute(sql, {'id': id})
 
 def get_files_tag(tag: int) -> set[int]:
     sql = 'select fileid from FileTag where tagid = ?'
-    curs = ag.db['Conn'].cursor().execute(sql, (tag,))
+    curs = ag.DB.conn.cursor().execute(sql, (tag,))
     files = []
     for id in curs:
         files.append(id[0])
@@ -985,8 +986,8 @@ def create_connection(path: str) -> bool:
         return False
 
     conn: apsw.Connection = apsw.Connection(path)
-    ag.db['Path'] = path
-    ag.db['Conn'] = conn
+    ag.DB.path = path
+    ag.DB.conn = conn
     ag.signals_.user_signal.emit('Enable_buttons')
 
     if not create_db.tune_new_version():

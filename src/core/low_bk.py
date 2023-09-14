@@ -207,7 +207,7 @@ def show_about():
 
 #region Common
 def save_tmp_settings(**kwargs):
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
+    cursor: apsw.Cursor = ag.DB.conn.cursor()
     sql0 = "delete from aux where key = :key"
     sql1 = "insert into aux values (:key, :value);"
 
@@ -216,7 +216,7 @@ def save_tmp_settings(**kwargs):
         cursor.execute(sql1, {"key": key, "value": pickle.dumps(val)})
 
 def get_tmp_setting(key: str, default=None):
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
+    cursor: apsw.Cursor = ag.DB.conn.cursor()
     sql = "select val from aux where key = :key;"
 
     val = cursor.execute(sql, {"key": key}).fetchone()
@@ -357,7 +357,7 @@ def dir_list_setup():
 def app_mode_changed(old_mode: ag.appMode):
     if ag.mode is ag.appMode.FILTER_SETUP:
         return
-    if not ag.db['Conn']:
+    if not ag.DB.conn:
         return
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
@@ -439,7 +439,7 @@ def fill_file_model(files) -> TableModel:
         row = ["THERE ARE NO FILES HERE"]
         for _,typ in field_idx[1:]:
             row.append(field_val(typ))
-        model.append_row(row, ag.FileData(-1,0,0))
+        model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid QModelIndex?
 
     return model
 
