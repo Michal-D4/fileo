@@ -523,6 +523,10 @@ def assemble_filter_sql(cond, sqlist) -> str:
 
     return sql
 
+def delete_not_exest_file(id: int):
+    sql_del = 'delete from files where id = ?'
+    ag.DB.conn.cursor().execute(sql_del, (id,))
+
 def delete_file(id: int):
     """
     delete file, esential info about file
