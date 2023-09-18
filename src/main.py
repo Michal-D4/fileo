@@ -2,11 +2,11 @@ import sys
 
 from loguru import logger
 
-from PyQt6.QtCore import Qt, pyqtSlot, QLockFile, QDir
+from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from .core import utils, app_globals as ag
+from .core import utils, app_globals as ag, iman
 from .core.sho import shoWindow
 
 if sys.platform.startswith("win"):
@@ -45,41 +45,38 @@ def main():
     # file_name = "sys.stderr"
     # set_logger(file_name)
 
+    pid = iman.new_app_instance()
+
+    ag.single_instance = utils.get_app_setting("SINGLE_INSTANCE", False)
+    if pid:
+        if ag.single_instance:
+            win_activate.activate(pid)
+            iman.app_instance_closed()
+
+            sys.exit(0)
+        else:
+            ag.DB.conn = None
+            ag.DB.path = ''
+
+    global app
+    app = QApplication([])
+
     try:
-        lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
-        # logger.info(f'{lock_file.fileName()}')
-        if not lock_file.tryLock():
-            ag.single_instance = utils.get_app_setting("SINGLE_INSTANCE", False)
-            if ag.single_instance:
-                if lock_file.error() is QLockFile.LockError.LockFailedError:
-                    res = lock_file.getLockInfo()
-                    win_activate.activate(res)
+        thema_name = "default"
+        log_qss = utils.get_app_setting("LOG_QSS", False)
+        utils.apply_style(app, thema_name, to_save=log_qss)
+    except KeyError as e:
+        # message for developers
+        logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")
+        return
 
-                sys.exit(0)
-            else:
-                ag.DB.restore = False
+    main_window = shoWindow()
 
-        global app
-        app = QApplication([])
+    main_window.show()
+    tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
+    tab.activated.connect(tab_pressed)
 
-        try:
-            thema_name = "default"
-            log_qss = utils.get_app_setting("LOG_QSS", False)
-            utils.apply_style(app, thema_name, to_save=log_qss)
-        except KeyError as e:
-            # message for developers
-            logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")
-            return
-
-        main_window = shoWindow()
-
-        main_window.show()
-        tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
-        tab.activated.connect(tab_pressed)
-
-        sys.exit(app.exec())
-    finally:
-        lock_file.unlock()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ from ..widgets.file_data import fileDataHolder
 
 from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut, history, low_bk
-from . import app_globals as ag
+from . import app_globals as ag, iman
 
 
 MIN_NOTE_HEIGHT = 75
@@ -463,6 +463,7 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        iman.app_instance_closed()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.saveGeometry(),
