@@ -29,6 +29,7 @@ def app_version() -> str:
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
 
+entry_point: str = ''
 app: 'shoWindow' = None
 dir_list: QTreeView = None
 tag_list: 'aBrowser' = None

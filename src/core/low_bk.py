@@ -64,6 +64,7 @@ def set_user_actions_handler():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
+        "Setup New window": new_window,
         "Setup About": show_about,
         "Setup Report duplicate files": report_duplicates,
         "Setup Preferencies": set_preferencies,
@@ -92,6 +93,16 @@ def set_user_actions_handler():
             )
 
     return execute_action
+
+@pyqtSlot()
+def new_window():
+    try:
+        open_with_url(ag.entry_point)
+    except Exception as e:
+        utils.save_to_file(
+            'Exception.txt',
+            f"{e}\n{ag.entry_point}"
+        )
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):
@@ -568,18 +579,14 @@ def open_current_file():
         open_file_by_model_index(idx)
 
 def open_file_by_model_index(index: QModelIndex):
-    if not open_with_url(index):
+    if open_with_url(full_file_name(index)):
+        update_open_date(index)
+    else:
         open_manualy(index)
 
-def open_with_url(index: QModelIndex) -> bool:
+def open_with_url(path: str) -> bool:
     url = QUrl()
-    if QDesktopServices.openUrl(
-        url.fromLocalFile(full_file_name(index))
-    ):
-        update_open_date(index)
-        return True
-    else:
-        return False
+    return QDesktopServices.openUrl(url.fromLocalFile(path))
 
 def update_open_date(index: QModelIndex):
     id = index.data(Qt.ItemDataRole.UserRole).id
@@ -750,7 +757,7 @@ def open_manualy(index: QModelIndex):
                 if it.id == id:
                     it.path = path_id
                     break
-            open_with_url(index)
+            open_with_url(str(f_path))
 
 def create_child_dir():
     cur_idx = ag.dir_list.selectionModel().currentIndex()

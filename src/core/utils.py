@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Optional
 from importlib import resources
 
-
-from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant
+from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant, QFile, QTextStream
 from PyQt6.QtGui import QMouseEvent, QPixmap
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
@@ -100,6 +99,21 @@ def resize_grips(self):
     self.grips['top_grip'].setGeometry(0, 0, self.width(), 10)
     self.grips['bottom_grip'].setGeometry(0, self.height() - 10, self.width(), 10)
 
+def save_to_file(filename: str, msg: str):
+    """ save translated qss """
+    pp = Path('~/fileo/report').expanduser()
+    path = get_app_setting(
+        'DEFAULT_REPORT_PATH', pp.as_posix()
+    )
+    path = Path(path) / filename
+
+    flqss = QFile(path.as_posix())
+    flqss.open(QFile.WriteOnly)
+    stream = QTextStream(flqss)
+    stream << msg
+    stream.flush()
+    flqss.close()
+
 def apply_style(app: QApplication, theme: str, to_save: bool = False):
     params = None
     qss = None
@@ -149,30 +163,13 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
         dyn_qss_add_lines(lines)
         return it
 
-    def save_qss():
-        """ save translated qss """
-        from PyQt6.QtCore import QFile, QTextStream
-        nonlocal qss
-        pp = Path('~/fileo/report').expanduser()
-        path = get_app_setting(
-            'DEFAULT_REPORT_PATH', pp.as_posix()
-        )
-        path = Path(path) / 'QSS.log'
-
-        flqss = QFile(path.as_posix())
-        flqss.open(QFile.WriteOnly)
-        stream = QTextStream(flqss)
-        stream << qss
-        stream.flush()
-        flqss.close()
-
     get_qss_theme()
     translate_qss()
     it = extract_dyn_qss()
     app.setStyleSheet(qss[:it])
 
     if to_save:
-        save_qss()
+        save_to_file('QSS.log', qss)
 
     icons.collect_all_icons()
 

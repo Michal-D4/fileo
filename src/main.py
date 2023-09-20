@@ -1,6 +1,7 @@
 import sys
 
 from loguru import logger
+from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -39,12 +40,7 @@ def set_logger(file):
     logger.info("START ==============================>")
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
 
-def main():
-    # from datetime import datetime as dt
-    # file_name = f"fill-{dt.now():%b-%d-%H}.log"
-    # file_name = "sys.stderr"
-    # set_logger(file_name)
-
+def instance_control():
     pid = iman.new_app_instance()
 
     ag.single_instance = utils.get_app_setting("SINGLE_INSTANCE", False)
@@ -58,6 +54,8 @@ def main():
             ag.DB.conn = None
             ag.DB.path = ''
 
+
+def start_app():
     global app
     app = QApplication([])
 
@@ -77,6 +75,21 @@ def main():
     tab.activated.connect(tab_pressed)
 
     sys.exit(app.exec())
+
+
+
+def main(entry_point: str):
+    # from datetime import datetime as dt
+    # file_name = f"fill-{dt.now():%b-%d-%H}.log"
+    # file_name = "sys.stderr"
+    # set_logger(file_name)
+    tmp = Path(entry_point).parent / 'fileo.exe'
+    ag.entry_point = tmp.as_posix()
+    utils.save_to_file("entry-point.txt", ag.entry_point)
+
+    instance_control()
+
+    start_app()
 
 
 if __name__ == "__main__":
