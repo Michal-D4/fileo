@@ -83,8 +83,13 @@ def main(entry_point: str):
     # file_name = f"fill-{dt.now():%b-%d-%H}.log"
     # file_name = "sys.stderr"
     # set_logger(file_name)
-    tmp = Path(entry_point).parent / 'fileo.exe'
-    ag.entry_point = tmp.as_posix()
+    tmp = Path(entry_point)
+    if getattr(sys, "frozen", False):
+
+        ag.entry_point = tmp.parent / 'fileo.exe'
+    else:
+        ag.entry_point = tmp.name
+
     utils.save_to_file("entry-point.txt", ag.entry_point)
 
     instance_control()

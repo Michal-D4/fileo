@@ -96,13 +96,27 @@ def set_user_actions_handler():
 
 @pyqtSlot()
 def new_window():
-    try:
-        open_with_url(ag.entry_point)
-    except Exception as e:
-        utils.save_to_file(
-            'Exception.txt',
-            f"{e}\n{ag.entry_point}"
+    if getattr(sys, "frozen", False):
+        import subprocess
+        # si = subprocess.STARTUPINFO()
+        # si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        # si.dwFlags |= subprocess.SW_SHOWNOACTIVATE
+        subprocess.Popen(
+        # subprocess.call(
+            [sys.executable, ag.entry_point],
+            shell=False,
+            # startupinfo=si
         )
+        # with open(ag.entry_point) as f:
+        #     exec(f.read())
+    else:
+        try:
+            open_with_url(ag.entry_point)
+        except Exception as e:
+            utils.save_to_file(
+                'Exception.txt',
+                f"{e}\n{ag.entry_point}"
+            )
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):
