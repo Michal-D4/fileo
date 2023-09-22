@@ -110,9 +110,8 @@ def tune_new_version() -> bool:
     conn = ag.DB.conn
     try:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
-
         if v[0] != USER_VER:
-            v[0] = convert_to_new_version(conn, v[0])
+            _ = convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
         logger.info(err)
         return False

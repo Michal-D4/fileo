@@ -84,7 +84,7 @@ def set_user_actions_handler():
             if pos == -1:
                 data_methods[act]()
             else:
-                data_methods[act](action[pos+1:])
+                data_methods[act](action[pos+1:].strip())
         except KeyError as err:
             utils.show_message_box(
                 'Action not implemented',
@@ -94,29 +94,16 @@ def set_user_actions_handler():
 
     return execute_action
 
-@pyqtSlot()
-def new_window():
+@pyqtSlot(str)
+def new_window(db_name: str):
+    import subprocess
+    logger.info(f'{db_name=}, {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
-        import subprocess
-        # si = subprocess.STARTUPINFO()
-        # si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        # si.dwFlags |= subprocess.SW_SHOWNOACTIVATE
-        subprocess.Popen(
-        # subprocess.call(
-            [sys.executable, ag.entry_point],
-            shell=False,
-            # startupinfo=si
-        )
-        # with open(ag.entry_point) as f:
-        #     exec(f.read())
+        subprocess.Popen([ag.entry_point, db_name])
     else:
-        try:
-            open_with_url(ag.entry_point)
-        except Exception as e:
-            utils.save_to_file(
-                'Exception.txt',
-                f"{e}\n{ag.entry_point}"
-            )
+        subprocess.Popen(
+            [sys.executable, ag.entry_point, db_name],
+        )
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):

@@ -40,7 +40,7 @@ def set_logger(file):
     logger.info("START ==============================>")
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
 
-def instance_control():
+def instance_control(db_name: str):
     pid = iman.new_app_instance()
 
     ag.single_instance = utils.get_app_setting("SINGLE_INSTANCE", False)
@@ -52,7 +52,7 @@ def instance_control():
             sys.exit(0)
         else:
             ag.DB.conn = None
-            ag.DB.path = ''
+            ag.DB.path = db_name
 
 
 def start_app():
@@ -78,11 +78,13 @@ def start_app():
 
 
 
-def main(entry_point: str):
+def main(entry_point: str, db_name: str):
     # from datetime import datetime as dt
     # file_name = f"fill-{dt.now():%b-%d-%H}.log"
     # file_name = "sys.stderr"
     # set_logger(file_name)
+    logger.info(entry_point)
+    logger.info(db_name)
     tmp = Path(entry_point)
     if getattr(sys, "frozen", False):
 
@@ -92,10 +94,6 @@ def main(entry_point: str):
 
     utils.save_to_file("entry-point.txt", ag.entry_point)
 
-    instance_control()
+    instance_control(db_name)
 
     start_app()
-
-
-if __name__ == "__main__":
-    main()

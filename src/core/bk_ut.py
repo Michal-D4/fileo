@@ -116,7 +116,7 @@ def set_field_menu():
 def click_setup_button():
     menu = QMenu(self)
     if not ag.single_instance:
-        menu.addAction('New window')
+        menu.addAction('New window/ ')
         menu.addSeparator()
     menu.addAction('Report duplicate files')
     menu.addSeparator()
