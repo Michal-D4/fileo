@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 self: 'shoWindow' = None
 
 def save_bk_settings():
-    if not ag.DB.conn:
+    if not ag.db.conn:
         return
 
     actions = ag.field_menu.menu().actions()
@@ -66,7 +66,7 @@ def bk_setup(main: 'shoWindow'):
 
     set_context_menu()
 
-    if ag.DB.conn:
+    if ag.db.conn:
         populate_all()
 
         QTimer.singleShot(10 * 1000, show_lost_files)
@@ -145,7 +145,7 @@ def current_file_changed(curr: QModelIndex, prev: QModelIndex):
         low_bk.file_notes_show(curr)
 
 def file_list_resize_0(e: QResizeEvent):
-    if ag.DB.conn:
+    if ag.db.conn:
         restore_dirs()
 
     ag.file_list.resizeEvent = low_bk.file_list_resize
@@ -157,7 +157,7 @@ def restore_dirs():
     restore_history()
 
 def populate_all():
-    if not ag.DB.conn:
+    if not ag.db.conn:
         return
 
     low_bk.populate_tag_list()
@@ -251,7 +251,7 @@ def file_loading(root_path: str, ext: list[str]):
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if self.is_busy or not ag.DB.conn:
+    if self.is_busy or not ag.db.conn:
         return
     self.thread = QThread(self)
 
@@ -302,7 +302,7 @@ def run_update_pdf_files():
     run_worker(workers.update_pdf_files)
 
 def run_worker(func):
-    if self.is_busy or not ag.DB.conn:
+    if self.is_busy or not ag.db.conn:
         return
     self.thread = QThread(self)
 

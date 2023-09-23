@@ -39,7 +39,7 @@ class loadFiles(QObject):
         self.ext_inserted = False
         self.files = None
 
-        self.conn = apsw.Connection(ag.DB.path)
+        self.conn = apsw.Connection(ag.db.path)
         self.init_path()
 
     def init_path(self):

@@ -50,6 +50,11 @@ class DB():
     conn: apsw.Connection = None
     restore: bool = True
 
+    def __repr__(self):
+        return f'path: {self.path}, restore: {self.restore!r}, {self.conn!r}'
+
+db = DB()
+
 class mimeType(Enum):
     folders = "folders"
     files_in = "files/drag-inside"
@@ -126,9 +131,9 @@ def save_settings(**kwargs):
     """
     used to save settings on DB level
     """
-    if not DB.conn:
+    if not db.conn:
         return
-    cursor: apsw.Cursor = DB.conn.cursor()
+    cursor: apsw.Cursor = db.conn.cursor()
     sql = "update settings set value = :value where key = :key;"
 
     for key, val in kwargs.items():
@@ -138,9 +143,9 @@ def get_setting(key: str, default=None):
     """
     used to restore settings on DB level
     """
-    if not DB.conn:
+    if not db.conn:
         return default
-    cursor: apsw.Cursor = DB.conn.cursor()
+    cursor: apsw.Cursor = db.conn.cursor()
     sql = "select value from settings where key = :key;"
 
     try:

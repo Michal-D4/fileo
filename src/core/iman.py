@@ -12,10 +12,8 @@ PORT = 65432
 instance_cnt = 0
 
 def new_app_instance():
-    ag.DB.restore, sock = server_is_not_running('+')
-    logger.info(f'{ag.DB.restore=}')
-    if ag.DB.restore:
-        logger.info('Server NOT running')
+    ag.db.restore, sock = server_is_not_running('+')
+    if ag.db.restore:
         setup_server()
         return 0
     else:
@@ -66,7 +64,6 @@ def _server_run(serversock, pid):
     conn, addr = accept_conn(serversock)
     data = ''
     sent = False
-    logger.info(f'{addr=}, {data=}')
 
     while True:
         if addr:
@@ -81,7 +78,6 @@ def _server_run(serversock, pid):
         if data:
             instance_cnt += 1 if data == '+' else -1
             if not instance_cnt:
-                logger.info(f'{instance_cnt=}')
                 break
             conn.send(str(pid).encode())
             logger.info(f'conn.send(str(pid)) <<< {data=}, {instance_cnt=}')
