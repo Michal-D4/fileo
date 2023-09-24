@@ -16,8 +16,8 @@ def choose_drop_action(e: QDropEvent):
     The menu appears if both Actions can be used
     """
     if (ag.drop_button == Qt.MouseButton.RightButton and
-        (ag.mode is ag.appMode.DIR or
-         not e.mimeData().hasFormat(ag.mimeType.files_in.value)
+        (ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder()
+         or not e.mimeData().hasFormat(ag.mimeType.files_in.value)
         )):
         pos = e.position().toPoint()
         menu = QMenu(ag.app)

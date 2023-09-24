@@ -485,11 +485,11 @@ def filter_subsqls(param) -> list[str]:
     if param['dir']:
         sqlist.append(filter_sqls('dir_sql'))
     if param['tag']:
-       sqlist.append(filter_sqls('tag_sql'))
+        sqlist.append(filter_sqls('tag_sql'))
     if param['ext']:
-       sqlist.append(filter_sqls('ext_sql'))
+        sqlist.append(filter_sqls('ext_sql'))
     if param['author']:
-       sqlist.append(filter_sqls('author_sql'))
+        sqlist.append(filter_sqls('author_sql'))
     return sqlist
 
 def filter_parcond(param) -> tuple:

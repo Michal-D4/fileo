@@ -16,8 +16,8 @@ def choose_drop_action(e: QDropEvent):
     The menu appears if both Actions can be used
     and KeyboardModifier is not used.
     """
-    if (ag.mode is ag.appMode.DIR or
-        not e.mimeData().hasFormat(ag.mimeType.files_in.value)):
+    if (ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder()
+        or not e.mimeData().hasFormat(ag.mimeType.files_in.value)):
         if not has_modifier(e):
             use_menu(e)
     else:

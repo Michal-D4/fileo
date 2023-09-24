@@ -635,7 +635,7 @@ def get_dir_id(file: int) -> int:
     in case of appMode.DIR - returns id of current folder
     otherwise - returns id of arbitrary folder contained current file
     """
-    if ag.mode is ag.appMode.DIR:
+    if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
         dir_idx = ag.dir_list.currentIndex()
         dir_dat: ag.DirData = dir_idx.data(Qt.ItemDataRole.UserRole)
         return dir_dat.id
