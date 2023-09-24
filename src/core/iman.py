@@ -41,7 +41,7 @@ def server_is_not_running(sign: str):
         sock.connect((HOST, PORT))
         sock.send(sign.encode())
         logger.info(f'Server running, sent sign: {sign}')
-    except socket.timeout as e:
+    except Exception as e:  # on linux not a TimeoutError
         logger.info(f'exception: {e}')
         return True, None
     return False, sock
