@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "md4-fileo"
-version = "0.9.52"
+version = "0.9.53"
 description = "Yet another file organizer"
 repository = "https://github.com/Michal-D4/fileo"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
@@ -21,8 +21,6 @@ pywinauto = [
     {platform = 'windows', version="^0.6.8"}]
 
 
-[tool.poetry.group.dev.dependencies]
-pyinstaller = "^5.13.0"
 
 [build-system]
 requires = ["poetry-core"]

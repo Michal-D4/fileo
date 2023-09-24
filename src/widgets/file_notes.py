@@ -107,8 +107,8 @@ class notesContainer(QScrollArea):
             ag.app.ui.edited_file.clear()
             ag.app.ui.edited_file.setEnabled(False)
 
-    def set_file_id(self, id: int):
-        self.file_id = id
+    def set_file_id(self, file_id: int):
+        self.file_id = file_id
         self.set_notes_data()
 
     def set_notes_data(self):
@@ -141,8 +141,8 @@ class notesContainer(QScrollArea):
         note: fileNote = self.editor.get_note()
         file_id = note.get_file_id()
         note_id = note.get_note_id()
-        # logger.info(f'{file_id=}, {note_id=}')
         txt = self.editor.get_text()
+
         if note_id:
             self.scroll_layout.removeWidget(note)
             ts = db_ut.update_note(file_id, note_id, txt)
@@ -169,6 +169,7 @@ class notesContainer(QScrollArea):
     def remove_item(self, note: fileNote):
         file_id = note.get_file_id()
         note_id = note.get_note_id()
+
         if (self.editing and
             self.editor.get_note_id() == note_id and
             self.editor.get_file_id() == file_id):
@@ -179,6 +180,7 @@ class notesContainer(QScrollArea):
                 details="It is editing!"
             )
             return
+
         if utils.show_message_box(
             'delete file note',
             'confirm deletion of note',
@@ -187,6 +189,7 @@ class notesContainer(QScrollArea):
             QMessageBox.Icon.Question
         ) == QMessageBox.StandardButton.Ok:
             self.scroll_layout.removeWidget(note)
+            note.deleteLater()
             db_ut.delete_note(file_id, note_id)
 
     def collapse_all(self):

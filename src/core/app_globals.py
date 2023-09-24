@@ -24,11 +24,12 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.52'
+    return '0.9.53'
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
 
+entry_point: str = ''
 app: 'shoWindow' = None
 dir_list: QTreeView = None
 tag_list: 'aBrowser' = None
@@ -43,7 +44,16 @@ hist_folder = True
 file_path: Path = None
 single_instance = False
 
-db = { 'Path': '', 'Conn': None, 'restore': True }
+@dataclass(slots=True)
+class DB():
+    path: str = ''
+    conn: apsw.Connection = None
+    restore: bool = True
+
+    def __repr__(self):
+        return f'path: {self.path}, restore: {self.restore!r}, {self.conn!r}'
+
+db = DB()
 
 class mimeType(Enum):
     folders = "folders"
@@ -77,7 +87,6 @@ class FileData():
 
 stop_thread = False
 mode = appMode.DIR
-section_resized: bool = False
 
 drop_button = 0
 drop_target = None
@@ -122,9 +131,9 @@ def save_settings(**kwargs):
     """
     used to save settings on DB level
     """
-    if not db["Conn"]:
+    if not db.conn:
         return
-    cursor: apsw.Cursor = db["Conn"].cursor()
+    cursor: apsw.Cursor = db.conn.cursor()
     sql = "update settings set value = :value where key = :key;"
 
     for key, val in kwargs.items():
@@ -134,9 +143,9 @@ def get_setting(key: str, default=None):
     """
     used to restore settings on DB level
     """
-    if not db["Conn"]:
+    if not db.conn:
         return default
-    cursor: apsw.Cursor = db["Conn"].cursor()
+    cursor: apsw.Cursor = db.conn.cursor()
     sql = "select value from settings where key = :key;"
 
     try:

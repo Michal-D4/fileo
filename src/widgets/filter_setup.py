@@ -14,6 +14,7 @@ class FilterSetup(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
 
+        self.single_folder = False
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
         ttls = ag.qss_params['$FoldTitles'].lower()
@@ -37,6 +38,9 @@ class FilterSetup(QWidget):
         self.ui.rating_sel.clicked.connect(self.rating_changed)
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
+
+    def is_single_folder(self) -> bool:
+        return self.single_folder
 
     def after_changed(self, st: bool):
         self.ui.after_date.setEnabled(st)
@@ -117,9 +121,11 @@ class FilterSetup(QWidget):
 
     def store_dir_ids(self):
         if not self.checks['dir']:
+            self.single_folder = False
             return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.checks['dir'] = (len(idxs) > 0)
+        self.single_folder = (len(idxs) == 1)
         for idx in idxs:
             db_ut.save_to_temp('dir', idx.data(Qt.ItemDataRole.UserRole).id)
         db_ut.temp_files_dir()

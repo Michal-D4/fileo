@@ -107,12 +107,11 @@ def check_app_schema(db_name: str) -> bool:
     return v[0] == APP_ID
 
 def tune_new_version() -> bool:
-    conn = ag.db['Conn']
+    conn = ag.db.conn
     try:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
-
         if v[0] != USER_VER:
-            v[0] = convert_to_new_version(conn, v[0])
+            _ = convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
         logger.info(err)
         return False

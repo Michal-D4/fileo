@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.9.53 - 2023, September 09
+* in Filter mode with single folder selected drag-drop files in the same way as in Dir mode
+* start new instance with DB selection
+* start new instance from menu
+* revision to multiple instance management, using sockets
+* revision to resizing, showing and hiding file list columns
+
 ## 0.9.52 - 2023, September 07
 * change app icon format from SVG to ICO. SVG sometimes doesn't work properly
 * clear file list when switch to empty DB

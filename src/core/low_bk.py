@@ -8,11 +8,11 @@ import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
-    QFile, QTextStream, QIODevice, QIODeviceBase
+    QFile, QTextStream, QIODeviceBase,
 )
-from PyQt6.QtGui import QDesktopServices
+from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QTreeView,
 )
 
 from . import db_ut, app_globals as ag, utils, duplicates as dup
@@ -64,6 +64,7 @@ def set_user_actions_handler():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
+        "Setup New window": new_window,
         "Setup About": show_about,
         "Setup Report duplicate files": report_duplicates,
         "Setup Preferencies": set_preferencies,
@@ -83,7 +84,7 @@ def set_user_actions_handler():
             if pos == -1:
                 data_methods[act]()
             else:
-                data_methods[act](action[pos+1:])
+                data_methods[act](action[pos+1:].strip())
         except KeyError as err:
             utils.show_message_box(
                 'Action not implemented',
@@ -92,6 +93,17 @@ def set_user_actions_handler():
             )
 
     return execute_action
+
+@pyqtSlot(str)
+def new_window(db_name: str):
+    import subprocess
+    logger.info(f'{db_name=}, {getattr(sys, "frozen", False)}')
+    if getattr(sys, "frozen", False):
+        subprocess.Popen([ag.entry_point, db_name])
+    else:
+        subprocess.Popen(
+            [sys.executable, ag.entry_point, db_name],
+        )
 
 @pyqtSlot(str)
 def goto_edited_file(param: str):
@@ -207,7 +219,7 @@ def show_about():
 
 #region Common
 def save_tmp_settings(**kwargs):
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
+    cursor: apsw.Cursor = ag.db.conn.cursor()
     sql0 = "delete from aux where key = :key"
     sql1 = "insert into aux values (:key, :value);"
 
@@ -216,7 +228,7 @@ def save_tmp_settings(**kwargs):
         cursor.execute(sql1, {"key": key, "value": pickle.dumps(val)})
 
 def get_tmp_setting(key: str, default=None):
-    cursor: apsw.Cursor = ag.db["Conn"].cursor()
+    cursor: apsw.Cursor = ag.db.conn.cursor()
     sql = "select val from aux where key = :key;"
 
     val = cursor.execute(sql, {"key": key}).fetchone()
@@ -253,8 +265,6 @@ def get_dir_names_path(index: QModelIndex) -> list:
     """
     return:  a list of node names from root to index
     """
-    if not index.isValid():
-        return []
     item: TreeItem = index.internalPointer()
     branch = []
     while 1:
@@ -305,31 +315,28 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     currentRowChanged signal in dirTree
     :@return: None
     """
+    def set_folder_path_label(idx: QModelIndex):
+        if idx.isValid():
+            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(idx)))
+
     ag.app.collapse_btn.setChecked(False)
-    def new_history_item():
-        if ag.hist_folder:
-            ag.hist_folder = False
-        else:       # new history item
-            add_history_item()
-        set_current_file(
-            curr_idx.data(Qt.ItemDataRole.UserRole).file_row
-        )
-
-    ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-
-    save_columns_width()
+    set_folder_path_label(curr_idx)
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
+        def new_history_item():
+            if ag.hist_folder:
+                ag.hist_folder = False
+            else:       # new history item
+                add_history_item()
+            set_current_file(
+                curr_idx.data(Qt.ItemDataRole.UserRole).file_row
+            )
+
         file_idx = ag.file_list.currentIndex()
         file_row = file_idx.row() if file_idx.isValid() else 0
         save_file_row(file_row, prev_idx)
         show_folder_files()
         new_history_item()
-
-def save_columns_width():
-    if ag.section_resized:   # save column widths if changed
-        ag.save_settings(COLUMN_WIDTH=get_columns_width())
-        ag.section_resized = False
 
 def save_file_row(file_row: int, dir_idx: QModelIndex):
     if dir_idx.isValid():
@@ -362,7 +369,7 @@ def dir_list_setup():
 def app_mode_changed(old_mode: ag.appMode):
     if ag.mode is ag.appMode.FILTER_SETUP:
         return
-    if not ag.db['Conn']:
+    if not ag.db.conn:
         return
     row = get_tmp_setting(f"SAVE_ROW{ag.mode.value}", 0)
     save_tmp_settings(**{f"SAVE_ROW{old_mode}": ag.file_list.currentIndex().row()})
@@ -444,7 +451,7 @@ def fill_file_model(files) -> TableModel:
         row = ["THERE ARE NO FILES HERE"]
         for _,typ in field_idx[1:]:
             row.append(field_val(typ))
-        model.append_row(row, ag.FileData(-1,0,0))
+        model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid QModelIndex?
 
     return model
 
@@ -488,15 +495,37 @@ def set_file_model(model: TableModel):
 def header_restore(model: QAbstractTableModel):
     hdr = field_titles()
     model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
+    restore_columns_width(hdr)
+
+def restore_columns_width(hdr: list):
     width = ag.get_setting("COLUMN_WIDTH", {})
 
-    for i,field in enumerate(hdr):
+    w0 = 0
+    for i,field in enumerate(hdr[1:]):
         ww = width.get(field, DEFAULT_FIELD_WIDTH)
-        ag.file_list.setColumnWidth(i, int(ww))
-    ag.file_list.header().sectionResized.connect(section_resized)
+        if not ww:
+            ww = DEFAULT_FIELD_WIDTH
+        w0 += ww
+        ag.file_list.setColumnWidth(i+1, ww)
+    ag.file_list.setColumnWidth(0, ag.file_list.width() - w0 - 21)
+    ag.file_list.header().sectionResized.connect(column_resized)
 
-def section_resized(idx: int, old_sz: int, new_sz: int):
-    ag.section_resized = True
+@pyqtSlot(int, int, int)
+def column_resized(idx: int, old_sz: int, new_sz: int):
+    if idx:   # not filename column
+        resize_filename_column(old_sz - new_sz)
+    ag.save_settings(COLUMN_WIDTH=get_columns_width())
+
+def file_list_resize(e: QResizeEvent):
+    resize_filename_column(e.size().width() - e.oldSize().width())
+    super(QTreeView, ag.file_list).resizeEvent(e)
+
+def resize_filename_column(delta: int):
+    if not (delta or ag.file_list.model()):
+        return
+
+    width0 = ag.file_list.columnWidth(0)     # width of first field "File name"
+    ag.file_list.setColumnWidth(0, max(width0 + delta, 200))
 
 def get_columns_width() -> dict:
     hdr = field_titles()
@@ -551,18 +580,14 @@ def open_current_file():
         open_file_by_model_index(idx)
 
 def open_file_by_model_index(index: QModelIndex):
-    if not open_with_url(index):
+    if open_with_url(full_file_name(index)):
+        update_open_date(index)
+    else:
         open_manualy(index)
 
-def open_with_url(index: QModelIndex) -> bool:
+def open_with_url(path: str) -> bool:
     url = QUrl()
-    if QDesktopServices.openUrl(
-        url.fromLocalFile(full_file_name(index))
-    ):
-        update_open_date(index)
-        return True
-    else:
-        return False
+    return QDesktopServices.openUrl(url.fromLocalFile(path))
 
 def update_open_date(index: QModelIndex):
     id = index.data(Qt.ItemDataRole.UserRole).id
@@ -610,7 +635,7 @@ def get_dir_id(file: int) -> int:
     in case of appMode.DIR - returns id of current folder
     otherwise - returns id of arbitrary folder contained current file
     """
-    if ag.mode is ag.appMode.DIR:
+    if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
         dir_idx = ag.dir_list.currentIndex()
         dir_dat: ag.DirData = dir_idx.data(Qt.ItemDataRole.UserRole)
         return dir_dat.id
@@ -733,7 +758,7 @@ def open_manualy(index: QModelIndex):
                 if it.id == id:
                     it.path = path_id
                     break
-            open_with_url(index)
+            open_with_url(str(f_path))
 
 def create_child_dir():
     cur_idx = ag.dir_list.selectionModel().currentIndex()
