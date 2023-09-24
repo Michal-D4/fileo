@@ -51,8 +51,10 @@ def instance_control(db_name: str):
 
             sys.exit(0)
         else:
-            ag.DB.conn = None
-            ag.DB.path = db_name
+            ag.db.conn = None
+            ag.db.path = db_name
+            ag.db.restore = bool(db_name)
+            logger.info(f'ag.DB: {ag.db!r}')
 
 
 def start_app():
@@ -84,15 +86,14 @@ def main(entry_point: str, db_name: str):
     # file_name = "sys.stderr"
     # set_logger(file_name)
     logger.info(entry_point)
-    logger.info(db_name)
     tmp = Path(entry_point)
     if getattr(sys, "frozen", False):
 
-        ag.entry_point = tmp.parent / 'fileo.exe'
+        ag.entry_point = (tmp.parent / 'fileo.exe').as_posix()
     else:
         ag.entry_point = tmp.name
 
-    utils.save_to_file("entry-point.txt", ag.entry_point)
+    # utils.save_to_file("entry-point.txt", ag.entry_point)
 
     instance_control(db_name)
 

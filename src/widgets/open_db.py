@@ -56,6 +56,7 @@ class OpenDB(QWidget):
         self.ui.listDB.itemClicked.connect(self.item_click)
         self.ui.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.listDB.customContextMenuRequested.connect(self.item_menu)
+        self.ui.listDB.currentItemChanged.connect(self.row_changed)
 
         self.ui.input_path.textEdited.connect(self.qss_input_path_edited)
         self.ui.input_path.editingFinished.connect(self.finish_edit)
@@ -67,13 +68,17 @@ class OpenDB(QWidget):
         escape.activated.connect(self.lost_focus)
         self.set_tool_tip()
 
+    @pyqtSlot(QListWidgetItem, QListWidgetItem)
+    def row_changed(self, curr: QListWidgetItem, prev: QListWidgetItem):
+        wid: listItem = self.ui.listDB.itemWidget(curr)
+        self.ui.input_path.setText(wid.get_full_name())
+
     @pyqtSlot(QPoint)
     def item_menu(self, pos: QPoint):
         item = self.ui.listDB.itemAt(pos)
         if item:
             wid: listItem = self.ui.listDB.itemWidget(item)
             db_name = wid.get_name()
-            logger.info(f'{db_name=}')
             menu = self.db_list_menu(db_name)
             action = menu.exec(self.ui.listDB.mapToGlobal(pos))
             if action:
@@ -90,6 +95,7 @@ class OpenDB(QWidget):
     def db_list_menu(self, db_name: str) -> QMenu:
         menu = QMenu(self)
         menu.addAction(f'Open DB "{db_name}"')
+        menu.addSeparator()
         menu.addAction(f'Open DB "{db_name}" in new window')
         menu.addSeparator()
         menu.addAction(f'Delete DB "{db_name}" from list')
@@ -168,7 +174,7 @@ class OpenDB(QWidget):
 
     def is_here_already(self, db_name: str) -> bool:
         for item in self.get_item_list():
-            if item.get_full_name() == db_name:
+            if item == db_name:
                 return True
         return False
 
