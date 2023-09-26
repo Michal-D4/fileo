@@ -39,7 +39,7 @@ class loadFiles(QObject):
         self.ext_inserted = False
         self.files = None
 
-        self.conn = apsw.Connection(ag.db['Path'])
+        self.conn = apsw.Connection(ag.db.path)
         self.init_path()
 
     def init_path(self):
@@ -127,7 +127,7 @@ class loadFiles(QObject):
         INSERT_FILE = ('insert into files (filename, extid, path) '
             'values (:file, :ext_id, :path);')
 
-        dir_id = self.get_dir_id(file_name.parent.as_posix(), path_id)
+        dir_id = self.get_dir_id(file_name.parent, path_id)
 
         ext_id = self.insert_extension(file_name)
 

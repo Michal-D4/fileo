@@ -21,7 +21,7 @@ from ..widgets.file_data import fileDataHolder
 
 from .filename_editor import fileEditorDelegate
 from . import icons, utils, db_ut, bk_ut, history, low_bk
-from . import app_globals as ag
+from . import app_globals as ag, iman
 
 
 MIN_NOTE_HEIGHT = 75
@@ -81,9 +81,9 @@ class shoWindow(QMainWindow):
         exec_user_action = low_bk.set_user_actions_handler()
         ag.signals_.user_signal.connect(exec_user_action)
 
+        self.restore_geometry()
         self.restore_container()
         self.restore_note_height()
-        self.restore_geometry()
 
         ag.file_data_holder = fileDataHolder()
         ag.file_data_holder.setObjectName("file_notes")
@@ -92,8 +92,10 @@ class shoWindow(QMainWindow):
             utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
         )
 
-        if ag.db['restore']:     # start app with restoring DB connection - 1st app instance
-            self.connect_db(utils.get_app_setting("DB_NAME", ""))
+        if ag.db.restore:     # start app with restoring DB connection - 1st app instance
+            self.connect_db(
+                ag.db.path or utils.get_app_setting("DB_NAME", "")
+            )
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -232,12 +234,12 @@ class shoWindow(QMainWindow):
         self.ui.btn_search.setDisabled(True)
 
     def connect_slots(self):
+        self.connect_checkable()
+
         self.ui.close.clicked.connect(self.close_app)
         self.ui.minimize.clicked.connect(self.minimize)
 
         self.ui.dataBase.clicked.connect(self.show_db_list)
-
-        self.connect_checkable()
 
         self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
@@ -263,12 +265,13 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(str)
     def get_db_name(self, db_name: str):
-        if db_name == ag.db['Path']:
+        if db_name == ag.db.path:
             return
 
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
+            bk_ut.restore_dirs()
 
     @pyqtSlot()
     def show_db_list(self):
@@ -409,7 +412,7 @@ class shoWindow(QMainWindow):
         self.toggle_filter_show()
 
     def toggle_filter_show(self):
-        if not ag.db['Conn']:
+        if not ag.db.conn:
             return
         if self.ui.btnFilterSetup.isChecked():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
@@ -430,7 +433,7 @@ class shoWindow(QMainWindow):
         search for files with a given extension
         in the selected folder and its subfolders
         """
-        if not ag.db['Conn']:
+        if not ag.db.conn:
             return
         srch_files = fileSearch(self)
         srch_files.move(
@@ -462,6 +465,7 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        iman.app_instance_closed()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.saveGeometry(),
@@ -469,8 +473,8 @@ class shoWindow(QMainWindow):
             "appMode": self.mode.value,
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
-        if ag.db['Path']:
-            settings["DB_NAME"] = ag.db['Path']
+        if ag.db.path:
+            settings["DB_NAME"] = ag.db.path
 
         utils.save_app_setting(**settings)
         bk_ut.save_bk_settings()

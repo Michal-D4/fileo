@@ -25,12 +25,15 @@ def sha256sum(filename: Path) -> str:
 
 def update0_files():
     files = db_ut.recent_loaded_files()
-    for id, file, path in files:
+    for f_id, file, path in files:
         if ag.stop_thread:
             break
         pp = Path(path) / file
-        hash = sha256sum(pp)
-        db_ut.update_file_data(id, pp.stat(), hash)
+        f_hash = sha256sum(pp)
+        if f_hash:
+            db_ut.update_file_data(f_id, pp.stat(), f_hash)
+        else:
+            db_ut.delete_not_exest_file(f_id)
 
 def update_touched_files():
     last_scan = ag.get_setting('LAST_SCAN_OPENED', -62135596800)
@@ -38,25 +41,27 @@ def update_touched_files():
         LAST_SCAN_OPENED=int(datetime.now().timestamp())
     )
     files = db_ut.files_toched(last_scan)
-    for id, file, path, hash0 in files:
+    for f_id, file, path, hash0 in files:
         if ag.stop_thread:
             break
         pp = Path(path) / file
-        hash = sha256sum(pp)
-        if hash != hash0:
-            db_ut.update_file_data(id, pp.stat(), hash)
+        f_hash = sha256sum(pp)
+        if f_hash:
+            if f_hash != hash0:
+                db_ut.update_file_data(f_id, pp.stat(), f_hash)
+        else:
+            db_ut.delete_not_exest_file(f_id)
 
 def update_pdf_files():
     files = db_ut.get_pdf_files()
-    for id, file, path, in files:
+    for f_id, file, path, in files:
         if ag.stop_thread:
             break
         pp = Path(path) / file
         try:
-            pdf_file_update(id, pp)
+            pdf_file_update(f_id, pp)
         except FileNotFoundError as e:
-            # logger.info(f'{e}')
-            pass
+            db_ut.delete_not_exest_file(f_id)
 
 def pdf_file_update(id: int, file: str):
     with (open(file, "rb")) as pdf_file:

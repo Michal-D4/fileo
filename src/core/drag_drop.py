@@ -48,7 +48,7 @@ def file_mime_data(indexes) -> QMimeData:
     pid = QCoreApplication.applicationPid()
     data_stream.writeInt(pid)
 
-    if ag.mode is ag.appMode.DIR:
+    if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
         dir_idx = ag.dir_list.currentIndex()
         dir_id = dir_idx.data(Qt.ItemDataRole.UserRole).id
     else:
@@ -239,9 +239,9 @@ def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
 def update_file_list(target: int):
     idx = ag.dir_list.currentIndex()
     if idx.isValid():
-        if (ag.mode is ag.appMode.DIR and
-            idx.data(Qt.ItemDataRole.UserRole).id == target):
-            low_bk.show_folder_files()
+        if ((ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder())
+            and idx.data(Qt.ItemDataRole.UserRole).id == target):
+            low_bk.refresh_file_list()
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()

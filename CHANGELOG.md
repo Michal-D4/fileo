@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.9.53 - 2023, September 25
+* fix error in connection to socket in Linux, when server not started the exception is
+"`Connection refuse`", not "`socket.timeout`"
+* fix bug in `load_files` module, function `get_dir_id` needs parameter of Path type, not `str`
+* in Filter mode with single folder selected, files are drag-dropped in the same way as in Dir mode, i.e. move is also available
+* start new instance with DB selection
+* start new instance from menu
+* revision to multiple instance management, using sockets
+* revision to resizing, showing and hiding file list columns
+
 ## 0.9.52 - 2023, September 07
 * change app icon format from SVG to ICO. SVG sometimes doesn't work properly
 * clear file list when switch to empty DB

@@ -1,15 +1,15 @@
 import subprocess
 
-def activate(res):
+def activate(pid):
     temp = subprocess.Popen(
         ['wmctrl', '-p', '-l'], stdout = subprocess.PIPE
     )
     rr = temp.communicate()
     pp = str(rr[0]).split(r'\n')
-    id = get_win_id(pp, str(res[1]))
-    if id:
+    p_id = get_win_id(pp, str(pid))
+    if p_id:
         subprocess.Popen(
-            ['wmctrl', '-i', '-R', f'{id}'], stdout = subprocess.PIPE
+            ['wmctrl', '-i', '-R', f'{p_id}'], stdout = subprocess.PIPE
         )
 
 def get_win_id(comm: list, pid: str) -> str:

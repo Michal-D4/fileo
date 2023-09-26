@@ -226,6 +226,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         return inserted
 
     def new_file_note(self):
+        if self.file_id == -1:
+            return
         if self.notes.is_editing():
             self.switch_page(5)
             return
