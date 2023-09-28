@@ -1,3 +1,5 @@
+from loguru import logger
+
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtWidgets import QWidget
 
@@ -143,7 +145,7 @@ class FilterSetup(QWidget):
                     break
         else:   # self.ui.any_btn.isChecked()
             files_tag = set()
-            for id in id_list[1:]:
+            for id in id_list:
                 files_tag |= db_ut.get_files_tag(id)
         for file in files_tag:
             db_ut.save_to_temp('file_tag', file)
