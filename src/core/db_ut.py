@@ -774,16 +774,16 @@ def insert_dir(dir_name: str, parent: int) -> int:
         curs.execute(sql3, (parent, id))
     return id
 
-def copy_existed(file_id: int, parent_dir: int) -> int:
+def copy_existent(file_id: int, parent_dir: int) -> int:
     """
-    make copy of existed file while import from file
+    make copy of existent file while import from file
     """
-    sql = (  # the "Existed" folder id in the current folder if any
+    sql = (  # the "existent" folder id in the current folder if any
         'select d.id from dirs d join parentdir p on '
         'p.id = d.id where p.parent = ? and d.name = ?'
     )
-    id = ag.db.conn.cursor().execute(sql, (parent_dir, 'Existed')).fetchone()
-    exist_id = id[0] if id else insert_dir('Existed', parent_dir)
+    id = ag.db.conn.cursor().execute(sql, (parent_dir, 'existent')).fetchone()
+    exist_id = id[0] if id else insert_dir('existent', parent_dir)
     copy_file(file_id, exist_id)
     return exist_id
 
