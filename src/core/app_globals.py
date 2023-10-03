@@ -87,6 +87,7 @@ class FileData():
 
 stop_thread = False
 mode = appMode.DIR
+srch_list = False
 
 drop_button = 0
 drop_target = None

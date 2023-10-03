@@ -205,6 +205,7 @@ def find_files_by_name(param: str):
 
     pp = split3()
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
+    ag.srch_list = True
     show_files(files)
 
 @pyqtSlot()
@@ -411,6 +412,7 @@ def filtered_files():
     create a list of files by filter
     """
     files = ag.filter_dlg.get_file_list()
+    ag.srch_list = False
     show_files(files)
 
 def filter_changed():
@@ -422,6 +424,7 @@ def show_folder_files():
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
 
     files = db_ut.get_files(u_dat.id, u_dat.parent_id) if u_dat else []
+    ag.srch_list = False
     show_files(files)
 
 def show_files(files):
@@ -709,11 +712,11 @@ def load_file(fl: dict) -> int:
         return
 
     dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
-    existed = 0
+    existent = 0
 
     id = db_ut.registered_file_id(file_[-1], file_[1])
     if id:
-        existed = db_ut.copy_existed(id, dir_id)
+        existent = db_ut.copy_existent(id, dir_id)
     else:
         id = db_ut.insert_file(file_)
         db_ut.copy_file(id, dir_id)
@@ -721,7 +724,7 @@ def load_file(fl: dict) -> int:
     db_ut.insert_tags(id, fl['tags'])
     db_ut.insert_filenotes(id, fl['notes'])
     db_ut.insert_authors(id, fl['authors'])
-    return existed
+    return existent
 #endregion
 
 #region  Files - Dirs
