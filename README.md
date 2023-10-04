@@ -192,3 +192,26 @@ You can also open files by double clicking on "File name". If the file is execut
 
 > **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, you can find it by searching by name or part of the name, or with a filter, or at least it will appear in (hidden) folder "@@Lost".
 > If you delete a file from the DB, it will be deleted from all folders, and all notes for this file and its links to tags and authors will be lost.
+
+***
+
+# Installation
+
+* Windows.
+
+  * setup.exe  from https://sourceforge.net/projects/fileo/
+
+
+* Linux and Windows
+  install as Python application from Pypi:
+  ```
+    > pip install md4-fileo
+  ```
+  and then run with
+  ```
+    > python fileo.py
+  ```
+
+
+
+

@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.9.54 - 2023, October 04
+* fix issue: the search for lost files thread interrupts user actions
+* make it possible to move files when dragging from the list of found files
+* fix bug: dragging files from file system adds folders if selected
+* fix a bug: in the "any tag" filter the tag is ignored if only one tag is selected
+
 ## 0.9.53 - 2023, September 25
 * fix error in connection to socket in Linux, when server not started the exception is
 "`Connection refuse`", not "`socket.timeout`"

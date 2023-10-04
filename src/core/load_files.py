@@ -67,6 +67,8 @@ class loadFiles(QObject):
         self.conn.close()
 
     def drop_file(self, filename: Path):
+        if not filename.is_file():
+            return
         path_id = self.get_path_id(filename.parent.as_posix())
 
         id = (

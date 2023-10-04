@@ -280,13 +280,13 @@ def move_files(stream: QDataStream, target: int) -> bool:
     count = stream.readInt()
 
     for _ in range(count):
-        id = stream.readInt()
-        if not dir_id:
-            dir_id = db_ut.get_dir_id_for_file(id)
+        file_id = stream.readInt()
+        if not dir_id or ag.srch_list:
+            dir_id = db_ut.get_dir_id_for_file(file_id)
         if dir_id:
-            db_ut.move_file(target, dir_id, id)
+            db_ut.move_file(target, dir_id, file_id)
         else:
-            db_ut.copy_file(id, target)
+            db_ut.copy_file(file_id, target)
     return True
 
 def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
