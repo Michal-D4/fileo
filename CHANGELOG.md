@@ -1,7 +1,16 @@
 # Change Log
 
-## 0.9.53 - 2023, September 09
-* in Filter mode with single folder selected drag-drop files in the same way as in Dir mode
+## 0.9.54 - 2023, October 04
+* fix issue: the search for lost files thread interrupts user actions
+* make it possible to move files when dragging from the list of found files
+* fix bug: dragging files from file system adds folders if selected
+* fix a bug: in the "any tag" filter the tag is ignored if only one tag is selected
+
+## 0.9.53 - 2023, September 25
+* fix error in connection to socket in Linux, when server not started the exception is
+"`Connection refuse`", not "`socket.timeout`"
+* fix bug in `load_files` module, function `get_dir_id` needs parameter of Path type, not `str`
+* in Filter mode with single folder selected, files are drag-dropped in the same way as in Dir mode, i.e. move is also available
 * start new instance with DB selection
 * start new instance from menu
 * revision to multiple instance management, using sockets

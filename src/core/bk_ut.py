@@ -277,8 +277,7 @@ def finish_loading(has_new_ext: bool):
 
 @pyqtSlot()
 def show_lost_files():
-    if workers.find_lost_files():
-        ag.signals_.user_signal.emit('reload_dirs')
+    workers.find_lost_files()
 
 @pyqtSlot()
 def run_update0_files():

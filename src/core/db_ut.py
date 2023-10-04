@@ -194,7 +194,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
-def lost_files() -> bool:
+def lost_files():
     """
     put the lost files in a special folder and show it
     """
@@ -210,8 +210,8 @@ def lost_files() -> bool:
     )
     # check if link to the @@Lost exists in dir tree
     sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
-    # add @@Lost link into dir tree
-    sql3 = 'insert into parentdir values (0, 1, 0, 0, 0)'
+    # add hidden link into dir tree to folder @@Lost
+    sql3 = 'insert into parentdir values (0, 1, 0, 1, 0)'
     # clear @@Lost
     sql4 = 'delete from filedir where dir = 1'
     # check if the @@Lost dir exists
@@ -230,29 +230,28 @@ def lost_files() -> bool:
 
     def add_lost_in_tree():
         '''
-        add @@Lost link into dir tree if doesn't exist
+        add @@Lost link (sql3) into dir tree (parentdir)
+        if doesn't exist (sql2)
         '''
         res = conn.cursor().execute(sql2).fetchone()
-        # logger.info(f'{res=}')
         if not res:
             conn.cursor().execute(sql3)
 
     def create_lost_dir():
         '''
-        create @@Lost dir if doesn't exist
+        create @@Lost dir (sql6) if doesn't exist (sql5)
         '''
         id1 = conn.cursor().execute(sql5).fetchone()
-        # logger.info(f'{id1=}')
         if not id1:
             conn.cursor().execute(sql6).fetchone()
 
     try:
         with ag.db.conn as conn:
             has_lost = conn.cursor().execute(sql0).fetchone()
-            # logger.info(f'{has_lost=}')
             if not has_lost:
+                # delete from @Lost dir files that has copies in other dir(s)
                 conn.cursor().execute(sql7).fetchone()
-                return False
+                return
 
             create_lost_dir()
 
@@ -260,9 +259,8 @@ def lost_files() -> bool:
             conn.cursor().execute(sql1)   # fill @@Lost dir
 
             add_lost_in_tree()
-            return True
-    except:
-        return False
+    finally:
+        pass
 
 def registered_file_id(path: str, filename: str) -> int:
     sql = (
@@ -568,7 +566,6 @@ def delete_file(id: int):
         if not hash:
             return
         sta = curs.execute(sql_sta, (hash[0],)).fetchone()
-        # logger.info(f'{sta=}')
         if sta[0] > 1:  # if duplicates exists
             preserve_id = curs.execute(
                 sql_preserve_id,
@@ -578,7 +575,6 @@ def delete_file(id: int):
                 sql_max_id, {'preserved': preserve_id}
             ).fetchone()[0]
             max_id = _id if _id else 0
-            # logger.info(f'{id=}, {preserve_id=}, {max_id=}, {_id=}')
             curs.execute(
                 sql_upd_filenotes,
                 {
@@ -774,16 +770,16 @@ def insert_dir(dir_name: str, parent: int) -> int:
         curs.execute(sql3, (parent, id))
     return id
 
-def copy_existed(file_id: int, parent_dir: int) -> int:
+def copy_existent(file_id: int, parent_dir: int) -> int:
     """
-    make copy of existed file while import from file
+    make copy of existent file while import from file
     """
-    sql = (  # the "Existed" folder id in the current folder if any
+    sql = (  # the "existent" folder id in the current folder if any
         'select d.id from dirs d join parentdir p on '
         'p.id = d.id where p.parent = ? and d.name = ?'
     )
-    id = ag.db.conn.cursor().execute(sql, (parent_dir, 'Existed')).fetchone()
-    exist_id = id[0] if id else insert_dir('Existed', parent_dir)
+    id = ag.db.conn.cursor().execute(sql, (parent_dir, 'existent')).fetchone()
+    exist_id = id[0] if id else insert_dir('existent', parent_dir)
     copy_file(file_id, exist_id)
     return exist_id
 
@@ -987,7 +983,6 @@ def create_connection(path: str) -> bool:
     if not path:
         return False
 
-    logger.info(f'{path=}, {ag.db.path=}')
     conn: apsw.Connection = apsw.Connection(path)
     ag.db.path = path
     ag.db.conn = conn

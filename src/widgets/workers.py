@@ -8,8 +8,8 @@ from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from ..core import app_globals as ag, db_ut, low_bk
 
-def find_lost_files() -> bool:
-    return db_ut.lost_files()
+def find_lost_files():
+    db_ut.lost_files()
 
 def sha256sum(filename: Path) -> str:
     h  = hashlib.sha256()

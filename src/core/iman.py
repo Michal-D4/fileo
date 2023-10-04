@@ -1,4 +1,3 @@
-from loguru import logger
 import socket
 import threading
 
@@ -20,7 +19,6 @@ def new_app_instance():
         try:
             pid = sock.recv(8).decode()
         except TimeoutError as e:
-            logger.info(f'exception: {e}')
             pid = 0
         return pid
 
@@ -31,18 +29,16 @@ def app_instance_closed():
         try:
             sock.recv(8).decode()
         except TimeoutError as e:
-            logger.info(f'exception: {e}')
+            pass
 
 
 def server_is_not_running(sign: str):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(2)
+    sock.settimeout(1)
     try:
         sock.connect((HOST, PORT))
         sock.send(sign.encode())
-        logger.info(f'Server running, sent sign: {sign}')
     except Exception as e:  # on linux not a TimeoutError
-        logger.info(f'exception: {e}')
         return True, None
     return False, sock
 
@@ -60,7 +56,6 @@ def setup_server():
 def _server_run(serversock, pid):
     serversock.listen()
     instance_cnt = 1
-    logger.info(f"Server running: {instance_cnt=}, {pid=}, {type(pid)=}")
     conn, addr = accept_conn(serversock)
     data = ''
     sent = False
@@ -70,7 +65,6 @@ def _server_run(serversock, pid):
             data = conn.recv(1).decode()
         if sent:
             conn.close()
-            logger.info(f'conn.close <<< {data=}')
             addr = data = ''
             sent = False
             continue
@@ -80,15 +74,12 @@ def _server_run(serversock, pid):
             if not instance_cnt:
                 break
             conn.send(str(pid).encode())
-            logger.info(f'conn.send(str(pid)) <<< {data=}, {instance_cnt=}')
             sent = True
             continue
-        # time.sleep(2)
 
         if not addr:
             conn, addr = accept_conn(serversock)
 
-    logger.info(">>> serversock.close")
     serversock.close()
 
 def accept_conn(serversock):
