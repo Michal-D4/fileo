@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.53'
+    return '0.9.54'
 
 # only this instance of AppSignals should be used anywhere in the application
 signals_ = AppSignals()
