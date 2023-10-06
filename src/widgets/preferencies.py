@@ -92,7 +92,7 @@ class Preferencies(QDialog):
         self.folder_history_depth.setMaximum(50)
         val = utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setValue(val)
-        ag.history.set_limit(val)
+        ag.history.set_limit(int(val))
         self.single_instance = QCheckBox()
         self.single_instance.setChecked(
             utils.get_app_setting('SINGLE_INSTANCE', 0)

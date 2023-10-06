@@ -61,10 +61,10 @@ def start_app():
     global app
     app = QApplication([])
 
+    thema_name = "default"
     try:
-        thema_name = "default"
         log_qss = utils.get_app_setting("LOG_QSS", False)
-        utils.apply_style(app, thema_name, to_save=log_qss)
+        utils.apply_style(app, thema_name, to_save=log_qss) # type: ignore
     except KeyError as e:
         # message for developers
         logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")

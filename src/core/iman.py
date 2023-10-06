@@ -32,7 +32,7 @@ def app_instance_closed():
             pass
 
 
-def server_is_not_running(sign: str):
+def server_is_not_running(sign: str) -> tuple[bool, socket.socket|None]:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
     try:

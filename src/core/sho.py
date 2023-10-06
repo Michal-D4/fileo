@@ -4,7 +4,7 @@ import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent,
+                         QResizeEvent, QPixmap,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
@@ -51,12 +51,12 @@ class shoWindow(QMainWindow):
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        self.start_pos = None
-        self.start_move_pos = QPoint(0, 0)
+        self.start_pos: QPoint = QPoint()
+        self.start_move_pos = QPoint()
         self.window_maximized: bool = False
         self.mode = ag.appMode.DIR
-        self.open_db: OpenDB = None
-        self.filter_setup: FilterSetup = None
+        self.open_db: OpenDB|None = None
+        self.filter_setup: FilterSetup|None = None
 
         self.icons = icons.get_toolbar_icons()
         self.set_button_icons()
@@ -89,17 +89,17 @@ class shoWindow(QMainWindow):
         ag.file_data_holder.setObjectName("file_notes")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
-            utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
+            int(utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
         if ag.db.restore:     # start app with restoring DB connection - 1st app instance
             self.connect_db(
-                ag.db.path or utils.get_app_setting("DB_NAME", "")
+                ag.db.path or str(utils.get_app_setting("DB_NAME", ""))
             )
 
     def set_busy(self, val: bool):
         self.is_busy = val
-        self.ui.busy.setPixmap(icons.get_other_icon("busy", int(val)))
+        self.ui.busy.setPixmap(QPixmap(icons.get_other_icon("busy", int(val))))
         self.ui.busy.setToolTip(
             'Background thread is working' if val else 'No active background thread'
         )
