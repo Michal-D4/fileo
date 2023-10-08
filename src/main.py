@@ -100,8 +100,6 @@ def main(entry_point: str, db_name: str):
     else:
         ag.entry_point = tmp.name
 
-    # utils.save_to_file("entry-point.txt", ag.entry_point)
-
     instance_control(db_name)
 
     start_app()
