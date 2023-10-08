@@ -13,6 +13,8 @@ from .. import qss as style_sheets
 
 APP_NAME = "fileo"
 MAKER = 'miha'
+GT = 10        # Grip Thickness
+MOVE_THRESHOLD = 50
 
 settings = None
 
@@ -63,7 +65,7 @@ def setup_ui(self):
             [grip.hide() for grip in self.grips.values()]
             self.showMaximized()
         else:
-            self.ui.appMargins.setContentsMargins(10, 10, 10, 10)
+            self.ui.appMargins.setContentsMargins(GT, GT, GT, GT)
             [grip.show() for grip in self.grips.values()]
             self.showNormal()
 
@@ -75,9 +77,10 @@ def setup_ui(self):
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            if (pos_ - self.start_move_pos).manhattanLength() < 100:
-                self.move(self.pos() + pos_ - self.start_move_pos)
-            self.start_move_pos = pos_
+            logger.info(f'pos_: ({pos_.x()}, {pos_.y()}), self.start_move: {self.start_move.x(), self.start_move.y()}')
+            if (pos_ - self.start_move).manhattanLength() < MOVE_THRESHOLD:
+                self.move(self.pos() + pos_ - self.start_move)
+            self.start_move = pos_
             e.accept()
 
     self.ui.topBar.mouseMoveEvent = move_window
@@ -94,10 +97,11 @@ def setup_ui(self):
     return maximize_restore
 
 def resize_grips(self):
-    self.grips['left_grip'].setGeometry(0, 10, 10, self.height()-10)
-    self.grips['right_grip'].setGeometry(self.width() - 10, 10, 10, self.height()-10)
-    self.grips['top_grip'].setGeometry(0, 0, self.width(), 10)
-    self.grips['bottom_grip'].setGeometry(0, self.height() - 10, self.width(), 10)
+    logger.info(f'{self.width()=}, {self.height()=}')
+    self.grips['left_grip'].setGeometry(0, GT, GT, self.height()-GT)
+    self.grips['right_grip'].setGeometry(self.width() - GT, GT, GT, self.height()-GT)
+    self.grips['top_grip'].setGeometry(0, 0, self.width(), GT)
+    self.grips['bottom_grip'].setGeometry(0, self.height() - GT, self.width(), GT)
 
 def save_to_file(filename: str, msg: str):
     """ save translated qss """

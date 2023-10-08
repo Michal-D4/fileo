@@ -52,7 +52,7 @@ class shoWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.start_pos: QPoint = QPoint()
-        self.start_move_pos = QPoint()
+        self.start_move = QPoint()
         self.window_maximized: bool = False
         self.mode = ag.appMode.DIR
         self.open_db: OpenDB|None = None
@@ -455,7 +455,8 @@ class shoWindow(QMainWindow):
         if self.open_db and self.open_db.isVisible():
             # close dialog when mouse is pressed outside of it
             ag.signals_.close_db_dialog.emit()
-        self.start_move_pos = e.globalPosition().toPoint()
+        self.start_move = e.globalPosition().toPoint()
+        logger.info(f'self.start_move: {self.start_move.x(), self.start_move.y()}')
         e.accept()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
