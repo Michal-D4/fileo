@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from ..widgets.filter_setup import FilterSetup
     from .history import History
 
+GT = 10        # Grip Thickness
+
 def app_name() -> str:
     return "fileo"
 

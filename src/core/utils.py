@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Optional
 from importlib import resources
 
-from PyQt6.QtCore import QEvent, Qt, QSettings, QVariant, QFile, QTextStream
-from PyQt6.QtGui import QMouseEvent, QPixmap
+from PyQt6.QtCore import QSettings, QVariant, QFile, QTextStream
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from . import icons, app_globals as ag
@@ -13,8 +13,6 @@ from .. import qss as style_sheets
 
 APP_NAME = "fileo"
 MAKER = 'miha'
-GT = 10        # Grip Thickness
-MOVE_THRESHOLD = 50
 
 settings = None
 
@@ -47,61 +45,6 @@ def save_app_setting(**kwargs):
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
 
-def setup_ui(self):
-    from ..widgets.custom_grips import CustomGrip
-
-    # CUSTOM GRIPS
-    self.grips = {}
-    self.grips['left_grip'] = CustomGrip(self, Qt.Edge.LeftEdge, True)
-    self.grips['right_grip'] = CustomGrip(self, Qt.Edge.RightEdge, True)
-    self.grips['top_grip'] = CustomGrip(self, Qt.Edge.TopEdge, True)
-    self.grips['bottom_grip'] = CustomGrip(self, Qt.Edge.BottomEdge, True)
-
-    def maximize_restore():
-        self.window_maximized = not self.window_maximized
-        self.ui.maximize.setIcon(self.icons["maximize"][self.window_maximized])
-        if self.window_maximized:
-            self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
-            [grip.hide() for grip in self.grips.values()]
-            self.showMaximized()
-        else:
-            self.ui.appMargins.setContentsMargins(GT, GT, GT, GT)
-            [grip.show() for grip in self.grips.values()]
-            self.showNormal()
-
-    self.ui.maximize.clicked.connect(maximize_restore)
-
-    def move_window(e: QMouseEvent):
-        if self.window_maximized:
-            maximize_restore()
-            return
-        if e.buttons() == Qt.MouseButton.LeftButton:
-            pos_ = e.globalPosition().toPoint()
-            logger.info(f'pos_: ({pos_.x()}, {pos_.y()}), self.start_move: {self.start_move.x(), self.start_move.y()}')
-            if (pos_ - self.start_move).manhattanLength() < MOVE_THRESHOLD:
-                self.move(self.pos() + pos_ - self.start_move)
-            self.start_move = pos_
-            e.accept()
-
-    self.ui.topBar.mouseMoveEvent = move_window
-    self.ui.status.mouseMoveEvent = move_window
-    self.ui.toolBar.mouseMoveEvent = move_window
-    self.container.ui.navi_header.mouseMoveEvent = move_window
-
-    def double_click_maximize_restore(e: QMouseEvent):
-        if e.type() == QEvent.Type.MouseButtonDblClick:
-            maximize_restore()
-
-    self.ui.topBar.mouseDoubleClickEvent = double_click_maximize_restore
-
-    return maximize_restore
-
-def resize_grips(self):
-    logger.info(f'{self.width()=}, {self.height()=}')
-    self.grips['left_grip'].setGeometry(0, GT, GT, self.height()-GT)
-    self.grips['right_grip'].setGeometry(self.width() - GT, GT, GT, self.height()-GT)
-    self.grips['top_grip'].setGeometry(0, 0, self.width(), GT)
-    self.grips['bottom_grip'].setGeometry(0, self.height() - GT, self.width(), GT)
 
 def save_to_file(filename: str, msg: str):
     """ save translated qss """

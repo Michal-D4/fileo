@@ -92,20 +92,6 @@ def _collect_toolbar_icons():
             color_active=ag.qss_params["$ToolButtonActiveColor"]),
     )
 
-    toolbar_icons["minimize"] = (
-        qta.icon('mdi.window-minimize', color=ag.qss_params["$topBarColor"]),
-    )
-
-    toolbar_icons["maximize"] = (
-        qta.icon('mdi.window-maximize', color=ag.qss_params["$topBarColor"]),
-        qta.icon('mdi.window-restore', color=ag.qss_params["$topBarColor"]),
-    )
-
-    toolbar_icons["close"] = (
-        qta.icon('mdi.window-close', color=ag.qss_params["$topBarColor"],
-            color_active=ag.qss_params["$ToolButtonActiveColor"]),
-    )
-
     toolbar_icons["field_menu"] = (
         qta.icon('mdi.dots-horizontal', color=ag.qss_params["$topBarColor"]),
     )

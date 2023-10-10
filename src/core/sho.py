@@ -1,5 +1,6 @@
 from loguru import logger
 from pathlib import Path
+import sys
 import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot
@@ -12,16 +13,24 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
 )
 
 from ..ui.ui_main import Ui_Sho
+from ..widgets.file_data import fileDataHolder
+from ..widgets.file_search import fileSearch
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
-from ..widgets.file_search import fileSearch
-from .compact_list import aBrowser
-from ..widgets.file_data import fileDataHolder
 
+from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate
-from . import icons, utils, db_ut, bk_ut, history, low_bk
-from . import app_globals as ag, iman
+from . import (icons, utils, db_ut, bk_ut, history, low_bk,
+    app_globals as ag, iman,
+)
+if sys.platform.startswith("win"):
+    from .win_win import setup_ui, resize_grips
+elif sys.platform.startswith("linux"):
+    from .linux_win import setup_ui, resize_grips
+else:
+    raise ImportError(f"doesn't support {sys.platform} system")
+
 
 
 MIN_NOTE_HEIGHT = 75
@@ -44,12 +53,6 @@ class shoWindow(QMainWindow):
 
         self.ui.setupUi(self)
         self.create_fold_container()
-
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.WindowMinMaxButtonsHint
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.start_pos: QPoint = QPoint()
         self.start_move = QPoint()
@@ -132,14 +135,13 @@ class shoWindow(QMainWindow):
 
     def restore_geometry(self):
         geometry = utils.get_app_setting("MainWindowGeometry")
+        logger.info(f'{geometry=}')
 
         if geometry:
             self.restoreGeometry(geometry)
+            logger.info(self.geometry())
 
-        maximize_restore = utils.setup_ui(self)
-        is_maximized = int(utils.get_app_setting("maximizedWindow", False))
-        if is_maximized:
-            maximize_restore()
+        setup_ui(self)
 
     @property
     def mode(self) -> int:
@@ -236,8 +238,6 @@ class shoWindow(QMainWindow):
     def connect_slots(self):
         self.connect_checkable()
 
-        self.ui.close.clicked.connect(self.close_app)
-        self.ui.minimize.clicked.connect(self.minimize)
 
         self.ui.dataBase.clicked.connect(self.show_db_list)
 
@@ -460,7 +460,7 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
-        utils.resize_grips(self)
+        resize_grips(self)
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
         e.accept()

@@ -1,6 +1,8 @@
+from loguru import logger
 import subprocess
 
-from . import utils
+from PyQt6.QtGui import QIcon
+from . import utils, icons
 
 def activate(pid):
     try:
@@ -20,10 +22,27 @@ def activate(pid):
             "Please install 'wmctrl' on your system."
         )
 
-
 def get_win_id(comm: list, pid: str) -> str:
     for cc in comm:
         if pid in cc:
             p = cc.find('0x')
             return cc[p:p+10]
     return ''
+
+def win_icons():
+    pass
+
+def setup_ui(self):
+    self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
+    ind = self.ui.horizontalLayout_4.indexOf(self.ui.horizontalLayout)
+    logger.info(f'{ind=}')
+    self.ui.horizontalLayout_4.takeAt(ind)
+    self.setWindowTitle('')
+    # can't set window icon
+    # self.setWindowIcon(QIcon('src/qss/angle_right.svg'))
+    # self.setWindowIcon(icons.get_other_icon('ok')) # 'app'))
+    # self.setWindowIcon(icons.get_toolbar_icons()['btnDir'][0])
+    self.close = self.close_app
+
+def resize_grips(self):
+    pass
