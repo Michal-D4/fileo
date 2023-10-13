@@ -1,7 +1,8 @@
 from PyQt6.QtCore import pyqtSignal, QObject
-from ..widgets.file_note import fileNote
 
 class AppSignals(QObject):
+    from .sho import shoWindow
+    from ..widgets.file_note import fileNote
 
     close_db_dialog = pyqtSignal(name="close_db_dialog")
 
@@ -20,3 +21,5 @@ class AppSignals(QObject):
     delete_note = pyqtSignal(fileNote)
 
     start_edit_note = pyqtSignal(fileNote)
+
+    initiate_grids = pyqtSignal()

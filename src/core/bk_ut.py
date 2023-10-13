@@ -69,6 +69,7 @@ def bk_setup(main: 'shoWindow'):
     if ag.db.conn:
         populate_all()
 
+        QTimer.singleShot(1000, lambda: ag.signals_.initiate_grids.emit())
         QTimer.singleShot(10 * 1000, show_lost_files)
         QTimer.singleShot(5 * 60 * 1000, run_update0_files)
         QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)

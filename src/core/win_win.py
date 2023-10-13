@@ -1,12 +1,11 @@
 from loguru import logger
 import qtawesome as qta
 
-from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtCore import Qt, QEvent, QPoint
+from PyQt6.QtGui import QMouseEvent
 
 from . import utils, app_globals as ag, icons
-
-MOVE_THRESHOLD = 50
+from ..widgets.custom_grips import CustomGrip
 
 def activate(pid):
     from pywinauto import Application
@@ -29,6 +28,7 @@ def win_icons():
             color_active=ag.qss_params["$ToolButtonActiveColor"]),
     )
 
+
 def setup_ui(self):
     self.setWindowFlags(
         Qt.WindowType.FramelessWindowHint |
@@ -39,14 +39,12 @@ def setup_ui(self):
     self.ui.close.clicked.connect(self.close_app)
     self.ui.minimize.clicked.connect(self.minimize)
 
-    from ..widgets.custom_grips import CustomGrip
-
     # CUSTOM GRIPS
     self.grips = {}
-    self.grips['left_grip'] = CustomGrip(self, Qt.Edge.LeftEdge, True)
-    self.grips['right_grip'] = CustomGrip(self, Qt.Edge.RightEdge, True)
-    self.grips['top_grip'] = CustomGrip(self, Qt.Edge.TopEdge, True)
-    self.grips['bottom_grip'] = CustomGrip(self, Qt.Edge.BottomEdge, True)
+    self.grips['left_grip'] = CustomGrip(self, Qt.Edge.LeftEdge)
+    self.grips['right_grip'] = CustomGrip(self, Qt.Edge.RightEdge)
+    self.grips['top_grip'] = CustomGrip(self, Qt.Edge.TopEdge)
+    self.grips['bottom_grip'] = CustomGrip(self, Qt.Edge.BottomEdge)
 
     def maximize_restore():
         self.window_maximized = not self.window_maximized
@@ -69,7 +67,7 @@ def setup_ui(self):
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
             logger.info(f'pos_: ({pos_.x()}, {pos_.y()}), self.start_move: ({self.start_move.x(), self.start_move.y()})')
-            if (pos_ - self.start_move).manhattanLength() < MOVE_THRESHOLD:
+            if (pos_ - self.start_move).manhattanLength() < ag.MOVE_THRESHOLD:
                 logger.info(f'self.pos: ({self.pos().x()}, {self.pos().y()})')
                 win_pos = QPoint(self.x(), self.y())
                 tmp = win_pos + pos_ - self.start_move
@@ -92,11 +90,5 @@ def setup_ui(self):
             maximize_restore()
 
     self.ui.topBar.mouseDoubleClickEvent = double_click_maximize_restore
-
-
-def resize_grips(self):
-    logger.info(f'{self.width()=}, {self.height()=}')
-    self.grips['left_grip'].setGeometry(0, ag.GT, ag.GT, self.height()-ag.GT)
-    self.grips['right_grip'].setGeometry(self.width() - ag.GT, ag.GT, ag.GT, self.height()-ag.GT)
-    self.grips['top_grip'].setGeometry(0, 0, self.width(), ag.GT)
-    self.grips['bottom_grip'].setGeometry(0, self.height() - ag.GT, self.width(), ag.GT)
+    # for grip in self.grips.values():
+    #     ag.signals_.initiate_grids.connect(grip.update_grips)

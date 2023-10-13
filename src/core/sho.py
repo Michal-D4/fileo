@@ -20,12 +20,13 @@ from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
 
 from .compact_list import aBrowser
+from ..widgets.custom_grips import CustomGrip
 from .filename_editor import fileEditorDelegate
 from . import (icons, utils, db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
 )
 if sys.platform.startswith("win"):
-    from .win_win import setup_ui, resize_grips
+    from .win_win import setup_ui
 elif sys.platform.startswith("linux"):
     from .linux_win import setup_ui, resize_grips
 else:
@@ -135,7 +136,6 @@ class shoWindow(QMainWindow):
 
     def restore_geometry(self):
         geometry = utils.get_app_setting("MainWindowGeometry")
-        logger.info(f'{geometry=}')
 
         if geometry:
             self.restoreGeometry(geometry)
@@ -451,21 +451,26 @@ class shoWindow(QMainWindow):
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
 
-    def mousePressEvent(self, e: QMouseEvent):
-        if self.open_db and self.open_db.isVisible():
-            # close dialog when mouse is pressed outside of it
-            ag.signals_.close_db_dialog.emit()
-        self.start_move = e.globalPosition().toPoint()
-        logger.info(f'self.start_move: {self.start_move.x(), self.start_move.y()}')
-        e.accept()
+    # def mousePressEvent(self, e: QMouseEvent):
+    #     if self.open_db and self.open_db.isVisible():
+    #         # close dialog when mouse is pressed outside of it
+    #         ag.signals_.close_db_dialog.emit()
+    #     self.start_move = e.globalPosition().toPoint()
+    #     e.accept()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
-        resize_grips(self)
+        o = e.oldSize()
+        s = e.size()
+        logger.info(f'x: ({s.width()} - {o.width()}), y: ({s.height()} - {o.height()})')
+        for grip in self.grips.values():
+            grip.update_grip()
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
+        super().resizeEvent(e)
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        logger.info('<<<<<<<')
         iman.app_instance_closed()
         settings = {
             "maximizedWindow": int(self.window_maximized),
