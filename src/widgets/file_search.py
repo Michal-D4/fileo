@@ -23,7 +23,7 @@ class fileSearch(QWidget):
 
         self.ui.btnCancel.clicked.connect(self.cancel)
         self.ui.btnGo.clicked.connect(self.go)
-        self.start_move_pos = QPoint(0,0)
+        self.start_pos = QPoint()
         self.mouseMoveEvent = self.move_self
 
         self.set_exts()
@@ -66,8 +66,8 @@ class fileSearch(QWidget):
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            dist = pos_ - self.start_move_pos
+            dist = pos_ - self.start_pos
             if dist.manhattanLength() < 50:
                 self.move(self.pos() + dist)
                 e.accept()
-            self.start_move_pos = pos_
+            self.start_pos = pos_

@@ -1,10 +1,11 @@
 from loguru import logger
 from pathlib import Path
+import sys
 import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent,
+                         QResizeEvent, QPixmap,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
@@ -12,16 +13,25 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
 )
 
 from ..ui.ui_main import Ui_Sho
+from ..widgets.file_data import fileDataHolder
+from ..widgets.file_search import fileSearch
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
-from ..widgets.file_search import fileSearch
-from .compact_list import aBrowser
-from ..widgets.file_data import fileDataHolder
 
+from .compact_list import aBrowser
+from ..widgets.custom_grips import CustomGrip
 from .filename_editor import fileEditorDelegate
-from . import icons, utils, db_ut, bk_ut, history, low_bk
-from . import app_globals as ag, iman
+from . import (icons, utils, db_ut, bk_ut, history, low_bk,
+    app_globals as ag, iman,
+)
+if sys.platform.startswith("win"):
+    from .win_win import setup_ui
+elif sys.platform.startswith("linux"):
+    from .linux_win import setup_ui, resize_grips
+else:
+    raise ImportError(f"doesn't support {sys.platform} system")
+
 
 
 MIN_NOTE_HEIGHT = 75
@@ -45,18 +55,12 @@ class shoWindow(QMainWindow):
         self.ui.setupUi(self)
         self.create_fold_container()
 
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.WindowMinMaxButtonsHint
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-        self.start_pos = None
-        self.start_move_pos = QPoint(0, 0)
+        self.start_pos: QPoint = QPoint()
+        self.start_move = QPoint()
         self.window_maximized: bool = False
         self.mode = ag.appMode.DIR
-        self.open_db: OpenDB = None
-        self.filter_setup: FilterSetup = None
+        self.open_db: OpenDB|None = None
+        self.filter_setup: FilterSetup|None = None
 
         self.icons = icons.get_toolbar_icons()
         self.set_button_icons()
@@ -89,17 +93,17 @@ class shoWindow(QMainWindow):
         ag.file_data_holder.setObjectName("file_notes")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
-            utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH)
+            int(utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
         if ag.db.restore:     # start app with restoring DB connection - 1st app instance
             self.connect_db(
-                ag.db.path or utils.get_app_setting("DB_NAME", "")
+                ag.db.path or str(utils.get_app_setting("DB_NAME", ""))
             )
 
     def set_busy(self, val: bool):
         self.is_busy = val
-        self.ui.busy.setPixmap(icons.get_other_icon("busy", int(val)))
+        self.ui.busy.setPixmap(QPixmap(icons.get_other_icon("busy", int(val))))
         self.ui.busy.setToolTip(
             'Background thread is working' if val else 'No active background thread'
         )
@@ -135,11 +139,9 @@ class shoWindow(QMainWindow):
 
         if geometry:
             self.restoreGeometry(geometry)
+            logger.info(self.geometry())
 
-        maximize_restore = utils.setup_ui(self)
-        is_maximized = int(utils.get_app_setting("maximizedWindow", False))
-        if is_maximized:
-            maximize_restore()
+        setup_ui(self)
 
     @property
     def mode(self) -> int:
@@ -236,8 +238,6 @@ class shoWindow(QMainWindow):
     def connect_slots(self):
         self.connect_checkable()
 
-        self.ui.close.clicked.connect(self.close_app)
-        self.ui.minimize.clicked.connect(self.minimize)
 
         self.ui.dataBase.clicked.connect(self.show_db_list)
 
@@ -451,20 +451,26 @@ class shoWindow(QMainWindow):
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
 
-    def mousePressEvent(self, e: QMouseEvent):
-        if self.open_db and self.open_db.isVisible():
-            # close dialog when mouse is pressed outside of it
-            ag.signals_.close_db_dialog.emit()
-        self.start_move_pos = e.globalPosition().toPoint()
-        e.accept()
+    # def mousePressEvent(self, e: QMouseEvent):
+    #     if self.open_db and self.open_db.isVisible():
+    #         # close dialog when mouse is pressed outside of it
+    #         ag.signals_.close_db_dialog.emit()
+    #     self.start_move = e.globalPosition().toPoint()
+    #     e.accept()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
-        utils.resize_grips(self)
+        super().resizeEvent(e)
+        o = e.oldSize()
+        s = e.size()
+        logger.info(f'x: ({s.width()} - {o.width()}), y: ({s.height()} - {o.height()})')
+        for grip in self.grips.values():
+            grip.update_grip()
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        logger.info('<<<<<<<')
         iman.app_instance_closed()
         settings = {
             "maximizedWindow": int(self.window_maximized),
