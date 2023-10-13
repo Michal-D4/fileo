@@ -104,7 +104,7 @@ def new_window(db_name: str):
     else:
         logger.info(f'2) {db_name=}, {ag.entry_point}')
         subprocess.Popen(
-            [sys.executable, ag.entry_point, db_name],
+            [sys.executable, ag.entry_point, db_name], # sys.executable - python interpreter
         )
 
 @pyqtSlot(str)

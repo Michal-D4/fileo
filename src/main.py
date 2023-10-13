@@ -11,9 +11,9 @@ from .core import utils, app_globals as ag, iman
 from .core.sho import shoWindow
 
 if sys.platform.startswith("win"):
-    from .core import win_win as win_activate
+    from .core.win_win import activate, win_icons
 elif sys.platform.startswith("linux"):
-    from .core import linux_win as win_activate
+    from .core.linux_win import activate, win_icons
 else:
     raise ImportError(f"doesn't support {sys.platform} system")
 
@@ -61,7 +61,7 @@ def instance_control(db_name: str):
     logger.info(f'{db_name}, {pid=}, {ag.single_instance=}')
     if pid:
         if ag.single_instance:
-            win_activate.activate(pid)
+            activate(pid)
             iman.app_instance_closed()
 
             sys.exit(0)
@@ -77,6 +77,7 @@ def start_app():
     try:
         log_qss = int(utils.get_app_setting("LOG_QSS", 0))
         utils.apply_style(app, thema_name, to_save=log_qss)
+        win_icons()
     except KeyError as e:
         # message for developers
         logger.info(f"KeyError: {e.args}; >>> check you qss parameters file {thema_name}.param")
@@ -94,7 +95,7 @@ def start_app():
 def main(entry_point: str, db_name: str):
     set_logger()
     tmp = Path(entry_point).resolve()
-    logger.info(entry_point)
+    logger.info(f'{entry_point=}')
     if getattr(sys, "frozen", False):
         ag.entry_point = tmp.as_posix()   # str
     else:
