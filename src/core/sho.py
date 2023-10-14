@@ -458,7 +458,7 @@ class shoWindow(QMainWindow):
     #     e.accept()
 
     def resizeEvent(self, e: QResizeEvent) -> None:
-        # super().resizeEvent(e)
+        super().resizeEvent(e)
         resize_grips(self)
         # for grip in self.grips.values():
         #     grip.update_grip()

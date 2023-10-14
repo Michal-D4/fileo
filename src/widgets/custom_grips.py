@@ -17,7 +17,7 @@
 from loguru import logger
 
 from PyQt6.QtCore import QRect, QSize, Qt, QPoint
-from PyQt6.QtGui import QCursor
+from PyQt6.QtGui import QCursor, QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizeGrip, QWidget
 
 from ..core import app_globals as ag
@@ -31,113 +31,88 @@ class CustomGrip(QWidget):
         self.wi = Widgets()
         self.start_move = QPoint()
 
-        # SHOW TOP GRIP
-        if edge == Qt.Edge.TopEdge:
-            self.wi.top(self)
-            self.setGeometry(0, 0, self.parent.width(), ag.GT)
-            self.setMaximumHeight(ag.GT)
+        self.resize_parent = {
+            Qt.Edge.TopEdge: self.set_top,
+            Qt.Edge.BottomEdge: self.set_bottom,
+            Qt.Edge.LeftEdge: self.set_left,
+            Qt.Edge.RightEdge: self.set_right
+        }[edge]()
 
-            # GRIPS
-            top_left = QSizeGrip(self.wi.top_left)
-            top_right = QSizeGrip(self.wi.top_right)
+    def set_top(self):
+        self.wi.top(self)
+        self.setGeometry(0, 0, self.parent.width(), ag.GT)
+        self.setMaximumHeight(ag.GT)
 
-            # RESIZE TOP
-            def resize_top(event):
-                delta = event.position()
-                height = max(self.parent.minimumHeight(), self.parent.height() - delta.y())
-                geo = self.parent.geometry()
-                geo.setTop(int(geo.bottom() - height))
-                self.parent.setGeometry(geo)
-                event.accept()
-            self.wi.top.mouseMoveEvent = resize_top
+        top_left = QSizeGrip(self.wi.top_left)
+        top_right = QSizeGrip(self.wi.top_right)
 
-        # SHOW BOTTOM GRIP
-        elif edge == Qt.Edge.BottomEdge:
-            self.wi.bottom(self)
-            self.setGeometry(0, self.parent.height() - ag.GT, self.parent.width(), ag.GT)
-            self.setMaximumHeight(ag.GT)
+        def move_top(delta: QPoint):
+            height = max(self.parent.minimumHeight(), self.parent.height() - delta.y())
+            geo: QRect = self.parent.geometry()
+            logger.info(f'{delta.y()=}; {self.parent.height()=}, {height=}')
+            geo.setTop(int(geo.bottom() - height))
+            self.parent.setGeometry(geo)
 
-            # GRIPS
-            self.bottom_left = QSizeGrip(self.wi.bottom_left)
-            self.bottom_right = QSizeGrip(self.wi.bottom_right)
+        return move_top
 
-            # RESIZE BOTTOM
-            def resize_bottom(event):
-                delta = event.position()
-                height = int(max(self.parent.minimumHeight(), self.parent.height() + delta.y()))
-                self.parent.resize(self.parent.width(), height)
-                event.accept()
-            self.wi.bottom.mouseMoveEvent = resize_bottom
+    def set_bottom(self):
+        self.wi.bottom(self)
+        self.setGeometry(0, self.parent.height() - ag.GT, self.parent.width(), ag.GT)
+        self.setMaximumHeight(ag.GT)
 
-        # SHOW LEFT GRIP
-        elif edge == Qt.Edge.LeftEdge:
-            self.wi.left(self)
-            self.setGeometry(0, ag.GT, ag.GT, self.parent.height())
-            self.setMaximumWidth(ag.GT)
+        self.bottom_left = QSizeGrip(self.wi.bottom_left)
+        self.bottom_right = QSizeGrip(self.wi.bottom_right)
 
-            # RESIZE LEFT
-            def resize_left(event):
-                delta = event.position()
-                width = max(self.parent.minimumWidth(), self.parent.width() - delta.x())
-                geo = self.parent.geometry()
-                geo.setLeft(int(geo.right() - width))
-                self.parent.setGeometry(geo)
-                event.accept()
-            self.wi.leftgrip.mouseMoveEvent = resize_left
+        def move_bottom(delta: QPoint):
+            height = int(max(self.parent.minimumHeight(), self.parent.height() + delta.y()))
+            logger.info(f'{delta.y()=}; {self.parent.height()=}, {height=}')
+            self.parent.resize(self.parent.width(), height)
 
-        # RESIZE RIGHT
-        elif edge == Qt.Edge.RightEdge:
-            self.wi.right(self)
-            self.setGeometry(self.parent.width() - ag.GT, ag.GT, ag.GT, self.parent.height())
-            self.setMaximumWidth(ag.GT)
+        return move_bottom
 
-            def resize_right(event):
-                delta = event.position()
-                width = int(max(self.parent.minimumWidth(), self.parent.width() + delta.x()))
-                self.parent.resize(width, self.parent.height())
-                event.accept()
-            self.wi.rightgrip.mouseMoveEvent = resize_right
+    def set_left(self):
+        self.wi.left(self)
+        self.setGeometry(0, ag.GT, ag.GT, self.parent.height() - 2*ag.GT)
+        self.setMaximumWidth(ag.GT)
+
+        def move_left(delta: QPoint):
+            width = max(self.parent.minimumWidth(), self.parent.width() - delta.x())
+            geo = self.parent.geometry()
+            logger.info(f'{delta.x()=}; {self.parent.width()=}, {width=}')
+            geo.setLeft(int(geo.right() - width))
+            self.parent.setGeometry(geo)
+
+        return move_left
+
+    def set_right(self):
+        self.wi.right(self)
+        self.setGeometry(self.parent.width() - ag.GT, ag.GT, ag.GT, self.parent.height() - 2*ag.GT)
+        self.setMaximumWidth(ag.GT)
+
+        def move_right(delta: QPoint):
+            width = int(max(self.parent.minimumWidth(), self.parent.width() + delta.x()))
+            logger.info(f'{delta.x()=}; {self.parent.width()=}, {width=}')
+            self.parent.resize(width, self.parent.height())
+
+        return move_right
+
+    def mouseMoveEvent(self, e: QMouseEvent):
+        logger.info(f'{self.edge.name}: delta={e.pos().x(), e.pos().y()}')
+        self.resize_parent(e.pos())
 
     def resizeEvent(self, event):
-        logger.info(f'{self.edge.name}: {self.width()=}, {self.height()=}')
-        logger.info(f'{self.parent.width()=}, {self.parent.height()=}')
-        # self.update_grip()
-        if self.edge == Qt.Edge.TopEdge:      # hasattr(self.wi, 'container_top'):
+        if self.edge == Qt.Edge.TopEdge:
             self.wi.container_top.setGeometry(0, 0, self.parent.width(), ag.GT)
-
-        elif self.edge == Qt.Edge.BottomEdge: # hasattr(self.wi, 'container_bottom'):
+        elif self.edge == Qt.Edge.BottomEdge:
             self.wi.container_bottom.setGeometry(0, 0, self.parent.width(), ag.GT)
-
-        elif self.edge == Qt.Edge.LeftEdge:   # hasattr(self.wi, 'leftgrip'):
+        elif self.edge == Qt.Edge.LeftEdge:
             self.wi.leftgrip.setGeometry(0, 0, ag.GT, self.parent.height() - 2*ag.GT)
-
-        elif self.edge == Qt.Edge.RightEdge:  # hasattr(self.wi, 'rightgrip'):
-            self.wi.rightgrip.setGeometry(0, 0, ag.GT, self.parent.height() - 2*ag.GT)
-        logger.info(f"{self.edge.name}: {self.geometry()}")
-
-    def update_grip(self):
-        '''
-        the method should be called to the perpendicular instances of grip:
-        LeftEdge, RightEdge <-> TopEdge, BottomEdge
-        i.e. it should be called from win_win.py
-        '''
-        logger.info(f'{self.edge.name}: {self.width()=}, {self.height()=}')
-        logger.info(f'{self.edge.name}: {self.parent.width()=}, {self.parent.height()=}')
-        if self.edge == Qt.Edge.LeftEdge:
-            self.setGeometry(0, ag.GT, ag.GT, self.parent.height()-2*ag.GT)
         elif self.edge == Qt.Edge.RightEdge:
-            self.setGeometry(
-                self.width() - ag.GT, ag.GT, ag.GT, self.parent.height()-2*ag.GT)
-        elif self.edge == Qt.Edge.TopEdge:
-            self.setGeometry(0, 0, self.parent.width(), ag.GT)
-        else:          #  self.edge == Qt.Edge.BottomEdge
-            self.setGeometry(0, self.parent.height() - ag.GT, self.parent.width(), ag.GT)
-        logger.info(f"{self.edge.name}: {self.geometry()}")
-
+            self.wi.rightgrip.setGeometry(0, 0, ag.GT, self.parent.height() - 2*ag.GT)
 
 
 class Widgets(object):
-    ssq = "background-color: rgba(222, 222, 222, 1%)"
+    ssq = "background-color: rgba(222, 222, 222, 50%)"
     def top(self, Form):
         if not Form.objectName():
             Form.setObjectName("Form")
