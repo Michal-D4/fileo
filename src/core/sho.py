@@ -450,18 +450,10 @@ class shoWindow(QMainWindow):
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
 
-    # def mousePressEvent(self, e: QMouseEvent):
-    #     if self.open_db and self.open_db.isVisible():
-    #         # close dialog when mouse is pressed outside of it
-    #         ag.signals_.close_db_dialog.emit()
-    #     self.start_move = e.globalPosition().toPoint()
-    #     e.accept()
-
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
+        logger.info(f'{self.geometry()=}')
         resize_grips(self)
-        # for grip in self.grips.values():
-        #     grip.update_grip()
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
         e.accept()
