@@ -9,13 +9,16 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QToolButton
 
-from .app_signals import AppSignals
 if TYPE_CHECKING:
     from .compact_list import aBrowser
     from .sho import shoWindow
     from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
+
+GT = 10        # Grip Thickness
+MOVE_THRESHOLD = 50
+
 
 def app_name() -> str:
     return "fileo"
@@ -25,9 +28,6 @@ def app_version() -> str:
     if version changed here then also change it in the "pyproject.toml" file
     """
     return '0.9.54'
-
-# only this instance of AppSignals should be used anywhere in the application
-signals_ = AppSignals()
 
 entry_point: str = ''
 app: 'shoWindow' = None
@@ -156,3 +156,7 @@ def get_setting(key: str, default=None):
         vv = None
 
     return vv if vv else default
+
+# only this instance of AppSignals should be used anywhere in the application
+from .app_signals import AppSignals
+signals_ = AppSignals()

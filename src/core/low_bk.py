@@ -97,12 +97,14 @@ def set_user_actions_handler():
 @pyqtSlot(str)
 def new_window(db_name: str):
     import subprocess
-    logger.info(f'{db_name=}, {getattr(sys, "frozen", False)}')
+    # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
+        # logger.info(f'1) {db_name=}, {ag.entry_point}')
         subprocess.Popen([ag.entry_point, db_name])
     else:
+        # logger.info(f'2) {db_name=}, {ag.entry_point}')
         subprocess.Popen(
-            [sys.executable, ag.entry_point, db_name],
+            [sys.executable, ag.entry_point, db_name], # sys.executable - python interpreter
         )
 
 @pyqtSlot(str)
