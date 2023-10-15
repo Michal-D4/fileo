@@ -27,9 +27,7 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     try:
         to_set = settings.value(key, default)
     except (TypeError, SystemError) as e:
-        # logger.info(f'{type(e)}, {e=}')
         to_set = default
-    # logger.info(f'{key=}, {default=}, {to_set=}')
     return to_set
 
 def save_app_setting(**kwargs):

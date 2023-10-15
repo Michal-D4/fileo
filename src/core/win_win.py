@@ -68,7 +68,6 @@ def setup_ui(self):
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            logger.info(f'pos_: ({pos_.x()}, {pos_.y()}), self.start_move: {self.start_move.x(), self.start_move.y()}')
             if (pos_ - self.start_move).manhattanLength() < ag.MOVE_THRESHOLD:
                 self.move(self.pos() + pos_ - self.start_move)
             self.start_move = pos_
@@ -89,13 +88,12 @@ def setup_ui(self):
 
     self.ui.topBar.mouseDoubleClickEvent = double_click_maximize_restore
 
-def resize_grips(self):
-    logger.info(f'{self.geometry()=}')
-    self.grips['left_grip'].setGeometry(0, ag.GT, ag.GT, self.height()-2*ag.GT)
-    logger.info(f'LeftEdge  : {(0, ag.GT, ag.GT, self.height()-2*ag.GT)}')
-    self.grips['right_grip'].setGeometry(self.width() - ag.GT, ag.GT, ag.GT, self.height()-2*ag.GT)
-    logger.info(f'RightEdge : {(self.width() - ag.GT, ag.GT, ag.GT, self.height()-2*ag.GT)}')
-    self.grips['top_grip'].setGeometry(0, 0, self.width(), ag.GT)
-    logger.info(f'TopEdge   : {(0, 0, self.width(), ag.GT)}')
-    self.grips['bottom_grip'].setGeometry(0, self.height() - ag.GT, self.width(), ag.GT)
-    logger.info(f'BottomEdge: {(0, self.height() - ag.GT, self.width(), ag.GT)}')
+def update_grips(self):
+    self.grips['left_grip'].setGeometry(
+        0, ag.GT, ag.GT, self.height()-2*ag.GT)
+    self.grips['right_grip'].setGeometry(
+        self.width() - ag.GT, ag.GT, ag.GT, self.height()-2*ag.GT)
+    self.grips['top_grip'].setGeometry(
+        0, 0, self.width(), ag.GT)
+    self.grips['bottom_grip'].setGeometry(
+        0, self.height() - ag.GT, self.width(), ag.GT)

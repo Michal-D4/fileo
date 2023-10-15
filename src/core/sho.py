@@ -26,7 +26,7 @@ from . import (icons, utils, db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
 )
 if sys.platform.startswith("win"):
-    from .win_win import setup_ui, resize_grips
+    from .win_win import setup_ui, update_grips
 elif sys.platform.startswith("linux"):
     from .linux_win import setup_ui
 else:
@@ -138,7 +138,6 @@ class shoWindow(QMainWindow):
 
         if geometry:
             self.restoreGeometry(geometry)
-            logger.info(self.geometry())
 
         setup_ui(self)
 
@@ -452,14 +451,13 @@ class shoWindow(QMainWindow):
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        logger.info(f'{self.geometry()=}')
-        resize_grips(self)
+        update_grips(self)
+
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        logger.info('<<<<<<<')
         iman.app_instance_closed()
         settings = {
             "maximizedWindow": int(self.window_maximized),

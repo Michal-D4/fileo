@@ -49,10 +49,8 @@ class CustomGrip(QWidget):
         def move_top(delta: QPoint):
             height = max(self.parent.minimumHeight(), self.parent.height() - delta.y())
             geo: QRect = self.parent.geometry()
-            logger.info(f'delta:{(delta.x(), delta.y())}; {geo}')
             geo.setTop(int(geo.bottom() - height))
             self.parent.setGeometry(geo)
-            logger.info(f'{self.parent.geometry()}')
 
         return move_top
 
@@ -66,7 +64,6 @@ class CustomGrip(QWidget):
 
         def move_bottom(delta: QPoint):
             height = int(max(self.parent.minimumHeight(), self.parent.height() + delta.y()))
-            logger.info(f'{delta.y()=}; {self.parent.height()=}, {height=}')
             self.parent.resize(self.parent.width(), height)
 
         return move_bottom
@@ -79,7 +76,6 @@ class CustomGrip(QWidget):
         def move_left(delta: QPoint):
             width = max(self.parent.minimumWidth(), self.parent.width() - delta.x())
             geo = self.parent.geometry()
-            logger.info(f'{delta.x()=}; {self.parent.width()=}, {width=}, {geo}')
             geo.setLeft(int(geo.right() - width))
             self.parent.setGeometry(geo)
 
@@ -92,25 +88,20 @@ class CustomGrip(QWidget):
 
         def move_right(delta: QPoint):
             width = int(max(self.parent.minimumWidth(), self.parent.width() + delta.x()))
-            logger.info(f'{delta.x()=}; {self.parent.width()=}, {width=}')
             self.parent.resize(width, self.parent.height())
 
         return move_right
 
     def mouseMoveEvent(self, e: QMouseEvent):
-        logger.info(f'{self.edge.name}: delta=({e.pos().x(), e.pos().y()}); parent.geometry={self.parent.geometry()}')
         self.resize_parent(e.pos())
 
     def resizeEvent(self, event):
-        if self.parent.width() <= 0 or self.parent.height() - 2*ag.GT <= 0:
-            logger.error(f'parent.geometry={self.parent.geometry()}')
         if self.edge & (Qt.Edge.TopEdge | Qt.Edge.BottomEdge) and self.parent.width() > 0:
             self.wi.grip.setGeometry(
                 0, 0, self.parent.width(), ag.GT)
         elif self.edge & (Qt.Edge.LeftEdge | Qt.Edge.RightEdge) and self.parent.height() - 2*ag.GT > 0:
             self.wi.grip.setGeometry(
                 0, 0, ag.GT, self.parent.height() - 2*ag.GT)
-        logger.info(f"{self.edge.name}: {self.wi.grip.geometry()}")
 
 
 class Widgets(object):

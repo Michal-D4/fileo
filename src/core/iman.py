@@ -15,7 +15,6 @@ instance_cnt = 0
 def new_app_instance():
     is_running, sock = server_is_running('+')
     ag.db.restore = not is_running
-    logger.info(f'{is_running=}')
     if not is_running:
         setup_server()
         return 0
