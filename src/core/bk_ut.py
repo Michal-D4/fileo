@@ -120,7 +120,7 @@ def click_setup_button():
         menu.addSeparator()
     menu.addAction('Report duplicate files')
     menu.addSeparator()
-    menu.addAction('Preferencies')
+    menu.addAction('Preferences')
     menu.addSeparator()
     menu.addAction('About')
     sz = menu.sizeHint()

@@ -1,7 +1,8 @@
 from loguru import logger
 import subprocess
 
-from . import utils
+from PyQt6.QtGui import QIcon
+from . import utils, icons
 
 def activate(pid):
     try:
@@ -20,7 +21,6 @@ def activate(pid):
             "Can't switch to existed fileo instance",
             "Please install 'wmctrl' on your system."
         )
-
 
 def get_win_id(comm: list, pid: str) -> str:
     for cc in comm:
@@ -44,5 +44,5 @@ def setup_ui(self):
     # self.setWindowIcon(icons.get_toolbar_icons()['btnDir'][0])
     self.close = self.close_app
 
-def resize_grips(self):
+def update_grips(self):
     pass

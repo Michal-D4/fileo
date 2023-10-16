@@ -1,5 +1,4 @@
 from PyQt6.QtCore import pyqtSignal, QObject
-from ..widgets.file_note import fileNote
 
 class AppSignals(QObject):
     from ..widgets.file_note import fileNote
@@ -21,3 +20,5 @@ class AppSignals(QObject):
     delete_note = pyqtSignal(fileNote)
 
     start_edit_note = pyqtSignal(fileNote)
+
+    initiate_grids = pyqtSignal()
