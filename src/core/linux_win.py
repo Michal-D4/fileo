@@ -35,7 +35,7 @@ def win_icons():
 def setup_ui(self):
     self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
     ind = self.ui.horizontalLayout_4.indexOf(self.ui.horizontalLayout)
-    logger.info(f'{ind=}')
+    # logger.info(f'{ind=}')
     self.ui.horizontalLayout_4.takeAt(ind)
     self.setWindowTitle('')
     # can't set window icon
@@ -44,5 +44,5 @@ def setup_ui(self):
     # self.setWindowIcon(icons.get_toolbar_icons()['btnDir'][0])
     self.close = self.close_app
 
-def resize_grips(self):
+def update_grips(self):
     pass

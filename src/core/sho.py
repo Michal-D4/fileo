@@ -12,23 +12,23 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QFrame, QWidget,
 )
 
+from .compact_list import aBrowser
+from .filename_editor import fileEditorDelegate
 from ..ui.ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
 from ..widgets.file_search import fileSearch
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
 from ..widgets.open_db import OpenDB
-
-from .compact_list import aBrowser
 from ..widgets.custom_grips import CustomGrip
-from .filename_editor import fileEditorDelegate
+
 from . import (icons, utils, db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
 )
 if sys.platform.startswith("win"):
-    from .win_win import setup_ui
+    from .win_win import setup_ui, update_grips
 elif sys.platform.startswith("linux"):
-    from .linux_win import setup_ui, resize_grips
+    from .linux_win import setup_ui, update_grips
 else:
     raise ImportError(f"doesn't support {sys.platform} system")
 
@@ -56,7 +56,6 @@ class shoWindow(QMainWindow):
         self.create_fold_container()
 
         self.start_pos: QPoint = QPoint()
-        self.start_move = QPoint()
         self.window_maximized: bool = False
         self.mode = ag.appMode.DIR
         self.open_db: OpenDB|None = None
@@ -451,20 +450,10 @@ class shoWindow(QMainWindow):
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
 
-    # def mousePressEvent(self, e: QMouseEvent):
-    #     if self.open_db and self.open_db.isVisible():
-    #         # close dialog when mouse is pressed outside of it
-    #         ag.signals_.close_db_dialog.emit()
-    #     self.start_move = e.globalPosition().toPoint()
-    #     e.accept()
-
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
-        o = e.oldSize()
-        s = e.size()
-        logger.info(f'x: ({s.width()} - {o.width()}), y: ({s.height()} - {o.height()})')
-        for grip in self.grips.values():
-            grip.update_grip()
+        update_grips(self)
+
         if self.filter_setup and self.filter_setup.isVisible():
             self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
         e.accept()

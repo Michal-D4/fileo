@@ -27,9 +27,7 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     try:
         to_set = settings.value(key, default)
     except (TypeError, SystemError) as e:
-        # logger.info(f'{type(e)}, {e=}')
         to_set = default
-    # logger.info(f'{key=}, {default=}, {to_set=}')
     return to_set
 
 def save_app_setting(**kwargs):
@@ -44,22 +42,6 @@ def save_app_setting(**kwargs):
 
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
-
-
-def save_to_file(filename: str, msg: str):
-    """ save translated qss """
-    pp = Path('~/fileo/report').expanduser()
-    path = get_app_setting(
-        'DEFAULT_REPORT_PATH', pp.as_posix()
-    )
-    path = Path(path) / filename
-
-    flqss = QFile(path.as_posix())
-    flqss.open(QFile.WriteOnly)
-    stream = QTextStream(flqss)
-    stream << msg
-    stream.flush()
-    flqss.close()
 
 def save_to_file(filename: str, msg: str):
     """ save translated qss """

@@ -35,7 +35,7 @@ def set_logger():
     if not use_logging:
         return
 
-    fmt = "{time:%y-%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
+    fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
 
     std_err = int(utils.get_app_setting("LOGGING_TO_STDERR", 0))
     if std_err:

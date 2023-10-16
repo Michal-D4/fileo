@@ -30,6 +30,8 @@ def win_icons():
 
 
 def setup_ui(self):
+    self.start_move = QPoint()
+
     self.setWindowFlags(
         Qt.WindowType.FramelessWindowHint |
         Qt.WindowType.WindowMinMaxButtonsHint
@@ -66,13 +68,8 @@ def setup_ui(self):
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            logger.info(f'pos_: ({pos_.x()}, {pos_.y()}), self.start_move: ({self.start_move.x(), self.start_move.y()})')
             if (pos_ - self.start_move).manhattanLength() < ag.MOVE_THRESHOLD:
-                logger.info(f'self.pos: ({self.pos().x()}, {self.pos().y()})')
-                win_pos = QPoint(self.x(), self.y())
-                tmp = win_pos + pos_ - self.start_move
-                logger.info(f'new  pos: ({tmp.x()}, {tmp.y()})')
-                self.move(win_pos + pos_ - self.start_move)
+                self.move(self.pos() + pos_ - self.start_move)
             self.start_move = pos_
             e.accept()
 
@@ -90,5 +87,13 @@ def setup_ui(self):
             maximize_restore()
 
     self.ui.topBar.mouseDoubleClickEvent = double_click_maximize_restore
-    # for grip in self.grips.values():
-    #     ag.signals_.initiate_grids.connect(grip.update_grips)
+
+def update_grips(self):
+    self.grips['left_grip'].setGeometry(
+        0, ag.GT, ag.GT, self.height()-2*ag.GT)
+    self.grips['right_grip'].setGeometry(
+        self.width() - ag.GT, ag.GT, ag.GT, self.height()-2*ag.GT)
+    self.grips['top_grip'].setGeometry(
+        0, 0, self.width(), ag.GT)
+    self.grips['bottom_grip'].setGeometry(
+        0, self.height() - ag.GT, self.width(), ag.GT)
