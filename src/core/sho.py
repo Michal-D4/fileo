@@ -28,7 +28,7 @@ from . import (icons, utils, db_ut, bk_ut, history, low_bk,
 if sys.platform.startswith("win"):
     from .win_win import setup_ui, update_grips
 elif sys.platform.startswith("linux"):
-    from .linux_win import setup_ui
+    from .linux_win import setup_ui, update_grips
 else:
     raise ImportError(f"doesn't support {sys.platform} system")
 

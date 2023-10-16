@@ -44,5 +44,5 @@ def setup_ui(self):
     # self.setWindowIcon(icons.get_toolbar_icons()['btnDir'][0])
     self.close = self.close_app
 
-def resize_grips(self):
+def update_grips(self):
     pass
