@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
 from . import db_ut, app_globals as ag, utils, duplicates as dup
 from .table_model import TableModel, ProxyModel2
 from .edit_tree_model2 import TreeModel, TreeItem
-from ..widgets import about, preferencies
+from ..widgets import about, preferences
 
 DEFAULT_FIELD_WIDTH = 65
 
@@ -67,7 +67,7 @@ def set_user_actions_handler():
         "Setup New window": new_window,
         "Setup About": show_about,
         "Setup Report duplicate files": report_duplicates,
-        "Setup Preferencies": set_preferencies,
+        "Setup Preferences": set_preferences,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
@@ -211,8 +211,8 @@ def find_files_by_name(param: str):
     show_files(files)
 
 @pyqtSlot()
-def set_preferencies():
-    pref = preferencies.Preferencies(ag.app)
+def set_preferences():
+    pref = preferences.Preferences(ag.app)
     pref.show()
 
 @pyqtSlot()

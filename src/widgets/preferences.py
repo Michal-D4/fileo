@@ -13,12 +13,12 @@ from ..core import utils, app_globals as ag
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
 
-class Preferencies(QDialog):
+class Preferences(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle('Application preferencies')
+        self.setWindowTitle('Application preferences')
         self.buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok |
             QDialogButtonBox.StandardButton.Cancel

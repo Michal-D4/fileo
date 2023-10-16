@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.9.55 - 2023, October 16
+* fix bags found in Linux
+* It turned out that in Linux (Fedora, Wayland window system) it is impossible to move and resize a frameless window. All Linux systems now use a standard main window with a title bar.
+* enable/disable logging in the preferences menu
+* open new window in a frozen state from main menu and DB chooser context menu
+* some changes to clean up the code
+
 ## 0.9.54 - 2023, October 04
 * fix issue: the search for lost files thread interrupts user actions
 * make it possible to move files when dragging from the list of found files
