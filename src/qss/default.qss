@@ -248,11 +248,13 @@ QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
 ##noteFrames~QFrame#labels {border: none; background-color: $commentsBackground}
 ##noteFrames~QFrame#authors {border: none; background-color: $commentsBackground}
 ##noteFrames~QPlainTextEdit#edit_authors {border: $shapeBorderRight1 $colorBorder2;}
-##note_editor~QTextEdit {border: none; background-color: $treeViewBackground }
+##note_editor~QTextEdit {border: none; background-color: $treeViewBackground}
+##line_edit~QLineEdit#tagEdit {background-color: $commentsBackground}
+##line_edit_ro~QLineEdit {background-color: $treeViewBackground}
 ##dialog~QFrame#form {background-color: $dialogBackground; border: none;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
 ##searchFrame~QFrame#frame {border: $shapeBorderRight1 $colorBorder; margin: 0px; padding: 0px 5px; }
 ##searchFrame~QLineEdit#searchLine {border: none; margin: 0px; }
 ##searchFrame~#frame QToolButton {border: none; background-color: $dialogBackground;}
 ##searchFrame~#frame QToolButton:checked {border: $shapeBorderRight1 $colorBorder; border-radius: 3px; background-color: $tagSelectedBG;}
-##fileInfo~background: $treeViewBackground
+##fileInfo~background: $treeViewBackground; border: none;
 ##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}

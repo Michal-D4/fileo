@@ -3,46 +3,40 @@ from loguru import logger
 import socket
 import threading
 
-from PyQt6.QtCore import QCoreApplication
-
 from . import app_globals as ag
 
 HOST = "127.0.0.1"
 PORT = 65432
 
-instance_cnt = 0
 
-def new_app_instance():
+def new_app_instance() -> int:
     is_running, sock = server_is_running('+')
     ag.db.restore = not is_running
     if not is_running:
         setup_server()
-        return 0
+        pid = 0
     else:
         try:
             pid = sock.recv(8).decode()
         except TimeoutError as e:
-            logger.info(f'not received: {e}')
             pid = 0
-        return pid
+    return int(pid)
 
 
-def app_instance_closed():
-    is_running, sock = server_is_running('-')
-    if is_running:
-        try:
-            sock.recv(8).decode()
-        except TimeoutError as e:
-            logger.info(f'not received: {e}')
+def app_instance_close():
+    server_is_running('-')
 
-
-def server_is_running(sign: str) -> tuple[bool, socket.socket|None]:
+def send_message(sign: str = '') -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
+    sock.connect((HOST, PORT))
+    logger.info(f'{ag.PID=}, {sign=}')
+    sock.send(f'{ag.PID}/{sign}'.encode())
+    return sock
+
+def server_is_running(sign: str) -> tuple[bool, socket.socket|None]:
     try:
-        sock.connect((HOST, PORT))
-        sock.send(sign.encode())
-        logger.info(f'Server started already; sent sign: "{sign}"')
+        sock = send_message(sign)
     except (TimeoutError, ConnectionRefusedError) as e:  # ConnectionRefusedError on linux
         logger.info(e)
         return False, None
@@ -50,53 +44,63 @@ def server_is_running(sign: str) -> tuple[bool, socket.socket|None]:
 
 def setup_server():
     serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversock.settimeout(1)
+    serversock.settimeout(ag.TIME_CHECK * 2)
     try:
         serversock.bind((HOST, PORT))
     except OSError as e:
-        logger.info(f"server can't bind to {(HOST, PORT)}:{e}")
+        logger.info(f"server can't bind to {HOST}:{PORT}:{e}")
+        ''' something went wrong
+        "server_is_running" reports that the server is not running, but
+        a new server cannot connect, usually because it is already bound.
+        so send a signal to remove the instance from the server and
+        close it when there are no more instances left. '''
         server_is_running('-')
         return
 
     server_thread = threading.Thread(
         target=_server_run,
-        args=(serversock, QCoreApplication.applicationPid())
+        args=(serversock, ag.PID)
     )
     server_thread.start()
 
 def _server_run(serversock, pid):
     serversock.listen()
-    instance_cnt = 1
-    logger.info(f"Server running: {instance_cnt=}, {pid=}")
+    instances = {str(pid): 2}
     conn, addr = accept_conn(serversock)
     data = ''
-    sent = False
 
-    while True:
+    STOP = threading.Event()
+    def remove_not_active(sec: int):
+        while not STOP.wait(sec):
+            for key in instances:
+                instances[key] = instances[key] // 2
+
+    th = threading.Thread(target=remove_not_active, args=(ag.TIME_CHECK*2,))
+    th.start()
+
+    while sum(instances.values()):
         if addr:
-            data = conn.recv(1).decode()
-        if sent:
+            data = conn.recv(8).decode()
+
+            if data:
+                dd = data.split('/')
+                if dd[1] == '-':
+                    instances.pop(dd[0])
+                else:
+                    instances[dd[0]] = 2
+                if dd[1] == '+':
+                    conn.send(str(pid).encode())
+                continue
             conn.close()
-            addr = data = ''
-            sent = False
-            continue
 
-        if data:
-            instance_cnt += 1 if data == '+' else -1
-            logger.info(f'send pid: {data=}, {instance_cnt=}')
-            if instance_cnt == 0:
-                break
-            conn.send(str(pid).encode())
-            sent = True
-            continue
+        conn, addr = accept_conn(serversock)
 
-        if not addr:
-            conn, addr = accept_conn(serversock)
-
+    STOP.set()
     logger.info(">>> serversock.close")
     serversock.close()
 
 def accept_conn(serversock: socket.socket):
+    global t1, t2
     conn, addr = None, ''
     try:
         conn, addr = serversock.accept()

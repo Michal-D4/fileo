@@ -1,3 +1,4 @@
+import sys
 from loguru import logger
 
 from pathlib import Path
@@ -109,8 +110,8 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
 
     get_qss_theme()
     translate_qss()
-    it = extract_dyn_qss()
-    app.setStyleSheet(qss[:it])
+    start_dyn = extract_dyn_qss()
+    app.setStyleSheet(qss[:start_dyn])
 
     if to_save:
         save_to_file('QSS.log', qss)
@@ -150,3 +151,31 @@ def show_message_box(title: str, msg: str,
     dlg.setStandardButtons(btn)
     dlg.setIcon(icon)
     return dlg.exec()
+
+def get_log_file() -> str:
+    std_err = int(get_app_setting("LOGGING_TO_STDERR", 0))
+    if std_err:
+        return "stderr"
+
+    from datetime import datetime as dt
+    log_path = get_app_setting("DEFAULT_LOG_PATH", "")
+    r_path = Path(log_path) if log_path else Path().resolve()
+    file_name = f"{dt.now():%b %d %H.%M.%S}.log"
+    file = r_path / file_name
+    return file.as_posix()
+
+def set_logger():
+    logger.remove()
+    use_logging = int(get_app_setting("SWITCH_ON_LOGGING", 0))
+    if not use_logging:
+        return
+
+    fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
+
+    LOG_FILE = get_log_file()
+    if LOG_FILE == "stderr":
+        logger.add(sys.stderr, format=fmt, enqueue=True)
+    else:
+        logger.add(LOG_FILE, format=fmt, enqueue=True)
+    logger.info(f'{ag.PID=}, {ag.app_name()=}, {ag.app_version()=}')
+    logger.info(f"START =================> {LOG_FILE}")

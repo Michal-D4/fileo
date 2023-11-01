@@ -57,7 +57,6 @@ class shoWindow(QMainWindow):
 
         self.start_pos: QPoint = QPoint()
         self.window_maximized: bool = False
-        self.mode = ag.appMode.DIR
         self.open_db: OpenDB|None = None
         self.filter_setup: FilterSetup|None = None
 
@@ -108,10 +107,10 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
+        logger.info(f'{ag.PID=}, {path}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
-            bk_ut.set_field_menu()
             ag.file_data_holder.set_tag_author_data()
             return True
         return False
@@ -124,7 +123,7 @@ class shoWindow(QMainWindow):
 
     def restore_mode(self):
         self.mode = ag.appMode(
-            int(utils.get_app_setting("appMode", ag.appMode.DIR.value))
+            int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
         self.click_checkable_button(True, self.mode)
 
@@ -138,7 +137,6 @@ class shoWindow(QMainWindow):
 
         if geometry:
             self.restoreGeometry(geometry)
-            logger.info(self.geometry())
 
         setup_ui(self)
 
@@ -220,7 +218,6 @@ class shoWindow(QMainWindow):
 
         ag.file_list = self.ui.file_list
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(ag.file_list))
-        ag.field_menu = self.ui.field_menu
 
     @pyqtSlot()
     def branch_expanded(self):
@@ -459,13 +456,11 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        logger.info('<<<<<<<')
-        iman.app_instance_closed()
+        iman.app_instance_close()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.saveGeometry(),
             "container": self.container.save_state(),
-            "appMode": self.mode.value,
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
         if ag.db.path:

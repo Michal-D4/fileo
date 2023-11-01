@@ -12,15 +12,14 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
 )
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QTreeView,
+    QFileDialog, QMessageBox, QTreeView, QHeaderView,
 )
 
 from . import db_ut, app_globals as ag, utils, duplicates as dup
-from .table_model import TableModel, ProxyModel2
+from .table_model import TableModel, ProxyModel
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferences
 
-DEFAULT_FIELD_WIDTH = 65
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -270,7 +269,7 @@ def get_dir_names_path(index: QModelIndex) -> list:
     """
     item: TreeItem = index.internalPointer()
     branch = []
-    while 1:
+    while item:
         if not item.parent():
             break
         name = item.data(Qt.ItemDataRole.DisplayRole)
@@ -358,7 +357,7 @@ def add_history_item():
         define_branch(ag.dir_list.currentIndex())
     )
 
-def dir_list_setup():
+def dir_dree_view_setup():
     ag.dir_list.header().hide()
     icon_size = 12
     indent = 12
@@ -424,41 +423,47 @@ def filter_changed():
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
+    # logger.info(u_dat)
 
-    files = db_ut.get_files(u_dat.id, u_dat.parent_id) if u_dat else []
     ag.srch_list = False
-    show_files(files)
+    if u_dat:
+        files = db_ut.get_files(u_dat.id, u_dat.parent_id)
+        show_files(files, u_dat.file_row)
+    else:
+        show_files([])
 
-def show_files(files):
+def show_files(files, row: int = 0):
     """
     populate file's model
     :@param files
     """
     model = fill_file_model(files)
     set_file_model(model)
-    header_restore(model)
+    set_current_file(row)
     model.model_data_changed.connect(rename_in_file_system)
 
 def fill_file_model(files) -> TableModel:
     model: TableModel = TableModel()
-    field_idx = field_indexes()
 
     for ff in files:
         ff1 = []
-        for i,typ in field_idx:
+        for i,typ in enumerate(ag.field_types):
             ff1.append(field_val(typ, ff[i]))
+
         model.append_row(ff1, ag.FileData(*ff[-3:]))
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
 
     if rows == 0:
-        row = ["THERE ARE NO FILES HERE"]
-        for _,typ in field_idx[1:]:
-            row.append(field_val(typ))
-        model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid QModelIndex?
-
+        null_file_list(model)
     return model
+
+def null_file_list(model: TableModel):
+    row = ["THERE ARE NO FILES HERE"]
+    for _,typ in enumerate(ag.field_types[1:]):
+        row.append(field_val(typ))
+    model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid key for files table
 
 def set_current_file(row: int):
     idx = ag.file_list.model().index(row, 0)
@@ -468,88 +473,47 @@ def set_current_file(row: int):
             idx, QAbstractItemView.ScrollHint.PositionAtCenter
         )
 
-def field_val(typ:str, val=0):
+def field_val(typ:str, val=None):
     if typ == "str":
-        return val
+        return val if val else ''
     if typ == "int":
-        return int(val)
+        return int(val) if val else 0
     a = QDateTime()
-    a.setSecsSinceEpoch(val)
+    a.setSecsSinceEpoch(-62135596800 if val is None else val)
     return a
 
-def field_indexes() -> list:
-    field_types = (
-        'str', 'date', 'int', 'int', 'date',
-        'int', 'int', 'date', 'date', 'date',
-    )
-    acts = ag.field_menu.menu().actions()
-    af_no = []
-    for i,a in enumerate(acts):
-        if a.isChecked():
-            af_no.append((i, field_types[i]))
-
-    return af_no
-
 def set_file_model(model: TableModel):
-    proxy_model = ProxyModel2()
+    proxy_model = ProxyModel()
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-    model.setHeaderData(0, Qt.Orientation.Horizontal, field_titles())
+    model.setHeaderData(0, Qt.Orientation.Horizontal, ag.fields)
     ag.file_list.setModel(proxy_model)
 
 def header_restore(model: QAbstractTableModel):
-    hdr = field_titles()
-    model.setHeaderData(0, Qt.Orientation.Horizontal, hdr)
-    restore_columns_width(hdr)
-
-def restore_columns_width(hdr: list):
-    width = ag.get_setting("COLUMN_WIDTH", {})
-
-    w0 = 0
-    for i,field in enumerate(hdr[1:]):
-        ww = width.get(field, DEFAULT_FIELD_WIDTH)
-        if not ww:
-            ww = DEFAULT_FIELD_WIDTH
-        w0 += ww
-        ag.file_list.setColumnWidth(i+1, ww)
-    ag.file_list.setColumnWidth(0, ag.file_list.width() - w0 - 21)
-    ag.file_list.header().sectionResized.connect(column_resized)
-
-@pyqtSlot(int, int, int)
-def column_resized(idx: int, old_sz: int, new_sz: int):
-    if idx:   # not filename column
-        resize_filename_column(old_sz - new_sz)
-    ag.save_settings(COLUMN_WIDTH=get_columns_width())
+    hdr = ag.file_list.header()
+    try:
+        state = ag.get_setting("FILE_LIST_HEADER")
+        if state:
+            hdr.restoreState(state)
+    except Exception as e:
+        logger.info(f'{type(e)}; {e.args}')
+    hdr.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
 
 def file_list_resize(e: QResizeEvent):
-    resize_filename_column(e.size().width() - e.oldSize().width())
+    hdr = ag.file_list.header()
+    sum_length = sum(
+        (hdr.sectionSize(i) for i in range(1, hdr.count())
+         if not hdr.isSectionHidden(i))
+    )
+    sz = e.size().width()
+    hdr.setMaximumSectionSize(max(sz // 2, sz - sum_length))
     super(QTreeView, ag.file_list).resizeEvent(e)
-
-def resize_filename_column(delta: int):
-    if not (delta or ag.file_list.model()):
-        return
-
-    width0 = ag.file_list.columnWidth(0)     # width of first field "File name"
-    ag.file_list.setColumnWidth(0, max(width0 + delta, 200))
-
-def get_columns_width() -> dict:
-    hdr = field_titles()
-
-    width = ag.get_setting("COLUMN_WIDTH", {})
-    for i,field in enumerate(hdr):
-        width[field] = ag.file_list.columnWidth(i)
-    return width
-
-def field_titles() -> list:
-    acts = ag.field_menu.menu().actions()
-    return [a.text() for a in acts if a.isChecked()]
 
 def copy_file_name():
     files = []
     for idx in ag.file_list.selectionModel().selectedRows(0):
         files.append(file_name(idx))
     QApplication.clipboard().setText('\n'.join(files))
-
 
 def copy_full_file_name():
     files = []
@@ -874,8 +838,7 @@ def tag_selection() -> list:
     return ag.tag_list.get_selected_ids()
 
 def tag_changed(new_tag: str):
-    if new_tag == ag.tag_list.get_current():
-        # edit finished, but tag wasn't changed
+    if new_tag == ag.tag_list.get_current():   # edit finished, but tags not changed
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()

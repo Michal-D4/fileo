@@ -20,5 +20,3 @@ class AppSignals(QObject):
     delete_note = pyqtSignal(fileNote)
 
     start_edit_note = pyqtSignal(fileNote)
-
-    initiate_grids = pyqtSignal()
