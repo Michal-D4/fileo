@@ -27,8 +27,10 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '0.9.55'
+    return '0.9.56'
 
+PID: int = 0
+TIME_CHECK = 5     # interval(sec) client sends message "it's active"
 entry_point: str = ''
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -36,7 +38,6 @@ tag_list: 'aBrowser' = None
 ext_list: 'aBrowser' = None
 file_list: QTreeView = None
 author_list: 'aBrowser' = None
-field_menu: QToolButton = None
 file_data_holder: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 history: 'History' = None
@@ -94,10 +95,10 @@ drop_target = None
 dropped_ids = []
 
 setting_names = (     # DB settings only
+    "APP_MODE",
     "AUTHOR_SEL_LIST",
-    "COLUMN_WIDTH",
     "EXT_SEL_LIST",
-    "FIELDS_STATE",
+    "FILE_LIST_HEADER",
     "FILE_ID",
     "TAG_SEL_LIST",
     "DIR_CHECK",
@@ -117,12 +118,23 @@ setting_names = (     # DB settings only
     "RATING_OP",
     "RATING_VAL",
     "LAST_SCAN_OPENED",
-    "FILE_SORT_COLUMN",
-    "FILE_SORT_ORDER",
     "SHOW_HIDDEN",
     "HISTORY",
     "SEARCH_FILE",
-    "APP_VERSION",
+)
+
+fields = (
+    'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
+    'Pages', 'Size', 'Published', 'Date of last note', 'Created',
+)
+tool_tips = (
+    ",Last opening date,rating of file,number of file openings,"
+    "Last modified date,Number of pages(in book),Size of file,"
+    "Publication date(book),Date of last note,File creation date"
+).split(',')
+field_types = (
+    'str', 'date', 'int', 'int', 'date',
+    'int', 'int', 'date', 'date', 'date',
 )
 
 dyn_qss = defaultdict(list)

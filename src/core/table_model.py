@@ -12,28 +12,6 @@ class ProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def delete_row(self, index):
-        self.sourceModel().delete_row(self.mapToSource(index))
-
-    def setHeaderData(self, value):
-        self.sourceModel().setHeaderData(0, Qt.Orientation.Horizontal, value)
-
-    def get_headers(self):
-        return self.sourceModel().header
-
-    def rowCount(self, parent=QModelIndex()):
-        return self.sourceModel().rowCount(parent)
-
-
-class ProxyModel2(ProxyModel):
-    """
-    Specific model for file list:
-    reimplemened mimeData, mimeTypes, flags methods
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
     def flags(self, index):
         if not index.isValid():
             return super().flags(index)
@@ -88,7 +66,7 @@ class TableModel(QAbstractTableModel):
             if col == 0 and role == Qt.ItemDataRole.ToolTipRole:
                 return self.rows[index.row()][col]
             if role == Qt.ItemDataRole.DisplayRole:
-                # row length > current column
+                # len(row) > col; len=1 -> col=0; len=2 -> col=(0,1) etc
                 if len(self.rows[index.row()]) > col:
                     if self.header[col] in ('Date of last note','Modified','Open Date',):
                         return self.rows[index.row()][col].toString("yyyy-MM-dd hh:mm")
@@ -109,14 +87,6 @@ class TableModel(QAbstractTableModel):
 
     def get_user_data(self):
         return self.user_data
-
-    def delete_row(self, index):
-        if index.isValid():
-            row = index.row()
-            self.beginRemoveRows(QModelIndex(), row, row)
-            self.rows.remove(self.rows[row])
-            self.user_data.remove(self.user_data[row])
-            self.endRemoveRows()
 
     def append_row(self, row, user_data=None):
         self.rows.append(row)

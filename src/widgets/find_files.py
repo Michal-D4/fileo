@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QMessageBox,
 )
 
-from ..core  import app_globals as ag, db_ut, icons, low_bk
+from ..core  import app_globals as ag, db_ut, icons
 
 
 class findFile(QWidget):

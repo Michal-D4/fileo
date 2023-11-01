@@ -16,6 +16,7 @@ class noteEditor(QTextEdit):
         super().__init__(parent)
         self.note: fileNote = None
         self.branch = None
+        self.setStyleSheet(ag.dyn_qss['note_editor'][0])
 
     def start_edit(self, note: fileNote):
         self.note = note
@@ -71,6 +72,7 @@ class notesContainer(QScrollArea):
         self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
         self.scroll_layout.setObjectName('scroll_layout')
+        self.setStyleSheet("border: none;")
 
     def go_menu(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.RightButton:
