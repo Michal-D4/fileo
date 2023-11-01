@@ -1,4 +1,5 @@
 from loguru import logger
+from enum import Enum, unique
 
 from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtGui import QMouseEvent
@@ -14,6 +15,15 @@ from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 
+@unique
+class Page(Enum):
+    TAGS = 0
+    AUTHORS = 1
+    LOCS = 2
+    INFO = 3
+    NOTE = 4
+    EDIT = 5
+
 
 class fileDataHolder(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
@@ -25,18 +35,22 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.setupUi(self)
 
-        self.page_selectors = [
-            self.l_tags, self.l_authors,
-            self.l_locations, self.l_file_info,
-            self.l_file_notes, self.l_editor,
-        ]
+        self.page_selectors = {
+            Page.TAGS: self.l_tags,
+            Page.AUTHORS: self.l_authors,
+            Page.LOCS: self.l_locations,
+            Page.INFO: self.l_file_info,
+            Page.NOTE: self.l_file_notes,
+            Page.EDIT: self.l_editor,
+        }
+
         self.set_stack_pages()
         self.l_editor.hide()
 
         ag.signals_.start_edit_note.connect(self.start_edit)
 
         self.expand.setIcon(icons.get_other_icon("up"))
-        self.expand.clicked.connect(self.up_down)
+        self.expand.clicked.connect(self.toggle_collapse)
 
         self.plus.setIcon(icons.get_other_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
@@ -52,9 +66,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.edit_btns.hide()
         self.note_btns.hide()
-        self.tagEdit.editingFinished.connect(self.finish_edit_tag)
+        self.tagEdit.editingFinished.connect(self.tag_selector.finish_edit_tag)
 
-        self.cur_page = 0
+        self.cur_page: Page = Page.TAGS
         self.l_file_notes_press(None)
 
         self.l_tags.mousePressEvent = self.l_tags_press
@@ -69,16 +83,18 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.stackedWidget.setObjectName("stackedWidget")
 
         # add tag selector page (0)
-        self.tag_selector = tagBrowser(self)
+        self.tag_selector = tagBrowser(self.tagEdit)
         self.stackedWidget.addWidget(self.tag_selector)
         self.tag_selector.setObjectName('tag_selector')
-        self.tag_selector.change_selection.connect(self.update_tags)
-        ag.tag_list.edit_finished.connect(self.update_tag_list)
+        self.tag_selector.change_selection.connect(self.tag_selector.update_tags)
+        ag.tag_list.edit_finished.connect(self.tag_selector.update_tag_list)
 
         # add author selector page (1)
-        self.author_selector = authorBrowser()
+        self.author_selector = authorBrowser(self.authorEdit)
         self.stackedWidget.addWidget(self.author_selector)
         self.author_selector.setObjectName('author_selector')
+        self.authorEdit.editingFinished.connect(self.author_selector.finish_edit_list)
+        self.authorEdit.hide()
 
         # add file locations page (2)
         self.locator = Locations(self)
@@ -102,56 +118,67 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.stackedWidget.addWidget(self.editor)
 
         ss = ag.dyn_qss['passive_selector'][0]
-        for lbl in self.page_selectors:
+        for lbl in self.page_selectors.values():
             lbl.setStyleSheet(ss)
 
         self.main_layout.addWidget(self.stackedWidget)
         self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
-        # tag selector page
-        self.switch_page(0)
-        self.note_btns.hide()
+        self.tagEdit.setReadOnly(False)
+        self.tagEdit.setStyleSheet(ag.dyn_qss["line_edit"][0])
+        self.tag_selector.set_selected_text()
+        self.switch_page(Page.TAGS)
 
     def l_authors_press(self, e: QMouseEvent):
-        # author selector page
-        self.switch_page(1)
-        self.note_btns.hide()
+        self.tagEdit.hide()
+        self.authorEdit.show()
+        self.author_selector.set_selected_text()
+        self.switch_page(Page.AUTHORS)
 
     def l_locations_press(self, e: QMouseEvent):
-        # file locations page
-        self.switch_page(2)
-        self.note_btns.hide()
+        self.switch_page(Page.LOCS)
 
     def l_file_info_press(self, e: QMouseEvent):
-        # file info page
-        self.switch_page(3)
-        self.note_btns.hide()
+        self.switch_page(Page.INFO)
 
     def l_file_notes_press(self, e: QMouseEvent):
-        # file notes page
-        self.switch_page(4)
         self.note_btns.show()
+        self.switch_page(Page.NOTE)
 
     def l_editor_press(self, e: QMouseEvent):
-        # editor page
-        self.switch_page(5)
-        self.note_btns.hide()
         self.edit_btns.show()
+        self.switch_page(Page.EDIT)
 
-    def switch_page(self, page_no: int):
+    def switch_page(self, new_page: Page):
+        if new_page is self.cur_page:
+            return
+
         self.page_selectors[self.cur_page].setStyleSheet(
             ag.dyn_qss['passive_selector'][0]
         )
-        self.page_selectors[page_no].setStyleSheet(
+        self.page_selectors[new_page].setStyleSheet(
             ag.dyn_qss['active_selector'][0]
         )
-        if self.cur_page == 5 and page_no != 5:
-            self.edit_btns.hide()
-        self.cur_page = page_no
-        self.stackedWidget.setCurrentIndex(page_no)
 
-    def up_down(self):
+        if self.cur_page is Page.NOTE:
+            self.note_btns.hide()
+
+        if self.cur_page is Page.EDIT:
+            self.edit_btns.hide()
+
+        if self.cur_page is Page.TAGS:
+            self.tagEdit.setReadOnly(True)
+            self.tagEdit.setStyleSheet(ag.dyn_qss["line_edit_ro"][0])
+
+        if self.cur_page is Page.AUTHORS:
+            self.authorEdit.hide()
+            self.tagEdit.show()
+
+        self.cur_page = new_page
+        self.stackedWidget.setCurrentIndex(new_page.value)
+
+    def toggle_collapse(self):
         if self.maximized:
             self.expand.setIcon(icons.get_other_icon("up"))
             ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
@@ -186,56 +213,17 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.tag_selector.set_list(db_ut.get_tags())
         self.author_selector.set_authors()
 
-    @pyqtSlot()
-    def update_tag_list(self):
-        self.tag_selector.set_list(db_ut.get_tags())
-
-    @pyqtSlot()
-    def finish_edit_tag(self):
-        old = self.tag_selector.get_selected()
-        new = self.new_tag_list()
-        self.tag_list_changed(old, new)
-
-    def tag_list_changed(self, old: list[str], new: list[str]):
-        self.remove_tags(old, new)
-        if self.add_tags(old, new):
-            self.update_tag_list()
-            ag.signals_.user_signal.emit("tag_inserted")
-
-    def new_tag_list(self):
-        """
-        tag can't contain blanks and can't be empty string
-        """
-        tmp = self.tagEdit.text().replace(' ','')
-        return [t for t in tmp.split(',') if t]
-
-    def remove_tags(self, old: list[str], new: list[str]):
-        diff = set(old) - set(new)
-        for d in diff:
-            id = self.tag_selector.get_tag_id(d)
-            db_ut.delete_tag_file(id, self.file_id)
-
-    def add_tags(self, old, new) -> bool:
-        inserted = False
-        diff = set(new) - set(old)
-        for d in diff:
-            if not (id := self.tag_selector.get_tag_id(d)):
-                id = db_ut.insert_tag(d)
-                inserted = True
-            db_ut.insert_tag_file(id, self.file_id)
-        return inserted
-
     def new_file_note(self):
         if self.file_id == -1:
             return
         if self.notes.is_editing():
-            self.switch_page(5)
+            self.switch_page(Page.EDIT)
             return
         self.show_editor(fileNote(self.file_id, 0))
 
     def start_edit(self, note: fileNote):
         if self.notes.is_editing():
-            self.switch_page(5)
+            self.switch_page(Page.EDIT)
             return
 
         self.show_editor(note)
@@ -248,24 +236,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.note_btns.hide()
         self.edit_btns.show()
         self.l_editor.show()
-        self.switch_page(5)
+        self.switch_page(Page.EDIT)
         self.editor.setFocus()
 
     def set_file_id(self, id: int):
         self.file_id = id
-        self.tag_selector.set_selection(
-            (int(s[0]) for s in db_ut.get_file_tagid(id))
-        )
-        self.tagEdit.setText(', '.join(
-            self.tag_selector.get_selected()
-            )
-        )
-        self.file_info.set_file_id(id)
+        self.tag_selector.set_file_id(id)
         self.author_selector.set_file_id(id)
         self.locator.set_file_id(id)
+        self.file_info.set_file_id(id)
         self.notes.set_file_id(id)
-
-    @pyqtSlot(list)
-    def update_tags(self, tags: list[str]):
-        self.tag_list_changed(self.new_tag_list(), tags)
-        self.tagEdit.setText(', '.join(tags))

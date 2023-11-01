@@ -21,22 +21,17 @@ self: 'shoWindow' = None
 def save_bk_settings():
     if not ag.db.conn:
         return
-
-    actions = ag.field_menu.menu().actions()
-
     try:
         curr_dir_idx = ag.dir_list.currentIndex()
         settings = {
-            "FIELDS_STATE": [int(a.isChecked()) for a in actions],
-            "COLUMN_WIDTH": low_bk.get_columns_width(),
+            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
             "EXT_SEL_LIST": low_bk.ext_selection(),
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
-            "FILE_SORT_COLUMN": ag.file_list.model().sortColumn(),
-            "FILE_SORT_ORDER": ag.file_list.model().sortOrder(),
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "HISTORY": ag.history.get_history(),
-        }
+            "APP_MODE": ag.mode.value,
+    }
         ag.save_settings(**settings)
         low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
         self.filter_setup.save_filter_settings()
@@ -61,7 +56,7 @@ def toggle_collapse(collapse: bool):
 
 def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize_0
-    low_bk.dir_list_setup()
+    low_bk.dir_dree_view_setup()
     ag.file_list.currentChanged = current_file_changed
 
     set_context_menu()
@@ -88,29 +83,20 @@ def bk_setup(main: 'shoWindow'):
         lambda: ag.signals_.user_signal.emit("double click file"))
 
 def set_field_menu():
-    checked = ag.get_setting("FIELDS_STATE", (1, 1, *((0,)*8)))
-    fields = (
-        'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
-        'Pages', 'Size', 'Published', 'Date of last note', 'Created',
-    )
-    tool_tips = (
-        ",Last opening date,rating of file,number of file openings,"
-        "Last modified date,Number of pages(in book),Size of file,"
-        "Publication date(book),Date of last note,File creation date"
-    )
+    hdr = ag.file_list.header()
 
     menu = QMenu(self)
-    for field,ch,tt in zip(fields, checked, tool_tips.split(',')):
+    for i,field,tt in zip(range(len(ag.fields)), ag.fields, ag.tool_tips):
         act = QAction(field, self, checkable=True)
         if tt:
             act.setToolTip(tt)
-        act.setChecked(int(ch))
-        act.triggered.connect(lambda state, fld=field: field_list_changed(state, field=fld))
+        act.setChecked(int(not hdr.isSectionHidden(i)))
+        act.triggered.connect(lambda state, ind=i: hide_show_column(state, index=ind))
         menu.addAction(act)
 
     menu.actions()[0].setEnabled(False)
     menu.setToolTipsVisible(True)
-    ag.field_menu.setMenu(menu)
+    self.ui.field_menu.setMenu(menu)
 
 @pyqtSlot()
 def click_setup_button():
@@ -131,11 +117,8 @@ def click_setup_button():
     if action:
         ag.signals_.user_signal.emit(f"Setup {action.text()}")
 
-def field_list_changed(state, field):
-    idx = ag.file_list.currentIndex()
-
-    low_bk.refresh_file_list()
-    low_bk.set_current_file(idx.row())
+def hide_show_column(state: bool, index: int):
+    ag.file_list.header().setSectionHidden(index, not state)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -149,12 +132,19 @@ def file_list_resize_0(e: QResizeEvent):
         restore_dirs()
 
     ag.file_list.resizeEvent = low_bk.file_list_resize
-    super(QTreeView, ag.file_list).resizeEvent(e)
+    low_bk.file_list_resize(e)
 
 def restore_dirs():
     low_bk.set_dir_model()
     ag.filter_dlg.restore_filter_settings()
     restore_history()
+    if ag.mode is ag.appMode.DIR:
+        files_by_history()
+    else:
+        low_bk.filtered_files()
+    model = ag.file_list.model()
+    low_bk.header_restore(model)
+    set_field_menu()
 
 def populate_all():
     if not ag.db.conn:
@@ -169,20 +159,16 @@ def populate_all():
     self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
 
 def restore_history():
-    restore_sorting()
     hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
+    # logger.info(f'{hist=}')
     ag.history.set_history(*hist)
 
+def files_by_history():
     idx = low_bk.expand_branch(ag.history.get_current())
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
     else:
         low_bk.show_folder_files()
-
-def restore_sorting():
-    col = ag.get_setting("FILE_SORT_COLUMN", 0)
-    order = ag.get_setting("FILE_SORT_ORDER", Qt.SortOrder.AscendingOrder)
-    ag.file_list.header().setSortIndicator(col, order)
 
 @pyqtSlot()
 def show_hidden_dirs():

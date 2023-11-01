@@ -75,6 +75,6 @@ class AboutDialog(QDialog):
 
     def set_title(self, ver: tuple=None):
         if ver:
-            self.setWindowTitle(f'About Fileo, Python {ver[0]}, DB v.{ver[1]}')
+            self.setWindowTitle(f'About Fileo, Python {ver[0]}, DB user v.{ver[1]}')
         else:
             self.setWindowTitle('About Fileo')

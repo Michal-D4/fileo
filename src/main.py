@@ -3,12 +3,14 @@ import sys
 from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from .core import utils, app_globals as ag, iman
 from .core.sho import shoWindow
+
+timer = None
 
 if sys.platform.startswith("win"):
     from .core.win_win import activate, win_icons
@@ -18,61 +20,42 @@ else:
     raise ImportError(f"doesn't support {sys.platform} system")
 
 
-app: QApplication = None
-
-@pyqtSlot(QWidget, QWidget)
-def tab_pressed():
-    global app
-    old = app.focusWidget()
-    if old is ag.dir_list:
-        ag.file_list.setFocus()
-    else:
-        ag.dir_list.setFocus()
-
-def set_logger():
-    logger.remove()
-    use_logging = int(utils.get_app_setting("SWITCH_ON_LOGGING", 0))
-    if not use_logging:
-        return
-
-    fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
-
-    std_err = int(utils.get_app_setting("LOGGING_TO_STDERR", 0))
-    if std_err:
-        logger.add(sys.stderr, format=fmt)
-    else:
-        from datetime import datetime as dt
-        log_path = utils.get_app_setting("DEFAULT_LOG_PATH", "")
-        r_path = Path(log_path) if log_path else Path().resolve()
-        file_name = f"{dt.now():%b %d %H.%M.%S}.log"
-        file = r_path / file_name
-
-        logger.add(file.as_posix(), format=fmt)
-    logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
-    logger.info("START =================>")
-
-def instance_control(db_name: str):
-    global app
-    app = QApplication([])
-
+def run_instance(db_name: str='') -> bool:
+    global timer
+    ag.PID = QCoreApplication.applicationPid()
     pid = iman.new_app_instance()
 
-    ag.single_instance = int(utils.get_app_setting("SINGLE_INSTANCE", 0))
-    logger.info(f'{db_name}, {pid=}, {ag.single_instance=}')
     if pid:
+        ag.single_instance = int(utils.get_app_setting("SINGLE_INSTANCE", 0))
         if ag.single_instance:
             activate(pid)
-            iman.app_instance_closed()
+            iman.app_instance_close()
+            return False
 
-            sys.exit(0)
+        ag.db.conn = None
+        ag.db.path = db_name
+        ag.db.restore = bool(db_name)
+
+    timer = QTimer(ag.app)
+    timer.timeout.connect(is_active_message)
+    timer.setInterval(ag.TIME_CHECK * 1000)
+    timer.start()
+
+    return True
+
+@pyqtSlot()
+def is_active_message():
+    iman.send_message()
+
+def start_app(app: QApplication):
+    @pyqtSlot(QWidget, QWidget)
+    def tab_pressed():
+        old = app.focusWidget()
+        if old is ag.dir_list:
+            ag.file_list.setFocus()
         else:
-            ag.db.conn = None
-            ag.db.path = db_name
-            ag.db.restore = bool(db_name)
-            logger.info(f'ag.DB: {ag.db!r}')
+            ag.dir_list.setFocus()
 
-
-def start_app():
     thema_name = "default"
     try:
         log_qss = int(utils.get_app_setting("LOG_QSS", 0))
@@ -93,14 +76,16 @@ def start_app():
 
 
 def main(entry_point: str, db_name: str):
-    set_logger()
+    app = QApplication([])
+
+    utils.set_logger()
+
     tmp = Path(entry_point).resolve()
-    logger.info(f'{entry_point=}')
     if getattr(sys, "frozen", False):
         ag.entry_point = tmp.as_posix()   # str
     else:
         ag.entry_point = tmp.name
 
-    instance_control(db_name)
-
-    start_app()
+    if run_instance(db_name):
+        logger.info(f'>>> {ag.PID} {entry_point=}, {ag.entry_point=}')
+        start_app(app)

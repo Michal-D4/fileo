@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QItemDelegate
 class fileEditorDelegate(QItemDelegate):
     '''
     the purpose of this delegate is to refuse editing with a double click
-    file must be opened with this event (double click)
+    the file must be opened by this event (double click)
     '''
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
