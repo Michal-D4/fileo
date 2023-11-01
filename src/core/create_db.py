@@ -96,7 +96,7 @@ TABLES = (
     ),
 )
 APP_ID = 1718185071
-USER_VER = 8
+USER_VER = 9
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -115,15 +115,14 @@ def tune_new_version() -> bool:
     except apsw.SQLError as err:
         logger.info(err)
         return False
-
-    tune_app_version(conn)
-
-    return v[0] == USER_VER
+    return True
 
 def convert_to_new_version(conn, old_v) -> int:
     if old_v == 0:
         create_tables(conn)
         return USER_VER
+    # if only the settings fields have changed
+    initialize_settings(conn)
 
 def create_db(db_name: str) -> apsw.Connection:
     return apsw.Connection(db_name)
@@ -131,33 +130,31 @@ def create_db(db_name: str) -> apsw.Connection:
 def create_tables(conn: apsw.Connection):
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
+    # conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
     cursor = conn.cursor()
     for tbl in TABLES:
         cursor.execute(tbl)
 
     initiate_db(conn)
 
-def initialize_settings(connection):
-    sql = (
+def initialize_settings(conn):
+    sql0 = 'select key from settings'
+    sql1 = 'delete from settings where key = ?'
+    sql2 = (
         'insert into settings (key) select (:key) '
         'where not exists (select key from settings '
         'where key = :key)'
     )
-    cursor = connection.cursor()
+    cursor = conn.cursor()
+    for key in conn.cursor().execute(sql0):
+        if key not in ag.setting_names:
+            cursor.execute(sql1, key)
+
     for name in ag.setting_names:
-        cursor.execute(sql, {'key': name})
+        cursor.execute(sql2, {'key': name})
 
-    save_version(connection)
-
-def save_version(connection):
-    ag.save_settings(APP_VERSION=ag.app_version())
-
-def tune_app_version(conn: apsw.Connection):
-    curr_ver = ag.get_setting('APP_VERSION', '')
-    new_ver = ag.app_version()
-    if curr_ver != new_ver:
-        save_version(conn)
+    conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
+    # save_app_version(conn)
 
 def initiate_db(connection):
     sql = (

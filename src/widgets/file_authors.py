@@ -2,9 +2,8 @@
 from loguru import logger
 
 from PyQt6.QtCore import QSize, pyqtSlot
-from PyQt6.QtWidgets import (QWidget, QSizePolicy,
-    QPlainTextEdit, QVBoxLayout, QHBoxLayout,
-    QToolButton, QFrame, QSizePolicy,
+from PyQt6.QtWidgets import (QWidget,
+    QVBoxLayout, QFrame, QLineEdit,
 )
 
 from ..core.compact_list import aBrowser
@@ -12,9 +11,10 @@ from ..core import icons, app_globals as ag, db_ut
 
 
 class authorBrowser(QWidget):
-    def __init__(self, parent=None) -> None:
+    def __init__(self, editor: QLineEdit, parent=None) -> None:
         super().__init__(parent)
         self.file_id = 0
+        self.editor = editor
 
         self.setup_ui()
 
@@ -22,43 +22,11 @@ class authorBrowser(QWidget):
         ag.author_list.edit_finished.connect(self.refresh_data)
 
         self.br.change_selection.connect(self.update_selection)
-        self.accept.clicked.connect(self.finish_edit_list)
-        self.reject.clicked.connect(self.set_selected_text)
+
+    def setup_editor(self):
+        self.editor.setText(self.set_selected_text())
 
     def setup_ui(self):
-        self.edit_authors = QPlainTextEdit()
-        self.edit_authors.setObjectName('edit_authors')
-        self.edit_authors.setMaximumSize(QSize(16777215, 42))
-        si_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.edit_authors.setSizePolicy(si_policy)
-        self.edit_authors.setToolTip(
-            'Enter authors separated by commas, '
-            'or select in the list below'
-            ', use Ctrl+Click to select multiple items'
-        )
-
-        self.accept = QToolButton()
-        self.accept.setObjectName('ok')
-        self.accept.setIcon(icons.get_other_icon("ok"))
-        self.accept.setToolTip('Accept editing')
-
-        self.reject = QToolButton()
-        self.reject.setObjectName('cancel')
-        self.reject.setIcon(icons.get_other_icon("cancel2"))
-        self.reject.setToolTip('Reject editing')
-
-        v_layout = QVBoxLayout()
-        v_layout.setContentsMargins(0, 0, 0, 0)
-        v_layout.setSpacing(0)
-        v_layout.addWidget(self.accept)
-        v_layout.addWidget(self.reject)
-
-        h_layout = QHBoxLayout()
-        h_layout.setContentsMargins(0, 0, 0, 0)
-        h_layout.setSpacing(0)
-        h_layout.addWidget(self.edit_authors)
-        h_layout.addLayout(v_layout)
-
         self.br = aBrowser(brackets=True)
         self.br.setObjectName('author_selector')
 
@@ -69,8 +37,6 @@ class authorBrowser(QWidget):
 
         m_layout = QVBoxLayout(authors)
         m_layout.setContentsMargins(0, 0, 0, 0)
-        m_layout.setSpacing(0)
-        m_layout.addLayout(h_layout)
         m_layout.addWidget(self.br)
 
         f_layout.addWidget(authors)
@@ -91,7 +57,7 @@ class authorBrowser(QWidget):
 
     @pyqtSlot()
     def set_selected_text(self):
-        self.edit_authors.setPlainText(', '.join(
+        self.editor.setText(', '.join(
             (f'[{it}]' for it in self.br.get_selected())
         ))
 
@@ -108,10 +74,10 @@ class authorBrowser(QWidget):
     def update_selection(self, items: list[str]):
         self.sel_list_changed(self.get_edited_list(), items)
         txt = (f'[{it}]' for it in items)
-        self.edit_authors.setPlainText(', '.join(txt))
+        self.editor.setText(', '.join(txt))
 
     def get_edited_list(self) -> list[str]:
-        tt = self.edit_authors.toPlainText().strip()
+        tt = self.editor.text().strip()
         tt = tt.replace('[', '')
         pp = [t.strip() for t in tt.split('],') if t.strip()]
         if pp:

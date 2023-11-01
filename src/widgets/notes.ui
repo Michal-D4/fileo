@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>728</width>
-    <height>44</height>
+    <height>46</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,7 +37,7 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,0">
       <property name="spacing">
        <number>6</number>
       </property>
@@ -54,9 +54,15 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLabel" name="title">
-        <property name="text">
-         <string>Tags:</string>
+       <widget class="QLineEdit" name="authorEdit">
+        <property name="toolTip">
+         <string>Authors</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
+        </property>
+        <property name="placeholderText">
+         <string>Enter a list of authors separated by commas or select from the &quot;Tag Selector&quot;</string>
         </property>
        </widget>
       </item>
@@ -69,7 +75,7 @@
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>Enter a list of tags separated by commas or select from the &quot;Tag Selector&quot;</string>
+         <string>List of tags assigned to a file</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -103,6 +109,12 @@
    </item>
    <item>
     <widget class="QFrame" name="labels">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -130,12 +142,18 @@
         <property name="text">
          <string>Tag selector</string>
         </property>
+        <property name="indent">
+         <number>0</number>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="l_authors">
         <property name="text">
          <string>Author selector</string>
+        </property>
+        <property name="indent">
+         <number>0</number>
         </property>
        </widget>
       </item>
@@ -144,12 +162,18 @@
         <property name="text">
          <string>Locations</string>
         </property>
+        <property name="indent">
+         <number>0</number>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="l_file_info">
         <property name="text">
          <string>File info</string>
+        </property>
+        <property name="indent">
+         <number>0</number>
         </property>
        </widget>
       </item>
@@ -158,12 +182,18 @@
         <property name="text">
          <string>Notes</string>
         </property>
+        <property name="indent">
+         <number>0</number>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="l_editor">
         <property name="text">
          <string>Note editor</string>
+        </property>
+        <property name="indent">
+         <number>0</number>
         </property>
        </widget>
       </item>

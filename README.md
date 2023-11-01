@@ -211,7 +211,3 @@ You can also open files by double clicking on "File name". If the file is execut
   ```
     > python fileo.py
   ```
-
-
-
-

@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.9.56 - 2023, November 01
+* displaying widgets in the bottom panel of the file list in a uniform visual style
+* move file tags methods to file_tags.py module
+* stop the instance management thread when all instances are closed, even if some of them crashed
+* refactor managing of file list columns
+* some changes to clean up the code
+
 ## 0.9.55 - 2023, October 16
 * fix bags found in Linux
 * It turned out that in Linux (Fedora, Wayland window system) it is impossible to move and resize a frameless window. All Linux systems now use a standard main window with a title bar.

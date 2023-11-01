@@ -1,8 +1,7 @@
 from loguru import logger
 import subprocess
 
-from PyQt6.QtGui import QIcon
-from . import utils, icons
+from . import utils
 
 def activate(pid):
     try:
@@ -21,6 +20,7 @@ def activate(pid):
             "Can't switch to existed fileo instance",
             "Please install 'wmctrl' on your system."
         )
+
 
 def get_win_id(comm: list, pid: str) -> str:
     for cc in comm:
