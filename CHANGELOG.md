@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.0.0 - 2023, November 08
+* check for updates from the menu
+
+## 0.9.57 - 2023, November 05
+* Fixed a bug in the file filter. It was returning all the files when they shouldn't be.
+
 ## 0.9.56 - 2023, November 01
 * displaying widgets in the bottom panel of the file list in a uniform visual style
 * move file tags methods to file_tags.py module

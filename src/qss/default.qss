@@ -185,29 +185,20 @@ QTreeView::item {
  border: none;
  background-color: transparent;
 }
-QTreeView::branch {
-   background-color: transparent;
-}
-/* QTreeView::item:hover {
- background: $itemHoverBG;
- border: none;
-}
-QTreeView::branch:hover {
- background: $itemHoverBG;
-} */
-/* QTreeView::item:hover{background-color: #94C8EA;}
-QTreeView::branch:hover{background-color: #94C8EA;} */
-QTreeView::item:hover{background-color: #99CCCC;}
-QTreeView::branch:hover{background-color: #99CCCC;}
+QTreeView::item:hover{background-color: $treeHoverBackground;}
 QTreeView::item:selected:active{
  background: $itemSelectBG;
  color: white;
 }
-QTreeView::branch:selected:active{
- background: $itemSelectBG;
-}
 QTreeView::item:selected:!active {
  background: $itemSelectNoActive;
+}
+QTreeView::branch {
+   background-color: transparent;
+}
+QTreeView::branch:hover{background-color: $treeHoverBackground;}
+QTreeView::branch:selected:active{
+ background: $itemSelectBG;
 }
 QTreeView::branch:selected:!active {
  background: $itemSelectNoActive;
@@ -229,9 +220,6 @@ QTreeView::branch:open:has-children {
  border-image: none;
  image: url($ico_angleDown);
 }
-/* QTreeView::item:selected{background-color: #bedcf0;}
-QTreeView::item:hover:selected{background-color: #94c8ea;}
-QTreeView::item:hover:!selected{background-color: #e6e6e6;} */
 /* END of common qss */
 /* below are special qss which are used for dynamic style switching in code */
 ##decorator~#decorator {background: $splitLineBackground;}

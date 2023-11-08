@@ -197,17 +197,17 @@ You can also open files by double clicking on "File name". If the file is execut
 
 # Installation
 
-* Windows.
+* Windows. Download the installer `setup.x.y.z.exe`  from [sourceforge](https://sourceforge.net/projects/fileo/) where `x.y.z` - version and run it.
 
-  * setup.exe  from https://sourceforge.net/projects/fileo/
 
 
 * Linux and Windows
-  install as Python application from Pypi:
+  install as Python package from PyPi:
+
   ```
     > pip install md4-fileo
   ```
   and then run with
   ```
-    > python fileo.py
+    > python -m fileo
   ```
