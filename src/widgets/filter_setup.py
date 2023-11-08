@@ -122,11 +122,10 @@ class FilterSetup(QWidget):
             self.store_author_ids()
 
     def store_dir_ids(self):
-        if not self.checks['dir']:
+        if not self.checks['dir']:   # if any folder is not selected
             self.single_folder = False
             return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
-        self.checks['dir'] = (len(idxs) > 0)
         self.single_folder = (len(idxs) == 1)
         for idx in idxs:
             db_ut.save_to_temp('dir', idx.data(Qt.ItemDataRole.UserRole).id)
@@ -134,7 +133,7 @@ class FilterSetup(QWidget):
 
     def store_tag_ids(self):
         id_list = ag.tag_list.get_selected_ids()
-        if not id_list:
+        if not id_list:   # if any tag is not selected
             self.checks['tag'] = False
             return
         if self.ui.all_btn.isChecked():
@@ -149,19 +148,22 @@ class FilterSetup(QWidget):
                 files_tag |= db_ut.get_files_tag(id)
         for file in files_tag:
             db_ut.save_to_temp('file_tag', file)
-        self.checks['tag'] = (len(files_tag) > 0)
 
     def store_ext_ids(self):
         ext_list = ag.ext_list.get_selected_ids()
+        if not ext_list:   # if any extension is not selected
+            self.checks['ext'] = False
+            return
         for id in ext_list:
             db_ut.save_to_temp('ext', id)
-        self.checks['ext'] = (len(ext_list) > 0)
 
     def store_author_ids(self):
         authors = ag.author_list.get_selected_ids()
+        if not authors:    # if any author is not selected
+            self.checks['author'] = False
+            return
         for id in authors:
             db_ut.save_to_temp('author', id)
-        self.checks['author'] = (len(authors) > 0)
 
     def dir_selection_changed(self):
         indexes = ag.dir_list.selectedIndexes()

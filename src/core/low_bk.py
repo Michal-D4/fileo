@@ -15,7 +15,8 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox, QTreeView, QHeaderView,
 )
 
-from . import db_ut, app_globals as ag, utils, duplicates as dup
+from . import (db_ut, app_globals as ag, utils, duplicates as dup,
+               check_update as upd)
 from .table_model import TableModel, ProxyModel
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferences
@@ -67,6 +68,7 @@ def set_user_actions_handler():
         "Setup About": show_about,
         "Setup Report duplicate files": report_duplicates,
         "Setup Preferences": set_preferences,
+        "Setup Check for update": upd.check4update,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,

@@ -1,7 +1,7 @@
 from loguru import logger
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import (Qt, QModelIndex, pyqtSlot, QPoint, QThread,
+from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer,
 )
 from PyQt6.QtGui import (QAction, QResizeEvent,
@@ -107,6 +107,8 @@ def click_setup_button():
     menu.addAction('Report duplicate files')
     menu.addSeparator()
     menu.addAction('Preferences')
+    menu.addSeparator()
+    menu.addAction('Check for update')
     menu.addSeparator()
     menu.addAction('About')
     sz = menu.sizeHint()

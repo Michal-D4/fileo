@@ -158,7 +158,7 @@ def start_drag_files(action):
         Qt.DropAction.CopyAction)
 
     if bb is Qt.DropAction.MoveAction:
-        low_bk.show_folder_files()
+        low_bk.refresh_file_list()
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):

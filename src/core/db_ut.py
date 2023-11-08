@@ -233,22 +233,22 @@ def lost_files():
         add @@Lost link (sql3) into dir tree (parentdir)
         if doesn't exist (sql2)
         '''
-        res = conn.cursor().execute(sql2).fetchone()
-        if not res:
+        lost_in_tree = conn.cursor().execute(sql2).fetchone()
+        if not lost_in_tree:
             conn.cursor().execute(sql3)
 
     def create_lost_dir():
         '''
         create @@Lost dir (sql6) if doesn't exist (sql5)
         '''
-        id1 = conn.cursor().execute(sql5).fetchone()
-        if not id1:
+        existLost = conn.cursor().execute(sql5).fetchone()
+        if not existLost:
             conn.cursor().execute(sql6).fetchone()
 
     try:
         with ag.db.conn as conn:
-            has_lost = conn.cursor().execute(sql0).fetchone()
-            if not has_lost:
+            has_lost_files = conn.cursor().execute(sql0).fetchone()
+            if not has_lost_files:
                 # delete from @Lost dir files that has copies in other dir(s)
                 conn.cursor().execute(sql7).fetchone()
                 return
@@ -435,91 +435,89 @@ def update_pdf_file(id, pages, p_date):
     )
     ag.db.conn.cursor().execute(sql, (pages, p_date))
 
-def filter_sqls(key: str, field: str='') -> str:
-    return {
-        'dir_sql': "select distinct val from aux where key = 'files_dir'",
-        'tag_sql':(
-            "select val from aux where key = 'file_tag'"
-        ),
-        'ext_sql': (
-            "select id from files where extid in "
-            "(select val from aux where key = 'ext')"
-        ),
-        'author_sql': (
-            "select fileid from fileauthor where aid in "
-            "(select val from aux where key = 'author')"
-        ),
-        'sql0': (
-            'with x(fileid, last_note_date) as (select fileid, max(modified) '
-            'from filenotes group by fileid) '
-            'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-            'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
-            'f.id, f.extid, f.path from files f '
-            'left join x on x.fileid = f.id '
-        ),
-        'open-0': "nopen <= ?",
-        'open-1': "nopen > ?",
-        'rating-0': "rating < ?",
-        'rating-1': "rating = ?",
-        'rating-2': "rating > ?",
-        'after': f"{field} > ?",
-        'before': f"{field} < ?",
-    }[key]
-
 def filter_files(param: dict) -> apsw.Cursor:
-    sqlist = filter_subsqls(param)
+    par = []
+    cond = []
+    sqlist = []
 
-    par, cond = filter_parcond(param)
+    def filter_sqls(key: str, field: str='') -> str:
+        return {
+            'dir_sql': "select distinct val from aux where key = 'files_dir'",
+            'tag_sql':(
+                "select val from aux where key = 'file_tag'"
+            ),
+            'ext_sql': (
+                "select id from files where extid in "
+                "(select val from aux where key = 'ext')"
+            ),
+            'author_sql': (
+                "select fileid from fileauthor where aid in "
+                "(select val from aux where key = 'author')"
+            ),
+            'sql0': (
+                'with x(fileid, last_note_date) as (select fileid, max(modified) '
+                'from filenotes group by fileid) '
+                'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+                'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
+                'f.id, f.extid, f.path from files f '
+                'left join x on x.fileid = f.id '
+            ),
+            'open-0': "nopen <= ?",
+            'open-1': "nopen > ?",
+            'rating-0': "rating < ?",
+            'rating-1': "rating = ?",
+            'rating-2': "rating > ?",
+            'after': f"{field} > ?",
+            'before': f"{field} < ?",
+        }[key]
 
-    sql = assemble_filter_sql(cond, sqlist)
+    def filter_subsqls():
+        if param['dir']:
+            sqlist.append(filter_sqls('dir_sql'))
+        if param['tag']:
+            sqlist.append(filter_sqls('tag_sql'))
+        if param['ext']:
+            sqlist.append(filter_sqls('ext_sql'))
+        if param['author']:
+            sqlist.append(filter_sqls('author_sql'))
+
+    def filter_parcond():
+        if param['open_check']:
+            cond.append(filter_sqls(f'open-{param["open_op"]}'))
+            par.append(param['open_val'])
+        if param['rating_check']:
+            cond.append(filter_sqls(f'rating-{param["rating_op"]}'))
+            par.append(param['rating_val'])
+        if param['after']:
+            cond.append(filter_sqls('after', param["date"]))
+            par.append(param['date_after'])
+        if param['before']:
+            cond.append(filter_sqls('before', param["date"]))
+            par.append(param['date_before'])
+
+    def assemble_filter_sql() -> str:
+        if sqlist:
+            sqlist[-1] = f"{sqlist[-1]})"            # add right parenthesis
+            sql1 = ''.join((
+                filter_sqls('sql0'),
+                'where f.id in (',
+                ' intersect '.join(sqlist)))
+            sql = ' and '.join((sql1, *cond)) if cond else sql1
+        else:
+            sql1 = filter_sqls('sql0')
+            sql = ' '.join((sql1, 'where', ' and '.join(cond))) if cond else sql1
+        return sql
+
+    filter_subsqls()
+
+    filter_parcond()
+
+    sql = assemble_filter_sql()
 
     return (
         ag.db.conn.cursor().execute(sql, tuple(par))
         if par else ag.db.conn.cursor().execute(sql)
     )
-
-def filter_subsqls(param) -> list[str]:
-    sqlist = []
-    if param['dir']:
-        sqlist.append(filter_sqls('dir_sql'))
-    if param['tag']:
-        sqlist.append(filter_sqls('tag_sql'))
-    if param['ext']:
-        sqlist.append(filter_sqls('ext_sql'))
-    if param['author']:
-        sqlist.append(filter_sqls('author_sql'))
-    return sqlist
-
-def filter_parcond(param) -> tuple:
-    par = []
-    cond = []
-    if param['open_check']:
-        cond.append(filter_sqls(f'open-{param["open_op"]}'))
-        par.append(param['open_val'])
-    if param['rating_check']:
-        cond.append(filter_sqls(f'rating-{param["rating_op"]}'))
-        par.append(param['rating_val'])
-    if param['after']:
-        cond.append(filter_sqls('after', param["date"]))
-        par.append(param['date_after'])
-    if param['before']:
-        cond.append(filter_sqls('before', param["date"]))
-        par.append(param['date_before'])
-    return par, cond
-
-def assemble_filter_sql(cond, sqlist) -> str:
-    if sqlist:
-        sqlist[-1] = f"{sqlist[-1]})"            # add right parenthesis
-        sql1 = ''.join((
-            filter_sqls('sql0'),
-            'where f.id in (',
-            ' intersect '.join(sqlist)))
-        sql = ' and '.join((sql1, *cond)) if cond else sql1
-    else:
-        sql1 = filter_sqls('sql0')
-        sql = ' '.join((sql1, 'where', ' and '.join(cond))) if cond else sql1
-
-    return sql
 
 def delete_not_exest_file(id: int):
     sql_del = 'delete from files where id = ?'

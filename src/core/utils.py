@@ -141,6 +141,7 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     app.setWindowIcon(icons.get_other_icon("app"))
 
 def show_message_box(title: str, msg: str,
+                     custom_btns=None,
                      btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
                      icon: QMessageBox.Icon = QMessageBox.Icon.Information,
                      details: str = '') -> int:
@@ -148,9 +149,18 @@ def show_message_box(title: str, msg: str,
     dlg.setWindowTitle(title)
     dlg.setText(msg)
     dlg.setDetailedText(details)
-    dlg.setStandardButtons(btn)
-    dlg.setIcon(icon)
-    return dlg.exec()
+    if custom_btns:
+        btns = []
+        for btn in custom_btns:
+            btns.append(dlg.addButton(*btn))
+        dlg.setIcon(icon)
+        dlg.exec()
+        clicked = dlg.clickedButton()
+        return btns.index(clicked) if clicked else -1
+    else:
+        dlg.setStandardButtons(btn)
+        dlg.setIcon(icon)
+        return dlg.exec()
 
 def get_log_file() -> str:
     std_err = int(get_app_setting("LOGGING_TO_STDERR", 0))

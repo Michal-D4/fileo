@@ -2,8 +2,8 @@
 * if line:
 *   start with '* '   comment line
 *   $word~str         a pair of key-value;
-*        the key in qss (including "$") will be replaced by the string
-*        that follows the "~"
+*     the key in qss (including "$") will be
+*     replaced by the string following "~"
 $ico_VLINE~vline3.svg
 $ico_angleRight~angle_right.svg
 $ico_angleDown~angle_down.svg
@@ -21,6 +21,7 @@ $splitLineHoverBackground~#3491F4
 $filterFrameBackground~#E9E9E9
 $FoldContainerBackground~#E9E9E9
 $treeViewBackground~#F3F3F3
+$treeHoverBackground~#99CCCC
 $itemHoverBG~#E8E8E8
 $itemSelectBG~#2261C3
 $itemSelectNoActive~#E4E6F1

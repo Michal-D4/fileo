@@ -30,7 +30,7 @@ def send_message(sign: str = '') -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
     sock.connect((HOST, PORT))
-    logger.info(f'{ag.PID=}, {sign=}')
+    # logger.info(f'{ag.PID=}, {sign=}')
     sock.send(f'{ag.PID}/{sign}'.encode())
     return sock
 
@@ -49,11 +49,12 @@ def setup_server():
         serversock.bind((HOST, PORT))
     except OSError as e:
         logger.info(f"server can't bind to {HOST}:{PORT}:{e}")
+        logger.info(f"Please try again in a minute")
         ''' something went wrong
         "server_is_running" reports that the server is not running, but
         a new server cannot connect, usually because it is already bound.
-        so send a signal to remove the instance from the server and
-        close it when there are no more instances left. '''
+        The issue must be resolved automaticaly in about half of minute.
+        '''
         server_is_running('-')
         return
 
@@ -105,6 +106,4 @@ def accept_conn(serversock: socket.socket):
     try:
         conn, addr = serversock.accept()
     finally:
-        if conn:
-            logger.info(f'{addr=}')
         return conn, addr
