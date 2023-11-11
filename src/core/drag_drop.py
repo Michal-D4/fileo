@@ -18,7 +18,9 @@ elif sys.platform.startswith("linux"):
 else:
     raise ImportError(f"doesn't support {sys.platform} system")
 
-dragged_ids = None
+drop_target: QModelIndex = QModelIndex()
+dragged_ids = []
+dropped_ids = []
 
 def get_index_path(index: QModelIndex) -> list[int]:
     """
@@ -85,10 +87,9 @@ def external_file_list(indexes) ->QMimeData:
     return drag_data
 
 def get_dir_mime_data() -> QMimeData:
-    global dragged_ids
 
     indexes = ag.dir_list.selectionModel().selectedRows()
-    dragged_ids = get_dragged_ids(indexes)
+    get_dragged_ids(indexes)
     return dir_mime_data(indexes)
 
 def get_dragged_ids(indexes: QModelIndex):
@@ -98,6 +99,7 @@ def get_dragged_ids(indexes: QModelIndex):
     to reject dragging if a loop is created in the tree
     """
     model = ag.dir_list.model()
+    dragged_ids.clear()
     ids = []
 
     qu = deque()
@@ -108,7 +110,7 @@ def get_dragged_ids(indexes: QModelIndex):
         n = model.rowCount(idx)
         for i in range(n):
             qu.append(model.index(i, 0, idx))
-    return set(ids)
+    dragged_ids.extend(set(ids))
 
 def dir_mime_data(indexes) -> QMimeData:
     """
@@ -145,7 +147,7 @@ def start_drag_dirs(action):
     )
 
     if bb is not Qt.DropAction.IgnoreAction:
-        low_bk.reload_dirs_changed(ag.drop_target, ag.dropped_ids[0])
+        low_bk.reload_dirs_changed(drop_target, dropped_ids[0])
 
 @pyqtSlot(Qt.DropAction)
 def start_drag_files(action):
@@ -208,6 +210,7 @@ def is_descendant(idx: QModelIndex) -> bool:
 
 @pyqtSlot(QDropEvent)
 def drop_event(e: QDropEvent):
+    global drop_target
     menu.choose_drop_action(e)
     pos = e.position().toPoint()
     index = ag.dir_list.indexAt(pos)
@@ -216,7 +219,7 @@ def drop_event(e: QDropEvent):
         if index.isValid() else 0
     )
     if drop_data(e.mimeData(), e.dropAction(), id):
-        ag.drop_target = index
+        drop_target = index
         e.accept()
     else:
         e.setDropAction(Qt.DropAction.IgnoreAction)
@@ -290,7 +293,7 @@ def move_files(stream: QDataStream, target: int) -> bool:
     return True
 
 def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    ag.dropped_ids.clear()
+    dropped_ids.clear()
     copy_move = (
         move_folder if act is Qt.DropAction.MoveAction
         else copy_folder
@@ -310,14 +313,14 @@ def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
 
 def copy_folder(index: QModelIndex, target: int) -> bool:
     dir_data = index.data(Qt.ItemDataRole.UserRole)
-    ag.dropped_ids.append(dir_data.id)
+    dropped_ids.append(dir_data.id)
 
     db_ut.copy_dir(target, dir_data)
     return True
 
 def move_folder(index: QModelIndex, target: int) -> bool:
     u_dat = index.data(Qt.ItemDataRole.UserRole)
-    ag.dropped_ids.append(u_dat.id)
+    dropped_ids.append(u_dat.id)
 
     if db_ut.move_dir(target, u_dat.parent_id, u_dat.id):
         return True

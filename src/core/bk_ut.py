@@ -2,11 +2,10 @@ from loguru import logger
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
-    QTimer,
+    QTimer, QAbstractTableModel,
 )
-from PyQt6.QtGui import (QAction, QResizeEvent,
-)
-from PyQt6.QtWidgets import QMenu, QTreeView
+from PyQt6.QtGui import QResizeEvent
+from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd, icons,
@@ -17,12 +16,12 @@ if TYPE_CHECKING:
     from .sho import shoWindow
 
 self: 'shoWindow' = None
+sum_width = min_width = 0
 
 def save_bk_settings():
     if not ag.db.conn:
         return
     try:
-        curr_dir_idx = ag.dir_list.currentIndex()
         settings = {
             "FILE_LIST_HEADER": ag.file_list.header().saveState(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
@@ -33,6 +32,7 @@ def save_bk_settings():
             "APP_MODE": ag.mode.value,
     }
         ag.save_settings(**settings)
+        curr_dir_idx = ag.dir_list.currentIndex()
         low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
         self.filter_setup.save_filter_settings()
     except:
@@ -82,22 +82,6 @@ def bk_setup(main: 'shoWindow'):
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_signal.emit("double click file"))
 
-def set_field_menu():
-    hdr = ag.file_list.header()
-
-    menu = QMenu(self)
-    for i,field,tt in zip(range(len(ag.fields)), ag.fields, ag.tool_tips):
-        act = QAction(field, self, checkable=True)
-        if tt:
-            act.setToolTip(tt)
-        act.setChecked(int(not hdr.isSectionHidden(i)))
-        act.triggered.connect(lambda state, ind=i: hide_show_column(state, index=ind))
-        menu.addAction(act)
-
-    menu.actions()[0].setEnabled(False)
-    menu.setToolTipsVisible(True)
-    self.ui.field_menu.setMenu(menu)
-
 @pyqtSlot()
 def click_setup_button():
     menu = QMenu(self)
@@ -119,9 +103,6 @@ def click_setup_button():
     if action:
         ag.signals_.user_signal.emit(f"Setup {action.text()}")
 
-def hide_show_column(state: bool, index: int):
-    ag.file_list.header().setSectionHidden(index, not state)
-
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
@@ -130,11 +111,44 @@ def current_file_changed(curr: QModelIndex, prev: QModelIndex):
         low_bk.file_notes_show(curr)
 
 def file_list_resize_0(e: QResizeEvent):
+    global sum_width, min_width
+    def file_list_resize(e: QResizeEvent):
+        sz = e.size().width()
+        resize_section_0(sz)
+        super(QTreeView, ag.file_list).resizeEvent(e)
+
+    def resize_section_0(sz: int):
+        hdr.resizeSection(
+            0, max(sz - sum_width, min_width)
+        )
+
+    def change_sum_width():
+        sum_width = sum((
+            hdr.sectionSize(i) for i in range(1, hdr.count())
+            if not hdr.isSectionHidden(i)
+        ))
+        sz = ag.file_list.contentsRect().width()
+        resize_section_0(sz)
+
     if ag.db.conn:
         restore_dirs()
 
-    ag.file_list.resizeEvent = low_bk.file_list_resize
-    low_bk.file_list_resize(e)
+    hdr = ag.file_list.header()
+    cnt = hdr.count()
+    if cnt:
+        sum_width = sum((
+            hdr.sectionSize(i) for i in range(1, cnt)
+            if not hdr.isSectionHidden(i)
+        ))
+        min_width = int(
+            max(hdr.sectionSize(i) for i in range(1, cnt)) * 1.5
+        )
+    else:
+        sum_width = min_width = 0
+
+    ag.file_list.resizeEvent = file_list_resize
+    ag.signals_.toggle_column.connect(change_sum_width)
+    file_list_resize(e)
 
 def restore_dirs():
     low_bk.set_dir_model()
@@ -145,8 +159,27 @@ def restore_dirs():
     else:
         low_bk.filtered_files()
     model = ag.file_list.model()
-    low_bk.header_restore(model)
-    set_field_menu()
+    header_restore(model)
+    low_bk.set_field_menu()
+
+def header_restore(model: QAbstractTableModel):
+    hdr = ag.file_list.header()
+    try:
+        state = ag.get_setting("FILE_LIST_HEADER")
+        if state:
+            hdr.restoreState(state)
+    except Exception as e:
+        logger.info(f'{type(e)}; {e.args}')
+    hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+    hdr.sectionResized.connect(resized_column)
+
+@pyqtSlot(int, int, int)
+def resized_column(localIdx: int, oldSize: int, newSize: int):
+    global sum_width, min_width
+    if localIdx == 0:
+        return
+    sum_width += (newSize - oldSize)
+    min_width = max(min_width, int(newSize * 1.5))
 
 def populate_all():
     if not ag.db.conn:

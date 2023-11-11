@@ -3,8 +3,6 @@ from PyQt6.QtCore import pyqtSignal, QObject
 class AppSignals(QObject):
     from ..widgets.file_note import fileNote
 
-    close_db_dialog = pyqtSignal(name="close_db_dialog")
-
     get_db_name = pyqtSignal(str, name="get_db_name")
 
     filter_setup_closed = pyqtSignal(name="filter_setup_closed")
@@ -20,3 +18,5 @@ class AppSignals(QObject):
     delete_note = pyqtSignal(fileNote)
 
     start_edit_note = pyqtSignal(fileNote)
+
+    toggle_column = pyqtSignal()

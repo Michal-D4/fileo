@@ -3,11 +3,10 @@ import apsw
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
-from pathlib import Path
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QTreeView, QToolButton
+from PyQt6.QtWidgets import QTreeView
 
 if TYPE_CHECKING:
     from .compact_list import aBrowser
@@ -27,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.0.0'
+    return '1.0.01'
 
 PID: int = 0
 TIME_CHECK = 5     # interval(sec) client sends message "it's active"
@@ -41,8 +40,6 @@ author_list: 'aBrowser' = None
 file_data_holder: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 history: 'History' = None
-hist_folder = True
-file_path: Path = None
 single_instance = False
 
 @dataclass(slots=True)
@@ -91,51 +88,6 @@ mode = appMode.DIR
 srch_list = False
 
 drop_button = 0
-drop_target = None
-dropped_ids = []
-
-setting_names = (     # DB settings only
-    "APP_MODE",
-    "AUTHOR_SEL_LIST",
-    "EXT_SEL_LIST",
-    "FILE_LIST_HEADER",
-    "FILE_ID",
-    "TAG_SEL_LIST",
-    "DIR_CHECK",
-    "TAG_CHECK",
-    "IS_ALL",
-    "EXT_CHECK",
-    "AUTHOR_CHECK",
-    "DATE_TYPE",
-    "AFTER",
-    "BEFORE",
-    "AFTER_DATE",
-    "BEFORE_DATE",
-    "OPEN_CHECK",
-    "OPEN_OP",
-    "OPEN_VAL",
-    "RATING_CHECK",
-    "RATING_OP",
-    "RATING_VAL",
-    "LAST_SCAN_OPENED",
-    "SHOW_HIDDEN",
-    "HISTORY",
-    "SEARCH_FILE",
-)
-
-fields = (
-    'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
-    'Pages', 'Size', 'Published', 'Date of last note', 'Created',
-)
-tool_tips = (
-    ",Last opening date,rating of file,number of file openings,"
-    "Last modified date,Number of pages(in book),Size of file,"
-    "Publication date(book),Date of last note,File creation date"
-).split(',')
-field_types = (
-    'str', 'date', 'int', 'int', 'date',
-    'int', 'int', 'date', 'date', 'date',
-)
 
 dyn_qss = defaultdict(list)
 qss_params = {}

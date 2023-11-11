@@ -95,6 +95,35 @@ TABLES = (
     'extension text); '
     ),
 )
+setting_names = (     # DB settings only
+    "APP_MODE",
+    "AUTHOR_SEL_LIST",
+    "EXT_SEL_LIST",
+    "FILE_LIST_HEADER",
+    "FILE_ID",
+    "TAG_SEL_LIST",
+    "DIR_CHECK",
+    "TAG_CHECK",
+    "IS_ALL",
+    "EXT_CHECK",
+    "AUTHOR_CHECK",
+    "DATE_TYPE",
+    "AFTER",
+    "BEFORE",
+    "AFTER_DATE",
+    "BEFORE_DATE",
+    "OPEN_CHECK",
+    "OPEN_OP",
+    "OPEN_VAL",
+    "RATING_CHECK",
+    "RATING_OP",
+    "RATING_VAL",
+    "LAST_SCAN_OPENED",
+    "SHOW_HIDDEN",
+    "HISTORY",
+    "SEARCH_FILE",
+)
+
 APP_ID = 1718185071
 USER_VER = 9
 
@@ -121,7 +150,6 @@ def convert_to_new_version(conn, old_v) -> int:
     if old_v == 0:
         create_tables(conn)
         return USER_VER
-    # if only the settings fields have changed
     initialize_settings(conn)
 
 def create_db(db_name: str) -> apsw.Connection:
@@ -130,7 +158,6 @@ def create_db(db_name: str) -> apsw.Connection:
 def create_tables(conn: apsw.Connection):
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    # conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
     cursor = conn.cursor()
     for tbl in TABLES:
         cursor.execute(tbl)
@@ -147,14 +174,13 @@ def initialize_settings(conn):
     )
     cursor = conn.cursor()
     for key in conn.cursor().execute(sql0):
-        if key not in ag.setting_names:
+        if key not in setting_names:
             cursor.execute(sql1, key)
 
-    for name in ag.setting_names:
+    for name in setting_names:
         cursor.execute(sql2, {'key': name})
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
-    # save_app_version(conn)
 
 def initiate_db(connection):
     sql = (

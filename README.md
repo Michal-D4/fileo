@@ -203,7 +203,7 @@ You can also open files by double clicking on "File name". If the file is execut
 
 * Linux and Windows
   install as Python package from PyPi:
-  
+
   ```
     > pip install md4-fileo
   ```
@@ -211,4 +211,3 @@ You can also open files by double clicking on "File name". If the file is execut
   ```
     > python -m fileo
   ```
-
