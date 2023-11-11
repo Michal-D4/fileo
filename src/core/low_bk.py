@@ -7,12 +7,12 @@ import sys
 import subprocess
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
-    pyqtSlot, QUrl, QDateTime,  QAbstractTableModel,
-    QFile, QTextStream, QIODeviceBase,
+    pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
+    QIODeviceBase,
 )
-from PyQt6.QtGui import QDesktopServices, QResizeEvent
+from PyQt6.QtGui import QDesktopServices, QAction
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QTreeView, QHeaderView,
+    QFileDialog, QMessageBox, QMenu,
 )
 
 from . import (db_ut, app_globals as ag, utils, duplicates as dup,
@@ -21,10 +21,25 @@ from .table_model import TableModel, ProxyModel
 from .edit_tree_model2 import TreeModel, TreeItem
 from ..widgets import about, preferences
 
+file_path: Path = None
+hist_folder:bool = True
+fields = (
+    'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
+    'Pages', 'Size', 'Published', 'Date of last note', 'Created',
+)
+tool_tips = (
+    ",Last opening date,rating of file,number of file openings,"
+    "Last modified date,Number of pages(in book),Size of file,"
+    "Publication date(book),Date of last note,File creation date"
+).split(',')
+field_types = (
+    'str', 'date', 'int', 'int', 'date',
+    'int', 'int', 'date', 'date', 'date',
+)
+
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
-        # subprocess.run(['explorer.exe', '/select,', os.path.normpath(path)])
         subprocess.run(['explorer.exe', '/select,', path])
 elif sys.platform.startswith("linux"):
     def reveal_file(path: str):
@@ -169,25 +184,26 @@ def enable_buttons():
 
 @pyqtSlot()
 def rename_file():
+    global file_path
     idx = ag.file_list.currentIndex()
     idx0 = ag.file_list.model().index(idx.row(), 0, QModelIndex())
     ag.file_list.setCurrentIndex(idx)
     old_name = full_file_name(idx0)
-    ag.file_path = Path(old_name)
-    if ag.file_path.exists() and ag.file_path.is_file():
+    file_path = Path(old_name)
+    if file_path.exists() and file_path.is_file():
         ag.file_list.edit(idx0)
 
 @pyqtSlot(str)
 def rename_in_file_system(new_name: str):
-    new_path = ag.file_path.rename(ag.file_path.parent / new_name)
+    new_path = file_path.rename(file_path.parent / new_name)
     if new_path.name == new_name:
         ag.app.ui.current_filename.setText(new_name)
     else:
         utils.show_message_box(
             'Error renaming file',
-            f'File {ag.file_path.name} was not renamed',
+            f'File {file_path.name} was not renamed',
             icon=QMessageBox.Icon.Critical,
-            details=ag.file_path.as_posix()
+            details=file_path.as_posix()
         )
 
 @pyqtSlot()
@@ -303,7 +319,8 @@ def expand_branch(branch: list) -> QModelIndex:
 
 #region  Dirs
 def set_dir_model():
-    ag.hist_folder = True
+    global hist_folder
+    hist_folder = True
     model: TreeModel = TreeModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
@@ -328,8 +345,9 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         def new_history_item():
-            if ag.hist_folder:
-                ag.hist_folder = False
+            global hist_folder
+            if hist_folder:
+                hist_folder = False
             else:       # new history item
                 add_history_item()
             set_current_file(
@@ -369,6 +387,26 @@ def dir_dree_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
+def set_field_menu():
+    hdr = ag.file_list.header()
+
+    menu = QMenu(ag.app)
+    for i,field,tt in zip(range(len(fields)), fields, tool_tips):
+        act = QAction(field, ag.app, checkable=True)
+        if tt:
+            act.setToolTip(tt)
+        act.setChecked(int(not hdr.isSectionHidden(i)))
+        act.triggered.connect(lambda state, idx=i: toggle_show_column(state, index=idx))
+        menu.addAction(act)
+
+    menu.actions()[0].setEnabled(False)
+    menu.setToolTipsVisible(True)
+    ag.app.ui.field_menu.setMenu(menu)
+
+def toggle_show_column(state: bool, index: int):
+    ag.file_list.header().setSectionHidden(index, not state)
+    ag.signals_.toggle_column.emit()
+
 @pyqtSlot(ag.appMode)
 def app_mode_changed(old_mode: ag.appMode):
     if ag.mode is ag.appMode.FILTER_SETUP:
@@ -399,9 +437,10 @@ def to_next_folder():
     go_to_history_folder(branch)
 
 def go_to_history_folder(branch: list):
+    global hist_folder
     if not branch:
         return
-    ag.hist_folder = True
+    hist_folder = True
     _history_folder(branch)
 
 def _history_folder(branch: list):
@@ -425,7 +464,6 @@ def filter_changed():
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
     u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-    # logger.info(u_dat)
 
     ag.srch_list = False
     if u_dat:
@@ -449,7 +487,7 @@ def fill_file_model(files) -> TableModel:
 
     for ff in files:
         ff1 = []
-        for i,typ in enumerate(ag.field_types):
+        for i,typ in enumerate(field_types):
             ff1.append(field_val(typ, ff[i]))
 
         model.append_row(ff1, ag.FileData(*ff[-3:]))
@@ -462,8 +500,8 @@ def fill_file_model(files) -> TableModel:
     return model
 
 def null_file_list(model: TableModel):
-    row = ["THERE ARE NO FILES HERE"]
-    for _,typ in enumerate(ag.field_types[1:]):
+    row = ["NO FILES HERE"]
+    for _,typ in enumerate(field_types[1:]):
         row.append(field_val(typ))
     model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid key for files table
 
@@ -488,28 +526,8 @@ def set_file_model(model: TableModel):
     proxy_model = ProxyModel()
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-    model.setHeaderData(0, Qt.Orientation.Horizontal, ag.fields)
+    model.setHeaderData(0, Qt.Orientation.Horizontal, fields)
     ag.file_list.setModel(proxy_model)
-
-def header_restore(model: QAbstractTableModel):
-    hdr = ag.file_list.header()
-    try:
-        state = ag.get_setting("FILE_LIST_HEADER")
-        if state:
-            hdr.restoreState(state)
-    except Exception as e:
-        logger.info(f'{type(e)}; {e.args}')
-    hdr.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-
-def file_list_resize(e: QResizeEvent):
-    hdr = ag.file_list.header()
-    sum_length = sum(
-        (hdr.sectionSize(i) for i in range(1, hdr.count())
-         if not hdr.isSectionHidden(i))
-    )
-    sz = e.size().width()
-    hdr.setMaximumSectionSize(max(sz // 2, sz - sum_length))
-    super(QTreeView, ag.file_list).resizeEvent(e)
 
 def copy_file_name():
     files = []

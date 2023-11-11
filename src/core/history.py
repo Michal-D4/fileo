@@ -63,16 +63,16 @@ class History(object):
         return 'yes' if self.prev else 'no'
 
     def add_item(self, path):
-        # logger.info(f'{path}')
+        # logger.info(f'{path=}, {self.curr=}')
         if self.curr:
             if len(self.prev) >= self.limit:
                 self.prev = self.prev[len(self.prev) - self.limit + 1:]
             self.prev.append(self.curr)
         self.next_.clear()
+        self.curr = path
         ag.signals_.user_signal.emit(
             f'enable_next_prev/no,{self.has_prev()}'
         )
-        self.curr = path
 
     def get_history(self) -> list:
         """

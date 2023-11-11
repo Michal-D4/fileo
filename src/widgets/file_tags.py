@@ -13,7 +13,6 @@ class tagBrowser(aBrowser):
         self.editor = editor
 
     def show_in_bpowser(self):
-        logger.info(f'{self.objectName()=}')
         style = ag.dyn_qss['text_browser'][0]
         self.browser.clear()
 
@@ -22,7 +21,6 @@ class tagBrowser(aBrowser):
         self.browser.setText(txt)
 
     def html_selected(self):
-        logger.info(f'{self.objectName()=}')
         sel = self.selected_idx
         inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>{tag}</a> "
              for i,tag in enumerate(self.tags))
@@ -30,7 +28,6 @@ class tagBrowser(aBrowser):
 
     @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
-        # self.update_tags()
         self.tag_list_changed(self.new_tag_list(), tags)
         self.editor.setText(', '.join(tags))
 

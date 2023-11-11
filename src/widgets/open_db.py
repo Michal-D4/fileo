@@ -63,7 +63,6 @@ class OpenDB(QWidget):
         self.ui.input_path.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.input_path.customContextMenuRequested.connect(self.path_menu)
 
-        ag.signals_.close_db_dialog.connect(self.lost_focus)
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.lost_focus)
         self.set_tool_tip()

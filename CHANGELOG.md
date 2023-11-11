@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.01 - 2023, November 08
+* ResizeMode of the file list columns is set to "Interactive" instead of "ResizeToContents".
+  When ResizeMode was set to "ResizeToContents", the column widths changed frequently, which didn't look good. Now only the user can change the columns width.
+* removed many app global variables that were defined in app_globals.py
+
 ## 1.0.0 - 2023, November 08
 * check for updates from the menu
 
