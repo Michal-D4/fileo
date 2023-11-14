@@ -162,11 +162,7 @@ def show_message_box(title: str, msg: str,
         dlg.setIcon(icon)
         return dlg.exec()
 
-def get_log_file() -> str:
-    std_err = int(get_app_setting("LOGGING_TO_STDERR", 0))
-    if std_err:
-        return "stderr"
-
+def get_log_file_name() -> str:
     from datetime import datetime as dt
     log_path = get_app_setting("DEFAULT_LOG_PATH", "")
     r_path = Path(log_path) if log_path else Path().resolve()
@@ -182,10 +178,7 @@ def set_logger():
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
 
-    LOG_FILE = get_log_file()
-    if LOG_FILE == "stderr":
-        logger.add(sys.stderr, format=fmt, enqueue=True)
-    else:
-        logger.add(LOG_FILE, format=fmt, enqueue=True)
+    LOG_FILE = get_log_file_name()
+    logger.add(LOG_FILE, format=fmt, enqueue=True)
     logger.info(f'{ag.PID=}, {ag.app_name()=}, {ag.app_version()=}')
     logger.info(f"START =================> {LOG_FILE}")

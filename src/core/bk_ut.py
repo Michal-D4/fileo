@@ -30,6 +30,7 @@ def save_bk_settings():
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "HISTORY": ag.history.get_history(),
             "APP_MODE": ag.mode.value,
+            "NOTE_EDIT_STATE": ag.file_data_holder.get_edit_state(),
     }
         ag.save_settings(**settings)
         curr_dir_idx = ag.dir_list.currentIndex()
@@ -192,6 +193,10 @@ def populate_all():
     hide_state = ag.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
+
+    ag.file_data_holder.set_edit_state(
+        ag.get_setting("NOTE_EDIT_STATE", (False,))
+    )
 
 def restore_history():
     hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr

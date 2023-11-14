@@ -100,7 +100,6 @@ setting_names = (     # DB settings only
     "AUTHOR_SEL_LIST",
     "EXT_SEL_LIST",
     "FILE_LIST_HEADER",
-    "FILE_ID",
     "TAG_SEL_LIST",
     "DIR_CHECK",
     "TAG_CHECK",
@@ -122,10 +121,11 @@ setting_names = (     # DB settings only
     "SHOW_HIDDEN",
     "HISTORY",
     "SEARCH_FILE",
+    "NOTE_EDIT_STATE",
 )
 
 APP_ID = 1718185071
-USER_VER = 9
+USER_VER = 10
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:

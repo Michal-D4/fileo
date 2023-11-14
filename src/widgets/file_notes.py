@@ -1,7 +1,7 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QFocusEvent
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QSizePolicy,
     QMessageBox, QVBoxLayout, QScrollArea, QAbstractScrollArea,
     QMenu,
@@ -17,6 +17,13 @@ class noteEditor(QTextEdit):
         self.note: fileNote = None
         self.branch = None
         self.setStyleSheet(ag.dyn_qss['note_editor'][0])
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+    def focusOutEvent(self, e: QFocusEvent):
+        logger.info(f'{e.lostFocus()}')
+        if e.lostFocus():
+            ag.signals_.user_signal.emit('SaveEditState')
+        super().focusOutEvent(e)
 
     def start_edit(self, note: fileNote):
         self.note = note
@@ -29,10 +36,10 @@ class noteEditor(QTextEdit):
         self.branch = branch
 
     def get_file_id(self) -> int:
-        return self.note.get_file_id()
+        return self.note.get_file_id() if self.note else 0
 
     def get_note_id(self) -> int:
-        return self.note.get_note_id()
+        return self.note.get_note_id() if self.note else 0
 
     def get_branch(self) -> str:
         return self.branch
@@ -42,6 +49,10 @@ class noteEditor(QTextEdit):
 
     def get_note(self) -> fileNote:
         return self.note
+
+    def set_note(self, note: fileNote):
+        self.note = note
+        logger.info(f'{self.note.get_file_id()=}, {self.note.get_note_id()=}')
 
 class notesContainer(QScrollArea):
     def __init__(self, editor: noteEditor, parent: QWidget=None) -> None:
@@ -96,9 +107,10 @@ class notesContainer(QScrollArea):
 
     def set_editing(self, state: bool):
         self.editing = state
-        self.edited_file_in_statusbar(state)
+        self.edited_file_in_status(state)
 
-    def edited_file_in_statusbar(self, show: bool):
+    def edited_file_in_status(self, show: bool):
+        logger.info(f'{show=}')
         if show:
             file_id = self.editor.get_file_id()
             filename = db_ut.get_file_name(file_id)

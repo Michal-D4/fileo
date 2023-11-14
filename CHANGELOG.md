@@ -1,8 +1,13 @@
 # Change Log
 
-## 1.0.01 - 2023, November 08
+## 1.0.02 - 2023, November 14
+* sort DB list and many other improvements to the DB selector
+* save/restore note editor state between sessions
+* improve checking for updates
+
+## 1.0.01 - 2023, November 11
 * ResizeMode of the file list columns is set to "Interactive" instead of "ResizeToContents".
-  When ResizeMode was set to "ResizeToContents", the column widths changed frequently, which didn't look good. Now only the user can change the columns width.
+  When ResizeMode was set to "ResizeToContents", the column widths changed frequently, which didn't look good. Now the columns width can be changed only by the user and when resizing the file list.
 * removed many app global variables that were defined in app_globals.py
 
 ## 1.0.0 - 2023, November 08

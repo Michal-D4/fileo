@@ -37,7 +37,6 @@ class Preferences(QDialog):
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
         form_layout.addRow('Allow single instance only:', self.single_instance)
         form_layout.addRow('Switch on logging:', self.do_log)
-        form_layout.addRow('Logging to stderr:', self.stderr_log)
         form_layout.addRow('Write QSS to log file:', self.qss_log)
 
         v_layout = QVBoxLayout(self)
@@ -68,7 +67,6 @@ class Preferences(QDialog):
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
             "SINGLE_INSTANCE": int(self.single_instance.isChecked()),
             "SWITCH_ON_LOGGING": int(self.do_log.isChecked()),
-            "LOGGING_TO_STDERR": int(self.stderr_log.isChecked()),
             "LOG_QSS": int(self.qss_log.isChecked()),
         }
         utils.save_app_setting(**settings)
@@ -111,10 +109,6 @@ class Preferences(QDialog):
         self.do_log = QCheckBox()
         self.do_log.setChecked(
             int(utils.get_app_setting('SWITCH_ON_LOGGING', 0))
-        )
-        self.stderr_log = QCheckBox()
-        self.stderr_log.setChecked(
-            int(utils.get_app_setting('LOGGING_TO_STDERR', 0))
         )
         self.qss_log = QCheckBox()
         self.qss_log.setChecked(

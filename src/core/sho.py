@@ -57,7 +57,6 @@ class shoWindow(QMainWindow):
 
         self.start_pos: QPoint = QPoint()
         self.window_maximized: bool = False
-        self.open_db: OpenDB|None = None
         self.filter_setup: FilterSetup|None = None
 
         self.icons = icons.get_toolbar_icons()
@@ -88,7 +87,7 @@ class shoWindow(QMainWindow):
         self.restore_note_height()
 
         ag.file_data_holder = fileDataHolder()
-        ag.file_data_holder.setObjectName("file_notes")
+        ag.file_data_holder.setObjectName("file_data_holder")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
             int(utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
@@ -272,15 +271,14 @@ class shoWindow(QMainWindow):
     @pyqtSlot()
     def show_db_list(self):
         """
-        manage the list of sqlite db files
-        and choose which to use
+        manage the list of db files,
+        select DB to open
         """
-        if not self.open_db:
-            self.open_db = OpenDB(self)
-        self.open_db.move(48, 20)
-        self.open_db.resize(min(self.width() // 2, MAX_WIDTH_DB_DIALOG),
+        open_db = OpenDB(self)
+        open_db.move(48, 20)
+        open_db.resize(min(self.width() // 2, MAX_WIDTH_DB_DIALOG),
             self.height() - 60)
-        self.open_db.show()
+        open_db.show()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):

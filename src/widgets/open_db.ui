@@ -49,9 +49,6 @@
            <property name="text">
             <string notr="true"/>
            </property>
-           <property name="placeholderText">
-            <string notr="true">Enter path to open or to create database. Esc - to close without choice</string>
-           </property>
           </widget>
          </item>
          <item>

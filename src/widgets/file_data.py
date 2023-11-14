@@ -1,7 +1,6 @@
 from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -216,28 +215,43 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def new_file_note(self):
         if self.file_id == -1:
             return
-        if self.notes.is_editing():
-            self.switch_page(Page.EDIT)
-            return
-        self.show_editor(fileNote(self.file_id, 0))
+        self.start_edit(fileNote(self.file_id, 0))
 
     def start_edit(self, note: fileNote):
         if self.notes.is_editing():
             self.switch_page(Page.EDIT)
             return
-
-        self.show_editor(note)
-
-    def show_editor(self, note: fileNote):
         self.editor.start_edit(note)
+        self.show_editor()
 
+    def show_editor(self):
         self.notes.set_editing(True)
-
         self.note_btns.hide()
         self.edit_btns.show()
         self.l_editor.show()
         self.switch_page(Page.EDIT)
         self.editor.setFocus()
+
+    def get_edit_state(self) -> tuple:
+        logger.info(f'{self.notes.is_editing()=}')
+        def get_others():
+            return (
+                True,
+                self.editor.get_file_id(),
+                self.editor.get_note_id(),
+                self.editor.get_branch(),
+                self.editor.get_text(),
+            )
+        return get_others() if self.notes.is_editing() else (False,)
+
+    def set_edit_state(self, vals: tuple):
+        logger.info(f'{vals=}')
+        if not vals[0]:
+            return
+        self.editor.set_note(fileNote(vals[1], vals[2]))
+        self.set_branch(vals[3])
+        self.editor.setText(vals[4])
+        self.show_editor()
 
     def set_file_id(self, id: int):
         self.file_id = id
