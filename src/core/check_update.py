@@ -38,8 +38,7 @@ def installer_update_replay(replay: QNetworkReply):
         release = obj['platform_releases']['windows']
         filename = release['filename'].toString()
         # logger.info(f"{filename=}")
-        i1 = filename.find('.')
-        if i1 < 0:
+        if filename.count('.') <= 1:
             utils.show_message_box(
                 'Check for update',
                 f"Something went wrong, can't find app.version in the repository. "
@@ -47,7 +46,7 @@ def installer_update_replay(replay: QNetworkReply):
                 icon=QMessageBox.Icon.Critical
             )
             return
-        ver = filename[i1+1:filename.rfind('.')]
+        ver = filename[filename.find('.')+1:filename.rfind('.')]
         if ag.app_version() < ver:
             if getattr(sys, "frozen", False):
                 get_sourceforge(ver)

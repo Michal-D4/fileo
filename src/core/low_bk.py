@@ -89,7 +89,8 @@ def set_user_actions_handler():
         "Enable_buttons": enable_buttons,
         "reload_dirs": reload_cur_dir,
         "file-note: Go to file": goto_edited_file,
-        "remove_file_from_location": remove_file_from_location
+        "remove_file_from_location": remove_file_from_location,
+        "SaveEditState": save_note_edit_state
       }
 
     @pyqtSlot(str)
@@ -110,7 +111,11 @@ def set_user_actions_handler():
 
     return execute_action
 
-@pyqtSlot(str)
+def save_note_edit_state():
+    ag.save_settings(
+        NOTE_EDIT_STATE=ag.file_data_holder.get_edit_state()
+    )
+
 def new_window(db_name: str):
     import subprocess
     # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
@@ -123,7 +128,6 @@ def new_window(db_name: str):
             [sys.executable, ag.entry_point, db_name], # sys.executable - python interpreter
         )
 
-@pyqtSlot(str)
 def goto_edited_file(param: str):
     file_id, branch = param.split('-')
     idx = expand_branch(
@@ -138,7 +142,6 @@ def goto_edited_file(param: str):
         row = model.get_row_by_id(int(file_id))
         set_current_file(row)
 
-@pyqtSlot()
 def report_duplicates():
     rep_creator = dup.Duplicates()
     rep = rep_creator.get_report()
@@ -171,18 +174,15 @@ def _save_report(rep: dict, filename: str):
                 out.write(f"File:  {r[0]}\n")
                 out.write(f"  {'; '.join(r[1:])}\n")
 
-@pyqtSlot()
 def reload_cur_dir():
     reload_dirs_changed(ag.dir_list.currentIndex())
 
-@pyqtSlot()
 def enable_buttons():
     ag.app.ui.btn_search.setEnabled(True)
     ag.app.refresh_tree.setEnabled(True)
     ag.app.show_hidden.setEnabled(True)
     ag.app.collapse_btn.setEnabled(True)
 
-@pyqtSlot()
 def rename_file():
     global file_path
     idx = ag.file_list.currentIndex()
@@ -206,13 +206,11 @@ def rename_in_file_system(new_name: str):
             details=file_path.as_posix()
         )
 
-@pyqtSlot()
 def enable_next_prev(param: str):
     not_empty = param.split(',')
     ag.app.btn_next.setDisabled(not_empty[0] == 'no')
     ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
 
-@pyqtSlot()
 def find_files_by_name(param: str):
     def split3():
         """
@@ -227,12 +225,10 @@ def find_files_by_name(param: str):
     ag.srch_list = True
     show_files(files)
 
-@pyqtSlot()
 def set_preferences():
     pref = preferences.Preferences(ag.app)
     pref.show()
 
-@pyqtSlot()
 def show_about():
     dlg = about.AboutDialog(ag.app)
     dlg.show()

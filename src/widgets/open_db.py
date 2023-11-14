@@ -1,7 +1,7 @@
 from pathlib import Path
 from loguru import logger
 
-from PyQt6.QtCore import Qt, pyqtSlot, QPoint, QModelIndex
+from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QFileDialog, QLabel,
     QListWidgetItem, QVBoxLayout, QWidget, QMenu,
@@ -28,10 +28,7 @@ class listItem(QWidget):
         self.set_style()
         self.setLayout(self.row)
 
-    def get_name(self) -> str:
-        return self.name.text()
-
-    def get_full_name(self) -> str:
+    def get_db_name(self) -> str:
         return '/'.join((self.path.text(), self.name.text()))
 
     def set_style(self):
@@ -39,57 +36,59 @@ class listItem(QWidget):
         self.path.setStyleSheet(ag.dyn_qss['path'][0])
 
 
-class OpenDB(QWidget):
+class OpenDB(QWidget, Ui_openDB):
 
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
 
-        self.ui = Ui_openDB()
-        self.ui.setupUi(self)
+        self.setupUi(self)
         self.msg = ''
 
         self.restore_db_list()
 
-        self.ui.open_btn.setIcon(icons.get_other_icon("open_db"))
-        self.ui.open_btn.clicked.connect(self.add_db)
+        self.open_btn.setIcon(icons.get_other_icon("open_db"))
+        self.open_btn.clicked.connect(self.add_db)
 
-        self.ui.listDB.itemClicked.connect(self.item_click)
-        self.ui.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.ui.listDB.customContextMenuRequested.connect(self.item_menu)
-        self.ui.listDB.currentItemChanged.connect(self.row_changed)
+        self.listDB.doubleClicked.connect(self.item_click)
+        self.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.listDB.customContextMenuRequested.connect(self.item_menu)
+        self.listDB.currentItemChanged.connect(self.row_changed)
+        self.listDB.setCurrentRow(0)
 
-        self.ui.input_path.textEdited.connect(self.qss_input_path_edited)
-        self.ui.input_path.editingFinished.connect(self.finish_edit)
-        self.ui.input_path.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.ui.input_path.customContextMenuRequested.connect(self.path_menu)
+        self.input_path.textEdited.connect(self.style_input_path)
+        self.input_path.editingFinished.connect(self.finish_edit)
+        self.input_path.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.input_path.customContextMenuRequested.connect(self.path_menu)
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.lost_focus)
+        escape.activated.connect(self.close)
         self.set_tool_tip()
 
     @pyqtSlot(QListWidgetItem, QListWidgetItem)
     def row_changed(self, curr: QListWidgetItem, prev: QListWidgetItem):
-        wid: listItem = self.ui.listDB.itemWidget(curr)
-        self.ui.input_path.setText(wid.get_full_name())
+        wid: listItem = self.listDB.itemWidget(curr)
+        self.input_path.setText(wid.get_db_name())
+        self.set_tool_tip()
 
     @pyqtSlot(QPoint)
     def item_menu(self, pos: QPoint):
-        item = self.ui.listDB.itemAt(pos)
+        item = self.listDB.itemAt(pos)
         if item:
-            wid: listItem = self.ui.listDB.itemWidget(item)
-            db_name = wid.get_name()
-            menu = self.db_list_menu(db_name)
-            action = menu.exec(self.ui.listDB.mapToGlobal(pos))
+            db_name = self.input_path.text()
+            menu = self.db_list_menu(
+                db_name[db_name.rfind('/')+1:]
+            )
+            action = menu.exec(self.listDB.mapToGlobal(pos))
             if action:
                 menu_item_text = action.text()
                 if menu_item_text.endswith('window'):
-                    self.open_in_new_window(wid.get_full_name())
+                    self.open_in_new_window(db_name)
                     return
                 if menu_item_text.startswith('Delete'):
                     self.remove_item(item)
                     return
                 if menu_item_text.startswith('Open'):
-                    self.open_db(wid.get_full_name())
+                    self.open_db(db_name)
 
     def db_list_menu(self, db_name: str) -> QMenu:
         menu = QMenu(self)
@@ -101,91 +100,101 @@ class OpenDB(QWidget):
         return menu
 
     def set_tool_tip(self):
-        self.ui.input_path.setToolTip(
+        self.input_path.setToolTip(
             'Enter path to create database or choose from '
             'the list below. Esc - to close without choice'
+        )
+        self.input_path.setPlaceholderText(
+            "Enter path to open/create database. "
+            "Esc - to close without choice"
         )
 
     @pyqtSlot(QPoint)
     def path_menu(self, pos: QPoint):
         menu = QMenu(self)
         menu.addAction("Copy message")
-        action = menu.exec(self.ui.input_path.mapToGlobal(pos))
+        action = menu.exec(self.input_path.mapToGlobal(pos))
         if action:
             self.copy_message()
 
     def copy_message(self):
-        if self.ui.input_path.text():
-            QApplication.clipboard().setText(self.ui.input_path.text())
+        if self.input_path.text():
+            QApplication.clipboard().setText(self.input_path.text())
         else:
-            QApplication.clipboard().setText(self.ui.input_path.placeholderText())
+            QApplication.clipboard().setText(self.input_path.placeholderText())
 
     def restore_db_list(self):
         db_list = utils.get_app_setting("DB_List", []) or []
         for it in db_list:
             self.add_item_widget(it)
-        self.ui.listDB.setCurrentRow(0)
 
     def add_item_widget(self, full_name: str):
+        item = QListWidgetItem(type=QListWidgetItem.ItemType.UserType)
+        self.listDB.addItem(item)
+
         path = Path(full_name)
-        if path.exists() and path.is_file():
-            item = QListWidgetItem(self.ui.listDB)
-            item.setData(Qt.ItemDataRole.UserRole, full_name)
-            self.ui.listDB.addItem(item)
+        item_widget = listItem(path.name, path.parent.as_posix())
+        item.setSizeHint(item_widget.sizeHint())
 
-            row = listItem(str(path.name), str(path.parent))
-            item.setSizeHint(row.sizeHint())
+        self.listDB.setItemWidget(item, item_widget)
 
-            self.ui.listDB.setItemWidget(item, row)
+    def remove_item(self, item: 'QListWidgetItem'):
+        self.listDB.takeItem(self.listDB.row(item))
 
-    @pyqtSlot('QListWidgetItem')
-    def remove_item(self, wit: 'QListWidgetItem'):
-        row = self.ui.listDB.row(wit)
-        self.ui.listDB.takeItem(row)
-        # self.db_list.remove(wit.data(Qt.ItemDataRole.UserRole))
-
-    def qss_input_path_edited(self, text: str):
-        self.ui.input_path.setStyleSheet(ag.dyn_qss['input_path_edited'][0])
-        self.ui.input_path.setToolTip('Esc - to close without choice')
+    def style_input_path(self, text: str):
+        self.input_path.setStyleSheet(ag.dyn_qss['input_path_edited'][0])
+        self.input_path.setToolTip('Esc - to close without choice')
 
     def finish_edit(self):
-        db_name = self.ui.input_path.text()
+        if self.msg:
+            return
+        db_name = self.input_path.text()
         if db_name:
-            self.register_db_name(db_name)
-
-    def register_db_name(self, db_name: str):
-        if self.verify_db_file(db_name):
-            self.add_db_name()
-        else:
-            self.show_error_message()
+            self.add_db_name(Path(db_name).as_posix())
 
     def show_error_message(self):
-        self.ui.input_path.setStyleSheet(ag.dyn_qss['input_path_message'][0])
+        if not self.msg:
+            return
+        self.input_path.setStyleSheet(ag.dyn_qss['input_path_message'][0])
 
-        self.ui.input_path.clear()
-        self.ui.input_path.setPlaceholderText(self.msg)
-        self.ui.input_path.setToolTip(self.msg)
+        self.input_path.clear()
+        self.input_path.setPlaceholderText(self.msg)
+        self.input_path.setToolTip(self.msg)
+        self.msg = ''
 
-    def add_db_name(self):
-        db_name = self.ui.input_path.text()
-        if not self.is_here_already(db_name):
+    def add_db_name(self, db_name:str):
+        db_ = db_name.strip()
+        logger.info(db_)
+        if self.open_if_here(db_):
+            return
+
+        self.open_if_ok(db_)
+
+    def open_if_ok(self, db_name: str):
+        if self.verify_db_file(db_name):
+            logger.info(f"{self.msg=}")
             self.add_item_widget(db_name)
+            self.open_db(db_name)
+            return
+        self.show_error_message()
 
-    def is_here_already(self, db_name: str) -> bool:
+    def open_if_here(self, db_name: str) -> bool:
         for item in self.get_item_list():
             if item == db_name:
+                self.open_db(db_name)
                 return True
         return False
 
     def add_db(self):
         pp = Path('~/fileo/dbs').expanduser()
         path = utils.get_app_setting('DEFAULT_DB_PATH', pp.as_posix())
-        file_name, ok_ = QFileDialog.getSaveFileName(self,
-            caption="Select DB file",
+        db_name, ok_ = QFileDialog.getSaveFileName(
+            self, caption="Select DB file",
             directory=path,
-            options=QFileDialog.Option.DontConfirmOverwrite)
+            options=QFileDialog.Option.DontConfirmOverwrite
+        )
         if ok_:
-            self.register_db_name(file_name)
+            self.add_db_name(Path(db_name).as_posix())
 
     def verify_db_file(self, file_name: str) -> bool:
         """
@@ -193,40 +202,34 @@ class OpenDB(QWidget):
                     or empty/new file to create new DB
                 False otherwise
         """
-        file_ = Path(file_name).resolve(False)
-        self.ui.input_path.setText(str(file_))
+        file_ = Path(file_name).resolve(strict=False)
+        logger.info(self.input_path.text())
+        logger.info(self.input_path.placeholderText())
+        self.input_path.setText(file_name)
         if file_.exists():
             if file_.is_file():
-                if create_db.check_app_schema(str(file_)):
+                if create_db.check_app_schema(file_name):
                     return True
                 if file_.stat().st_size == 0:               # empty file
                     create_db.create_tables(
-                        create_db.create_db(str(file_))
+                        create_db.create_db(file_name)
                     )
                     return True
                 else:
-                    self.msg = f"not DB: {file_}"
+                    self.msg = f"not DB: {file_name}"
                     return False
         elif file_.parent.exists and file_.parent.is_dir():   # file not exist
             create_db.create_tables(
-                create_db.create_db(str(file_))
+                create_db.create_db(file_name)
             )
             return True
         else:
-            self.msg = f"bad path: {file_}"
+            self.msg = f"bad path: {file_name}"
             return False
 
     @pyqtSlot()
-    def lost_focus(self):
-        self.close()
-
-    @pyqtSlot()
     def item_click(self):
-        item = self.ui.listDB.currentItem()
-        wid: listItem = self.ui.listDB.itemWidget(item)
-        logger.info(f'{wid.get_full_name()=}')
-
-        self.open_db(wid.get_full_name())
+        self.open_db(self.input_path.text())
 
     def open_db(self, db_name: str):
         ag.signals_.get_db_name.emit(db_name)
@@ -238,13 +241,15 @@ class OpenDB(QWidget):
 
     def get_item_list(self) -> list:
         items = []
-        self.ui.listDB
-        for i in range(self.ui.listDB.count()):
-            item = self.ui.listDB.item(i)
-            wit: listItem = self.ui.listDB.itemWidget(item)
-            items.append(wit.get_full_name())
+        for i in range(self.listDB.count()):
+            item = self.listDB.item(i)
+            wit: listItem = self.listDB.itemWidget(item)
+            items.append(wit.get_db_name())
+        items.sort(key=str.lower, reverse=True)
         return items
 
     def close(self) -> bool:
-        utils.save_app_setting(**{"DB_List": self.get_item_list()})
+        self.msg = 'closing'
+        logger.info(f"{self.msg=}")
+        utils.save_app_setting(DB_List=self.get_item_list())
         return super().close()
