@@ -8,18 +8,8 @@ from PyQt6.QtWidgets import QMenu
 from . import app_globals as ag
 
 def choose_drop_action(e: QDropEvent):
-    """
-    MoveAction can be used in the following cases
-    1 - to move folders, always
-    2 - to move files in case of ag.appMode.DIR
-    Otherwise, only CopyAction can be used
-    The menu appears if both Actions can be used
-    and KeyboardModifier is not used.
-    """
-    if (ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder()
-        or not e.mimeData().hasFormat(ag.mimeType.files_in.value)):
-        if not has_modifier(e):
-            use_menu(e)
+    if not has_modifier(e):
+        use_menu(e)
     else:
         e.setDropAction(Qt.DropAction.CopyAction)
 

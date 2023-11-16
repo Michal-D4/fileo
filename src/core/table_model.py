@@ -73,7 +73,7 @@ class TableModel(QAbstractTableModel):
                     if self.header[col] == 'Created':
                         return self.rows[index.row()][col].toString("yyyy-MM-dd")
                     if self.header[col] == 'Published':
-                        return self.rows[index.row()][col].toString("MMM yyyy")
+                        return self.rows[index.row()][col].toString("yyyy-MM")
                     return self.rows[index.row()][col]
                 return None
             elif role == Qt.ItemDataRole.EditRole:
