@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.03 - 2023, November 16
+* fixed a bug with sorting the file list by publication date
+* allowed drag move from the list of filtered files
+
 ## 1.0.02 - 2023, November 14
 * sort DB list and many other improvements to the DB selector
 * save/restore note editor state between sessions
