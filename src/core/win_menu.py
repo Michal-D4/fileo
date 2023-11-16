@@ -9,16 +9,10 @@ from . import app_globals as ag
 
 def choose_drop_action(e: QDropEvent):
     """
-    MoveAction can be used in the following cases
-    1 - to move folders, always
-    2 - to move files in case of ag.appMode.DIR
-    Otherwise, only CopyAction can be used
-    The menu appears if both Actions can be used
+    The default action ic Copy,
+    Right button is used to choose action from menu
     """
-    if (ag.drop_button == Qt.MouseButton.RightButton and
-        (ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder()
-         or not e.mimeData().hasFormat(ag.mimeType.files_in.value)
-        )):
+    if ag.drop_button == Qt.MouseButton.RightButton:
         pos = e.position().toPoint()
         menu = QMenu(ag.app)
         menu.addAction('Copy')
@@ -34,8 +28,3 @@ def choose_drop_action(e: QDropEvent):
             e.ignore()
     else:
         e.setDropAction(Qt.DropAction.CopyAction)
-    # logger.info(e.dropAction())
-    # logger.info(f'mimeType files_in: {e.mimeData().hasFormat(ag.mimeType.files_in.value)}')
-    # logger.info(f'mimeType files_out: {e.mimeData().hasFormat(ag.mimeType.files_out.value)}')
-    # logger.info(f'mimeType files_URI: {e.mimeData().hasFormat(ag.mimeType.files_uri.value)}')
-    # logger.info(f'mimeType folders: {e.mimeData().hasFormat(ag.mimeType.folders.value)}')
