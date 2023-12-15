@@ -2,10 +2,10 @@ from loguru import logger
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
-    QTimer, QAbstractTableModel,
+    QTimer, QAbstractTableModel, Qt,
 )
 from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
+from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView, QApplication
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd, icons,
@@ -21,6 +21,11 @@ sum_width = min_width = 0
 def save_bk_settings():
     if not ag.db.conn:
         return
+    mode = (
+        ag.mode.value
+        if ag.mode.value <= ag.appMode.HISTORY_FILES.value
+        else ag.first_mode.value
+    )
     try:
         settings = {
             "FILE_LIST_HEADER": ag.file_list.header().saveState(),
@@ -28,14 +33,20 @@ def save_bk_settings():
             "EXT_SEL_LIST": low_bk.ext_selection(),
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
-            "HISTORY": ag.history.get_history(),
-            "APP_MODE": ag.mode.value,
+            "DIR_HISTORY": ag.history.get_history(),
+            "FILE_HISTORY": ag.file_history,
+            "APP_MODE": mode,
             "NOTE_EDIT_STATE": ag.file_data_holder.get_edit_state(),
-    }
+            "FILTER_FILE_ROW": (
+                ag.file_list.currentIndex().row()
+                if ag.mode is ag.appMode.FILTER else 0
+            )
+        }
         ag.save_settings(**settings)
-        curr_dir_idx = ag.dir_list.currentIndex()
-        low_bk.save_file_row(ag.file_list.currentIndex().row(), curr_dir_idx)
-        self.filter_setup.save_filter_settings()
+        dir_idx = ag.dir_list.currentIndex()
+
+        low_bk.save_file_id(dir_idx)
+        ag.filter_dlg.save_filter_settings()
     except:
         pass
 
@@ -72,7 +83,7 @@ def bk_setup(main: 'shoWindow'):
 
     dd.set_drag_drop_handlers()
 
-    ag.signals_.start_file_search.connect(file_loading)
+    ag.signals_.start_disk_scanning.connect(file_loading)
     ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
@@ -87,8 +98,13 @@ def bk_setup(main: 'shoWindow'):
 def click_setup_button():
     menu = QMenu(self)
     if not ag.single_instance:
-        menu.addAction('New window/ ')
+        menu.addAction('New window')
         menu.addSeparator()
+    menu.addAction('Create/Open DB')
+    menu.addAction('Select DB from list')
+    menu.addSeparator()
+    menu.addAction('Scan disk for files')
+    menu.addSeparator()
     menu.addAction('Report duplicate files')
     menu.addSeparator()
     menu.addAction('Preferences')
@@ -99,7 +115,7 @@ def click_setup_button():
     sz = menu.sizeHint()
     pos = self.ui.btnSetup.pos()
     action = menu.exec(ag.app.mapToGlobal(
-        pos + QPoint(53, 26 - sz.height())
+        pos + QPoint(53, 26)
     ))
     if action:
         ag.signals_.user_signal.emit(f"Setup {action.text()}")
@@ -135,6 +151,39 @@ def file_list_resize_0(e: QResizeEvent):
         restore_dirs()
 
     hdr = ag.file_list.header()
+    ag.file_list.resizeEvent = file_list_resize
+    ag.signals_.toggle_column.connect(change_sum_width)
+    file_list_resize(e)
+    ag.signals_.app_mode_changed.emit(ag.appMode.NIL.value)
+
+def restore_dirs():
+    # logger.info(f'{ag.db.path=}')
+    low_bk.set_dir_model()
+    ag.filter_dlg.restore_filter_settings()
+    restore_history()
+    if ag.mode is ag.appMode.FILTER:
+        low_bk.filtered_files()
+        row = ag.get_setting("FILTER_FILE_ROW", 0)
+        idx = ag.file_list.model().index(row, 0)
+        ag.file_list.setCurrentIndex(idx)
+        ag.file_list.scrollTo(idx)
+    else:     # ag.appMode.DIR or ag.appMode.FILTER_SETUP
+        history_dir_files()
+
+    model = ag.file_list.model()
+    header_restore(model)
+    low_bk.set_field_menu()
+
+def header_restore(model: QAbstractTableModel):
+    global sum_width, min_width
+    hdr = ag.file_list.header()
+    try:
+        state = ag.get_setting("FILE_LIST_HEADER")
+        if state:
+            hdr.restoreState(state)
+    except Exception as e:
+        logger.info(f'{type(e)}; {e.args}')
+
     cnt = hdr.count()
     if cnt:
         sum_width = sum((
@@ -146,31 +195,8 @@ def file_list_resize_0(e: QResizeEvent):
         )
     else:
         sum_width = min_width = 0
+    # logger.info(f'{sum_width=}, {min_width=}')
 
-    ag.file_list.resizeEvent = file_list_resize
-    ag.signals_.toggle_column.connect(change_sum_width)
-    file_list_resize(e)
-
-def restore_dirs():
-    low_bk.set_dir_model()
-    ag.filter_dlg.restore_filter_settings()
-    restore_history()
-    if ag.mode is ag.appMode.DIR:
-        files_by_history()
-    else:
-        low_bk.filtered_files()
-    model = ag.file_list.model()
-    header_restore(model)
-    low_bk.set_field_menu()
-
-def header_restore(model: QAbstractTableModel):
-    hdr = ag.file_list.header()
-    try:
-        state = ag.get_setting("FILE_LIST_HEADER")
-        if state:
-            hdr.restoreState(state)
-    except Exception as e:
-        logger.info(f'{type(e)}; {e.args}')
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
@@ -199,11 +225,18 @@ def populate_all():
     )
 
 def restore_history():
-    hist = ag.get_setting('HISTORY', [[], [], []])  # next_, prev, curr
-    # logger.info(f'{hist=}')
+    ag.file_history = ag.get_setting('FILE_HISTORY', [])
+    hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
+    if not hist[2]:
+        idx = ag.dir_list.model().index(0, 0, QModelIndex())
+        if idx.isValid():
+            udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
+            hist[2] = [udat.id,]
+
+    low_bk.hist_folder = bool(hist[2])
     ag.history.set_history(*hist)
 
-def files_by_history():
+def history_dir_files():
     idx = low_bk.expand_branch(ag.history.get_current())
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
@@ -211,13 +244,14 @@ def files_by_history():
         low_bk.show_folder_files()
 
 @pyqtSlot()
-def show_hidden_dirs():
+def refresh_dir_list():
     """
     QCheckBox stateChanged signal handler
     """
     branch = low_bk.define_branch(ag.dir_list.currentIndex())
     low_bk.set_dir_model()
     idx = low_bk.expand_branch(branch)
+
     ag.dir_list.setCurrentIndex(idx)
 
 def set_context_menu():
@@ -227,6 +261,21 @@ def set_context_menu():
     """
     ag.dir_list.customContextMenuRequested.connect(dir_menu)
     ag.file_list.customContextMenuRequested.connect(file_menu)
+    ag.app.ui.msg.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+    ag.app.ui.msg.customContextMenuRequested.connect(msg_copy_menu)
+
+@pyqtSlot(QPoint)
+def msg_copy_menu(pos: QPoint):
+    menu = QMenu(ag.app)
+    menu.addAction("Copy message")
+    action = menu.exec(ag.app.ui.msg.mapToGlobal(pos))
+    if action:
+        copy_message()
+
+def copy_message():
+    if ag.app.ui.msg.text():
+        QApplication.clipboard().setText(ag.app.ui.msg.text())
+        ag.app.ui.msg.clear()
 
 @pyqtSlot(QPoint)
 def dir_menu(pos):
@@ -264,7 +313,11 @@ def file_menu(pos):
         menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
-        menu.addAction("Remove file(s) from folder")
+        if ag.mode is ag.appMode.HISTORY_FILES:
+            menu.addAction("Clear file history")
+            menu.addAction("Remove selected from history")
+        else:
+            menu.addAction("Remove file(s) from folder")
         menu.addSeparator()
         menu.addAction("Delete file(s) from DB")
         action = menu.exec(ag.file_list.mapToGlobal(pos))

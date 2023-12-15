@@ -29,15 +29,12 @@ def check4update():
 
 @pyqtSlot(QNetworkReply)
 def installer_update_replay(replay: QNetworkReply):
-    logger.info(f'{replay.error()=}')
     if replay.error() is QNetworkReply.NetworkError.NoError:
         rep = replay.readAll()
         json_rep = QJsonDocument.fromJson(rep)
-        logger.info(rep)
         obj = json_rep.object()
         release = obj['platform_releases']['windows']
         filename = release['filename'].toString()
-        # logger.info(f"{filename=}")
         if filename.count('.') <= 1:
             utils.show_message_box(
                 'Check for update',
@@ -63,13 +60,12 @@ def installer_update_replay(replay: QNetworkReply):
             )
 
 def get_sourceforge(ver: str):
-    # logger.info(f'has new ver "{ver}", current v.: {ag.app_version()}')
     btn_clicked = utils.show_message_box(
         'Check for update',
         f'New version "{ver}" available.',
         custom_btns=(
-            ('Go to download', QMessageBox.ButtonRole.ActionRole),
-            (QMessageBox.StandardButton.Cancel,)
+            ('Go to download', QMessageBox.ButtonRole.YesRole),
+            ('Cancel', QMessageBox.ButtonRole.NoRole),
         )
     )
     if btn_clicked == 0:

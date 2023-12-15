@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QCheckBox,
 )
 
+import qss
 from ..core import utils, app_globals as ag
 
 def create_dir(dir: Path):
@@ -35,7 +36,9 @@ class Preferences(QDialog):
         form_layout.addRow('Report path:', self.report_path)
         form_layout.addRow('Log file path:', self.log_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
-        form_layout.addRow('Allow single instance only:', self.single_instance)
+        if qss.config['instance_control']:
+            form_layout.addRow('Allow single instance only:', self.single_instance)
+            form_layout.addRow('Server port:', self.port_no)
         form_layout.addRow('Switch on logging:', self.do_log)
         form_layout.addRow('Write QSS to log file:', self.qss_log)
 
@@ -65,17 +68,19 @@ class Preferences(QDialog):
             "DEFAULT_REPORT_PATH": self.report_path.text(),
             "DEFAULT_LOG_PATH": self.log_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
-            "SINGLE_INSTANCE": int(self.single_instance.isChecked()),
             "SWITCH_ON_LOGGING": int(self.do_log.isChecked()),
             "LOG_QSS": int(self.qss_log.isChecked()),
         }
+        if qss.config['instance_control']:
+            settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
+            settings['PORT_NUMBER'] = self.port_no.value()
+            ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         utils.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
         create_dir(Path(self.export_path.text()))
         create_dir(Path(self.report_path.text()))
         create_dir(Path(self.log_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
-        ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         self.close()
 
     def set_inputs(self):
@@ -102,10 +107,16 @@ class Preferences(QDialog):
         val = utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setValue(int(val))
         ag.history.set_limit(int(val))
-        self.single_instance = QCheckBox()
-        self.single_instance.setChecked(
-            int(utils.get_app_setting('SINGLE_INSTANCE', 0))
-        )
+        if qss.config['instance_control']:
+            self.single_instance = QCheckBox()
+            self.single_instance.setChecked(
+                int(utils.get_app_setting('SINGLE_INSTANCE', 0))
+            )
+            self.port_no = QSpinBox()
+            self.port_no.setMinimum(1024)
+            self.port_no.setMaximum(65535)
+            val = utils.get_app_setting('PORT_NUMBER', 10010)
+            self.port_no.setValue(int(val))
         self.do_log = QCheckBox()
         self.do_log.setChecked(
             int(utils.get_app_setting('SWITCH_ON_LOGGING', 0))

@@ -284,7 +284,7 @@ def move_files(stream: QDataStream, target: int) -> bool:
 
     for _ in range(count):
         file_id = stream.readInt()
-        if not dir_id or ag.srch_list:
+        if not dir_id:
             dir_id = db_ut.get_dir_id_for_file(file_id)
         if dir_id:
             db_ut.move_file(target, dir_id, file_id)

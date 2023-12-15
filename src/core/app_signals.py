@@ -1,7 +1,8 @@
 from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtWidgets import QWidget
+
 
 class AppSignals(QObject):
-    from ..widgets.file_note import fileNote
 
     get_db_name = pyqtSignal(str, name="get_db_name")
 
@@ -9,14 +10,14 @@ class AppSignals(QObject):
 
     collapseSignal = pyqtSignal(QObject, bool)
 
-    start_file_search = pyqtSignal(str, list, name="start_file_search")
+    start_disk_scanning = pyqtSignal(str, list, name="start_disk_scanning")
 
     user_signal = pyqtSignal(str, name="user_signal")
 
     app_mode_changed = pyqtSignal(int)
 
-    delete_note = pyqtSignal(fileNote)
+    delete_note = pyqtSignal(QWidget)
 
-    start_edit_note = pyqtSignal(fileNote)
+    start_edit_note = pyqtSignal(QWidget)
 
     toggle_column = pyqtSignal()

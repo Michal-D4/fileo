@@ -10,8 +10,6 @@ from . import app_globals as ag
 def choose_drop_action(e: QDropEvent):
     if not has_modifier(e):
         use_menu(e)
-    else:
-        e.setDropAction(Qt.DropAction.CopyAction)
 
 def has_modifier(e: QDropEvent) -> bool:
     if e.modifiers() is Qt.KeyboardModifier.ShiftModifier:

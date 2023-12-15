@@ -119,13 +119,15 @@ setting_names = (     # DB settings only
     "RATING_VAL",
     "LAST_SCAN_OPENED",
     "SHOW_HIDDEN",
-    "HISTORY",
+    "DIR_HISTORY",
+    "FILE_HISTORY",
     "SEARCH_FILE",
     "NOTE_EDIT_STATE",
+    "FILTER_FILE_ROW",
 )
 
 APP_ID = 1718185071
-USER_VER = 10
+USER_VER = 13
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:

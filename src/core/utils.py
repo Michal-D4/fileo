@@ -10,7 +10,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from . import icons, app_globals as ag
-from .. import qss as style_sheets
+from src import qss as style_sheets
 
 APP_NAME = "fileo"
 MAKER = 'miha'
@@ -130,6 +130,9 @@ def apply_style(app: QApplication, theme: str, to_save: bool = False):
     icons.add_other_icon(
         'app', QPixmap(ag.qss_params['$ico_app'])
     )
+    icons.add_other_icon(
+        'history', QPixmap(ag.qss_params['$ico_history'])
+    )
 
     try:
         from ctypes import windll  # to show icon on the taskbar - Windows only
@@ -149,18 +152,17 @@ def show_message_box(title: str, msg: str,
     dlg.setWindowTitle(title)
     dlg.setText(msg)
     dlg.setDetailedText(details)
+
     if custom_btns:
         btns = []
         for btn in custom_btns:
             btns.append(dlg.addButton(*btn))
         dlg.setIcon(icon)
-        dlg.exec()
-        clicked = dlg.clickedButton()
-        return btns.index(clicked) if clicked else -1
     else:
         dlg.setStandardButtons(btn)
         dlg.setIcon(icon)
-        return dlg.exec()
+
+    return dlg.exec()
 
 def get_log_file_name() -> str:
     from datetime import datetime as dt

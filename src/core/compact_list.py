@@ -199,7 +199,6 @@ class aBrowser(QWidget):
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
-        self.curr_pos = self.browser.textCursor().position()
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
         self.update_selected(href, mod)
@@ -223,12 +222,12 @@ class aBrowser(QWidget):
 
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
         tref = href.toString()[1:]
+        self.curr_pos = self.browser.textCursor().position()
         if tref not in self.tags:
             # no new tags created in this module
             # so this shouldn't happen
             return
         self.browser.find(tref)
-        self.curr_pos = self.browser.textCursor().position()
         i = self.tags.index(tref)
         if mod is Qt.KeyboardModifier.ControlModifier:
             if i in self.selected_idx:

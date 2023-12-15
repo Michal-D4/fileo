@@ -46,11 +46,6 @@ def collect_all_icons():
 
 def _collect_toolbar_icons():
     # global icons
-    toolbar_icons["dataBase"] = (
-        qta.icon('mdi.database-outline', color=ag.qss_params["$ToolButtonColor"],
-            color_active=ag.qss_params["$ToolButtonActiveColor"]),
-    )
-
     toolbar_icons["btnDir"] = (
         qta.icon('mdi.tree-outline', color=ag.qss_params["$ToolButtonColor"],
             color_active=ag.qss_params["$ToolButtonActiveColor"], scale_factor = 1.3),
@@ -73,11 +68,6 @@ def _collect_toolbar_icons():
         qta.icon(*names_, **(opt_ | {'color': ag.qss_params["$ToolButtonColor"],
                                     'color_active': ag.qss_params["$ToolButtonActiveColor"]})),
         qta.icon(*names_, **(opt_ | {'color': ag.qss_params["$ToolButtonActiveColor"]})),
-    )
-
-    toolbar_icons["btnScan"] = (
-        qta.icon('mdi.select-search', color=ag.qss_params["$ToolButtonColor"],
-            color_active=ag.qss_params["$ToolButtonActiveColor"]),
     )
 
     toolbar_icons["btnToggleBar"] = (

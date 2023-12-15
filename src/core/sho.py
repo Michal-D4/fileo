@@ -16,11 +16,8 @@ from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate
 from ..ui.ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
-from ..widgets.file_search import fileSearch
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
-from ..widgets.open_db import OpenDB
-from ..widgets.custom_grips import CustomGrip
 
 from . import (icons, utils, db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
@@ -37,7 +34,6 @@ else:
 MIN_NOTE_HEIGHT = 75
 MIN_CONTAINER_WIDTH = 135
 DEFAULT_CONTAINER_WIDTH = 170
-MAX_WIDTH_DB_DIALOG = 400
 DEFAULT_HISTORY_DEPTH = 15
 
 def set_widget_to_frame(frame: QFrame, widget: QWidget):
@@ -57,16 +53,14 @@ class shoWindow(QMainWindow):
 
         self.start_pos: QPoint = QPoint()
         self.window_maximized: bool = False
-        self.filter_setup: FilterSetup|None = None
 
-        self.icons = icons.get_toolbar_icons()
         self.set_button_icons()
         self.connect_slots()
         self.set_extra_widgets()
 
         self.setup_global_widgets()
-        self.restore_settings()
         self.restore_mode()
+        self.restore_settings()
         bk_ut.bk_setup(self)
         self.set_busy(False)
 
@@ -93,7 +87,7 @@ class shoWindow(QMainWindow):
             int(utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
-        if ag.db.restore:     # start app with restoring DB connection - 1st app instance
+        if ag.db.restore:     # start app with restoring DB connection - first app instance
             self.connect_db(
                 ag.db.path or str(utils.get_app_setting("DB_NAME", ""))
             )
@@ -106,7 +100,7 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
-        logger.info(f'{ag.PID=}, {path}')
+        # logger.info(f'{ag.PID=}, {path}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
@@ -121,10 +115,12 @@ class shoWindow(QMainWindow):
             self.ui.container.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        self.mode = ag.appMode(
+        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
+        mode = ag.appMode(
             int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
-        self.click_checkable_button(True, self.mode)
+        low_bk.set_check_btn(mode)
+        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
 
     def restore_note_height(self):
         hh = utils.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
@@ -136,20 +132,13 @@ class shoWindow(QMainWindow):
 
         if geometry:
             self.restoreGeometry(geometry)
+            if not ag.db.restore:
+                self.move(self.x() + 50, self.y() + 30)
 
         setup_ui(self)
 
-    @property
-    def mode(self) -> int:
-        return ag.mode
-
-    @mode.setter
-    def mode(self, val: ag.appMode):
-        ag.mode = val
-        self.container.ui.app_mode.setText(f"{val}")
-
     def set_extra_widgets(self):
-        self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Previous folder')
+        self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Prev folder')
         self.btn_prev.clicked.connect(low_bk.to_prev_folder)
         self.btn_prev.setDisabled(True)
 
@@ -158,7 +147,7 @@ class shoWindow(QMainWindow):
         self.btn_next.setDisabled(True)
 
         self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')
-        self.refresh_tree.clicked.connect(bk_ut.show_hidden_dirs)
+        self.refresh_tree.clicked.connect(bk_ut.refresh_dir_list)
         self.refresh_tree.setDisabled(True)
 
         self.show_hidden = self._create_button("show_hide", 'show_hide', 'Show hidden folders')
@@ -184,12 +173,10 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def show_hide_click(self, state: bool):
-        bk_ut.show_hidden_dirs()
+        bk_ut.refresh_dir_list()
         self.show_hidden.setIcon(icons.get_other_icon("show_hide", int(state)))
 
     def setup_global_widgets(self):
-        ag.app = bk_ut.self = self
-
         frames = self.container.get_widgets()
 
         ag.dir_list = QTreeView()
@@ -198,10 +185,10 @@ class shoWindow(QMainWindow):
         ag.dir_list.setAcceptDrops(True)
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        ag.dir_list.setFocusPolicy(Qt.FocusPolicy.StrongFocus) # default
         ag.dir_list.setObjectName('dir_list')
         ag.dir_list.expanded.connect(self.branch_expanded)
         set_widget_to_frame(frames[0], ag.dir_list)
+        ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
 
         ag.tag_list = aBrowser(read_only=False)
         ag.tag_list.setObjectName("tag_list")
@@ -223,20 +210,20 @@ class shoWindow(QMainWindow):
         self.collapse_btn.setChecked(False)
 
     def set_button_icons(self):
-        for btn_name, icon in self.icons.items():
+        for btn_name, icon in icons.get_toolbar_icons().items():
             btn: QToolButton  = getattr(self.ui, btn_name)
             btn.setIcon(icon[btn.isChecked()])
         self.ui.btn_search.setIcon(icons.get_other_icon("search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         self.ui.btn_search.setDisabled(True)
+        self.ui.recent_files.setIcon(icons.get_other_icon("history"))
+        self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
 
     def connect_slots(self):
+        ag.app = bk_ut.self = self
+        ag.set_checkable_btn()
         self.connect_checkable()
 
-
-        self.ui.dataBase.clicked.connect(self.show_db_list)
-
-        self.ui.btnScan.clicked.connect(self.click_scan)
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
         self.ui.btnSetup.clicked.connect(bk_ut.click_setup_button)
 
@@ -255,8 +242,9 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot()
     def close_filter_setup(self):
-        self.mode = ag.appMode.FILTER
-        self.click_checkable_button(True, self.mode)
+        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
+        ag.set_mode(ag.appMode.FILTER)
+        self.click_checkable_button(ag.appMode.FILTER)
 
     @pyqtSlot(str)
     def get_db_name(self, db_name: str):
@@ -266,19 +254,8 @@ class shoWindow(QMainWindow):
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
+            # logger.info(f'ag.mode={ag.mode.name}')
             bk_ut.restore_dirs()
-
-    @pyqtSlot()
-    def show_db_list(self):
-        """
-        manage the list of db files,
-        select DB to open
-        """
-        open_db = OpenDB(self)
-        open_db.move(48, 20)
-        open_db.resize(min(self.width() // 2, MAX_WIDTH_DB_DIALOG),
-            self.height() - 60)
-        open_db.show()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
@@ -363,15 +340,9 @@ class shoWindow(QMainWindow):
         self.start_pos = None
 
     def connect_checkable(self):
-        self.checkable_btn = {
-            ag.appMode.DIR: self.ui.btnDir,
-            ag.appMode.FILTER: self.ui.btnFilter,
-            ag.appMode.FILTER_SETUP: self.ui.btnFilterSetup,
-        }
-
-        for key, btn in self.checkable_btn.items():
+        for key, btn in ag.checkable_btn.items():
             btn.clicked.connect(lambda state, bc=key:
-                self.click_checkable_button(state, bt_key=bc))
+                self.click_checkable_button(bt_key=bc))
 
     def minimize(self):
         self.showMinimized()
@@ -382,75 +353,53 @@ class shoWindow(QMainWindow):
             time.sleep(0.1)
         self.close()
 
-    def click_checkable_button(self, state: bool, bt_key: ag.appMode):
-        """
-        state = True if clicked button checked
-        bt_key - here the key of checkable_btn dict
-        there are three checkable buttons on left tool bar:
-        btnDir, btnFilter, btnFilterSetup
-        click button changes state of application
-        change icon of checkable button depending on its state
-        """
-        old_mode = ag.mode.value
-        if state:
-            # need loop to find button to upcheck
-            for key, btn in self.checkable_btn.items():
-                btn.setIcon(self.icons[btn.objectName()][key is bt_key])
-        else:
-            self.checkable_btn[bt_key].setIcon[bt_key][0]
-
-        self.mode = bt_key
-        self.checkable_btn[self.mode].setChecked(True)
-        ag.signals_.app_mode_changed.emit(old_mode)
+    def click_checkable_button(self, bt_key: ag.appMode):
+        first_mode = ag.mode.value
+        # logger.info(f'{ag.mode.name=}, {bt_key.name=}')
+        low_bk.set_check_btn(bt_key)
+        ag.signals_.app_mode_changed.emit(first_mode)
 
         self.toggle_filter_show()
 
     def toggle_filter_show(self):
         if not ag.db.conn:
             return
+        # logger.info(f'{self.ui.btnFilterSetup.isChecked()=}')
+        # logger.info(f'ag.mode={ag.mode.name}, {ag.checkable_btn[ag.appMode.FILTER_SETUP].isChecked()=}')
         if self.ui.btnFilterSetup.isChecked():
-            self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
-            self.filter_setup.show()
-        elif self.filter_setup:
-            self.filter_setup.hide()
+            ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
+            ag.filter_dlg.show()
+        elif ag.filter_dlg:
+            ag.filter_dlg.hide()
 
     def init_filter_setup(self):
-        self.filter_setup = FilterSetup(self)
-        ag.tag_list.change_selection.connect(self.filter_setup.tag_selection_changed)
-        ag.ext_list.change_selection.connect(self.filter_setup.ext_selection_changed)
-        ag.author_list.change_selection.connect(self.filter_setup.author_selection_changed)
-        ag.filter_dlg = self.filter_setup
+        # logger.info(f'ag.mode={ag.mode.name}')
+        ag.filter_dlg = FilterSetup(self)
+        ag.tag_list.change_selection.connect(ag.filter_dlg.tag_selection_changed)
+        ag.ext_list.change_selection.connect(ag.filter_dlg.ext_selection_changed)
+        ag.author_list.change_selection.connect(ag.filter_dlg.author_selection_changed)
 
-    @pyqtSlot()
-    def click_scan(self):
-        """
-        search for files with a given extension
-        in the selected folder and its subfolders
-        """
-        if not ag.db.conn:
-            return
-        srch_files = fileSearch(self)
-        srch_files.move(
-            (self.width()-srch_files.width()) // 4,
-            (self.height()-srch_files.height()) // 4)
-        srch_files.show()
-        self.ui.btnScan.setEnabled(False)
+        self.toggle_filter_show()
 
     @pyqtSlot()
     def click_toggle_bar(self):
         if self.ui.container.isVisible():
             self.ui.container.hide()
-            self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][1])
+            self.ui.btnToggleBar.setIcon(
+                icons.get_toolbar_icons()["btnToggleBar"][1]
+            )
         else:
             self.ui.container.show()
-            self.ui.btnToggleBar.setIcon(self.icons["btnToggleBar"][0])
+            self.ui.btnToggleBar.setIcon(
+                icons.get_toolbar_icons()["btnToggleBar"][0]
+            )
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         super().resizeEvent(e)
         update_grips(self)
 
-        if self.filter_setup and self.filter_setup.isVisible():
-            self.filter_setup.move(self.width() - self.filter_setup.width() - 10, 32)
+        if ag.filter_dlg and ag.filter_dlg.isVisible():
+            ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
