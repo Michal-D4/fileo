@@ -7,7 +7,7 @@ QFrame#toolBar {
 QFrame#title {
    background-color: $treeViewBackground;
 }
-QTextBrowser, QTreeView#dir_list, QListView {
+QTextBrowser, QListView {
    border: none;
    background-color: $treeViewBackground;
    color: $navigatorColor;
@@ -19,11 +19,6 @@ QTextBrowser#compact_list {
    selection-background-color: $treeViewBackground;
    font-family: $fontFamily;
    font-size: $FontSizeNormal;
-}
-QTreeView#file_list {
-   border: none;
-   background-color: $treeViewFileBG;
-   color: $navigatorColor;
 }
 #toolBar QToolButton {
    border: none;
@@ -174,51 +169,53 @@ QToolButton#more:hover {
    font: $foldableHeaderFont;
 }
 /* QTreeView */
-QTreeView {
- padding-left: 12px;
- show-decoration-selected: 1;
- font-family: $fontFamily;
- font-size: $FontSizeNormal;
+QTreeView#dir_list, QTreeView#file_list {
+   border: none;
+   background-color: $treeViewFileBG;
+   color: $navigatorColor;
+   padding-left: 12px;
+   show-decoration-selected: 1;
+   font-family: $fontFamily;
+   font-size: $FontSizeNormal;
 }
-QTreeView::item {
- color: black;
- border: none;
- background-color: transparent;
+QTreeView::item:hover{
+   background-color: $treeHoverBackground;
 }
-QTreeView::item:hover{background-color: $treeHoverBackground;}
 QTreeView::item:selected:active{
- background: $itemSelectBG;
- color: white;
+   background: $itemSelectBG;
+   color: white;
 }
 QTreeView::item:selected:!active {
- background: $itemSelectNoActive;
+   /* background: $itemSelectBG;
+   color: white; */
+   background: $itemSelectNoActive;
 }
 QTreeView::branch {
    background-color: transparent;
 }
 QTreeView::branch:hover{background-color: $treeHoverBackground;}
 QTreeView::branch:selected:active{
- background: $itemSelectBG;
+   background: $itemSelectBG;
 }
 QTreeView::branch:selected:!active {
- background: $itemSelectNoActive;
+   background: $itemSelectNoActive;
 }
 QTreeView::branch:!adjoins-item {
- border-image: url($ico_VLINE) 0;
+   border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:adjoins-item {
- border-image: url($ico_VLINE) 0;
+   border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:!has-children:!has-siblings:adjoins-item {
- border-image: url($ico_VLINE) 0;
+   border-image: url($ico_VLINE) 0;
 }
 QTreeView::branch:closed:has-children {
- border-image: none;
- image: url($ico_angleRight);
+   border-image: none;
+   image: url($ico_angleRight);
 }
 QTreeView::branch:open:has-children {
- border-image: none;
- image: url($ico_angleDown);
+   border-image: none;
+   image: url($ico_angleDown);
 }
 /* END of common qss */
 /* below are special qss which are used for dynamic style switching in code */
@@ -226,9 +223,8 @@ QTreeView::branch:open:has-children {
 ##decorator~#decorator:hover {background: $splitLineHoverBackground;}
 ##path~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputColor;
 ##name~border: none; font-family: $fontFamily; font-size: $FontSizeBig; color: $dialogInputColor;
-##input_path_edited~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputEditColor;
 ##input_path_message~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $ErrorMessage1Color;
-##text_browser~<style type="text/css"> #closeBtn {text-align: right} *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
+##text_browser~<style type="text/css"> *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
 ##active_selector~$bottomBorder color: $$activeColor
 ##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
 ##noteFrames~QFrame#head {$bottomBorder background-color: $treeViewBackground; }

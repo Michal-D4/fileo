@@ -5,16 +5,16 @@ from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget, QFileDialog
 
-from .ui_file_search import Ui_FileSearch
+from .ui_scan_disk import Ui_scanDisk
 
 from ..core import app_globals as ag, icons
 
 
-class fileSearch(QWidget):
+class diskScanner(QWidget):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
 
-        self.ui = Ui_FileSearch()
+        self.ui = Ui_scanDisk()
         self.ui.setupUi(self)
 
         self.ui.open_btn.setIcon(icons.get_other_icon("open_db"))
@@ -50,7 +50,7 @@ class fileSearch(QWidget):
         if self.ui.no_ext.isChecked():
             exts.append('')
 
-        ag.signals_.start_file_search.emit(str(root), exts)
+        ag.signals_.start_disk_scanning.emit(str(root), exts)
         self.close()
 
     def set_exts(self):

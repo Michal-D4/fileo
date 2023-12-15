@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FileSearch</class>
- <widget class="QWidget" name="FileSearch">
+ <class>scanDisk</class>
+ <widget class="QWidget" name="scanDisk">
   <property name="geometry">
    <rect>
     <x>0</x>

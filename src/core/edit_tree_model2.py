@@ -97,10 +97,7 @@ class TreeModel(QAbstractItemModel):
     def columnCount(self, parent=QModelIndex()):
         return self.rootItem.columnCount()
 
-    def data(self, index, role):
-        if not index.isValid():
-            return None
-
+    def data(self, index, role: Qt.ItemDataRole):
         if (role == Qt.ItemDataRole.DisplayRole or
             role == Qt.ItemDataRole.ToolTipRole or
             role == Qt.ItemDataRole.EditRole):
@@ -225,7 +222,7 @@ class TreeModel(QAbstractItemModel):
 
         for key in items_dict:
             # sort by dir name case insensitive
-            items_dict[key].sort(key=lambda item:  item.itemData[0].upper())
+            items_dict[key].sort(key=lambda item: item.itemData[0].upper())
             parents[key].children = items_dict[key]
 
         self.dataChanged.connect(self.data_changed)

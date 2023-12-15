@@ -68,9 +68,8 @@ class fileInfo(QWidget):
         except QComboBox from authors table
         """
         idx = ag.file_list.currentIndex()
-        u_dat: ag.FileData = idx.data(Qt.ItemDataRole.UserRole)
-        if u_dat:
-            self.file_id = u_dat.id
+        if idx.isValid():
+            self.file_id = idx.data(Qt.ItemDataRole.UserRole).id
             fields = db_ut.get_file_info(self.file_id)
             if not fields:
                 return

@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.0.03'
+    return '1.0.04'
 
 PID: int = 0
 TIME_CHECK = 5     # interval(sec) client sends message "it's active"
@@ -40,7 +40,56 @@ author_list: 'aBrowser' = None
 file_data_holder: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 history: 'History' = None
+file_history = []
 single_instance = False
+stop_thread = False
+drop_button = 0
+checkable_btn = None
+
+dyn_qss = defaultdict(list)
+qss_params = {}
+
+@unique
+class appMode(Enum):    # better name is fileListMode
+    NIL = 0
+    DIR = 1
+    FILTER = 2
+    FILTER_SETUP = 3
+    HISTORY_FILES = 4
+    FOUND_FILES = 5
+    FILE_BY_REF = 6
+
+    def __repr__(self) -> str:
+        return f'{self.name}:{self.value}'
+
+def set_checkable_btn():
+    global checkable_btn
+    checkable_btn = {
+        appMode.DIR: app.ui.btnDir,
+        appMode.FILTER: app.ui.btnFilter,
+        appMode.FILTER_SETUP: app.ui.btnFilterSetup,
+    }
+
+first_mode = appMode.DIR
+mode = appMode.NIL
+
+def set_mode(new_mode: appMode):
+    global mode, first_mode
+    if new_mode is mode:
+        return
+    if mode.value < appMode.HISTORY_FILES.value:
+        first_mode = mode
+    mode = new_mode
+
+    app.container.ui.app_mode.setText(mode.name)
+
+def switch_first_mode():
+    global mode, first_mode
+    if mode.value >= appMode.HISTORY_FILES.value:
+        old_mode, mode = mode, first_mode
+        app.container.ui.app_mode.setText(mode.name)
+
+        signals_.app_mode_changed.emit(old_mode.value)
 
 @dataclass(slots=True)
 class DB():
@@ -49,7 +98,7 @@ class DB():
     restore: bool = True
 
     def __repr__(self):
-        return f'path: {self.path}, restore: {self.restore!r}, {self.conn!r}'
+        return f'(path: {self.path}, conn: {self.conn}, restore: {self.restore})'
 
 db = DB()
 
@@ -59,23 +108,24 @@ class mimeType(Enum):
     files_out = 'files/drag-outside'
     files_uri = 'text/uri-list'
 
-@unique
-class appMode(Enum):
-    DIR = 1
-    FILTER = 2
-    FILTER_SETUP = 3
-
 @dataclass(slots=True)
 class DirData():
     parent_id: int
     id: int
     is_link: bool
     hidden: bool
-    file_row: int = 0
+    file_id: int = 0
 
     def __post_init__(self):
         self.is_link = bool(self.is_link)
         self.hidden = bool(self.hidden)
+
+    def __repr__(self) -> str:
+        return (
+            f'DirData(parent_id={self.parent_id}, id={self.id}, '
+            f'is_link={bool(self.is_link)}, hidden={bool(self.hidden)}, '
+            f'file_id={self.file_id})'
+        )
 
 @dataclass(slots=True)
 class FileData():
@@ -83,14 +133,8 @@ class FileData():
     ext_id: int
     path: int
 
-stop_thread = False
-mode = appMode.DIR
-srch_list = False
-
-drop_button = 0
-
-dyn_qss = defaultdict(list)
-qss_params = {}
+    def __repr__(self) -> str:
+        return f'(file_id={self.id}, ext_id={self.ext_id}, path_id={self.path})'
 
 def save_settings(**kwargs):
     """
@@ -120,6 +164,20 @@ def get_setting(key: str, default=None):
         vv = None
 
     return vv if vv else default
+
+def add_history_file(id_: int):
+    """
+    id_ - file id, valid value > 0
+    """
+    if id_ < 1 or file_history and id_ == file_history[-1]:
+        return
+    try:
+        i = file_history.index(id_)
+        file_history.pop(i)
+    except ValueError:
+        pass
+
+    file_history.append(id_)
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals

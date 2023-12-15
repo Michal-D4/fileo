@@ -18,12 +18,11 @@ class History(object):
         self.prev = prev
         self.curr = curr
         ag.signals_.user_signal.emit(
-            f'enable_next_prev/{self.has_next()},{self.has_prev()}'
+            f'enable_next_prev\\{self.has_next()},{self.has_prev()}'
         )
 
     def set_limit(self, limit: int):
         self.limit: int = limit
-        # logger.info(f'{limit=}, {len(self.next_)=}, {len(self.prev)=}')
         if len(self.next_) > limit:
             self.next_ = self.next_[len(self.next_)-limit:]
         if len(self.prev) > limit:
@@ -39,9 +38,8 @@ class History(object):
 
         self.curr = self.next_.pop()
         ag.signals_.user_signal.emit(
-            f'enable_next_prev/{self.has_next()},yes'
+            f'enable_next_prev\\{self.has_next()},yes'
         )
-        # logger.info(f'{self.curr=}, {self.prev=}')
         return self.curr
 
     def prev_dir(self) -> list:
@@ -51,9 +49,8 @@ class History(object):
 
         self.curr = self.prev.pop()
         ag.signals_.user_signal.emit(
-            f'enable_next_prev/yes,{self.has_prev()}'
+            f'enable_next_prev\\yes,{self.has_prev()}'
         )
-        # logger.info(f'{self.curr=}, {self.next_=}')
         return self.curr
 
     def has_next(self) -> str:
@@ -62,16 +59,23 @@ class History(object):
     def has_prev(self) -> str:
         return 'yes' if self.prev else 'no'
 
-    def add_item(self, path):
-        # logger.info(f'{path=}, {self.curr=}')
-        if self.curr:
+    def add_item(self, new):
+        if not self.curr:
+            self.curr = new
+            return
+
+        if self.prev[-2:] == [self.curr, new]:
+            # to avoid duplicated pairs in history
+            self.curr = self.prev.pop(-1)
+        else:
             if len(self.prev) >= self.limit:
                 self.prev = self.prev[len(self.prev) - self.limit + 1:]
             self.prev.append(self.curr)
+            self.curr = new
         self.next_.clear()
-        self.curr = path
+
         ag.signals_.user_signal.emit(
-            f'enable_next_prev/no,{self.has_prev()}'
+            f'enable_next_prev\\no,{self.has_prev()}'
         )
 
     def get_history(self) -> list:

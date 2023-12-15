@@ -4,7 +4,9 @@ from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
     QSortFilterProxyModel, pyqtSignal
     )
 
-from . import db_ut
+from . import db_ut, app_globals as ag
+
+SORT_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
 class ProxyModel(QSortFilterProxyModel):
@@ -37,9 +39,9 @@ class ProxyModel(QSortFilterProxyModel):
     def update_field_by_name(self, val, name: str, index: QModelIndex):
         self.sourceModel().update_field_by_name(val, name, self.mapToSource(index))
 
-    def get_row_by_id(self, id: int) -> int:
+    def get_index_by_id(self, id: int) -> int:
         idx = self.sourceModel().get_index_by_id(id)
-        return self.mapFromSource(idx).row()
+        return self.mapFromSource(idx)
 
     def get_user_data(self) -> list:
         return self.sourceModel().get_user_data()
@@ -73,17 +75,20 @@ class TableModel(QAbstractTableModel):
                     if self.header[col] == 'Created':
                         return self.rows[index.row()][col].toString("yyyy-MM-dd")
                     if self.header[col] == 'Published':
-                        return self.rows[index.row()][col].toString("yyyy-MM")
+                        return self.rows[index.row()][col].toString("MMM yyyy")
                     return self.rows[index.row()][col]
                 return None
             elif role == Qt.ItemDataRole.EditRole:
                 return self.rows[index.row()][col]
             elif role == Qt.ItemDataRole.UserRole:
                 return self.user_data[index.row()]
+            elif role == SORT_ROLE:
+                return self.rows[index.row()][col]
             elif role == Qt.ItemDataRole.TextAlignmentRole:
                 if col:
                     return Qt.AlignmentFlag.AlignRight
                 return Qt.AlignmentFlag.AlignLeft
+        return None
 
     def get_user_data(self):
         return self.user_data
@@ -130,6 +135,7 @@ class TableModel(QAbstractTableModel):
         self.dataChanged.emit(index, index)
         if field == 'filename':
             self.model_data_changed.emit(value)
+        ag.add_history_file(self.user_data[index.row()].id)
         return True
 
     def get_row(self, row):

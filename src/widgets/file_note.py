@@ -14,15 +14,18 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 class fileNote(QWidget):
 
-    def __init__(self, file_id: int=0,
+    def __init__(self,
+                 note_file_id: int = 0,  # file_id from filenotes table
                  note_id: int=0,
                  modified: int=0,
                  created: int=0,
+                 file_id: int=0,         # current file_id in file_list
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
-        self.file_id = file_id
+        self.file_id = file_id if file_id else note_file_id
         self.id = note_id
+        self.note_file_id = note_file_id
         self.collapsed = False
 
         self.modified = datetime.fromtimestamp(modified)
@@ -52,10 +55,6 @@ class fileNote(QWidget):
     def set_text(self, note: str):
         self.text = note
 
-    def set_note_text(self, note: str):
-        self.text = note
-        self.set_browser_text()
-
     def set_browser_text(self):
         self.ui.textBrowser.setMarkdown(self.text)
         self.set_height_by_text()
@@ -66,22 +65,17 @@ class fileNote(QWidget):
         size = self.ui.textBrowser.document().size().toSize()
         self.visible_height = size.height() + self.ui.item_header.height()
 
-    def set_note_id(self, note_id: int):
-        self.id = note_id
-
     def get_note_id(self) -> int:
         return self.id
+
+    def set_file_id(self, file_id: int):
+        self.file_id = file_id
 
     def get_file_id(self) -> int:
         return self.file_id
 
-    def set_creation_date(self, created: int):
-        self.created = datetime.fromtimestamp(created)
-        self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
-
-    def set_modification_date(self, modified: int):
-        self.modified = datetime.fromtimestamp(modified)
-        self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
+    def get_note_file_id(self) -> int:
+        return self.note_file_id
 
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
@@ -125,8 +119,10 @@ class fileNote(QWidget):
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
-        tref = href.toString()
-        if tref.startswith('http'):
+        scheme = href.scheme()
+        if scheme == 'fileid':
+            ag.signals_.user_signal.emit(f'show file\\{href.fileName()}')
+        elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:

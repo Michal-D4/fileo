@@ -9,10 +9,11 @@ from .ui_notes import Ui_FileNotes
 from ..core import icons, app_globals as ag, db_ut
 from .file_authors import authorBrowser
 from .file_info import fileInfo
-from .file_notes import noteEditor, notesContainer
+from .file_notes import notesContainer
 from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
+from .note_editor import noteEditor
 
 @unique
 class Page(Enum):
@@ -28,7 +29,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
-        self.id = 0
         self.maximized = False
         self.s_height = 0
 
@@ -48,6 +48,22 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         ag.signals_.start_edit_note.connect(self.start_edit)
 
+        self.set_buttons()
+
+        self.tagEdit.editingFinished.connect(self.tag_selector.finish_edit_tag)
+
+        self.cur_page: Page = Page.TAGS
+        self.l_file_notes_press(None)
+
+        self.l_tags.mousePressEvent = self.l_tags_press
+        self.l_authors.mousePressEvent = self.l_authors_press
+        self.l_locations.mousePressEvent = self.l_locations_press
+        self.l_file_info.mousePressEvent = self.l_file_info_press
+        self.l_file_notes.mousePressEvent = self.l_file_notes_press
+        self.l_editor.mousePressEvent = self.l_editor_press
+
+    def set_buttons(self):
+
         self.expand.setIcon(icons.get_other_icon("up"))
         self.expand.clicked.connect(self.toggle_collapse)
 
@@ -65,17 +81,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.edit_btns.hide()
         self.note_btns.hide()
-        self.tagEdit.editingFinished.connect(self.tag_selector.finish_edit_tag)
-
-        self.cur_page: Page = Page.TAGS
-        self.l_file_notes_press(None)
-
-        self.l_tags.mousePressEvent = self.l_tags_press
-        self.l_authors.mousePressEvent = self.l_authors_press
-        self.l_locations.mousePressEvent = self.l_locations_press
-        self.l_file_info.mousePressEvent = self.l_file_info_press
-        self.l_file_notes.mousePressEvent = self.l_file_notes_press
-        self.l_editor.mousePressEvent = self.l_editor_press
 
     def set_stack_pages(self):
         self.stackedWidget = QStackedWidget(self)
@@ -96,19 +101,19 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.authorEdit.hide()
 
         # add file locations page (2)
-        self.locator = Locations(self)
+        self.locator = Locations()
         self.stackedWidget.addWidget(self.locator)
         self.locator.setObjectName('locator')
 
         # add file info page (3)
-        self.file_info = fileInfo(self)
+        self.file_info = fileInfo()
         self.file_info.setObjectName('file_info')
         self.stackedWidget.addWidget(self.file_info)
 
         self.editor = noteEditor()
         self.editor.setObjectName('note_editor')
 
-        self.notes = notesContainer(self.editor, self)
+        self.notes = notesContainer(self.editor)
         self.notes.setObjectName('notes_container')
 
         # add file notes page (4)
@@ -152,6 +157,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def switch_page(self, new_page: Page):
         if new_page is self.cur_page:
             return
+        ag.add_history_file(self.file_id)
 
         self.page_selectors[self.cur_page].setStyleSheet(
             ag.dyn_qss['passive_selector'][0]
@@ -192,11 +198,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.file_list.hide()
         self.maximized = not self.maximized
 
-    def set_branch(self, branch):
-        if not self.notes.is_editing():
-            self.editor.set_branch(branch)
-        self.locator.set_current_branch(branch)
-
     def cancel_note_editing(self):
         self.l_editor.hide()
         self.notes.set_editing(False)
@@ -219,6 +220,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def start_edit(self, note: fileNote):
         if self.notes.is_editing():
+            self.edit_btns.show()
             self.switch_page(Page.EDIT)
             return
         self.editor.start_edit(note)
@@ -226,37 +228,44 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def show_editor(self):
         self.notes.set_editing(True)
-        self.note_btns.hide()
         self.edit_btns.show()
         self.l_editor.show()
         self.switch_page(Page.EDIT)
         self.editor.setFocus()
 
     def get_edit_state(self) -> tuple:
-        logger.info(f'{self.notes.is_editing()=}')
         def get_others():
+            note: fileNote = self.editor.get_note()
             return (
                 True,
-                self.editor.get_file_id(),
-                self.editor.get_note_id(),
+                note.get_note_file_id(),
+                note.get_note_id(),
+                note.get_file_id(),
                 self.editor.get_branch(),
                 self.editor.get_text(),
             )
         return get_others() if self.notes.is_editing() else (False,)
 
     def set_edit_state(self, vals: tuple):
-        logger.info(f'{vals=}')
         if not vals[0]:
             return
-        self.editor.set_note(fileNote(vals[1], vals[2]))
-        self.set_branch(vals[3])
-        self.editor.setText(vals[4])
+        note = fileNote(vals[1], vals[2])
+        note.set_file_id(vals[3])
+        self.editor.set_note(note)
+        self.editor.set_branch(vals[4])
+        self.editor.set_text(vals[5])
         self.show_editor()
 
-    def set_file_id(self, id: int):
-        self.file_id = id
-        self.tag_selector.set_file_id(id)
-        self.author_selector.set_file_id(id)
-        self.locator.set_file_id(id)
-        self.file_info.set_file_id(id)
-        self.notes.set_file_id(id)
+    def set_data(self, file_id: int, branch: list):
+        # logger.info(f'{file_id=}')
+        self.file_id = file_id
+        self.tag_selector.set_file_id(file_id)
+        self.author_selector.set_file_id(file_id)
+        self.file_info.set_file_id(file_id)
+        self.notes.set_file_id(file_id)
+
+        self.locator.set_data(file_id, branch)
+        if not branch:
+            branch = self.locator.get_branch(file_id)
+        if not self.notes.is_editing():
+            self.editor.set_branch(branch)

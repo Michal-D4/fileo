@@ -1,9 +1,10 @@
+import qss
 import sys
 
 from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer
+from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer, QItemSelectionModel
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -21,25 +22,22 @@ else:
 
 
 def run_instance(db_name: str='') -> bool:
-    global timer
-    ag.PID = QCoreApplication.applicationPid()
-    pid = iman.new_app_instance()
+    if qss.config['instance_control']:
+        iman.PORT = int(utils.get_app_setting('PORT_NUMBER', 10010))
+        global timer
+        ag.PID = QCoreApplication.applicationPid()
+        pid = iman.new_app_instance()
+        logger.info(f'{pid=}')
+        if pid:
+            ag.single_instance = int(utils.get_app_setting("SINGLE_INSTANCE", 0))
+            if ag.single_instance:
+                activate(pid)
+                iman.app_instance_close()
+                return False
 
-    if pid:
-        ag.single_instance = int(utils.get_app_setting("SINGLE_INSTANCE", 0))
-        if ag.single_instance:
-            activate(pid)
-            iman.app_instance_close()
-            return False
-
-        ag.db.conn = None
-        ag.db.path = db_name
-        ag.db.restore = bool(db_name)
-
-    timer = QTimer(ag.app)
-    timer.timeout.connect(is_active_message)
-    timer.setInterval(ag.TIME_CHECK * 1000)
-    timer.start()
+    ag.db.conn = None
+    ag.db.path = db_name if db_name != '-' else ''
+    ag.db.restore = bool(db_name)
 
     return True
 
@@ -55,6 +53,11 @@ def start_app(app: QApplication):
             ag.file_list.setFocus()
         else:
             ag.dir_list.setFocus()
+            idx = ag.dir_list.currentIndex()
+            sel_model = ag.dir_list.selectionModel()
+            cur_selection = sel_model.selection()
+            sel_model.select(cur_selection, QItemSelectionModel.SelectionFlag.Clear)
+            sel_model.select(cur_selection, QItemSelectionModel.SelectionFlag.Select)
 
     thema_name = "default"
     try:
@@ -72,6 +75,12 @@ def start_app(app: QApplication):
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
     tab.activated.connect(tab_pressed)
 
+    if qss.config['instance_control']:
+        timer = QTimer(ag.app)
+        timer.timeout.connect(is_active_message)
+        timer.setInterval(ag.TIME_CHECK * 1000)
+        timer.start()
+
     sys.exit(app.exec())
 
 
@@ -79,6 +88,7 @@ def main(entry_point: str, db_name: str):
     app = QApplication([])
 
     utils.set_logger()
+    logger.info(f'{db_name=}')
 
     tmp = Path(entry_point).resolve()
     if getattr(sys, "frozen", False):

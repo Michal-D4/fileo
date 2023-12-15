@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.0.04 - 2023, December 15
+* toggle instance control with toml file
+* list of recent files, save between sessions
+* insert into note the link to URI (http, file) with drag-drop
+* insert into note the link to files registered in db with drag-drop
+* open the file/url using the link in the note
+* go to the file using the link in the note
+* show file duplicates in the Locations tab
+* introduce sortRole into fileList model
+
 ## 1.0.03 - 2023, November 16
 * fixed a bug with sorting the file list by publication date
 * allowed drag move from the list of filtered files

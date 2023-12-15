@@ -6,7 +6,7 @@ import threading
 from . import app_globals as ag
 
 HOST = "127.0.0.1"
-PORT = 65432
+PORT = 10010
 
 
 def new_app_instance() -> int:
@@ -29,6 +29,7 @@ def app_instance_close():
 def send_message(sign: str = '') -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
+    # logger.info(f'{HOST=}:{PORT}')
     sock.connect((HOST, PORT))
     # logger.info(f'{ag.PID=}, {sign=}')
     sock.send(f'{ag.PID}/{sign}'.encode())
