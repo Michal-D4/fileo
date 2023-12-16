@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QFrame, QWidget,
 )
 
+from src import qss
 from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate
 from ..ui.ui_main import Ui_Sho
@@ -403,7 +404,8 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        iman.app_instance_close()
+        if qss.config['instance_control']:
+            iman.app_instance_close()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.saveGeometry(),

@@ -929,7 +929,8 @@ def delete_folders():
             continue
         if visited := delete_tree(u_dat):
             delete_visited(visited)
-    near_curr = ag.dir_list.model().neighbor_idx(cur_idx)
+    model: TreeModel = ag.dir_list.model()
+    near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
 
 def delete_visited(visited: list):
