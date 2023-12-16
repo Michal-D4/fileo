@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.0.05 - 2023, December 16
+* fix some bags
+
 ## 1.0.04 - 2023, December 15
 * toggle instance control with toml file
 * list of recent files, save between sessions

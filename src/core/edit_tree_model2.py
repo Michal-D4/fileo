@@ -204,26 +204,27 @@ class TreeModel(QAbstractItemModel):
         :return: None
         """
         dirs = db_ut.dir_tree_select()
-        # dirs in such an order that the parent goes before its children
+        # dirs in such an order that the parent
+        # goes before its children
         # structure: parent key; dir name, ag.DirData
 
-        items_dict = defaultdict(list)
+        children = defaultdict(list)
         parents = {'0': self.rootItem}
 
         def enroll_item(key: str, id: int, item: TreeItem):
             item.parentItem = parents[key]
             parents[','.join((key, str(id)))] = item
-            items_dict[key].append(item)
+            children[key].append(item)
 
         for row in dirs:
-            u_dat = row[-1]
+            u_dat = row[-1]    # ag.DirData
             it = TreeItem(data=(row[1],), user_data=u_dat)
             enroll_item(row[0], u_dat.id, it)
 
-        for key in items_dict:
+        for key in children:
             # sort by dir name case insensitive
-            items_dict[key].sort(key=lambda item: item.itemData[0].upper())
-            parents[key].children = items_dict[key]
+            children[key].sort(key=lambda item: item.itemData[0].upper())
+            parents[key].children = children[key]
 
         self.dataChanged.connect(self.data_changed)
 

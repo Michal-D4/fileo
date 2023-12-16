@@ -227,7 +227,7 @@ def populate_all():
 def restore_history():
     ag.file_history = ag.get_setting('FILE_HISTORY', [])
     hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
-    if not hist[2]:
+    if not hist[2] and ag.dir_list.model().rowCount():
         idx = ag.dir_list.model().index(0, 0, QModelIndex())
         if idx.isValid():
             udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)

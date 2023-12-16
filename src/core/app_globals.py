@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.0.04'
+    return '1.0.05'
 
 PID: int = 0
 TIME_CHECK = 5     # interval(sec) client sends message "it's active"

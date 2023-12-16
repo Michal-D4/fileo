@@ -9,7 +9,7 @@ from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )
 from . import app_globals as ag, low_bk, load_files, db_ut
-from .edit_tree_model2 import TreeItem
+from .edit_tree_model2 import TreeItem, TreeModel
 
 if sys.platform.startswith("win"):
     from . import win_menu as menu
@@ -302,7 +302,7 @@ def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     folders_data = data.data(ag.mimeType.folders.value)
     stream = QDataStream(folders_data, QIODevice.ReadOnly)
     idx_count = stream.readInt()
-    model = ag.dir_list.model()
+    model: TreeModel = ag.dir_list.model()
     for _ in range(idx_count):
         tmp_str = stream.readQString()
         id_list = (int(i) for i in tmp_str.split(','))
