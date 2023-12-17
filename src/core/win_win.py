@@ -50,7 +50,7 @@ def setup_ui(self):
 
     def maximize_restore():
         self.window_maximized = not self.window_maximized
-        self.ui.maximize.setIcon(self.icons["maximize"][self.window_maximized])
+        self.ui.maximize.setIcon(icons.get_toolbar_icon("maximize", self.window_maximized))
         if self.window_maximized:
             self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
             [grip.hide() for grip in self.grips.values()]

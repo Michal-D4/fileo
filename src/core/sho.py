@@ -387,12 +387,12 @@ class shoWindow(QMainWindow):
         if self.ui.container.isVisible():
             self.ui.container.hide()
             self.ui.btnToggleBar.setIcon(
-                icons.get_toolbar_icons()["btnToggleBar"][1]
+                icons.get_toolbar_icon("btnToggleBar", 1)
             )
         else:
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(
-                icons.get_toolbar_icons()["btnToggleBar"][0]
+                icons.get_toolbar_icon("btnToggleBar", 0)
             )
 
     def resizeEvent(self, e: QResizeEvent) -> None:

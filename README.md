@@ -195,21 +195,21 @@ You can also open files by double clicking on "File name". If the file is execut
 
 ***
 
-### Db selector
+### DB selector
 
-All application data is stored into data base (SQlite DB). The SQlite data base is a single file, you can create as mane DB files as you want. All manipulation with DB files are performing into DB selector: 
+All application data is stored into a data base (SQlite DB). The SQlite data base is a single file, you can create as many DB files as you want. All manipulation with the DB files are performing in the DB selector: 
 
 ![DB-selector](https://github.com/Michal-D4/fileo/raw/main/img/DB-selector.jpg)
 
-The elements of Db selector:
+The elements of the DB selector:
 
-1. button to open Db selector
-2. input filed to manually input the db file name, full name including path, example: `C:/Users/mihal/fileo/dbs/one-else.db`
-3. button to open file dialog to select file in file system
-4. list of db names and paths to them.
-5. context menu of db list. The database can be opened in the current window, in a new window, or the database can be deleted from the list - the database file in the file system will remain untouched.
+1. button to open the DB selector
+2. input filed to manually input the DB file name, full name including path, for example: `C:/Users/mihal/fileo/dbs/one-else.db`
+3. button to open the file dialog to select file in the file system
+4. list of DB names and paths to them.
+5. context menu of DB list: the database can be opened *in the current window*, *in a new window*, or *the database can be deleted from the list* - the database file in the file system will remain untouched.
 
-The DB can be opened in the current window by double click on the line of DB list.
+The DB can also be opened in the current window by double click on the line in the DB list.
 
 # Installation
 
