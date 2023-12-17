@@ -1,7 +1,11 @@
 # Change Log
 
+## 1.0.06 - 2023, December 17
+* fix little bug with drag move files
+* some user interface and code enhancements
+
 ## 1.0.05 - 2023, December 16
-* fix some bags
+* fix bag with empty DB
 
 ## 1.0.04 - 2023, December 15
 * toggle instance control with toml file

@@ -1,4 +1,3 @@
-import qss
 import sys
 
 from loguru import logger
@@ -8,6 +7,7 @@ from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer, QItemSelectionM
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
+from src import qss
 from .core import utils, app_globals as ag, iman
 from .core.sho import shoWindow
 

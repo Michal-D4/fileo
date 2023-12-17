@@ -84,8 +84,9 @@ class OpenDB(QWidget, Ui_openDB):
         menu = QMenu(self)
         menu.addAction(f'Open DB "{db_name}"')
         menu.addSeparator()
-        menu.addAction(f'Open DB "{db_name}" in new window')
-        menu.addSeparator()
+        if not ag.single_instance:
+            menu.addAction(f'Open DB "{db_name}" in new window')
+            menu.addSeparator()
         menu.addAction(f'Delete DB "{db_name}" from list')
         return menu
 
