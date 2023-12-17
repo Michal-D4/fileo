@@ -28,7 +28,6 @@ class findFile(QWidget):
 
     def setup_ui(self):
         self.srch_pattern = QLineEdit()
-        self.srch_pattern.setClearButtonEnabled(True)
         self.srch_pattern.setObjectName('searchLine')
         self.srch_pattern.setPlaceholderText('Input file name or its part.')
         self.srch_pattern.setToolTip('Enter - start search; Esc - cancel.')
@@ -47,6 +46,7 @@ class findFile(QWidget):
 
         name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
         self.srch_pattern.setText(name)
+        self.srch_pattern.selectAll()
         self.case.setChecked(case)
         self.word.setChecked(word)
 

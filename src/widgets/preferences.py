@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QCheckBox,
 )
 
-import qss
+from src import qss
 from ..core import utils, app_globals as ag
 
 def create_dir(dir: Path):

@@ -279,15 +279,15 @@ def copy_files(stream: QDataStream, target: int) -> bool:
     return True
 
 def move_files(stream: QDataStream, target: int) -> bool:
-    dir_id = stream.readInt()   # source dir_id
+    dir_file = dir_id = stream.readInt()   # source dir_id
     count = stream.readInt()
 
     for _ in range(count):
         file_id = stream.readInt()
         if not dir_id:
-            dir_id = db_ut.get_dir_id_for_file(file_id)
-        if dir_id:
-            db_ut.move_file(target, dir_id, file_id)
+            dir_file = db_ut.get_dir_id_for_file(file_id)
+        if dir_file:
+            db_ut.move_file(target, dir_file, file_id)
         else:
             db_ut.copy_file(file_id, target)
     return True

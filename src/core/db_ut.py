@@ -636,9 +636,9 @@ def get_file_dir_ids(file_id: int) -> apsw.Cursor:
     else:
         return ag.db.conn.cursor().execute(sql_id, (file_id,))
 
-def get_dir_id_for_file(file: int) -> int:
+def get_dir_id_for_file(file_id: int) -> int:
     sql = 'select dir from filedir where file = ?'
-    res = ag.db.conn.cursor().execute(sql, (file,)).fetchone()
+    res = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
     return res[0] if res else 0
 
 def temp_files_dir():
@@ -684,21 +684,21 @@ def get_file_info(id: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, (id,)).fetchone()
 
-def move_file(new_dir: int, old_dir: int, file: int):
+def move_file(new_dir: int, old_dir: int, file_id: int):
     sql ='update filedir set dir = :new where dir = :old and file = :id;'
     with ag.db.conn as conn:
         try:
             conn.cursor().execute(
-                sql, {'new': new_dir, 'old': old_dir, 'id': file}
+                sql, {'new': new_dir, 'old': old_dir, 'id': file_id}
             )
         except apsw.ConstraintError:
             pass         # re-copy, duplication
 
-def copy_file(id: int, dir: int):
+def copy_file(file_id: int, dir_id: int):
     sql = 'insert into filedir (file, dir) values (?, ?);'
     with ag.db.conn as conn:
         try:
-            conn.cursor().execute(sql, (id, dir))
+            conn.cursor().execute(sql, (file_id, dir_id))
         except apsw.ConstraintError:
             pass         # re-copy, duplication
 
