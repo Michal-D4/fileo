@@ -204,8 +204,8 @@ def set_check_btn(new_mode: ag.appMode):
 
     # need loop to find button to upcheck
     for key, btn in ag.checkable_btn.items():
-        btn.setIcon(icons.get_toolbar_icons()[btn.objectName()][key is new_mode])
-        # [key is new_mode] is 0 or 1 -- index of two items list
+        btn.setIcon(icons.get_toolbar_icon(btn.objectName(), key is new_mode))
+        # (key is new_mode) is 0 or 1 -- index of two items list
 
     ag.checkable_btn[new_mode].setChecked(True)
     ag.set_mode(new_mode)

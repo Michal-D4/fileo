@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.07 - 2023, December 17
+* fix bug with maximize/restore icons
+* draw border around the filter setup dialog
+* set current date in the filter setup dialog if default is 'Sep 14 1752'
+
 ## 1.0.06 - 2023, December 17
 * fix little bug with drag move files
 * some user interface and code enhancements

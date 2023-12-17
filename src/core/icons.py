@@ -96,3 +96,6 @@ def add_other_icon(key: str, pict: QPixmap):
 
 def get_toolbar_icons() -> Dict:
     return toolbar_icons
+
+def get_toolbar_icon(key: str, idx: int=0) -> QIcon:
+    return toolbar_icons[key][idx]

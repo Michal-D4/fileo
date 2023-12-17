@@ -229,8 +229,15 @@ class FilterSetup(QWidget):
         self.ui.date_type.setCurrentIndex(ag.get_setting("DATE_TYPE", 0))
         self.ui.after.setChecked(ag.get_setting("AFTER", False))
         self.ui.before.setChecked(ag.get_setting("BEFORE", False))
-        self.ui.after_date.setDate(QDate.fromJulianDay(ag.get_setting("AFTER_DATE", 0)))
-        self.ui.before_date.setDate(QDate.fromJulianDay(ag.get_setting("BEFORE_DATE", 0)))
+        cur_date = QDate.currentDate().toJulianDay()
+        after = ag.get_setting("AFTER_DATE", cur_date)
+        if after == 2361222:        # 'Thu Sep 14 1752'
+            after = cur_date
+        before = ag.get_setting("BEFORE_DATE", cur_date)
+        if before == 2361222:       # 'Thu Sep 14 1752'
+            before = cur_date
+        self.ui.after_date.setDate(QDate.fromJulianDay(after))
+        self.ui.before_date.setDate(QDate.fromJulianDay(before))
 
         self.tag_selection_changed(ag.tag_list.get_selected())
         self.ext_selection_changed(ag.ext_list.get_selected())
