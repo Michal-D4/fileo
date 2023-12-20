@@ -243,9 +243,9 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot()
     def close_filter_setup(self):
-        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
         ag.set_mode(ag.appMode.FILTER)
         self.click_checkable_button(ag.appMode.FILTER)
+        low_bk.filtered_files()
 
     @pyqtSlot(str)
     def get_db_name(self, db_name: str):
@@ -355,18 +355,14 @@ class shoWindow(QMainWindow):
         self.close()
 
     def click_checkable_button(self, bt_key: ag.appMode):
-        first_mode = ag.mode.value
-        # logger.info(f'{ag.mode.name=}, {bt_key.name=}')
         low_bk.set_check_btn(bt_key)
-        ag.signals_.app_mode_changed.emit(first_mode)
+        ag.signals_.app_mode_changed.emit(ag.mode.value)
 
         self.toggle_filter_show()
 
     def toggle_filter_show(self):
         if not ag.db.conn:
             return
-        # logger.info(f'{self.ui.btnFilterSetup.isChecked()=}')
-        # logger.info(f'ag.mode={ag.mode.name}, {ag.checkable_btn[ag.appMode.FILTER_SETUP].isChecked()=}')
         if self.ui.btnFilterSetup.isChecked():
             ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
             ag.filter_dlg.show()

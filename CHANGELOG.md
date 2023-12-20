@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.08 - 2023, December 20
+* replace spaces in href with %20 to make links work.
+* fix bug with switch from filter setup to filter to show filtered files.
+
 ## 1.0.07 - 2023, December 17
 * fix bug with maximize/restore icons
 * draw border around the filter setup dialog
