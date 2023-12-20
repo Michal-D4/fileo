@@ -51,7 +51,7 @@ class noteEditor(QWidget):
         if data.hasFormat(ag.mimeType.files_uri.value):
             url: QUrl = data.urls()[0]
             if url.scheme() == 'file':
-                t.insertText(f'[{url.fileName()}]({url.toString()})')
+                t.insertText(f'[{url.fileName()}]({url.toString().replace(" ","%20")})')
             elif url.scheme().startswith('http'):
                 t.insertText(link_string())
             e.accept()
