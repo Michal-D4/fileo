@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QLineEdit
 
 from ..core.compact_list import aBrowser
 from ..core import app_globals as ag, db_ut
+from src import tug
 
 class tagBrowser(aBrowser):
     def __init__(self, editor: QLineEdit, parent=None) -> None:
@@ -13,7 +14,7 @@ class tagBrowser(aBrowser):
         self.editor = editor
 
     def show_in_bpowser(self):
-        style = ag.dyn_qss['text_browser'][0]
+        style = tug.dyn_qss['text_browser'][0]
         self.browser.clear()
 
         txt = ''.join((style, self.html_selected()))

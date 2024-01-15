@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QTextBrowser, QMenu
 
 from collections import defaultdict
 
-from ..core import icons, app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut
 
 MENU_TITLES = (
     (True, "Copy", QKeySequence.StandardKey.Copy),

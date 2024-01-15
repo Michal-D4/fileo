@@ -7,8 +7,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
 )
 
-from . import app_globals as ag
-
+from src import tug
 
 class editTag(QWidget):
     def __init__(self, text: str, parent = None) -> None:
@@ -243,7 +242,7 @@ class aBrowser(QWidget):
 
     def show_in_bpowser(self):
         self.browser.clear()
-        style = ag.dyn_qss['text_browser'][0]
+        style = tug.dyn_qss['text_browser'][0]
         inn = self.html_selected()
         self.browser.setText(''.join((style, inn)))
         curs = self.browser.textCursor()

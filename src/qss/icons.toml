@@ -1,0 +1,238 @@
+[alphaF]
+ico = """\
+<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
+font-family="Cascadia Code" fill="$Hourbour">F</text></svg>\
+"""
+[alphaH]
+ico = """\
+<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
+font-family="Cascadia Code" fill="$Hourbour">H</text></svg>\
+"""
+[alphaL]
+ico = """\
+<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
+font-family="Cascadia Code" fill="$Hourbour">L</text></svg>\
+"""
+[arrow_back]
+ico = """\
+<svg viewBox="0 -960 960 960"><path d="m560-240 240-240-240-240-58 56 \
+142 142H158v80h486L502-300"/></svg>\
+"""
+[arrow_forward]
+ico = """\
+<svg viewBox="0 -960 960 960"><path d="M400-240 160-480l240-240 56 58\
+-142 142h486v80H314l142 142"/></svg>\
+"""
+[history]
+ico = """\
+<svg viewBox="0 0 24 24" |><path d="M19.435 17.838a9.45 9.45 0 0 0 .088-11.556\
+A9.45 9.45 0 0 0 3.9 7.13V3.9H2.55v4.725l.675.675H7.95V7.95H4.994a8.11 8.11 0 1 1-.182 7.79\
+l-1.198.623a9.45 9.45 0 0 0 15.82 1.475zm-4.538-1.31.956-.954L12 11.72V6.6h-1.35\
+V12l.197.478z"/></svg>\
+"""
+colors = ["fill=\"#000\""]
+[match_case]
+ico = """\
+<svg viewBox="0 0 20 20"><text x="2" y="15" font-size="14" \
+font-family="Segoe UI">Aa</text></svg>\
+"""
+[match_word]
+ico = """\
+<svg viewBox="0 0 20 20"><text x="2" y="14" font-size="14" \
+font-family="Segoe UI">ab</text><path d="M1 15v3h17v-3" \
+stroke="#000" fill="none"/></svg>\
+"""
+[search]
+ico = """\
+<svg viewBox="0 0 30 30"><path d="M13 3C7.489 3 3 7.489 3 13s4.489 \
+10 10 10a9.947 9.947 0 0 0 6.322-2.264l5.971 5.971a1 1 0 1 0 1.414-1.414\
+l-5.97-5.97A9.947 9.947 0 0 0 23 13c0-5.511-4.489-10-10-10zm0 2c4.43 0 8 \
+3.57 8 8s-3.57 8-8 8-8-3.57-8-8 3.57-8 8-8z"/></svg>\
+"""
+[menu]
+ico = """\
+<svg viewBox="0 0 64 64" |><rect width="48.279" height="6.035" \
+x="8.112" y="42.19" ry="1.464"/><rect width="48.279" \
+height="6.035" x="8.112" y="28.708" ry="1.464"/><rect \
+width="48.279" height="6.035" x="8.112" y="15.225" \
+ry="1.464"/></svg>\
+"""
+colors = ["fill=\"#808080\"", "active|fill=\"#FFF\""]
+[menu_active]
+ico_subst = "menu"
+colors = ["fill=\"#FFF\""]
+[folders]
+ico = """\
+<svg viewBox="0 0 96 96" stroke-width="8" | fill="none"><path d="\
+M36 16h12l8 8h20a8 8 0 0 1 8 8v28a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8\
+V24a8 8 0 0 1 8-8"/><path d="M68 68v8a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8\
+V40a8 8 0 0 1 8-8h8"/></svg>\
+"""
+colors = ["stroke=\"#808080\"", "active|stroke=\"#FFF\""]
+[folders_active]
+ico_subst = "folders"
+colors = ["active|stroke=\"#FFF\""]
+[ok]
+ico = """\
+<svg viewBox="0 0 32 32"><path d="M28.28 6.28L11 23.563l-7.28-7.28\
+-1.44 1.437 8 8 .72.686.72-.687 18-18-1.44-1.44z" |/></svg>\
+"""
+colors = ["style=\"fill:#1C7E62\""]
+[maximize]
+ico = """\
+<svg width="192" height="192" viewBox="0 0 1920 1920">\
+<path d="M560 560 h800 v800 H560Z m80 80 v640 h640 V640Z" \
+fill-rule="evenodd"/></svg>\
+"""
+[restore]
+ico = """\
+<svg viewBox="0 0 1920 1920"><path d="M560 1360h640V720H560v640\
+zm560-560v480H640V800h480zm240-240v640h-160v-80h80V640H800v80h-80\
+V560Z" fill-rule="evenodd"/></svg>\
+"""
+[minimize]
+ico = """\
+<svg viewBox="0 0 1920 1920"><path d="M660 920v80h800V920Z"/></svg>\
+"""
+[close]
+ico = """\
+<svg viewBox="0 0 1920 1920"><path d="M1360 560h-57L960 903 \
+617 560h-57v57l343 343-343 343v57h57l343-343 343 343h57v-57l\
+-343-343 343-343Z" |/></svg>\
+"""
+colors = ["normal|style=\"fill:#000\"", "active|style=\"fill:#FFF\""]
+[close_active]
+ico_subst = "close"
+colors = ["style=\"fill:#FFF\""]
+[cancel2]
+ico = """\
+<svg viewBox="0 0 260 260"><path d="M230 30h-18l-82 82-82-82H30v18\
+l82 82-82 82v18h18l82-82 82 82h18v-18l-82-82 82-82Z" |/></svg>\
+"""
+colors = ["style=\"fill:#FF0038\""]
+[busy_on]
+ico = """<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" |/></svg>"""
+colors = ["fill=\"#68BD44\""]
+[busy_off]
+ico_subst = "busy_on"
+colors = ["fill=\"#DE1B2E\""]
+[show_hide_on]
+ico = """\
+<svg viewBox="0 0 32 32"><path d="M4 4v24h24V12.187l-2 \
+2V26H6V6h19.813l2-2H4zm23.28 3.28L16 18.563l-4.28-4.28-1.44 \
+1.437 5 5 .72.686.72-.687 12-12-1.44-1.44z" |/></svg>\
+"""
+colors = ["style=\"fill:#000\""]
+[show_hide_off]
+ico = """\
+<svg viewBox="0 0 32 32"><path d="M4 4v24h24V12.187l-2 \
+2V26H6V6h19.813l2-2H4z" |/></svg>\
+"""
+colors = ["style=\"fill:#000\""]
+[filter_setup]
+ico = """\
+<svg viewBox="0 0 36 36" |><path d="M32.988 24.503a.594.594 0 0 0-.363-.574\
+l-.86-.256c-.047-.123-.092-.246-.149-.363l.4-.738a.594.594 0 0 0-.108-.701\
+l-.727-.722a.594.594 0 0 0-.702-.102l-.742.388a4.014 4.014 0 0 0-.389-.164\
+l-.246-.808a.589.589 0 0 0-.568-.395H27.51a.594.594 0 0 0-.568.42l-.24.789\
+a3.973 3.973 0 0 0-.396.164l-.726-.39a.594.594 0 0 0-.696.103l-.743.717\
+a.594.594 0 0 0-.107.706l.378.682a3.912 3.912 0 0 0-.158.378l-.81.24\
+a.589.589 0 0 0-.424.569v1.024a.589.589 0 0 0 .424.563l.814.24\
+a3.856 3.856 0 0 0 .16.37l-.4.747a.594.594 0 0 0 .108.701l.727.717\
+a.594.594 0 0 0 .701.108l.758-.4c.118.056.24.103.368.149l.251.83\
+a.594.594 0 0 0 .568.414h1.024a.594.594 0 0 0 .569-.42l.24-.808\
+a3.41 3.41 0 0 0 .36-.149l.767.404a.594.594 0 0 0 .696-.102l.727-.717\
+a.594.594 0 0 0 .108-.706l-.404-.743q.081-.174.148-.353l.83-.24\
+a.589.589 0 0 0 .424-.568zm-.82.834-1.08.318-.06.215a3.072 3.072 0 0 1-.257.609\
+l-.107.194.512.978-.512.512-1.024-.512-.19.103a3.18 3.18 0 0 1-.614.25\
+l-.215.062-.323 1.07h-.64l-.322-1.065-.215-.061a3.19 3.19 0 0 1-.62-.251\
+l-.189-.103-.994.512-.512-.512.512-.993-.112-.195a3.072 3.072 0 0 1-.236-.65\
+l-.087-.19-1.024-.321v-.672l1.024-.312.067-.21a3.042 3.042 0 0 1 .272-.63\
+l.122-.224-.512-.948.512-.481.968.512.194-.107a3.19 3.19 0 0 1 .645-.267\
+l.21-.061.323-1.024h.706l.318 1.024.21.061a3.18 3.18 0 0 1 .624.267\
+l.195.107.984-.512.512.512-.512.968.107.194a3.113 3.113 0 0 1 .256.62\
+l.06.215 1.056.312z" style="stroke-width:.512"/><path d="M27.92 23.058\
+a2.048 2.048 0 1 0 2.09 2.048 2.078 2.078 0 0 0-2.089-2.048zm0 3.307\
+a1.244 1.244 0 1 1 1.27-1.244 1.26 1.26 0 0 1-1.269 1.25z" \
+style="stroke-width:.512"/><path d="M33 6.25H3a1 1 0 0 0 0 2h30a1 1 0 0 0 0-2z"/>\
+<path d="M28 12.25H8a1 1 0 0 0 0 2h20a1 1 0 0 0 0-2z"/>\
+<path d="M23 18.25H13a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2z" /></svg>\
+"""
+colors = ["fill=\"#808080\"", "active|fill=\"#FFF\""]
+[filter_setup_active]
+ico_subst = "filter_setup"
+colors = ["fill=\"#FFF\""]
+[more]
+ico = """\
+<svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 \
+2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2\
+zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>\
+"""
+[refresh]
+ico = """\
+<svg viewBox="0 0 16 16" |><path d="M12.75 8a4.5 4.5 0 0 1-8.61 1.834\
+l-1.391.565A6.001 6.001 0 0 0 14.25 8 6 6 0 0 0 3.5 4.334V2.5H2v4l.75.75\
+h3.5v-1.5H4.352A4.5 4.5 0 0 1 12.75 8z"/></svg>\
+"""
+colors = ["fill=\"#666\""]
+[filter]
+ico = """\
+<svg viewBox="0 0 36 36" |><path d="M33 11H3a1 1 0 0 0 0 2h30a1 1 0 0 0 0-2Z"/>\
+<path d="M28 17H8a1 1 0 0 0 0 2h20a1 1 0 0 0 0-2Z"/><path d="M23 23H13\
+a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2Z"/></svg>\
+"""
+colors = ["fill=\"#808080\"", "active|fill=\"#FFF\""]
+[filter_active]
+ico_subst = "filter"
+colors = ["fill=\"#FFF\""]
+[angle_left]
+ico = """\
+<svg viewBox="0 0 32 32" |><path d="M19 4 7 16l12 10 2-2-10-8L21 6"/></svg>\
+"""
+colors = ["fill=\"#808080\"", "active|fill=\"#FFF\""]
+[angle_right]
+ico = """\
+<svg viewBox="0 0 32 32" |><path d="m11 6 10 10-10 10 2 2 12-12L13 4Z"/></svg>\
+"""
+colors = ["fill=\"#808080\"", "active|fill=\"#FFF\""]
+[collapse_all]
+ico = """\
+<svg viewBox="0 0 24 24" |><path d="M4 2a2 2 0 0 0-2 2v10h2V4h10V2z\
+m4 4a2 2 0 0 0-2 2v10h2V8h10V6zm12 6v8h-8v-8zm0-2h-8a2 2 0 0 0-2 2v8\
+a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2m-1 7h-6v-2h6z"/></svg>\
+"""
+colors = ["fill=\"#808080\""]
+[plus]
+ico = """\
+<svg viewBox="0 0 36 36"><path \
+d="M30 17H19V6a1 1 0 1 0-2 0v11H6a1 1 0 0 0-1 1 .91.91 0 0 0 1 .94h11V30\
+a1 1 0 1 0 2 0V19h11a1 1 0 0 0 1-1 1 1 0 0 0-1-1Z"/></svg>\
+"""
+colors = ["fill=\"#616161\""]
+[angle_up]
+ico = """\
+<svg viewBox="0 0 32 32" |><path d="M16 7 4 19l2 2 10-10 10 10 2-2L16 7Z"/></svg>\
+"""
+colors = ["fill=\"#616161\""]
+[angle_down]
+ico = """\
+<svg viewBox="0 0 32 32" |><path d="m16 26 12-12-2-2-10 10L6 12l-2 2 12 12Z"/></svg>\
+"""
+colors = ["fill=\"#616161\""]
+[angle_right_2]
+ico_subst = "angle_right"
+colors = ["fill=\"#616161\""]
+[pencil]
+ico = """\
+<svg viewBox="0 0 24 24" fill="none"><path d="m18 10 3-3-4-4-3 3m4 4L8 20\
+H4v-4L14 6m4 4-4-4" | stroke-width="2" stroke-linejoin="round"/></svg>
+"""
+colors = ["stroke=\"#616161\""]
+[folder_open]
+ico = """\
+<svg viewBox="0 0 16 16" |><path d="M1.5 14h11l.48-.37 2.63-7-.48-.63H14\
+V3.5l-.5-.5H7.71l-.86-.85L6.5 2h-5l-.5.5v11l.5.5zM2 3h4.29l.86.85.35.15H13\
+v2H8.5l-.35.15-.86.85H3.5l-.47.34-1 3.08L2 3zm10.13 10H2.19l1.67-5H7.5\
+l.35-.15.86-.85h5.79l-2.37 6z"/></svg>\
+"""
+colors = ["fill=\"#616161\""]

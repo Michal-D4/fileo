@@ -46,31 +46,28 @@ class notesContainer(QScrollArea):
         self.setStyleSheet("border: none;")
 
     def go_menu(self, e: QMouseEvent):
-        if e.buttons() == Qt.MouseButton.RightButton:
-            if self.editor.get_file_id() == self.file_id:
-                return
-            menu = QMenu(ag.app)
-            menu.addAction('Go to file')
-            act = menu.exec(ag.app.ui.edited_file.mapToGlobal(e.pos()))
-            if act:
-                self.go_action(act.text())
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            self.go_to_file()
 
-    def go_action(self, act_text: str):
+    def go_to_file(self):
         file_id = self.editor.get_file_id()
         branch = ','.join((str(i) for i in self.editor.get_branch()))
         # logger.info(f'{branch=}')
         ag.signals_.user_signal.emit(
-            f"file-note: {act_text}\\{file_id}-{branch}"
+            f"file-note: Go to file\\{file_id}-{branch}"
         )
 
     def is_editing(self):
         return self.editing
 
     def set_editing(self, state: bool):
+        # logger.info(f'{state=}')
         self.editing = state
-        self.edited_file_in_status(state)
+        if state:
+            self.edited_file_in_status(state)
 
     def edited_file_in_status(self, show: bool):
+        # logger.info(f'{show=}')
         if show:
             file_id = self.editor.get_file_id()
             filename = db_ut.get_file_name(file_id)

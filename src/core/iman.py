@@ -7,6 +7,8 @@ from . import app_globals as ag
 
 HOST = "127.0.0.1"
 PORT = 10010
+PID: int = 0
+TIME_CHECK = 5     # interval(sec) client sends message "it's active"
 
 
 def new_app_instance() -> int:
@@ -31,8 +33,8 @@ def send_message(sign: str = '') -> socket.socket:
     sock.settimeout(1)
     # logger.info(f'{HOST=}:{PORT}')
     sock.connect((HOST, PORT))
-    # logger.info(f'{ag.PID=}, {sign=}')
-    sock.send(f'{ag.PID}/{sign}'.encode())
+    # logger.info(f'{PID=}, {sign=}')
+    sock.send(f'{PID}/{sign}'.encode())
     return sock
 
 def server_is_running(sign: str) -> tuple[bool, socket.socket|None]:
@@ -45,7 +47,7 @@ def server_is_running(sign: str) -> tuple[bool, socket.socket|None]:
 
 def setup_server():
     serversock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    serversock.settimeout(ag.TIME_CHECK * 2)
+    serversock.settimeout(TIME_CHECK * 2)
     try:
         serversock.bind((HOST, PORT))
     except OSError as e:
@@ -61,7 +63,7 @@ def setup_server():
 
     server_thread = threading.Thread(
         target=_server_run,
-        args=(serversock, ag.PID)
+        args=(serversock, PID)
     )
     server_thread.start()
 
@@ -77,7 +79,7 @@ def _server_run(serversock, pid):
             for key in instances:
                 instances[key] = instances[key] // 2
 
-    th = threading.Thread(target=remove_not_active, args=(ag.TIME_CHECK*2,))
+    th = threading.Thread(target=remove_not_active, args=(TIME_CHECK*2,))
     th.start()
 
     while sum(instances.values()):

@@ -3,8 +3,9 @@ from loguru import logger
 from PyQt6.QtCore import Qt, QDate
 from PyQt6.QtWidgets import QWidget
 
-from ..core import app_globals as ag, low_bk, db_ut
+from ..core import app_globals as ag, db_ut
 from .ui_set_filter import Ui_filterSetup
+from src import tug
 
 UNIX_EPOCH = 2440588   # julian date of 1970-01-01
 
@@ -19,15 +20,15 @@ class FilterSetup(QWidget):
         self.single_folder = False
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
-        ttls = ag.qss_params['$FoldTitles'].lower()
+        ttls = tug.qss_params['$FoldTitles'].lower()
         titles = ttls.split(',')
         self.ui.selected_dir.setText(titles[0])
         self.ui.selected_tag.setText(titles[1])
         self.ui.selected_ext.setText(titles[2])
         self.ui.selected_author.setText(titles[3])
 
-        self.setStyleSheet(ag.dyn_qss["dialog"][0])
-        self.ui.hrdFrame.setStyleSheet(ag.dyn_qss["dialog_hdr"][0])
+        self.setStyleSheet(tug.dyn_qss["dialog"][0])
+        self.ui.hrdFrame.setStyleSheet(tug.dyn_qss["dialog_hdr"][0])
 
         self.ui.after_date.setDisplayFormat("yyyy-MM-dd")
         self.ui.before_date.setDisplayFormat("yyyy-MM-dd")

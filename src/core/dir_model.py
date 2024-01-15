@@ -4,12 +4,12 @@ from collections import defaultdict
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
 
-from . import db_ut, app_globals as ag, icons
+from . import db_ut, app_globals as ag
+from src import tug
 
-
-class TreeItem(object):
+class dirItem(object):
     def __init__(self, data, user_data: ag.DirData=None, parent=None):
-        self.parentItem: TreeItem = parent
+        self.parentItem: dirItem = parent
         self.itemData = list(data)
         self.children = []
 
@@ -41,12 +41,12 @@ class TreeItem(object):
 
         for row in range(count):
             data = [None for v in range(columns)]
-            item = TreeItem(data, None, self)
+            item = dirItem(data, None, self)
             self.children.insert(position, item)
 
         return True
 
-    def appendChild(self, item: 'TreeItem'):
+    def appendChild(self, item: 'dirItem'):
         item.parentItem = self
         item.userData.parent_id = self.userData.id
         self.children.append(item)
@@ -75,19 +75,19 @@ class TreeItem(object):
         self.userData = user_data
 
 
-class TreeModel(QAbstractItemModel):
+class dirModel(QAbstractItemModel):
     def __init__(self, headers=None, parent=None):
         super().__init__(parent)
 
         hdr = headers if headers else ('',)
-        self.rootItem = TreeItem(
+        self.rootItem = dirItem(
             data=hdr, user_data=ag.DirData(0, 0, False, False))
 
     def data_changed(self, idx1: QModelIndex, idx2: QModelIndex):
         """
         only one item is edited and so only one index is used
         """
-        item: TreeItem = self.getItem(idx1)
+        item: dirItem = self.getItem(idx1)
         if item.userData:
             name = item.data(idx1.column())
             id = item.user_data().id
@@ -109,10 +109,10 @@ class TreeModel(QAbstractItemModel):
         elif role == Qt.ItemDataRole.DecorationRole:
             u_dat = self.getItem(index).user_data()
             if u_dat.hidden:
-                return icons.get_other_icon("hidden")
+                return tug.get_icon("hidden")
             if u_dat.is_link:
-                return icons.get_other_icon("link")
-            return icons.get_other_icon("folder")
+                return tug.get_icon("link")
+            return tug.get_icon("folder")
 
         return None
 
@@ -211,14 +211,14 @@ class TreeModel(QAbstractItemModel):
         children = defaultdict(list)
         parents = {'0': self.rootItem}
 
-        def enroll_item(key: str, id: int, item: TreeItem):
+        def enroll_item(key: str, id: int, item: dirItem):
             item.parentItem = parents[key]
             parents[','.join((key, str(id)))] = item
             children[key].append(item)
 
         for row in dirs:
             u_dat = row[-1]    # ag.DirData
-            it = TreeItem(data=(row[1],), user_data=u_dat)
+            it = dirItem(data=(row[1],), user_data=u_dat)
             enroll_item(row[0], u_dat.id, it)
 
         for key in children:

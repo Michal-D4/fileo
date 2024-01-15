@@ -1,11 +1,13 @@
 from loguru import logger
-import qtawesome as qta
 
 from PyQt6.QtCore import Qt, QEvent, QPoint
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon
+from PyQt6.QtWidgets import QApplication
 
-from . import utils, app_globals as ag, icons
-from ..widgets.custom_grips import CustomGrip
+from ..widgets import custom_grips as cg
+from src import tug
+
+MOVE_THRESHOLD = 50
 
 def activate(pid):
     from pywinauto import Application
@@ -14,20 +16,26 @@ def activate(pid):
     running_app.top_window().set_focus()
 
 def win_icons():
-    icons.toolbar_icons["minimize"] = (
-        qta.icon('mdi.window-minimize', color=ag.qss_params["$topBarColor"]),
-    )
+    keys = {
+        'minimize': ('minimize',),
+        'maximize': ('maximize', 'restore'),
+        'close': ('close', 'close_active'),
+    }
+    tug.set_icons(keys)
 
-    icons.toolbar_icons["maximize"] = (
-        qta.icon('mdi.window-maximize', color=ag.qss_params["$topBarColor"]),
-        qta.icon('mdi.window-restore', color=ag.qss_params["$topBarColor"]),
-    )
+def set_app_icon(app: QApplication):
+    try:
+        from ctypes import windll  # to show icon on the taskbar - Windows only
+        myappid = '.'.join((tug.MAKER, tug.APP_NAME))
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    except ImportError:
+        pass
 
-    icons.toolbar_icons["close"] = (
-        qta.icon('mdi.window-close', color=ag.qss_params["$topBarColor"],
-            color_active=ag.qss_params["$ToolButtonActiveColor"]),
-    )
-
+    pict = QPixmap()
+    if pict.load(tug.qss_params['$ico_app']):
+        ico = QIcon()
+        ico.addPixmap(pict)
+        app.setWindowIcon(ico)
 
 def setup_ui(self):
     self.start_move = QPoint()
@@ -43,20 +51,20 @@ def setup_ui(self):
 
     # CUSTOM GRIPS
     self.grips = {}
-    self.grips['left_grip'] = CustomGrip(self, Qt.Edge.LeftEdge)
-    self.grips['right_grip'] = CustomGrip(self, Qt.Edge.RightEdge)
-    self.grips['top_grip'] = CustomGrip(self, Qt.Edge.TopEdge)
-    self.grips['bottom_grip'] = CustomGrip(self, Qt.Edge.BottomEdge)
+    self.grips['left_grip'] = cg.CustomGrip(self, Qt.Edge.LeftEdge)
+    self.grips['right_grip'] = cg.CustomGrip(self, Qt.Edge.RightEdge)
+    self.grips['top_grip'] = cg.CustomGrip(self, Qt.Edge.TopEdge)
+    self.grips['bottom_grip'] = cg.CustomGrip(self, Qt.Edge.BottomEdge)
 
     def maximize_restore():
         self.window_maximized = not self.window_maximized
-        self.ui.maximize.setIcon(icons.get_toolbar_icon("maximize", self.window_maximized))
+        self.ui.maximize.setIcon(tug.get_icon("maximize", self.window_maximized))
         if self.window_maximized:
             self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
             [grip.hide() for grip in self.grips.values()]
             self.showMaximized()
         else:
-            self.ui.appMargins.setContentsMargins(ag.GT, ag.GT, ag.GT, ag.GT)
+            self.ui.appMargins.setContentsMargins(cg.GT, cg.GT, cg.GT, cg.GT)
             [grip.show() for grip in self.grips.values()]
             self.showNormal()
 
@@ -68,7 +76,7 @@ def setup_ui(self):
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
-            if (pos_ - self.start_move).manhattanLength() < ag.MOVE_THRESHOLD:
+            if (pos_ - self.start_move).manhattanLength() < MOVE_THRESHOLD:
                 self.move(self.pos() + pos_ - self.start_move)
             self.start_move = pos_
             e.accept()
@@ -78,7 +86,7 @@ def setup_ui(self):
     self.ui.toolBar.mouseMoveEvent = move_window
     self.container.ui.navi_header.mouseMoveEvent = move_window
 
-    is_maximized = int(utils.get_app_setting("maximizedWindow", False))
+    is_maximized = int(tug.get_app_setting("maximizedWindow", False))
     if is_maximized:
         maximize_restore()
 
@@ -90,10 +98,10 @@ def setup_ui(self):
 
 def update_grips(self):
     self.grips['left_grip'].setGeometry(
-        0, ag.GT, ag.GT, self.height()-2*ag.GT)
+        0, cg.GT, cg.GT, self.height()-2*cg.GT)
     self.grips['right_grip'].setGeometry(
-        self.width() - ag.GT, ag.GT, ag.GT, self.height()-2*ag.GT)
+        self.width() - cg.GT, cg.GT, cg.GT, self.height()-2*cg.GT)
     self.grips['top_grip'].setGeometry(
-        0, 0, self.width(), ag.GT)
+        0, 0, self.width(), cg.GT)
     self.grips['bottom_grip'].setGeometry(
-        0, self.height() - ag.GT, self.width(), ag.GT)
+        0, self.height() - cg.GT, self.width(), cg.GT)

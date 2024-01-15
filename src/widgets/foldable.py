@@ -4,9 +4,9 @@ from loguru import logger
 
 from PyQt6.QtWidgets import QWidget
 
-from ..core import icons, app_globals as ag
+from ..core import app_globals as ag
 from .ui_foldable import Ui_foldable
-
+from src import tug
 
 class Foldable(QWidget):
     """
@@ -55,7 +55,7 @@ class Foldable(QWidget):
 
     def _toggle_icon(self):
         self.ui.toFold.setIcon(
-           icons.get_other_icon("right") if self.is_collapsed else icons.get_other_icon("down")
+           tug.get_icon("right") if self.is_collapsed else tug.get_icon("down")
         )
 
     def toggle_collapse(self):

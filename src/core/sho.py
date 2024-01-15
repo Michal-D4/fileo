@@ -5,14 +5,14 @@ import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent, QPixmap,
+                         QResizeEvent,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
                              QVBoxLayout, QTreeView, QVBoxLayout,
                              QFrame, QWidget,
 )
 
-from src import qss
+from src import tug
 from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate
 from ..ui.ui_main import Ui_Sho
@@ -20,7 +20,7 @@ from ..widgets.file_data import fileDataHolder
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
 
-from . import (icons, utils, db_ut, bk_ut, history, low_bk,
+from . import (db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
 )
 if sys.platform.startswith("win"):
@@ -60,8 +60,8 @@ class shoWindow(QMainWindow):
         self.set_extra_widgets()
 
         self.setup_global_widgets()
-        self.restore_mode()
         self.restore_settings()
+        self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
 
@@ -71,7 +71,7 @@ class shoWindow(QMainWindow):
         self.fold_layout.setSpacing(0)
         self.container = FoldContainer(self.ui.container)
         self.fold_layout.addWidget(self.container)
-        self.container.set_qss_fold(ag.dyn_qss['decorator'])
+        self.container.set_qss_fold(tug.dyn_qss['decorator'])
 
     def restore_settings(self):
         exec_user_action = low_bk.set_user_actions_handler()
@@ -85,17 +85,18 @@ class shoWindow(QMainWindow):
         ag.file_data_holder.setObjectName("file_data_holder")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
         ag.history = history.History(
-            int(utils.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
+            int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
         if ag.db.restore:     # start app with restoring DB connection - first app instance
             self.connect_db(
-                ag.db.path or str(utils.get_app_setting("DB_NAME", ""))
+                ag.db.path or str(tug.get_app_setting("DB_NAME", ""))
             )
 
     def set_busy(self, val: bool):
         self.is_busy = val
-        self.ui.busy.setPixmap(QPixmap(icons.get_other_icon("busy", int(val))))
+        pix = tug.get_icon("busy", int(val))
+        self.ui.busy.setPixmap(pix.pixmap(16, 16))
         self.ui.busy.setToolTip(
             'Background thread is working' if val else 'No active background thread'
         )
@@ -110,26 +111,28 @@ class shoWindow(QMainWindow):
         return False
 
     def restore_container(self):
-        state = utils.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
+        state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
             self.ui.container.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
+        # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
         mode = ag.appMode(
-            int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
+            int(ag.get_setting("APP_MODE", ag.appMode.DIR))
         )
+        if mode.value > ag.appMode.FILTER_SETUP.value:
+            mode = ag.appMode.DIR
         low_bk.set_check_btn(mode)
-        # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
+        # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
 
     def restore_note_height(self):
-        hh = utils.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
+        hh = tug.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
         self.ui.noteHolder.setMinimumHeight(int(hh))
         self.ui.noteHolder.setMaximumHeight(int(hh))
 
     def restore_geometry(self):
-        geometry = utils.get_app_setting("MainWindowGeometry")
+        geometry = tug.get_app_setting("MainWindowGeometry")
 
         if geometry:
             self.restoreGeometry(geometry)
@@ -166,7 +169,7 @@ class shoWindow(QMainWindow):
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
-        btn.setIcon(icons.get_other_icon(icon_name))
+        btn.setIcon(tug.get_icon(icon_name))
         btn.setObjectName(o_name)
         self.container.add_widget(btn, 0)
         btn.setToolTip(tool_tip)
@@ -175,7 +178,7 @@ class shoWindow(QMainWindow):
     @pyqtSlot(bool)
     def show_hide_click(self, state: bool):
         bk_ut.refresh_dir_list()
-        self.show_hidden.setIcon(icons.get_other_icon("show_hide", int(state)))
+        self.show_hidden.setIcon(tug.get_icon("show_hide", int(state)))
 
     def setup_global_widgets(self):
         frames = self.container.get_widgets()
@@ -211,22 +214,28 @@ class shoWindow(QMainWindow):
         self.collapse_btn.setChecked(False)
 
     def set_button_icons(self):
-        for btn_name, icon in icons.get_toolbar_icons().items():
-            btn: QToolButton  = getattr(self.ui, btn_name)
-            btn.setIcon(icon[btn.isChecked()])
-        self.ui.btn_search.setIcon(icons.get_other_icon("search"))
+        m_icons = [
+            "btnDir", "btnFilter", "btnFilterSetup", "btnToggleBar",
+            "btnSetup", 'minimize', 'maximize', 'close'
+        ]
+        for icon_name in m_icons:
+            btn: QToolButton  = getattr(self.ui, icon_name)
+            btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
+        self.ui.btn_search.setIcon(tug.get_icon("search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         self.ui.btn_search.setDisabled(True)
-        self.ui.recent_files.setIcon(icons.get_other_icon("history"))
+        self.ui.recent_files.setIcon(tug.get_icon("history"))
         self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
+        self.ui.field_menu.setIcon(tug.get_icon("more"))
 
     def connect_slots(self):
         ag.app = bk_ut.self = self
-        ag.set_checkable_btn()
         self.connect_checkable()
 
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
-        self.ui.btnSetup.clicked.connect(bk_ut.click_setup_button)
+        self.ui.btnSetup.clicked.connect(bk_ut.show_main_menu)
+
+        self.ui.db_name.mousePressEvent = self.show_db_list
 
         self.ui.vSplit.enterEvent = self.vsplit_enter_event
         self.ui.vSplit.mousePressEvent = self.vsplit_press_event
@@ -240,6 +249,11 @@ class shoWindow(QMainWindow):
 
         ag.signals_.get_db_name.connect(self.get_db_name)
         ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
+
+    def show_db_list(self, e: QMouseEvent):
+        logger.info(f'{e.buttons()=}')
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            ag.signals_.user_signal.emit("MainMenu Select DB from list")
 
     @pyqtSlot()
     def close_filter_setup(self):
@@ -341,7 +355,12 @@ class shoWindow(QMainWindow):
         self.start_pos = None
 
     def connect_checkable(self):
-        for key, btn in ag.checkable_btn.items():
+        checkable_btn = {
+            ag.appMode.DIR: self.ui.btnDir,
+            ag.appMode.FILTER: self.ui.btnFilter,
+            ag.appMode.FILTER_SETUP: self.ui.btnFilterSetup,
+        }
+        for key, btn in checkable_btn.items():
             btn.clicked.connect(lambda state, bc=key:
                 self.click_checkable_button(bt_key=bc))
 
@@ -356,7 +375,7 @@ class shoWindow(QMainWindow):
 
     def click_checkable_button(self, bt_key: ag.appMode):
         low_bk.set_check_btn(bt_key)
-        ag.signals_.app_mode_changed.emit(ag.mode.value)
+        ag.signals_.app_mode_changed.emit(ag.first_mode.value)
 
         self.toggle_filter_show()
 
@@ -370,7 +389,6 @@ class shoWindow(QMainWindow):
             ag.filter_dlg.hide()
 
     def init_filter_setup(self):
-        # logger.info(f'ag.mode={ag.mode.name}')
         ag.filter_dlg = FilterSetup(self)
         ag.tag_list.change_selection.connect(ag.filter_dlg.tag_selection_changed)
         ag.ext_list.change_selection.connect(ag.filter_dlg.ext_selection_changed)
@@ -383,12 +401,12 @@ class shoWindow(QMainWindow):
         if self.ui.container.isVisible():
             self.ui.container.hide()
             self.ui.btnToggleBar.setIcon(
-                icons.get_toolbar_icon("btnToggleBar", 1)
+                tug.get_icon("btnToggleBar", 1)
             )
         else:
             self.ui.container.show()
             self.ui.btnToggleBar.setIcon(
-                icons.get_toolbar_icon("btnToggleBar", 0)
+                tug.get_icon("btnToggleBar", 0)
             )
 
     def resizeEvent(self, e: QResizeEvent) -> None:
@@ -400,7 +418,7 @@ class shoWindow(QMainWindow):
         e.accept()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if qss.config['instance_control']:
+        if tug.config['instance_control']:
             iman.app_instance_close()
         settings = {
             "maximizedWindow": int(self.window_maximized),
@@ -411,7 +429,7 @@ class shoWindow(QMainWindow):
         if ag.db.path:
             settings["DB_NAME"] = ag.db.path
 
-        utils.save_app_setting(**settings)
+        tug.save_app_setting(**settings)
         bk_ut.save_bk_settings()
 
         super().closeEvent(event)

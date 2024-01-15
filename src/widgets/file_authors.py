@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget,
 )
 
 from ..core.compact_list import aBrowser
-from ..core import icons, app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut
 
 
 class authorBrowser(QWidget):

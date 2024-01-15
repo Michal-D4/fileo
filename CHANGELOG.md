@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.1.01 - 2024, January 14
+* created a report on files with the same names
+* removed Awesome icon font, using SVG icons instead. Due to this, the size of the application has been reduced by more than 5 MB.
+* fixed a bug in sorting the list of files by file name: comparing the name and extension separately, and not as one string
+* many other changes and improvements
+
 ## 1.0.08 - 2023, December 20
 * replace spaces in href with %20 to make links work.
 * fix bug with switch from filter setup to filter to show filtered files.

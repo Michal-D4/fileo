@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import QWidget, QFileDialog
 
 from .ui_scan_disk import Ui_scanDisk
 
-from ..core import app_globals as ag, icons
+from ..core import app_globals as ag
+from src import tug
 
 
 class diskScanner(QWidget):
@@ -17,22 +18,17 @@ class diskScanner(QWidget):
         self.ui = Ui_scanDisk()
         self.ui.setupUi(self)
 
-        self.ui.open_btn.setIcon(icons.get_other_icon("open_db"))
+        self.ui.open_btn.setIcon(tug.get_icon("folder_open"))
 
         self.ui.open_btn.clicked.connect(self.get_root_path)
 
-        self.ui.btnCancel.clicked.connect(self.cancel)
+        self.ui.btnCancel.clicked.connect(self.close)
         self.ui.btnGo.clicked.connect(self.go)
         self.start_pos = QPoint()
         self.mouseMoveEvent = self.move_self
 
         self.set_exts()
-        self.ui.srch_title.setStyleSheet(ag.dyn_qss['name'][0])
-
-    @pyqtSlot()
-    def cancel(self):
-        ag.app.ui.btnScan.setEnabled(True)
-        self.close()
+        self.ui.srch_title.setStyleSheet(tug.dyn_qss['name'][0])
 
     @pyqtSlot()
     def go(self):

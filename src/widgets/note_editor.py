@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout
 
 from .file_note import fileNote
 from ..core import app_globals as ag, db_ut
+from src import tug
 
 class noteEditor(QWidget):
     def __init__(self, parent = None) -> None:
@@ -20,7 +21,7 @@ class noteEditor(QWidget):
 
         self.editor.setAcceptDrops(False)
         self.setAcceptDrops(True)
-        self.setStyleSheet(ag.dyn_qss['note_editor'][0])
+        self.setStyleSheet(tug.dyn_qss['note_editor'][0])
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
@@ -75,6 +76,9 @@ class noteEditor(QWidget):
         super().focusOutEvent(e)
 
     def start_edit(self, note: fileNote):
+        # logger.info(
+        #     f'fileId={note.get_file_id()}, note fileId={note.get_note_file_id()}, noteId={note.get_note_id()}'
+        # )
         self.note = note
         self.editor.setPlainText(db_ut.get_note(
             self.get_file_id(), self.get_note_id()

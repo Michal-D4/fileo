@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget, QStackedWidget
 
 from .ui_notes import Ui_FileNotes
 
-from ..core import icons, app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut
 from .file_authors import authorBrowser
 from .file_info import fileInfo
 from .file_notes import notesContainer
@@ -14,6 +14,7 @@ from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 from .note_editor import noteEditor
+from src import tug
 
 @unique
 class Page(Enum):
@@ -64,19 +65,19 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def set_buttons(self):
 
-        self.expand.setIcon(icons.get_other_icon("up"))
+        self.expand.setIcon(tug.get_icon("up"))
         self.expand.clicked.connect(self.toggle_collapse)
 
-        self.plus.setIcon(icons.get_other_icon("plus"))
+        self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
 
-        self.collapse_all.setIcon(icons.get_other_icon("collapse_all"))
+        self.collapse_all.setIcon(tug.get_icon("collapse_all"))
         self.collapse_all.clicked.connect(self.notes.collapse_all)
 
-        self.save.setIcon(icons.get_other_icon("ok"))
+        self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.note_changed)
 
-        self.cancel.setIcon(icons.get_other_icon("cancel2"))
+        self.cancel.setIcon(tug.get_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
 
         self.edit_btns.hide()
@@ -121,16 +122,16 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         # add note editor page (5)
         self.stackedWidget.addWidget(self.editor)
 
-        ss = ag.dyn_qss['passive_selector'][0]
+        ss = tug.dyn_qss['passive_selector'][0]
         for lbl in self.page_selectors.values():
             lbl.setStyleSheet(ss)
 
         self.main_layout.addWidget(self.stackedWidget)
-        self.setStyleSheet(' '.join(ag.dyn_qss['noteFrames']))
+        self.setStyleSheet(' '.join(tug.dyn_qss['noteFrames']))
 
     def l_tags_press(self, e: QMouseEvent):
         self.tagEdit.setReadOnly(False)
-        self.tagEdit.setStyleSheet(ag.dyn_qss["line_edit"][0])
+        self.tagEdit.setStyleSheet(tug.dyn_qss["line_edit"][0])
         self.tag_selector.set_selected_text()
         self.switch_page(Page.TAGS)
 
@@ -158,12 +159,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if new_page is self.cur_page:
             return
         ag.add_history_file(self.file_id)
+        # logger.info(f'{self.cur_page.name=}, {new_page.name=}')
 
         self.page_selectors[self.cur_page].setStyleSheet(
-            ag.dyn_qss['passive_selector'][0]
+            tug.dyn_qss['passive_selector'][0]
         )
         self.page_selectors[new_page].setStyleSheet(
-            ag.dyn_qss['active_selector'][0]
+            tug.dyn_qss['active_selector'][0]
         )
 
         if self.cur_page is Page.NOTE:
@@ -174,7 +176,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         if self.cur_page is Page.TAGS:
             self.tagEdit.setReadOnly(True)
-            self.tagEdit.setStyleSheet(ag.dyn_qss["line_edit_ro"][0])
+            self.tagEdit.setStyleSheet(tug.dyn_qss["line_edit_ro"][0])
 
         if self.cur_page is Page.AUTHORS:
             self.authorEdit.hide()
@@ -185,13 +187,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def toggle_collapse(self):
         if self.maximized:
-            self.expand.setIcon(icons.get_other_icon("up"))
+            self.expand.setIcon(tug.get_icon("up"))
             ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
             ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
             ag.file_list.show()
         else:
             self.s_height = self.height()
-            self.expand.setIcon(icons.get_other_icon("down"))
+            self.expand.setIcon(tug.get_icon("down"))
             hh = ag.file_list.height() + self.s_height
             ag.app.ui.noteHolder.setMinimumHeight(hh)
             ag.app.ui.noteHolder.setMaximumHeight(hh)
@@ -199,6 +201,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.maximized = not self.maximized
 
     def cancel_note_editing(self):
+        # logger.info(f'{self.cur_page.name=}')
         self.l_editor.hide()
         self.notes.set_editing(False)
         self.l_file_notes_press(None)
@@ -219,6 +222,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.start_edit(fileNote(self.file_id, 0))
 
     def start_edit(self, note: fileNote):
+        # logger.info(f'editing: {self.notes.is_editing()}')
         if self.notes.is_editing():
             self.edit_btns.show()
             self.switch_page(Page.EDIT)
@@ -234,7 +238,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.editor.setFocus()
 
     def get_edit_state(self) -> tuple:
-        def get_others():
+        def get_attributes():
             note: fileNote = self.editor.get_note()
             return (
                 True,
@@ -244,10 +248,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
                 self.editor.get_branch(),
                 self.editor.get_text(),
             )
-        return get_others() if self.notes.is_editing() else (False,)
+        return get_attributes() if self.notes.is_editing() else (False,)
 
     def set_edit_state(self, vals: tuple):
+        # logger.info(f'{vals=}')
         if not vals[0]:
+            self.cancel_note_editing()
             return
         note = fileNote(vals[1], vals[2])
         note.set_file_id(vals[3])

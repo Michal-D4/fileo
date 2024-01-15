@@ -7,9 +7,10 @@ from PyQt6.QtCore import QObject, QPoint, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QMouseEvent, QResizeEvent
 from PyQt6.QtWidgets import QMenu, QWidget
 
-from ..core import icons, app_globals as ag
+from ..core import app_globals as ag
 from .foldable import Foldable
 from .ui_fold_container import Ui_Foldings
+from src import tug
 
 MIN_HEIGHT = 62
 
@@ -166,9 +167,9 @@ class FoldContainer(QWidget):
         ag.signals_.collapseSignal.connect(self._toggle_collapsed)
 
     def set_menu_more(self):
-        self.ui.more.setIcon(icons.get_other_icon("more"))
+        self.ui.more.setIcon(tug.get_icon("more"))
         menu = QMenu(self)
-        for i,item in enumerate(ag.qss_params['$FoldTitles'].split(',')):
+        for i,item in enumerate(tug.qss_params['$FoldTitles'].split(',')):
             act = QAction(item, self, checkable=True)
             act.setChecked(True)
             act.triggered.connect(
@@ -191,7 +192,7 @@ class FoldContainer(QWidget):
         return sum((1 for ff in self.widgets if not (ff.is_hidden or ff.is_collapsed)))
 
     def _set_titles(self):
-        ttls = ag.qss_params['$FoldTitles'].split(',')
+        ttls = tug.qss_params['$FoldTitles'].split(',')
         for i,ff in enumerate(self.widgets):
             ff.wid.set_title(ttls[i])
 

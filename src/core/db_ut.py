@@ -102,6 +102,21 @@ def file_duplicates():
     )
     return ag.db.conn.cursor().execute(sql)
 
+def files_4_report():
+    """
+    file name, path, folder, modification date
+    """
+    sql = (
+        'with x(file, dir) as (select file, min(dir) '
+        'from filedir group by file) '
+        'select f.filename, p.path, d.name, '
+        'f.modified from files f '
+        'join paths p on p.id = f.path '
+        'join x on x.file = f.id '
+        'join dirs d on d.id = x.dir '
+    )
+    return ag.db.conn.cursor().execute(sql)
+
 def get_file_name(id: int|str) -> str:
     sql = 'select filename from files where id = ?'
     res = ag.db.conn.cursor().execute(sql, (id,)).fetchone()

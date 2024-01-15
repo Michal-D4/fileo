@@ -46,3 +46,6 @@ def setup_ui(self):
 
 def update_grips(self):
     pass
+
+def set_app_icon(app):
+    pass

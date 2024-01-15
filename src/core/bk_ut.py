@@ -8,9 +8,10 @@ from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView, QApplication
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, icons,
+    drag_drop as dd,
 )
 from ..widgets import workers, find_files
+from src import tug
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -95,7 +96,7 @@ def bk_setup(main: 'shoWindow'):
         lambda: ag.signals_.user_signal.emit("double click file"))
 
 @pyqtSlot()
-def click_setup_button():
+def show_main_menu():
     menu = QMenu(self)
     if not ag.single_instance:
         menu.addAction('New window')
@@ -106,6 +107,7 @@ def click_setup_button():
     menu.addAction('Scan disk for files')
     menu.addSeparator()
     menu.addAction('Report duplicate files')
+    menu.addAction('Report files with same names')
     menu.addSeparator()
     menu.addAction('Preferences')
     menu.addSeparator()
@@ -118,7 +120,7 @@ def click_setup_button():
         pos + QPoint(53, 26)
     ))
     if action:
-        ag.signals_.user_signal.emit(f"Setup {action.text()}")
+        ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -157,7 +159,6 @@ def file_list_resize_0(e: QResizeEvent):
     ag.signals_.app_mode_changed.emit(ag.appMode.NIL.value)
 
 def restore_dirs():
-    # logger.info(f'{ag.db.path=}')
     low_bk.set_dir_model()
     ag.filter_dlg.restore_filter_settings()
     restore_history()
@@ -218,7 +219,7 @@ def populate_all():
 
     hide_state = ag.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
-    self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
+    self.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
 
     ag.file_data_holder.set_edit_state(
         ag.get_setting("NOTE_EDIT_STATE", (False,))
@@ -348,7 +349,6 @@ def file_loading(root_path: str, ext: list[str]):
 @pyqtSlot(bool)
 def finish_loading(has_new_ext: bool):
     self.thread.quit()
-    self.ui.btnScan.setEnabled(True)
     self.set_busy(False)
     if has_new_ext:
         ag.signals_.user_signal.emit("ext inserted")

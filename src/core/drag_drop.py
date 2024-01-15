@@ -9,7 +9,7 @@ from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )
 from . import app_globals as ag, low_bk, load_files, db_ut
-from .edit_tree_model2 import TreeItem, TreeModel
+from .dir_model import dirItem, dirModel
 
 if sys.platform.startswith("win"):
     from . import win_menu as menu
@@ -121,7 +121,7 @@ def dir_mime_data(indexes) -> QMimeData:
 
     data_stream.writeInt(len(indexes))
     for idx in indexes:
-        it: TreeItem = idx.internalPointer()
+        it: dirItem = idx.internalPointer()
         path = get_index_path(idx)
         data_stream.writeQString(','.join((str(x) for x in path)))
 
@@ -164,7 +164,7 @@ def start_drag_files(action):
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):
-    ag.drop_button = event.buttons()
+    menu.drop_button = event.buttons()
     event.accept()
 
 @pyqtSlot(QDragMoveEvent)
@@ -300,9 +300,9 @@ def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     )
 
     folders_data = data.data(ag.mimeType.folders.value)
-    stream = QDataStream(folders_data, QIODevice.ReadOnly)
+    stream = QDataStream(folders_data, QIODevice.OpenModeFlag.ReadOnly)
     idx_count = stream.readInt()
-    model: TreeModel = ag.dir_list.model()
+    model: dirModel = ag.dir_list.model()
     for _ in range(idx_count):
         tmp_str = stream.readQString()
         id_list = (int(i) for i in tmp_str.split(','))
