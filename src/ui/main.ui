@@ -485,7 +485,7 @@
                  </size>
                 </property>
                 <property name="toolTip">
-                 <string>List of recent files</string>
+                 <string>List of recent files, Ctrl+H</string>
                 </property>
                 <property name="text">
                  <string/>
@@ -519,7 +519,7 @@
                  </size>
                 </property>
                 <property name="toolTip">
-                 <string>Search files by name</string>
+                 <string>Search files by name, Ctrl+F</string>
                 </property>
                 <property name="text">
                  <string/>

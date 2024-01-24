@@ -40,8 +40,8 @@ class notesContainer(QScrollArea):
         self.scrollWidget.setObjectName("scrollWidget")
         self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
-        self.scroll_layout.setContentsMargins(9,0,6,0)
-        self.scroll_layout.setSpacing(6)
+        self.scroll_layout.setContentsMargins(6,0,0,0)
+        self.scroll_layout.setSpacing(2)
         self.scroll_layout.setObjectName('scroll_layout')
         self.setStyleSheet("border: none;")
 

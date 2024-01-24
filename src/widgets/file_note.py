@@ -55,6 +55,13 @@ class fileNote(QWidget):
 
     def set_text(self, note: str):
         self.text = note
+        for pp in note.split('\n'):
+            if pp:
+                txt = pp
+                break
+        else:
+            return
+        self.ui.title.setText(txt[:40])
 
     def set_browser_text(self):
         self.ui.textBrowser.setMarkdown(self.text)

@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer, QAbstractTableModel, Qt,
 )
-from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView, QApplication
+from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut
+from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
+    QMessageBox, QApplication,
+)
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd,
+    drag_drop as dd, utils,
 )
 from ..widgets import workers, find_files
 from src import tug
@@ -94,6 +96,41 @@ def bk_setup(main: 'shoWindow'):
 
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_signal.emit("double click file"))
+
+    ctrl_f = QShortcut(QKeySequence("Ctrl+f"), ag.app)
+    ctrl_f.activated.connect(search_files)
+    ctrl_w = QShortcut(QKeySequence("Ctrl+w"), ag.app)
+    ctrl_w.activated.connect(short_create_folder)
+    ctrl_e = QShortcut(QKeySequence("Ctrl+e"), ag.app)
+    ctrl_e.activated.connect(short_create_child)
+    del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.app)
+    del_key.activated.connect(short_delete_folder)
+
+@pyqtSlot()
+def short_create_folder():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    ag.signals_.user_signal.emit(f"Dirs Create folder")
+
+@pyqtSlot()
+def short_create_child():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    if ag.dir_list.currentIndex().isValid():
+        ag.signals_.user_signal.emit(f"Dirs Create folder as child")
+
+@pyqtSlot()
+def short_delete_folder():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    if ag.dir_list.currentIndex().isValid():
+        if utils.show_message_box(
+            'Delete folders',
+            'Delete selected folders. Please confirm',
+            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            icon=QMessageBox.Icon.Question
+        ) == QMessageBox.StandardButton.Ok:
+            ag.signals_.user_signal.emit(f"Dirs Delete folder(s)")
 
 @pyqtSlot()
 def show_main_menu():
@@ -284,20 +321,21 @@ def dir_menu(pos):
     menu = QMenu(self)
     if idx.isValid():
         menu.addSeparator()
-        menu.addAction("Delete folder(s)")
+        menu.addAction("Delete folder(s)\tDel")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
         menu.addAction("Import files")
         menu.addSeparator()
-        menu.addAction("Create folder")
-        menu.addAction("Create folder as child")
+        menu.addAction("Create folder\tCtrl-W")
+        menu.addAction("Create folder as child\tCtrl-E")
     else:
-        menu.addAction("Create folder")
+        menu.addAction("Create folder\tCtrl-W")
 
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:
-        ag.signals_.user_signal.emit(f"Dirs {action.text()}")
+        item = action.text().split('\t')[0]
+        ag.signals_.user_signal.emit(f"Dirs {item}")
 
 @pyqtSlot(QPoint)
 def file_menu(pos):

@@ -1,7 +1,7 @@
 from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
 from .ui_notes import Ui_FileNotes
@@ -70,15 +70,21 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
+        ctrl_n = QShortcut(QKeySequence("Ctrl+n"), self)
+        ctrl_n.activated.connect(self.short_new_note)
 
         self.collapse_all.setIcon(tug.get_icon("collapse_all"))
         self.collapse_all.clicked.connect(self.notes.collapse_all)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.note_changed)
+        ctrl_s = QShortcut(QKeySequence("Ctrl+s"), self)
+        ctrl_s.activated.connect(self.note_changed)
 
         self.cancel.setIcon(tug.get_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
+        ctrl_q = QShortcut(QKeySequence("Ctrl+q"), self)
+        ctrl_q.activated.connect(self.short_cancel_editing)
 
         self.edit_btns.hide()
         self.note_btns.hide()
@@ -200,6 +206,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.file_list.hide()
         self.maximized = not self.maximized
 
+    def short_cancel_editing(self):
+        if (not self.notes.is_editing() or
+            ag.app.focusWidget() is not self.notes):
+            return
+        self.cancel_note_editing()
+
     def cancel_note_editing(self):
         # logger.info(f'{self.cur_page.name=}')
         self.l_editor.hide()
@@ -215,6 +227,11 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def set_tag_author_data(self):
         self.tag_selector.set_list(db_ut.get_tags())
         self.author_selector.set_authors()
+
+    def short_new_note(self):
+        logger.info(f'{ag.app.focusWidget()=}')
+        if ag.app.focusWidget() is self.notes:
+            self.new_file_note()
 
     def new_file_note(self):
         if self.file_id == -1:

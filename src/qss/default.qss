@@ -145,6 +145,10 @@ QFrame#item_header {
    background-color: $navigatorBackground;
    color: $navigatorColor;
 }
+QFrame#item_header QLabel {
+   background-color: $navigatorBackground;
+   color: $navigatorColor;
+}
 QFrame#header {
    background-color: $navigatorBackground;
    color: $navigatorColor;

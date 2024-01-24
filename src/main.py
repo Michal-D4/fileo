@@ -71,7 +71,7 @@ def start_app(app: QApplication):
             ag.file_list.setFocus()
         else:
             ag.dir_list.setFocus()
-            idx = ag.dir_list.currentIndex()
+
             sel_model = ag.dir_list.selectionModel()
             cur_selection = sel_model.selection()
             sel_model.select(cur_selection, QItemSelectionModel.SelectionFlag.Clear)
@@ -79,6 +79,10 @@ def start_app(app: QApplication):
 
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
     tab.activated.connect(tab_pressed)
+    ctrl_h = QShortcut(QKeySequence("Ctrl+h"), ag.app)
+    ctrl_h.activated.connect(
+        lambda: ag.signals_.user_signal.emit("show_recent_files")
+    )
 
     if tug.config['instance_control']:
         timer = QTimer(ag.app)

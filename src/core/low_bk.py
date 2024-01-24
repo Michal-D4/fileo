@@ -104,6 +104,7 @@ def set_user_actions_handler():
         "file reveal": reveal_in_explorer,
         "Files Clear file history": clear_file_history,
         "Files Remove selected from history": remove_selected_from_history,
+        "show_recent_files": show_recent_files,
       }
 
     @pyqtSlot(str)
@@ -946,6 +947,7 @@ def create_child_dir():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
         ag.dir_list.setCurrentIndex(new_idx)
+        ag.dir_list.edit(new_idx)
 
 def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
     model = ag.dir_list.model()
@@ -965,6 +967,7 @@ def create_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setCurrentIndex(new_idx)
+        ag.dir_list.edit(new_idx)
 
 def create_folder(index: QModelIndex):
     """

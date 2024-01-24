@@ -20,6 +20,8 @@ class FilterSetup(QWidget):
         self.single_folder = False
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        self.ui.after_date.setCalendarPopup(True)
+        self.ui.before_date.setCalendarPopup(True)
         ttls = tug.qss_params['$FoldTitles'].lower()
         titles = ttls.split(',')
         self.ui.selected_dir.setText(titles[0])
