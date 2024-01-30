@@ -23,13 +23,7 @@ from ..widgets.fold_container import FoldContainer
 from . import (db_ut, bk_ut, history, low_bk,
     app_globals as ag, iman,
 )
-if sys.platform.startswith("win"):
-    from .win_win import setup_ui, update_grips
-elif sys.platform.startswith("linux"):
-    from .linux_win import setup_ui, update_grips
-else:
-    raise ImportError(f"doesn't support {sys.platform} system")
-
+from .win_win import setup_ui, update_grips
 
 
 MIN_NOTE_HEIGHT = 75
@@ -74,8 +68,7 @@ class shoWindow(QMainWindow):
         self.container.set_qss_fold(tug.dyn_qss['decorator'])
 
     def restore_settings(self):
-        exec_user_action = low_bk.set_user_actions_handler()
-        ag.signals_.user_signal.connect(exec_user_action)
+        ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
 
         self.restore_geometry()
         self.restore_container()
@@ -119,7 +112,7 @@ class shoWindow(QMainWindow):
     def restore_mode(self):
         # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
         mode = ag.appMode(
-            int(ag.get_setting("APP_MODE", ag.appMode.DIR))
+            int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
         if mode.value > ag.appMode.FILTER_SETUP.value:
             mode = ag.appMode.DIR
@@ -135,7 +128,7 @@ class shoWindow(QMainWindow):
         geometry = tug.get_app_setting("MainWindowGeometry")
 
         if geometry:
-            self.restoreGeometry(geometry)
+            self.setGeometry(geometry)
             if not ag.db.restore:
                 self.move(self.x() + 50, self.y() + 30)
 
@@ -352,7 +345,7 @@ class shoWindow(QMainWindow):
 
     def leave_event(self, e):
         self.unsetCursor()
-        self.start_pos = None
+        self.start_pos = QPoint()
 
     def connect_checkable(self):
         checkable_btn = {
@@ -410,19 +403,18 @@ class shoWindow(QMainWindow):
             )
 
     def resizeEvent(self, e: QResizeEvent) -> None:
-        super().resizeEvent(e)
         update_grips(self)
 
         if ag.filter_dlg and ag.filter_dlg.isVisible():
             ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
-        e.accept()
+        super().resizeEvent(e)
 
     def closeEvent(self, event: QCloseEvent) -> None:
         if tug.config['instance_control']:
             iman.app_instance_close()
         settings = {
             "maximizedWindow": int(self.window_maximized),
-            "MainWindowGeometry": self.saveGeometry(),
+            "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
         }

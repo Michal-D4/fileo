@@ -801,7 +801,7 @@ def remove_files():
     post_delete_file(row)
 
 def remove_file_from_location(param: str):
-    dir_id, file_id = param.split(',')
+    file_id, dir_id = param.split(',')
     db_ut.delete_file_dir_link(file_id, dir_id)
     # need branch instead of empty list []
     ag.file_data_holder.set_data(int(file_id), [])
@@ -1054,7 +1054,7 @@ def tag_changed(new_tag: str):
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()
-    ag.tag_list.edit_finished.emit()
+    ag.tag_list.list_changed.emit()
 
 def delete_tags(tags: str):
     """
@@ -1063,7 +1063,7 @@ def delete_tags(tags: str):
     for id in tags.split(','):
         db_ut.detele_tag(id)
     populate_tag_list()
-    ag.tag_list.edit_finished.emit()
+    ag.tag_list.list_changed.emit()
 #endregion
 
 def populate_ext_list():
@@ -1088,7 +1088,7 @@ def author_changed(new_author: str):
         return
     db_ut.update_author(ag.author_list.current_id(), new_author)
     populate_author_list()
-    ag.author_list.edit_finished.emit()
+    ag.author_list.list_changed.emit()
 
 def delete_authors(authors: str):
     """
@@ -1097,13 +1097,17 @@ def delete_authors(authors: str):
     for id in authors.split(','):
         db_ut.detele_author(id)
     populate_author_list()
-    ag.author_list.edit_finished.emit()
+    ag.author_list.list_changed.emit()
 #endregion
 
 def file_notes_show(file_idx: QModelIndex):
-    ag.file_data_holder.set_data(
+    file_id = (
         file_idx.data(Qt.ItemDataRole.UserRole).id
-        if file_idx.isValid() else 0,
+        if file_idx.isValid() else 0
+    )
+    branch = (
         define_branch(ag.dir_list.currentIndex())
         if ag.mode is ag.appMode.DIR else []
     )
+    # logger.info(f'{file_id=}, {branch=}')
+    ag.file_data_holder.set_data(file_id, branch)

@@ -13,13 +13,7 @@ from .core.sho import shoWindow
 
 timer = None
 
-if sys.platform.startswith("win"):
-    from .core.win_win import activate, win_icons, set_app_icon
-elif sys.platform.startswith("linux"):
-    from .core.linux_win import activate, win_icons, set_app_icon
-else:
-    raise ImportError(f"doesn't support {sys.platform} system")
-
+from .core.win_win import activate, set_app_icon
 
 def run_instance(db_name: str='') -> bool:
     if tug.config['instance_control']:
@@ -52,7 +46,6 @@ def start_app(app: QApplication):
         log_qss = int(tug.get_app_setting("LOG_QSS", 0))
         styles = tug.prepare_styles(thema_name, to_save=log_qss)
         app.setStyleSheet(styles)
-        win_icons()
         set_app_icon(app)
     except KeyError as e:
         # message for developers
@@ -106,5 +99,5 @@ def main(entry_point: str, db_name: str):
         ag.entry_point = tmp.name
 
     if run_instance(db_name):
-        logger.info(f'>>> {iman.PID} {entry_point=}, {ag.entry_point=}')
+        logger.info(f'>>> {iman.PID=} {entry_point=}, {ag.entry_point=}')
         start_app(app)

@@ -228,7 +228,7 @@ QTreeView::branch:open:has-children {
 ##path~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputColor;
 ##name~border: none; font-family: $fontFamily; font-size: $FontSizeBig; color: $dialogInputColor;
 ##input_path_message~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $ErrorMessage1Color;
-##text_browser~<style type="text/css"> *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG} .c {background: $tagCurrentBG} </style>
+##text_browser~<style type="text/css"> *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG}</style>
 ##active_selector~$bottomBorder color: $$activeColor
 ##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
 ##noteFrames~QFrame#head {$bottomBorder background-color: $treeViewBackground; }

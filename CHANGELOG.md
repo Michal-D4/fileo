@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.03 - 2024, January 30
+* frameless main window also in Linux
+* fix some issues with move-resize main window. Everything seems to be running smoothly now
+* many other changes and improvements in the code
+
 ## 1.1.02 - 2024, January 17
 * shortcuts for the most common actions: creating and deleting folders, creating and saving a note, searching for a file, and displaying file history.
 * show the beginning of the note in the note header

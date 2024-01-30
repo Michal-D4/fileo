@@ -168,6 +168,9 @@ def collect_all_icons():
         'right': ('angle_right_2',),
         'toEdit': ('pencil',),
         'folder_open': ('folder_open',),
+        'minimize': ('minimize',),
+        'maximize': ('maximize', 'restore'),
+        'close': ('close', 'close_active'),
     }
     set_icons(keys)
 

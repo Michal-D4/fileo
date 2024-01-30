@@ -188,7 +188,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.close()
 
     def open_in_new_window(self, db_name: str):
-        ag.signals_.user_signal.emit(f'Setup New window\\{db_name}')
+        ag.signals_.user_signal.emit(f'MainMenu New window\\{db_name}')
         self.close()
 
     def get_item_list(self) -> list:

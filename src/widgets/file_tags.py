@@ -22,9 +22,9 @@ class tagBrowser(aBrowser):
         self.browser.setText(txt)
 
     def html_selected(self):
-        sel = self.selected_idx
-        inn = ' '.join(f"<a class={'s' if i in sel else 't'} href=#{tag}>{tag}</a> "
-             for i,tag in enumerate(self.tags))
+        sel = self.sel_tags
+        inn = ' '.join(f"<a class={'s' if tag in sel else 't'} href=#{tag}>{tag}</a> "
+             for tag in self.tags)
         return inn
 
     @pyqtSlot(list)

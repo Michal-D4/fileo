@@ -2,6 +2,7 @@ from loguru import logger
 
 from PyQt6.QtCore import Qt, QUrl, QRect, pyqtSignal, pyqtSlot, QPoint
 from PyQt6.QtGui import (QGuiApplication, QKeySequence, QShortcut,
+    QTextCursor,
 )
 from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
@@ -47,7 +48,7 @@ class aBrowser(QWidget):
     edit_item = pyqtSignal(str)
     delete_items = pyqtSignal(str)
     change_selection = pyqtSignal(list)
-    edit_finished = pyqtSignal()
+    list_changed = pyqtSignal()
 
     def __init__(self, brackets: bool=False,
         read_only: bool=True, parent=None) -> None:
@@ -67,10 +68,9 @@ class aBrowser(QWidget):
         self.browser.customContextMenuRequested.connect(self.custom_menu)
         self.browser.setOpenLinks(False)
 
-        self.tags = []
-        self.tag_ids = []
-        self.selected_idx = []
-        self.curr_pos = 0
+        self.tags = {}
+        self.sel_tags = []
+        self._to_edit: str = ''
         self.scroll_pos = 0
 
         self.browser.anchorClicked.connect(self.ref_clicked)
@@ -78,24 +78,28 @@ class aBrowser(QWidget):
         if not self.read_only:
             f2 = QShortcut(QKeySequence(Qt.Key.Key_F2), self.browser)
             f2.setContext(Qt.ShortcutContext.WidgetShortcut)
-            f2.activated.connect(self.rename_tag)
+            f2.activated.connect(self.f2_rename_tag)
 
     @pyqtSlot()
+    def f2_rename_tag(self):
+        if self._to_edit and self._to_edit not in self.sel_tags:
+            return
+        self.rename_tag()
+
     def rename_tag(self):
         """
         edit last selected tag - current tag
         """
-        if not self.selected_idx:
+        if not self._to_edit:
             return
         c_rect = self.get_edit_rect()
         if c_rect:
-            ed = editTag(self.get_current(), self)
+            ed = editTag(self._to_edit, self)
             ed.setGeometry(c_rect)
             ed.show()
 
     def get_edit_rect(self):
         start, end = self.get_start_end()
-
         if start.y() < end.y():   # two line selection
             w = self.browser.width()
             return QRect(
@@ -111,37 +115,38 @@ class aBrowser(QWidget):
         )
 
     def get_start_end(self):
+        self.browser.find(self._to_edit)
         curs = self.browser.textCursor()
 
-        # curs.setPosition(pos)
         end = self.browser.cursorRect(curs)
-
-        pos = curs.position()
-        tag = self.get_current()
-        curs.setPosition(pos - len(tag))
+        curs.setPosition(curs.position() - len(self._to_edit))
         start = self.browser.cursorRect(curs)
         return start, end
 
     @pyqtSlot(QPoint)
     def custom_menu(self, pos):
+        if not self.tags:
+            return
         self.scroll_pos = self.browser.verticalScrollBar().value()
         menu = QMenu(self)
         if not self.read_only:
-            menu.addAction("Delete selected")
-            menu.addAction("Edit current")
-        menu.addAction("Copy selected")
+            self.item_to_edit(pos)
+            menu.addAction('Delete selected')
+            menu.addAction(f'Rename "{self._to_edit}"\tF2')
+        menu.addAction('Copy selected')
         menu.addSeparator()
-        menu.addAction("Select all")
+        menu.addAction('Select all')
         action = menu.exec(self.browser.mapToGlobal(pos))
         if action:
+            choice = action.text().split('"')[0]
             {"Delete selected": self.delete_selected,
-             "Edit current": self.rename_tag,
+             "Rename ": self.rename_tag,
              "Copy selected": self.copy_selected,
              "Select all": self.select_all,
-             }[action.text()]()
+             }[choice]()
 
     def delete_selected(self):
-        if not self.selected_idx:
+        if not self.sel_tags:
             return
         ids = ','.join((str(id) for id in self.get_selected_ids()))
         self.delete_items.emit(ids)
@@ -152,11 +157,9 @@ class aBrowser(QWidget):
 
     def set_list(self, items: list):
         self.tags.clear()
-        self.tag_ids.clear()
-        self.selected_idx.clear()
-        for it in items:
-            self.tags.append(it[0])
-            self.tag_ids.append(it[1])
+        self.sel_tags.clear()
+        for key, val in items:
+            self.tags[key] = val
         self.show_in_bpowser()
 
     @pyqtSlot()
@@ -171,93 +174,83 @@ class aBrowser(QWidget):
             curs.clearSelection()
             self.browser.setTextCursor(curs)
 
-    def set_selection(self, sel_ids: list[int]):
-        if len(self.tags) > 0:
-            self.selected_idx = [self.tag_ids.index(int(s)) for s in sel_ids]
+    def set_selection(self, sel_ids):
+        _sels = list(sel_ids)
+        if len(_sels) > 0:
+            self.sel_tags = [key for key, val in self.tags.items() if val in _sels]
             self.show_in_bpowser()
-            self.browser.find(self.get_current())
-
-    def change_selection_emit(self):
-        items = [val for i,val in enumerate(self.tags) if i in self.selected_idx]
-        self.change_selection.emit(items)
 
     def select_all(self):
-        self.selected_idx = list(range(len(self.tag_ids)))
+        self.sel_tags = list(self.tags.keys())
         self.show_in_bpowser()
 
     def get_selected_ids(self) -> list[int]:
-        tmp = [self.tag_ids[i] for i in self.selected_idx]
-        tmp.sort()
-        return tmp
+        return sorted([self.tags[tag] for tag in self.sel_tags])
 
-    def get_tag_id(self, tag: str) -> bool:
-        try:
-            return self.tag_ids[self.tags.index(tag)]
-        except ValueError:
-            return 0
+    def get_tag_id(self, tag: str) -> int:
+        return self.tags.get(tag, 0)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
         self.update_selected(href, mod)
-        self.change_selection_emit()
+        self.change_selection.emit(self.sel_tags)
         self.show_in_bpowser()
 
+    def item_to_edit(self, pos: QPoint):
+        curs: QTextCursor = self.browser.cursorForPosition(pos)
+        p = curs.position()
+        key = '[]' if self.brackets else '  '
+        txt = self.browser.toPlainText()
+        q = txt[:p].rfind(key[0]) + 1
+        r = txt[q:].find(key[1])
+        self._to_edit = txt[q:q+r] if r > -1 else txt[q:]
+
     def get_selected(self) -> list[str]:
-        tmp = [self.tags[i] for i in self.selected_idx]
-        tmp.sort(key=str.lower)
-        return tmp
+        return sorted(self.sel_tags, key=str.lower)
 
     def get_current(self) -> str:
-        """
-        the current tag is the last selected tag
-        that is the last one in self.selected_idx
-        """
-        return self.tags[self.selected_idx[-1]] if self.selected_idx else ''
+        return self._to_edit
 
     def current_id(self) -> int:
-        return self.tag_ids[self.selected_idx[-1]] if self.selected_idx else 0
+        return self.tags.get(self._to_edit, 0)
 
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
         tref = href.toString()[1:]
-        self.curr_pos = self.browser.textCursor().position()
-        if tref not in self.tags:
-            # no new tags created in this module
-            # so this shouldn't happen
-            return
-        self.browser.find(tref)
-        i = self.tags.index(tref)
         if mod is Qt.KeyboardModifier.ControlModifier:
-            if i in self.selected_idx:
-                self.selected_idx.remove(i)
+            if tref in self.sel_tags:
+                self.sel_tags.remove(tref)
+                self._to_edit = self.sel_tags[-1] if len(
+                    self.sel_tags
+                ) > 0 else ''
             else:
-                self.selected_idx.append(i)
+                self.sel_tags.append(tref)
+                self._to_edit = tref
         else:
-            if self.selected_idx == [i]:
-                self.selected_idx.clear()
+            if self.sel_tags == [tref]:
+                self.sel_tags.clear()
+                self._to_edit = ''
                 return
-            self.selected_idx.clear()
-            self.selected_idx.append(i)
+            self.sel_tags.clear()
+            self.sel_tags.append(tref)
+            self._to_edit = tref
 
     def show_in_bpowser(self):
         self.browser.clear()
         style = tug.dyn_qss['text_browser'][0]
         inn = self.html_selected()
         self.browser.setText(''.join((style, inn)))
-        curs = self.browser.textCursor()
-        curs.setPosition(self.curr_pos)
-        self.browser.setTextCursor(curs)
         self.browser.verticalScrollBar().setValue(self.scroll_pos)
 
     def html_selected(self):
-        sel = self.selected_idx
+        sel = self.sel_tags
         if self.brackets:
             if sel:
-                return ' '.join(f"<a class={'c' if i == sel[-1] else 's' if i in sel else 't'}"
-                    f' href="#{tag}">[{tag}]</a> ' for i,tag in enumerate(self.tags))
+                return ' '.join(f"<a class={'s' if tag in sel else 't'}"
+                    f' href="#{tag}">[{tag}]</a> ' for tag in self.tags)
             return ' '.join(f'<a class t href="#{tag}">[{tag}]</a> ' for tag in self.tags)
         if sel:
-            return ' '.join(f"<a class={'c' if i == sel[-1] else 's' if i in sel else 't'}"
-                f' href="#{tag}">{tag}</a> ' for i,tag in enumerate(self.tags))
+            return ' '.join(f"<a class={'s' if tag in sel else 't'}"
+                f' href="#{tag}">{tag}</a> ' for tag in self.tags)
         return ' '.join(f'<a class t href="#{tag}">{tag}</a> ' for tag in self.tags)

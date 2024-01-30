@@ -98,7 +98,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.stackedWidget.addWidget(self.tag_selector)
         self.tag_selector.setObjectName('tag_selector')
         self.tag_selector.change_selection.connect(self.tag_selector.update_tags)
-        ag.tag_list.edit_finished.connect(self.tag_selector.update_tag_list)
+        ag.tag_list.list_changed.connect(self.tag_selector.update_tag_list)
 
         # add author selector page (1)
         self.author_selector = authorBrowser(self.authorEdit)
@@ -154,7 +154,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.switch_page(Page.INFO)
 
     def l_file_notes_press(self, e: QMouseEvent):
-        self.note_btns.show()
+        if self.file_id:
+            self.note_btns.show()
         self.switch_page(Page.NOTE)
 
     def l_editor_press(self, e: QMouseEvent):
@@ -234,7 +235,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             self.new_file_note()
 
     def new_file_note(self):
-        if self.file_id == -1:
+        if not self.file_id:
             return
         self.start_edit(fileNote(self.file_id, 0))
 
@@ -282,12 +283,17 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def set_data(self, file_id: int, branch: list):
         # logger.info(f'{file_id=}')
         self.file_id = file_id
+        if not file_id:
+            self.note_btns.hide()
+        else:
+            self.note_btns.show()
         self.tag_selector.set_file_id(file_id)
         self.author_selector.set_file_id(file_id)
         self.file_info.set_file_id(file_id)
         self.notes.set_file_id(file_id)
 
         self.locator.set_data(file_id, branch)
+        # locator calculates all branches the file belongs to
         if not branch:
             branch = self.locator.get_branch(file_id)
         if not self.notes.is_editing():

@@ -44,7 +44,7 @@ $statusLabelHover~#398BCF
 $ScrollBarHandleBG~#888888
 $topBarToolButtonHoverBG~#C6C6C6
 $ToolButtonCloseHoverBG~#DE1B2E
-$ErrorMessage1Color~#DE1B2E
+$ErrorMessage1Color~#E74856
 $ToolButtonMenuHoverBG~#D2D2D2
 $ToolButtonActiveColor~#FFFFFF
 $ToolButtonColor~#808080

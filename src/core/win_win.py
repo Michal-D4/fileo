@@ -1,4 +1,5 @@
 from loguru import logger
+import sys
 
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon
@@ -9,19 +10,42 @@ from src import tug
 
 MOVE_THRESHOLD = 50
 
-def activate(pid):
-    from pywinauto import Application
+if sys.platform.startswith("win"):
+    def activate(pid):
+        from pywinauto import Application
 
-    running_app = Application().connect(process=int(pid))
-    running_app.top_window().set_focus()
+        running_app = Application().connect(process=int(pid))
+        running_app.top_window().set_focus()
+elif sys.platform.startswith("linux"):
+    import subprocess
+    from . import utils
+    def activate(pid):
+        try:
+            temp = subprocess.Popen(
+                ['wmctrl', '-p', '-l'], stdout = subprocess.PIPE
+            )
+            rr = temp.communicate()
+            pp = str(rr[0]).split(r'\n')
+            p_id = get_win_id(pp, str(pid))
+            if p_id:
+                subprocess.Popen(
+                    ['wmctrl', '-i', '-R', f'{p_id}'], stdout = subprocess.PIPE
+                )
+        except FileNotFoundError:
+            utils.show_message_box(
+                "Can't switch to existed fileo instance",
+                "Please install 'wmctrl' on your system."
+            )
 
-def win_icons():
-    keys = {
-        'minimize': ('minimize',),
-        'maximize': ('maximize', 'restore'),
-        'close': ('close', 'close_active'),
-    }
-    tug.set_icons(keys)
+
+    def get_win_id(comm: list, pid: str) -> str:
+        for cc in comm:
+            if pid in cc:
+                p = cc.find('0x')
+                return cc[p:p+10]
+        return ''
+else:
+    raise ImportError(f"doesn't support {sys.platform} system")
 
 def set_app_icon(app: QApplication):
     try:
@@ -39,6 +63,7 @@ def set_app_icon(app: QApplication):
 
 def setup_ui(self):
     self.start_move = QPoint()
+    self._geom = None
 
     self.setWindowFlags(
         Qt.WindowType.FramelessWindowHint |
@@ -57,27 +82,28 @@ def setup_ui(self):
     self.grips['bottom_grip'] = cg.CustomGrip(self, Qt.Edge.BottomEdge)
 
     def maximize_restore():
-        self.window_maximized = not self.window_maximized
-        self.ui.maximize.setIcon(tug.get_icon("maximize", self.window_maximized))
-        if self.window_maximized:
+        if self.isMaximized():
+            self.ui.appMargins.setContentsMargins(cg.MG, cg.MG, cg.MG, cg.MG)
+            [grip.show() for grip in self.grips.values()]
+            self.setGeometry(self._geom)
+        else:
+            self._geom = self.normalGeometry()
             self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
             [grip.hide() for grip in self.grips.values()]
             self.showMaximized()
-        else:
-            self.ui.appMargins.setContentsMargins(cg.GT, cg.GT, cg.GT, cg.GT)
-            [grip.show() for grip in self.grips.values()]
-            self.showNormal()
+        self.ui.maximize.setIcon(tug.get_icon("maximize", self.isMaximized()))
 
     self.ui.maximize.clicked.connect(maximize_restore)
 
     def move_window(e: QMouseEvent):
-        if self.window_maximized:
+        if self.isMaximized():
             maximize_restore()
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
+            a_pos = self.pos()
             if (pos_ - self.start_move).manhattanLength() < MOVE_THRESHOLD:
-                self.move(self.pos() + pos_ - self.start_move)
+                self.move(a_pos + pos_ - self.start_move)
             self.start_move = pos_
             e.accept()
 
@@ -98,9 +124,9 @@ def setup_ui(self):
 
 def update_grips(self):
     self.grips['left_grip'].setGeometry(
-        0, cg.GT, cg.GT, self.height()-2*cg.GT)
+        0, cg.GT, cg.GT, self.height()-cg.G2)
     self.grips['right_grip'].setGeometry(
-        self.width() - cg.GT, cg.GT, cg.GT, self.height()-2*cg.GT)
+        self.width() - cg.GT, cg.GT, cg.GT, self.height()-cg.G2)
     self.grips['top_grip'].setGeometry(
         0, 0, self.width(), cg.GT)
     self.grips['bottom_grip'].setGeometry(
