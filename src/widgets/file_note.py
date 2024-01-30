@@ -5,8 +5,9 @@ from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
 from PyQt6.QtWidgets import QWidget
 
-from ..core import icons, app_globals as ag
+from ..core import app_globals as ag
 from .ui_file_note import Ui_fileNote
+from src import tug
 
 MIN_HEIGHT = 50
 TIME_FORMAT = "%Y-%m-%d %H:%M"
@@ -15,7 +16,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 class fileNote(QWidget):
 
     def __init__(self,
-                 note_file_id: int = 0,  # file_id from filenotes table
+                 note_file_id: int = 0,  # file_id from filenotes table, find by hash
                  note_id: int=0,
                  modified: int=0,
                  created: int=0,
@@ -38,8 +39,8 @@ class fileNote(QWidget):
         self.ui = Ui_fileNote()
 
         self.ui.setupUi(self)
-        self.ui.edit.setIcon(icons.get_other_icon("toEdit"))
-        self.ui.remove.setIcon(icons.get_other_icon("cancel2"))
+        self.ui.edit.setIcon(tug.get_icon("toEdit"))
+        self.ui.remove.setIcon(tug.get_icon("cancel2"))
         self.ui.created.setText(f'created: {self.created.strftime(TIME_FORMAT)}')
         self.ui.modified.setText(f'modified: {self.modified.strftime(TIME_FORMAT)}')
         self.ui.textBrowser.setOpenLinks(False)
@@ -54,6 +55,13 @@ class fileNote(QWidget):
 
     def set_text(self, note: str):
         self.text = note
+        for pp in note.split('\n'):
+            if pp:
+                txt = pp
+                break
+        else:
+            return
+        self.ui.title.setText(txt[:40])
 
     def set_browser_text(self):
         self.ui.textBrowser.setMarkdown(self.text)
@@ -105,8 +113,8 @@ class fileNote(QWidget):
 
     def set_collapse_icon(self, collapse: bool):
         self.ui.collapse.setIcon(
-            icons.get_other_icon("right") if collapse
-            else icons.get_other_icon("down")
+            tug.get_icon("right") if collapse
+            else tug.get_icon("down")
         )
 
     @pyqtSlot()

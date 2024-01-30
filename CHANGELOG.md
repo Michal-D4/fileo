@@ -1,5 +1,20 @@
 # Change Log
 
+## 1.1.03 - 2024, January 30
+* frameless main window also in Linux
+* fix some issues with move-resize main window. Everything seems to be running smoothly now
+* many other changes and improvements in the code
+
+## 1.1.02 - 2024, January 17
+* shortcuts for the most common actions: creating and deleting folders, creating and saving a note, searching for a file, and displaying file history.
+* show the beginning of the note in the note header
+
+## 1.1.01 - 2024, January 14
+* created a report on files with the same names
+* removed Awesome icon font, using SVG icons instead. Due to this, the size of the application has been reduced by more than 5 MB.
+* fixed a bug in sorting the list of files by file name: comparing the name and extension separately, and not as one string
+* many other changes and improvements
+
 ## 1.0.08 - 2023, December 20
 * replace spaces in href with %20 to make links work.
 * fix bug with switch from filter setup to filter to show filtered files.

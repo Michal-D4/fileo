@@ -29,9 +29,6 @@ def get_win_id(comm: list, pid: str) -> str:
             return cc[p:p+10]
     return ''
 
-def win_icons():
-    pass
-
 def setup_ui(self):
     self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
     ind = self.ui.horizontalLayout_4.indexOf(self.ui.horizontalLayout)
@@ -45,4 +42,7 @@ def setup_ui(self):
     self.close = self.close_app
 
 def update_grips(self):
+    pass
+
+def set_app_icon(app):
     pass

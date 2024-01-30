@@ -4,13 +4,16 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
     QTimer, QAbstractTableModel, Qt,
 )
-from PyQt6.QtGui import QResizeEvent
-from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView, QApplication
+from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
+from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
+    QMessageBox, QApplication,
+)
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, icons,
+    drag_drop as dd, utils,
 )
 from ..widgets import workers, find_files
+from src import tug
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -94,8 +97,44 @@ def bk_setup(main: 'shoWindow'):
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_signal.emit("double click file"))
 
+    ctrl_f = QShortcut(QKeySequence("Ctrl+f"), ag.app)
+    ctrl_f.activated.connect(search_files)
+    ctrl_w = QShortcut(QKeySequence("Ctrl+w"), ag.app)
+    ctrl_w.activated.connect(short_create_folder)
+    ctrl_e = QShortcut(QKeySequence("Ctrl+e"), ag.app)
+    ctrl_e.activated.connect(short_create_child)
+    del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.app)
+    del_key.activated.connect(short_delete_folder)
+
 @pyqtSlot()
-def click_setup_button():
+def short_create_folder():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    ag.signals_.user_signal.emit(f"Dirs Create folder")
+
+@pyqtSlot()
+def short_create_child():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    if ag.dir_list.currentIndex().isValid():
+        ag.signals_.user_signal.emit(f"Dirs Create folder as child")
+
+@pyqtSlot()
+def short_delete_folder():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    if ag.dir_list.currentIndex().isValid():
+        if utils.show_message_box(
+            'Delete folders',
+            'Delete selected folders. Please confirm',
+            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            icon=QMessageBox.Icon.Question
+        ) == QMessageBox.StandardButton.Ok:
+            ag.signals_.user_signal.emit(f"Dirs Delete folder(s)")
+
+@pyqtSlot()
+def show_main_menu():
+    is_db_opened = bool(ag.db.conn)
     menu = QMenu(self)
     if not ag.single_instance:
         menu.addAction('New window')
@@ -103,9 +142,16 @@ def click_setup_button():
     menu.addAction('Create/Open DB')
     menu.addAction('Select DB from list')
     menu.addSeparator()
-    menu.addAction('Scan disk for files')
+    act_scan = QAction('Scan disk for files')
+    act_scan.setEnabled(is_db_opened)
+    menu.addAction(act_scan)
     menu.addSeparator()
-    menu.addAction('Report duplicate files')
+    act_dup = QAction('Report duplicate files')
+    act_dup.setEnabled(is_db_opened)
+    menu.addAction(act_dup)
+    act_same = QAction('Report files with same names')
+    act_same.setEnabled(is_db_opened)
+    menu.addAction(act_same)
     menu.addSeparator()
     menu.addAction('Preferences')
     menu.addSeparator()
@@ -118,7 +164,7 @@ def click_setup_button():
         pos + QPoint(53, 26)
     ))
     if action:
-        ag.signals_.user_signal.emit(f"Setup {action.text()}")
+        ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
@@ -153,11 +199,8 @@ def file_list_resize_0(e: QResizeEvent):
     hdr = ag.file_list.header()
     ag.file_list.resizeEvent = file_list_resize
     ag.signals_.toggle_column.connect(change_sum_width)
-    file_list_resize(e)
-    ag.signals_.app_mode_changed.emit(ag.appMode.NIL.value)
 
 def restore_dirs():
-    # logger.info(f'{ag.db.path=}')
     low_bk.set_dir_model()
     ag.filter_dlg.restore_filter_settings()
     restore_history()
@@ -176,7 +219,7 @@ def restore_dirs():
 
 def header_restore(model: QAbstractTableModel):
     global sum_width, min_width
-    hdr = ag.file_list.header()
+    hdr: QHeaderView = ag.file_list.header()
     try:
         state = ag.get_setting("FILE_LIST_HEADER")
         if state:
@@ -200,6 +243,22 @@ def header_restore(model: QAbstractTableModel):
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
+    hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+    hdr.customContextMenuRequested.connect(header_menu)
+
+@pyqtSlot(QPoint)
+def header_menu(pos: QPoint):
+    hdr: QHeaderView = ag.file_list.header()
+    idx = hdr.logicalIndexAt(pos)
+    if idx:
+        me = QMenu()
+        me.addAction(f'Hide column "{low_bk.fields[idx]}"')
+        action = me.exec(hdr.mapToGlobal(
+            QPoint(pos.x(), pos.y() + hdr.height()))
+        )
+        if action:
+            low_bk.toggle_show_column(False, idx)
+
 @pyqtSlot(int, int, int)
 def resized_column(localIdx: int, oldSize: int, newSize: int):
     global sum_width, min_width
@@ -218,7 +277,7 @@ def populate_all():
 
     hide_state = ag.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
-    self.show_hidden.setIcon(icons.get_other_icon("show_hide", hide_state))
+    self.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
 
     ag.file_data_holder.set_edit_state(
         ag.get_setting("NOTE_EDIT_STATE", (False,))
@@ -270,10 +329,6 @@ def msg_copy_menu(pos: QPoint):
     menu.addAction("Copy message")
     action = menu.exec(ag.app.ui.msg.mapToGlobal(pos))
     if action:
-        copy_message()
-
-def copy_message():
-    if ag.app.ui.msg.text():
         QApplication.clipboard().setText(ag.app.ui.msg.text())
         ag.app.ui.msg.clear()
 
@@ -283,20 +338,21 @@ def dir_menu(pos):
     menu = QMenu(self)
     if idx.isValid():
         menu.addSeparator()
-        menu.addAction("Delete folder(s)")
+        menu.addAction("Delete folder(s)\tDel")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
         menu.addAction("Import files")
         menu.addSeparator()
-        menu.addAction("Create folder")
-        menu.addAction("Create folder as child")
+        menu.addAction("Create folder\tCtrl-W")
+        menu.addAction("Create folder as child\tCtrl-E")
     else:
-        menu.addAction("Create folder")
+        menu.addAction("Create folder\tCtrl-W")
 
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:
-        ag.signals_.user_signal.emit(f"Dirs {action.text()}")
+        item = action.text().split('\t')[0]
+        ag.signals_.user_signal.emit(f"Dirs {item}")
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
@@ -348,7 +404,6 @@ def file_loading(root_path: str, ext: list[str]):
 @pyqtSlot(bool)
 def finish_loading(has_new_ext: bool):
     self.thread.quit()
-    self.ui.btnScan.setEnabled(True)
     self.set_busy(False)
     if has_new_ext:
         ag.signals_.user_signal.emit("ext inserted")

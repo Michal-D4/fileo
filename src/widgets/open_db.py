@@ -7,8 +7,9 @@ from PyQt6.QtWidgets import (QFileDialog, QLabel,
     QListWidgetItem, QVBoxLayout, QWidget, QMenu,
 )
 
-from ..core import create_db, icons, utils, app_globals as ag
+from ..core import create_db, app_globals as ag
 from .ui_open_db import Ui_openDB
+from src import tug
 
 
 class listItem(QWidget):
@@ -31,8 +32,8 @@ class listItem(QWidget):
         return '/'.join((self.path.text(), self.name.text()))
 
     def set_style(self):
-        self.name.setStyleSheet(ag.dyn_qss['name'][0])
-        self.path.setStyleSheet(ag.dyn_qss['path'][0])
+        self.name.setStyleSheet(tug.dyn_qss['name'][0])
+        self.path.setStyleSheet(tug.dyn_qss['path'][0])
 
 
 class OpenDB(QWidget, Ui_openDB):
@@ -91,7 +92,7 @@ class OpenDB(QWidget, Ui_openDB):
         return menu
 
     def restore_db_list(self):
-        db_list = utils.get_app_setting("DB_List", []) or []
+        db_list = tug.get_app_setting("DB_List", []) or []
         for it in db_list:
             self.add_item_widget(it)
 
@@ -111,7 +112,7 @@ class OpenDB(QWidget, Ui_openDB):
     def show_error_message(self):
         if not self.msg:
             return
-        ag.app.ui.msg.setStyleSheet(ag.dyn_qss['input_path_message'][0])
+        ag.app.ui.msg.setStyleSheet(tug.dyn_qss['input_path_message'][0])
         ag.app.ui.msg.setText(self.msg)
 
         ag.app.ui.msg.setToolTip(self.msg)
@@ -140,7 +141,7 @@ class OpenDB(QWidget, Ui_openDB):
 
     def add_db(self):
         pp = Path('~/fileo/dbs').expanduser()
-        path = utils.get_app_setting('DEFAULT_DB_PATH', pp.as_posix())
+        path = tug.get_app_setting('DEFAULT_DB_PATH', pp.as_posix())
         db_name, ok_ = QFileDialog.getSaveFileName(
             self, caption="Select DB file",
             directory=path,
@@ -187,7 +188,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.close()
 
     def open_in_new_window(self, db_name: str):
-        ag.signals_.user_signal.emit(f'Setup New window\\{db_name}')
+        ag.signals_.user_signal.emit(f'MainMenu New window\\{db_name}')
         self.close()
 
     def get_item_list(self) -> list:
@@ -200,5 +201,6 @@ class OpenDB(QWidget, Ui_openDB):
         return items
 
     def close(self) -> bool:
-        utils.save_app_setting(DB_List=self.get_item_list())
+        tug.save_app_setting(DB_List=self.get_item_list())
+        tug.open_db = None
         return super().close()

@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget,
 )
 
 from ..core.compact_list import aBrowser
-from ..core import icons, app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut
 
 
 class authorBrowser(QWidget):
@@ -18,13 +18,9 @@ class authorBrowser(QWidget):
 
         self.setup_ui()
 
-        # list of authors changed outside, in ag.author_list
-        ag.author_list.edit_finished.connect(self.refresh_data)
+        ag.author_list.list_changed.connect(self.refresh_data)
 
         self.br.change_selection.connect(self.update_selection)
-
-    def setup_editor(self):
-        self.editor.setText(self.set_selected_text())
 
     def setup_ui(self):
         self.br = aBrowser(brackets=True)

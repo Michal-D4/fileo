@@ -8,8 +8,8 @@ from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
     QCheckBox,
 )
 
-from src import qss
-from ..core import utils, app_globals as ag
+from src import tug
+from ..core import app_globals as ag
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ class Preferences(QDialog):
         form_layout.addRow('Report path:', self.report_path)
         form_layout.addRow('Log file path:', self.log_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
-        if qss.config['instance_control']:
+        if tug.config['instance_control']:
             form_layout.addRow('Allow single instance only:', self.single_instance)
             form_layout.addRow('Server port:', self.port_no)
         form_layout.addRow('Switch on logging:', self.do_log)
@@ -71,11 +71,11 @@ class Preferences(QDialog):
             "SWITCH_ON_LOGGING": int(self.do_log.isChecked()),
             "LOG_QSS": int(self.qss_log.isChecked()),
         }
-        if qss.config['instance_control']:
+        if tug.config['instance_control']:
             settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
             settings['PORT_NUMBER'] = self.port_no.value()
             ag.single_instance = bool(settings["SINGLE_INSTANCE"])
-        utils.save_app_setting(**settings)
+        tug.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
         create_dir(Path(self.export_path.text()))
         create_dir(Path(self.report_path.text()))
@@ -87,41 +87,41 @@ class Preferences(QDialog):
         self.db_path = QLineEdit()
         pp = Path('~/fileo').expanduser()
         self.db_path.setText(
-            utils.get_app_setting('DEFAULT_DB_PATH', str(pp / 'dbs'))
+            tug.get_app_setting('DEFAULT_DB_PATH', str(pp / 'dbs'))
         )
         self.export_path = QLineEdit()
         self.export_path.setText(
-            utils.get_app_setting('DEFAULT_EXPORT_PATH', str(pp / 'export'))
+            tug.get_app_setting('DEFAULT_EXPORT_PATH', str(pp / 'export'))
         )
         self.report_path = QLineEdit()
         self.report_path.setText(
-            utils.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
+            tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
         )
         self.log_path = QLineEdit()
         self.log_path.setText(
-            utils.get_app_setting('DEFAULT_LOG_PATH', str(pp / 'log'))
+            tug.get_app_setting('DEFAULT_LOG_PATH', str(pp / 'log'))
         )
         self.folder_history_depth = QSpinBox()
         self.folder_history_depth.setMinimum(2)
         self.folder_history_depth.setMaximum(50)
-        val = utils.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
+        val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setValue(int(val))
         ag.history.set_limit(int(val))
-        if qss.config['instance_control']:
+        if tug.config['instance_control']:
             self.single_instance = QCheckBox()
             self.single_instance.setChecked(
-                int(utils.get_app_setting('SINGLE_INSTANCE', 0))
+                int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
             self.port_no = QSpinBox()
             self.port_no.setMinimum(1024)
             self.port_no.setMaximum(65535)
-            val = utils.get_app_setting('PORT_NUMBER', 10010)
+            val = tug.get_app_setting('PORT_NUMBER', 10010)
             self.port_no.setValue(int(val))
         self.do_log = QCheckBox()
         self.do_log.setChecked(
-            int(utils.get_app_setting('SWITCH_ON_LOGGING', 0))
+            int(tug.get_app_setting('SWITCH_ON_LOGGING', 0))
         )
         self.qss_log = QCheckBox()
         self.qss_log.setChecked(
-            int(utils.get_app_setting('LOG_QSS', 0))
+            int(tug.get_app_setting('LOG_QSS', 0))
         )

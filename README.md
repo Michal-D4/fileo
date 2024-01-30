@@ -10,23 +10,29 @@ The graphical interface is shown in the image below.
 
 ## The GUI elements:
 
-1. shows application mode
-2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane. All menu items checked in the image &ndash; this means that all widgets are visible.
-3. the name of current file
-4. a button to search files by name, and a button to select fields to be visible in the file list
-5. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folder; collapse all branches/expand the last branch
-6. the left toolbar, it contains the following buttons from top to bottom:
-   1. button to chose/create the data base file
-   2. switch to "DIR" mode, the file list displays files from the current folder
-   3. switch to the "FILTER" mode, the file list displays files according to the filter settings
-   4. open filter settings dialog, switch to "FILTER_SETUP" mode
-   5. open a dialog to upload files to the application from  the selected root folder and all its subfolders
+1. application mode, it determinates how files in the list (7) is selected.
+2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane. 
+3. Describes how the list of files (7) was created. 
+4. buttons related to the file list (7):  
+   * ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files
+   * ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name, 
+   * ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the fields that will be visible in the file list
+6. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folders; collapse all branches - expand the last branch if all branches were collapsed.
+7. left toolbar, it contains the following buttons from top to bottom:
+   1. menu button
+   2. button to chose/create the data base file
+   3. switch to "DIR" mode, the file list displays files from the current folder
+   4. switch to the "FILTER" mode, the file list displays files according to the filter settings
+   5. open filter settings dialog, switch to "FILTER_SETUP" mode
    6. hide/show left pane
-   7. menu button
-7. list of selected files (by filter, folder, etc.)
-8. current database name
-9. folder tree branch from root to current folder
-10. panel for displaying/editing file data: notes, tags, authors (for books), links (links to a file locations, file can be located in several folders).
+8. the file list
+9. current database name, click on it to enter list of available databases.
+10. file name of the file which note is edited, empty if no note edited, click on it to go to this file and folder that contains this file
+10. the current file in file list
+11. folder tree branch from root to current folder
+12. number of files in the file list
+13. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders).
+14. folder tree window. 
 
 The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
@@ -65,9 +71,7 @@ You can also *copy/move files from one folder to another*  by dragging *with the
 
 There are two method to add files:
 
-1. Open "Search for files..." dialog with the button ![image-20230210145215938](https://github.com/Michal-D4/fileo/raw/main/img/image-20230210145215938.png)
-
-   ![image-20230210145404623](https://github.com/Michal-D4/fileo/raw/main/img/image-20230210145404623.png)
+1. Open "Search for files..." dialog with main menu item "Scan disk for files": ![scan_disk_dialog](https://github.com/Michal-D4/fileo/raw/main/img/scan_disk_dialog.png)
 
 2. drag files from the file explorer (or similar application) to the folder in the folder tree.
 
@@ -227,3 +231,4 @@ The DB can also be opened in the current window by double click on the line in t
   ```
     > python -m fileo
   ```
+

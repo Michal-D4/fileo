@@ -9,7 +9,7 @@ from . import db_ut, app_globals as ag
 SORT_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
-class ProxyModel(QSortFilterProxyModel):
+class fileProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,7 +46,15 @@ class ProxyModel(QSortFilterProxyModel):
     def get_user_data(self) -> list:
         return self.sourceModel().get_user_data()
 
-class TableModel(QAbstractTableModel):
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        if left.column() == 0:
+            l_val = self.sourceModel().data(left, SORT_ROLE)
+            r_val = self.sourceModel().data(right, SORT_ROLE)
+            # logger.info(f'{l_val=}, {r_val}, {l_val[0] < r_val[0] or l_val[1] < r_val[1]}')
+            return l_val[0] < r_val[0] or l_val[1] < r_val[1]
+        return super().lessThan(left, right)
+
+class fileModel(QAbstractTableModel):
 
     model_data_changed = pyqtSignal(str)
 
@@ -54,7 +62,8 @@ class TableModel(QAbstractTableModel):
         super().__init__(parent)
         self.header = ()
         self.rows = []
-        self.user_data = []
+        self.user_data: list[ag.FileData] = []
+        self.file4sort: list[tuple] = []
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.rows)
@@ -83,7 +92,7 @@ class TableModel(QAbstractTableModel):
             elif role == Qt.ItemDataRole.UserRole:
                 return self.user_data[index.row()]
             elif role == SORT_ROLE:
-                return self.rows[index.row()][col]
+                return self.rows[index.row()][col] if col else self.file4sort[index.row()]
             elif role == Qt.ItemDataRole.TextAlignmentRole:
                 if col:
                     return Qt.AlignmentFlag.AlignRight
@@ -93,9 +102,10 @@ class TableModel(QAbstractTableModel):
     def get_user_data(self):
         return self.user_data
 
-    def append_row(self, row, user_data=None):
+    def append_row(self, row:list, user_data=(ag.FileData(), '  ')):
         self.rows.append(row)
-        self.user_data.append(user_data)
+        self.user_data.append(user_data[0])
+        self.file4sort.append(user_data[1])
 
     def removeRows(self, row, count=1, parent=QModelIndex()):
         self.beginRemoveRows(QModelIndex(), row, row + count - 1)

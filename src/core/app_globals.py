@@ -1,6 +1,5 @@
 from loguru import logger
 import apsw
-from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
@@ -15,9 +14,6 @@ if TYPE_CHECKING:
     from ..widgets.filter_setup import FilterSetup
     from .history import History
 
-GT = 10        # Grip Thickness
-MOVE_THRESHOLD = 50
-
 
 def app_name() -> str:
     return "fileo"
@@ -26,10 +22,8 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.0.08'
+    return '1.1.03'
 
-PID: int = 0
-TIME_CHECK = 5     # interval(sec) client sends message "it's active"
 entry_point: str = ''
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -43,11 +37,6 @@ history: 'History' = None
 file_history = []
 single_instance = False
 stop_thread = False
-drop_button = 0
-checkable_btn = None
-
-dyn_qss = defaultdict(list)
-qss_params = {}
 
 @unique
 class appMode(Enum):    # better name is fileListMode
@@ -61,14 +50,6 @@ class appMode(Enum):    # better name is fileListMode
 
     def __repr__(self) -> str:
         return f'{self.name}:{self.value}'
-
-def set_checkable_btn():
-    global checkable_btn
-    checkable_btn = {
-        appMode.DIR: app.ui.btnDir,
-        appMode.FILTER: app.ui.btnFilter,
-        appMode.FILTER_SETUP: app.ui.btnFilterSetup,
-    }
 
 first_mode = appMode.DIR
 mode = appMode.NIL
@@ -129,9 +110,9 @@ class DirData():
 
 @dataclass(slots=True)
 class FileData():
-    id: int
-    ext_id: int
-    path: int
+    id: int = 0
+    ext_id: int = 0
+    path: int = 0
 
     def __repr__(self) -> str:
         return f'(file_id={self.id}, ext_id={self.ext_id}, path_id={self.path})'

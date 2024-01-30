@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
 )
 
 from ..core import app_globals as ag, db_ut
+from src import tug
 
 
 class fileInfo(QWidget):
@@ -23,7 +24,7 @@ class fileInfo(QWidget):
 
         self.form_setup()
         self.setObjectName('fileInfo')
-        self.setStyleSheet(ag.dyn_qss["fileInfo"][0])
+        self.setStyleSheet(tug.dyn_qss["fileInfo"][0])
 
     def rating_changed(self):
         db_ut.update_files_field(self.file_id, 'rating', self.rating.text())

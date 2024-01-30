@@ -1,10 +1,14 @@
-from PyQt6.QtCore import Qt, QSize
+from loguru import logger
+
+from PyQt6.QtCore import Qt, QSize, QPoint
 from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QDialog, QLabel, QSizePolicy,
     QHBoxLayout, QVBoxLayout, QDialogButtonBox, QStyle,
+    QSpinBox, QToolButton, QFrame
 )
 
 from ..core import app_globals as ag
+from src import tug
 
 
 class AboutDialog(QDialog):
@@ -16,8 +20,7 @@ class AboutDialog(QDialog):
         self.buttonBox = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Close
         )
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.rejected.connect(self.close)
 
         v_layout = QVBoxLayout(self)
         v_layout.setContentsMargins(16, 16, 16, 16)
@@ -51,11 +54,79 @@ class AboutDialog(QDialog):
 
         v_layout.addLayout(h_layout)
         v_layout.addWidget(self.git_repo)
+
+        if tug.config['test']:
+            self.set_test_box(v_layout)
+
         v_layout.addWidget(self.buttonBox)
         self.setModal(True)
 
-        py_db_ver = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
-        py_db_ver.activated.connect(self.get_py_db_versions)
+        f11 = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
+        f11.activated.connect(self.get_py_db_versions)
+
+    def set_test_box(self, layout):
+        from .custom_grips import CustomGrip
+        logger.info(f'{ag.app.geometry()=}')
+
+        def click_left():
+            grip: CustomGrip = ag.app.grips['left_grip']
+            pos = ag.app.pos()
+            logger.info(f'{pos=}, {self.incr.value()=}')
+            pos.setX(pos.x() - self.incr.value())
+            grip.resize_parent(pos)
+
+        def click_right():
+            grip: CustomGrip = ag.app.grips['right_grip']
+            rect = ag.app.geometry()
+            logger.info(f'{rect=}, {self.incr.value()=}')
+            grip.resize_parent(QPoint(rect.right() + self.incr.value(), rect.y()))
+
+        def click_up():
+            grip: CustomGrip = ag.app.grips['top_grip']
+            pos = ag.app.pos()
+            logger.info(f'{pos=}, {self.incr.value()=}')
+            pos.setY(pos.y() - self.incr.value())
+            grip.resize_parent(pos)
+
+        def click_down():
+            grip: CustomGrip = ag.app.grips['bottom_grip']
+            rect = ag.app.geometry()
+            logger.info(f'{rect=}, {self.incr.value()=}')
+            grip.resize_parent(QPoint(rect.x(), rect.bottom() + self.incr.value()))
+
+        self.incr = QSpinBox()
+        self.incr.setMinimum(-50)
+        self.incr.setMaximum(50)
+
+        self.dir_left = QToolButton()
+        self.dir_left.setArrowType(Qt.ArrowType.LeftArrow)
+
+        self.dir_right = QToolButton()
+        self.dir_right.setArrowType(Qt.ArrowType.RightArrow)
+
+        self.dir_up = QToolButton()
+        self.dir_up.setArrowType(Qt.ArrowType.UpArrow)
+
+        self.dir_down = QToolButton()
+        self.dir_down.setArrowType(Qt.ArrowType.DownArrow)
+
+        test_layout = QHBoxLayout()
+        test_layout.addWidget(self.incr)
+        test_layout.addStretch(1)
+        test_layout.addWidget(self.dir_left)
+        test_layout.addWidget(self.dir_right)
+        test_layout.addWidget(self.dir_up)
+        test_layout.addWidget(self.dir_down)
+
+        frame = QFrame()
+        frame.setLayout(test_layout)
+
+        layout.addWidget(frame)
+
+        self.dir_left.clicked.connect(click_left)
+        self.dir_right.clicked.connect(click_right)
+        self.dir_up.clicked.connect(click_up)
+        self.dir_down.clicked.connect(click_down)
 
     def get_info_icon(self) -> QPixmap:
         ico = QStyle.standardIcon(

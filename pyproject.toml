@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "md4-fileo"
-version = "1.0.08"
+version = "1.1.03"
 description = "Yet another file organizer"
 repository = "https://github.com/Michal-D4/fileo"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]
@@ -15,7 +15,6 @@ python = "^3.10"
 loguru = "^0.6.0"
 pypdf2 = "^3.0.1"
 pyqt6 = "^6.4.0"
-qtawesome = "^1.2.2"
 apsw = "^3.40.1.0"
 pywinauto = [
     {platform = 'windows', version="^0.6.8"}]

@@ -7,7 +7,8 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QMessageBox,
 )
 
-from ..core  import app_globals as ag, db_ut, icons
+from ..core  import app_globals as ag, db_ut
+from src import tug
 
 
 class findFile(QWidget):
@@ -19,7 +20,7 @@ class findFile(QWidget):
         super().__init__(parent)
         self.file_id = 0
 
-        self.setStyleSheet(' '.join(ag.dyn_qss['searchFrame']))
+        self.setStyleSheet(' '.join(tug.dyn_qss['searchFrame']))
         self.setup_ui()
         self.srch_pattern.editingFinished.connect(self.search_files)
 
@@ -35,13 +36,13 @@ class findFile(QWidget):
         self.case = QToolButton()
         self.case.setAutoRaise(True)
         self.case.setCheckable(True)
-        self.case.setIcon(icons.get_other_icon('match_case'))
+        self.case.setIcon(tug.get_icon('match_case'))
         self.case.setToolTip('Match Case')
 
         self.word = QToolButton()
         self.word.setAutoRaise(True)
         self.word.setCheckable(True)
-        self.word.setIcon(icons.get_other_icon('match_word'))
+        self.word.setIcon(tug.get_icon('match_word'))
         self.word.setToolTip('Exact match')
 
         name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))

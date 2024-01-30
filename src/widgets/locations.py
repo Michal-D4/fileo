@@ -9,28 +9,12 @@ from PyQt6.QtWidgets import QTextBrowser, QMenu
 
 from collections import defaultdict
 
-from ..core import icons, app_globals as ag, db_ut
-
-MENU_TITLES = (
-    (True, "Copy", QKeySequence.StandardKey.Copy),
-    (False, "go to this location", None),
-    (False, "Reveal in explorer", None),
-    (False, "delete file from this location", None),
-    (True, "", None),       # addSeparator
-    (True, "Select All", QKeySequence.StandardKey.SelectAll),
-)
+from ..core import app_globals as ag, db_ut
 
 
-def dir_type(dd: ag.DirData):
-    """
-    returns:
-       '(L)' if folder is link to another folder,
-       '(H)' if folder is hidden
-       '(LH) if folder is link and is hidden
-       empty string - otherwise
-    """
+def add_link_hide_str(dd: ag.DirData):
     tt = f'{"L" if dd.is_link else ""}{"H" if dd.hidden else ""}'
-    return f'({tt})' if tt else ''
+    return f'({tt})' if tt else ''   ## () around "L", "H", "LH"
 
 class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
@@ -41,36 +25,58 @@ class Locations(QTextBrowser):
 
         self.cur_pos = QPoint()
         self.setTabChangesFocus(False)
-        self.mousePressEvent = self.loc_menu
 
-    def loc_menu(self, e: QMouseEvent):
-        self.cur_pos = e.pos()
-        if e.buttons() is Qt.MouseButton.LeftButton:
-            self.select_line_under_mouse(self.cur_pos)
-            return
-        if e.buttons() is Qt.MouseButton.RightButton:
-            txt_cursor = self.textCursor()
-            if not txt_cursor.hasSelection():
-                line = self.select_line_under_mouse(self.cur_pos)
-            else:
-                line = txt_cursor.selectedText()
+    def mousePressEvent(self, e: QMouseEvent) -> None:
+        _menu_dscr = { # key is menu items text, (obligatory item, method to call, shortcut)
+            "Copy": (True, self.copy, QKeySequence.StandardKey.Copy),
+            "goto this location": (False, self.go_file, None),
+            "Reveal in explorer": (False, self.reveal_file, None),
+            "delete file from this location": (False, self.delete_file, None),
+            "delimiter": (True, None, None),
+            "Select All": (True, self.selectAll, QKeySequence.StandardKey.SelectAll),
+        }
 
-            branch = self.names.get(line, False)
-            menu = self.create_menu(branch)
+        def create_menu() -> QMenu:
+            menu = QMenu(self)
+            actions = []
+            for key, dscr in _menu_dscr.items():
+                must, meth, short = dscr
+                if must or self.branch:
+                    if meth:
+                        actions.append(QAction(key, self))
+                        if short:
+                            actions[-1].setShortcut(short)
+                    else:
+                        actions.append(QAction(self))
+                        actions[-1].setSeparator(True)
+            menu.addActions(actions)
+            return menu
+
+        def local_menu():
             action = menu.exec(self.mapToGlobal(self.cur_pos))
             if action:
-                {
-                    MENU_TITLES[0][1]: self.copy,
-                    MENU_TITLES[1][1]: self.go_file,
-                    MENU_TITLES[2][1]: self.reveal_file,
-                    MENU_TITLES[3][1]: self.delete_file,
-                    MENU_TITLES[5][1]: self.selectAll,
-                }[action.text()]()
+                _menu_dscr[action.text()][1]()
+
+        def branch_under_mouse():
+            line = self.select_line_under_mouse(self.cur_pos)
+            return self.names.get(line, [])
+
+        self.cur_pos = e.pos()
+
+        if e.buttons() is Qt.MouseButton.LeftButton:
+            self.select_line_under_mouse(self.cur_pos)
+        elif e.buttons() is Qt.MouseButton.RightButton:
+            self.branch = branch_under_mouse()
+            menu = create_menu()
+            local_menu()
 
     def get_branch(self, file_id: int=0) -> list:
+        """
+        returns the first branch the file belongs to
+        """
         branches = list(self.names.values())
         if file_id == 0:
-            return branches[0][0] if len(branches) > 0 else []
+            return []
         for blist in branches:
             for bb in blist:
                 if bb[1] == file_id:
@@ -78,47 +84,25 @@ class Locations(QTextBrowser):
         return []
 
     def go_file(self):
-        key = self.select_line_under_mouse(self.cur_pos)
-        value = self.names.get(key, False)
-        branch = ','.join((str(i) for i in value[0][0]))
+        branch = ','.join((str(i) for i in self.branch[0][0]))
         ag.signals_.user_signal.emit(
-            f'file-note: Go to file\\{value[0][1]}-{branch}'
+            f'file-note: Go to file\\{self.branch[0][1]}-{branch}'
         )
 
     def delete_file(self):
-        key = self.select_line_under_mouse(self.cur_pos)
-        branch = self.names.get(key, False)[0]
         ag.signals_.user_signal.emit(
-            f'remove_file_from_location\\{branch[0][-1]},{branch[1]}'
+            f'remove_file_from_location\\{self.branch[0][-1]},{self.branch[0][0][-1]}'
         )
 
     def reveal_file(self):
-        key = self.select_line_under_mouse(self.cur_pos)
-        ag.signals_.user_signal.emit(
-            f'file reveal\\{self.names.get(key, False)[0][1]}'
-        )
+        ag.signals_.user_signal.emit(f'file reveal\\{self.branch[0][1]}')
 
     def select_line_under_mouse(self, pos: QPoint) -> QTextCursor:
         txt_cursor = self.cursorForPosition(pos)
         txt_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-        sel_text = txt_cursor.selectedText().split(' \xa0'*4)[0]
+        sel_text = txt_cursor.selectedText().split(' \xa0'*4)[0]  # exclude duplication info, if any
         self.setTextCursor(txt_cursor)
         return sel_text
-
-    def create_menu(self, branch) -> QMenu:
-        menu = QMenu(self)
-        actions = []
-        for cond, name, key in MENU_TITLES:
-            if cond or branch:
-                if name:
-                    actions.append(QAction(name, self))
-                    if key:
-                        actions[-1].setShortcut(key)
-                else:
-                    actions.append(QAction(self))
-                    actions[-1].setSeparator(True)
-        menu.addActions(actions)
-        return menu
 
     def set_data(self, file_id: int, curr_branch: list):
         # logger.info(f'{file_id=}, {curr_branch=}')
@@ -136,7 +120,7 @@ class Locations(QTextBrowser):
         self.branches.clear()
         for dd in dirs:
             self.branches.append(
-                [(dd.id, dir_type(dd), dd.file_id), dd.parent_id]
+                [(dd.id, add_link_hide_str(dd), dd.file_id), dd.parent_id]
             )
 
     def get_file_dirs(self) -> list:
@@ -149,10 +133,10 @@ class Locations(QTextBrowser):
         return dirs
 
     def build_branches(self):
-        def add_dir_parent(d_data: ag.DirData, tt: list) -> list:
+        def add_dir_parent() -> list:
             ss = tt[:-1]
-            tt[-1] = (d_data.id, dir_type(d_data))
-            tt.append(d_data.parent_id)
+            tt[-1] = (qq.id, add_link_hide_str(qq))
+            tt.append(qq.parent_id)
             return ss
 
         curr = 0
@@ -162,18 +146,18 @@ class Locations(QTextBrowser):
             tt = self.branches[curr]
 
             while 1:
-                if tt[-1] == 0:
+                if tt[-1] == 0:  # 0 is root dir
                     break
                 parents = db_ut.dir_parents(tt[-1])
                 first = True
                 for pp in parents:
                     qq = ag.DirData(*pp)
                     if first:
-                        ss = add_dir_parent(qq, tt)
+                        ss = add_dir_parent()
                         first = False
                         continue
                     self.branches.append(
-                        [*ss, (qq.id, dir_type(qq)), qq.parent_id]
+                        [*ss, (qq.id, add_link_hide_str(qq)), qq.parent_id]
                     )
             curr += 1
 

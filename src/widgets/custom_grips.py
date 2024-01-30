@@ -22,98 +22,98 @@ from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizeGrip, QWidget
 
 from ..core import app_globals as ag
 
+GT = 10        # Grip Thickness
+G2 = GT*2
+MG = GT//2
 
 class CustomGrip(QWidget):
-    def __init__(self, parent, edge: Qt.Edge):
+    def __init__(self, parent: QWidget, edge: Qt.Edge):
         super().__init__(parent)
-        self.parent = parent
-        self.edge = edge
-        self.wi = Widgets()
-        self.start_move = QPoint()
+        self.parent: QWidget = parent
+        self.edge: Qt.Edge = edge
+        self.wi = Grips()
 
         self.resize_parent = {
             Qt.Edge.TopEdge: self.set_top,
             Qt.Edge.BottomEdge: self.set_bottom,
             Qt.Edge.LeftEdge: self.set_left,
             Qt.Edge.RightEdge: self.set_right
-        }[edge]()
+        }[edge]()  # move_top, move_bottom, move_left, move_right
 
     def set_top(self):
         self.wi.top(self)
-        self.setGeometry(0, 0, self.parent.width(), ag.GT)
-        self.setMaximumHeight(ag.GT)
+        self.setGeometry(0, 0, self.parent.width(), GT)
+        self.setMaximumHeight(GT)
 
         QSizeGrip(self.wi.top_left)
         QSizeGrip(self.wi.top_right)
 
-        def move_top(delta: QPoint):
-            height = max(self.parent.minimumHeight(), self.parent.height() - delta.y())
-            geo: QRect = self.parent.geometry()
-            geo.setTop(int(geo.bottom() - height))
-            self.parent.setGeometry(geo)
+        def move_top(pos: QPoint):
+            rect: QRect = self.parent.geometry()
+            rect.setTop(pos.y())
+            self.parent.setGeometry(rect)
 
         return move_top
 
     def set_bottom(self):
         self.wi.bottom(self)
-        self.setGeometry(0, self.parent.height() - ag.GT, self.parent.width(), ag.GT)
-        self.setMaximumHeight(ag.GT)
+        self.setGeometry(0, self.parent.height() - GT, self.parent.width(), GT)
+        self.setMaximumHeight(GT)
 
         QSizeGrip(self.wi.bottom_left)
         QSizeGrip(self.wi.bottom_right)
 
-        def move_bottom(delta: QPoint):
-            height = int(max(self.parent.minimumHeight(), self.parent.height() + delta.y()))
+        def move_bottom(pos: QPoint):
+            height = pos.y() - self.parent.y()
             self.parent.resize(self.parent.width(), height)
 
         return move_bottom
 
     def set_left(self):
         self.wi.left(self)
-        self.setGeometry(0, ag.GT, ag.GT, self.parent.height() - 2*ag.GT)
-        self.setMaximumWidth(ag.GT)
+        self.setGeometry(0, GT, GT, self.parent.height() - G2)
+        self.setMaximumWidth(GT)
 
-        def move_left(delta: QPoint):
-            width = max(self.parent.minimumWidth(), self.parent.width() - delta.x())
-            geo = self.parent.geometry()
-            geo.setLeft(int(geo.right() - width))
-            self.parent.setGeometry(geo)
+        def move_left(pos: QPoint):
+            rect = self.parent.geometry()
+            rect.setLeft(pos.x())
+            self.parent.setGeometry(rect)
 
         return move_left
 
     def set_right(self):
         self.wi.right(self)
-        self.setGeometry(self.parent.width() - ag.GT, ag.GT, ag.GT, self.parent.height() - 2*ag.GT)
-        self.setMaximumWidth(ag.GT)
+        self.setGeometry(self.parent.width() - GT, GT, GT, self.parent.height() - G2)
+        self.setMaximumWidth(GT)
 
-        def move_right(delta: QPoint):
-            width = int(max(self.parent.minimumWidth(), self.parent.width() + delta.x()))
+        def move_right(pos: QPoint):
+            width = pos.x() - self.parent.x()
             self.parent.resize(width, self.parent.height())
 
         return move_right
 
-    def mouseMoveEvent(self, e: QMouseEvent):
-        self.resize_parent(e.pos())
+    def mouseMoveEvent(self, e: QMouseEvent) -> None:
+        self.resize_parent(e.globalPosition().toPoint())
+        return super().mouseMoveEvent(e)
 
-    def resizeEvent(self, event):
-        if self.edge & (Qt.Edge.TopEdge | Qt.Edge.BottomEdge) and self.parent.width() > 0:
+    def resizeEvent(self, e):
+        if self.edge & (Qt.Edge.TopEdge | Qt.Edge.BottomEdge):
             self.wi.grip.setGeometry(
-                0, 0, self.parent.width(), ag.GT)
-        elif self.edge & (Qt.Edge.LeftEdge | Qt.Edge.RightEdge) and self.parent.height() - 2*ag.GT > 0:
+                0, 0, self.parent.width(), GT)
+        elif self.edge & (Qt.Edge.LeftEdge | Qt.Edge.RightEdge):
             self.wi.grip.setGeometry(
-                0, 0, ag.GT, self.parent.height() - 2*ag.GT)
+                0, 0, GT, self.parent.height() - G2)
 
 
-class Widgets(object):
+class Grips(object):
     ssq = "background-color: rgba(222, 222, 222, 1%)"
     def top(self, Form):
         if not Form.objectName():
             Form.setObjectName("Form")
         self.grip = QFrame(Form)
         self.grip.setObjectName("container_top")
-        # self.container_top.setGeometry(QRect(0, 0, 500, ag.GT))
-        self.grip.setMinimumSize(QSize(0, ag.GT))
-        self.grip.setMaximumSize(QSize(16777215, ag.GT))
+        self.grip.setMinimumSize(QSize(0, GT))
+        self.grip.setMaximumSize(QSize(16777215, GT))
         self.grip.setFrameShape(QFrame.Shape.NoFrame)
         self.grip.setFrameShadow(QFrame.Shadow.Raised)
         self.top_layout = QHBoxLayout(self.grip)
@@ -122,8 +122,8 @@ class Widgets(object):
         self.top_layout.setContentsMargins(0, 0, 0, 0)
         self.top_left = QFrame(self.grip)
         self.top_left.setObjectName("top_left")
-        self.top_left.setMinimumSize(QSize(ag.GT, ag.GT))
-        self.top_left.setMaximumSize(QSize(ag.GT, ag.GT))
+        self.top_left.setMinimumSize(QSize(GT, GT))
+        self.top_left.setMaximumSize(QSize(GT, GT))
         self.top_left.setCursor(QCursor(Qt.CursorShape.SizeFDiagCursor))
         self.top_left.setStyleSheet(self.ssq)
         self.top_left.setFrameShape(QFrame.Shape.NoFrame)
@@ -138,8 +138,8 @@ class Widgets(object):
         self.top_layout.addWidget(self.top)
         self.top_right = QFrame(self.grip)
         self.top_right.setObjectName("top_right")
-        self.top_right.setMinimumSize(QSize(ag.GT, ag.GT))
-        self.top_right.setMaximumSize(QSize(ag.GT, ag.GT))
+        self.top_right.setMinimumSize(QSize(GT, GT))
+        self.top_right.setMaximumSize(QSize(GT, GT))
         self.top_right.setCursor(QCursor(Qt.CursorShape.SizeBDiagCursor))
         self.top_right.setStyleSheet(self.ssq)
         self.top_right.setFrameShape(QFrame.Shape.NoFrame)
@@ -151,9 +151,8 @@ class Widgets(object):
             Form.setObjectName("Form")
         self.grip = QFrame(Form)
         self.grip.setObjectName("container_bottom")
-        # self.container_bottom.setGeometry(QRect(0, 0, 500, ag.GT))
-        self.grip.setMinimumSize(QSize(0, ag.GT))
-        self.grip.setMaximumSize(QSize(16777215, ag.GT))
+        self.grip.setMinimumSize(QSize(0, GT))
+        self.grip.setMaximumSize(QSize(16777215, GT))
         self.grip.setFrameShape(QFrame.Shape.NoFrame)
         self.grip.setFrameShadow(QFrame.Shadow.Raised)
         self.bottom_layout = QHBoxLayout(self.grip)
@@ -162,8 +161,8 @@ class Widgets(object):
         self.bottom_layout.setContentsMargins(0, 0, 0, 0)
         self.bottom_left = QFrame(self.grip)
         self.bottom_left.setObjectName("bottom_left")
-        self.bottom_left.setMinimumSize(QSize(ag.GT, ag.GT))
-        self.bottom_left.setMaximumSize(QSize(ag.GT, ag.GT))
+        self.bottom_left.setMinimumSize(QSize(GT, GT))
+        self.bottom_left.setMaximumSize(QSize(GT, GT))
         self.bottom_left.setCursor(QCursor(Qt.CursorShape.SizeBDiagCursor))
         self.bottom_left.setStyleSheet(self.ssq)
         self.bottom_left.setFrameShape(QFrame.Shape.NoFrame)
@@ -178,8 +177,8 @@ class Widgets(object):
         self.bottom_layout.addWidget(self.bottom)
         self.bottom_right = QFrame(self.grip)
         self.bottom_right.setObjectName("bottom_right")
-        self.bottom_right.setMinimumSize(QSize(ag.GT, ag.GT))
-        self.bottom_right.setMaximumSize(QSize(ag.GT, ag.GT))
+        self.bottom_right.setMinimumSize(QSize(GT, GT))
+        self.bottom_right.setMaximumSize(QSize(GT, GT))
         self.bottom_right.setCursor(QCursor(Qt.CursorShape.SizeFDiagCursor))
         self.bottom_right.setStyleSheet(self.ssq)
         self.bottom_right.setFrameShape(QFrame.Shape.NoFrame)
@@ -191,8 +190,7 @@ class Widgets(object):
             Form.setObjectName("Form")
         self.grip = QFrame(Form)
         self.grip.setObjectName("left")
-        self.grip.setGeometry(QRect(0, ag.GT, ag.GT, 480))
-        self.grip.setMinimumSize(QSize(ag.GT, 0))
+        self.grip.setMinimumSize(QSize(GT, 0))
         self.grip.setCursor(QCursor(Qt.CursorShape.SizeHorCursor))
         self.grip.setStyleSheet(self.ssq)
         self.grip.setFrameShape(QFrame.Shape.NoFrame)
@@ -201,11 +199,9 @@ class Widgets(object):
     def right(self, Form):
         if not Form.objectName():
             Form.setObjectName("Form")
-        Form.resize(500, 500)
         self.grip = QFrame(Form)
         self.grip.setObjectName("right")
-        self.grip.setGeometry(QRect(0, 0, ag.GT, 500))
-        self.grip.setMinimumSize(QSize(ag.GT, 0))
+        self.grip.setMinimumSize(QSize(GT, 0))
         self.grip.setCursor(QCursor(Qt.CursorShape.SizeHorCursor))
         self.grip.setStyleSheet(self.ssq)
         self.grip.setFrameShape(QFrame.Shape.NoFrame)

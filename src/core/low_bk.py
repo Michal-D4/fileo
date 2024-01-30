@@ -5,6 +5,7 @@ from pathlib import Path
 import pickle
 import sys
 import subprocess
+import datetime
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
@@ -15,14 +16,14 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox, QMenu,
 )
 
-from . import (db_ut, app_globals as ag, utils, duplicates as dup,
-               check_update as upd, icons,
+from . import (db_ut, app_globals as ag, reports as rep, utils, check_update as upd,
 )
-from .table_model import TableModel, ProxyModel
-from .edit_tree_model2 import TreeModel, TreeItem
+from .file_model import fileModel, fileProxyModel
+from .dir_model import dirModel, dirItem
 from ..widgets import about, preferences
 from ..widgets.open_db import OpenDB
 from ..widgets.scan_disk_for_files import diskScanner
+from src import tug
 
 MAX_WIDTH_DB_DIALOG = 400
 
@@ -84,14 +85,15 @@ def set_user_actions_handler():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
-        "Setup New window": new_window,
-        "Setup Create/Open DB": create_open_db,
-        "Setup Select DB from list": show_db_list,
-        "Setup Scan disk for files": scan_disk,
-        "Setup About": show_about,
-        "Setup Report duplicate files": report_duplicates,
-        "Setup Preferences": set_preferences,
-        "Setup Check for update": upd.check4update,
+        "MainMenu New window": new_window,
+        "MainMenu Create/Open DB": create_open_db,
+        "MainMenu Select DB from list": show_db_list,
+        "MainMenu Scan disk for files": scan_disk,
+        "MainMenu About": show_about,
+        "MainMenu Report duplicate files": report_duplicates,
+        "MainMenu Report files with same names": report_same_names,
+        "MainMenu Preferences": set_preferences,
+        "MainMenu Check for update": upd.check4update,
         "find_files_by_name": find_files_by_name,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
@@ -102,6 +104,7 @@ def set_user_actions_handler():
         "file reveal": reveal_in_explorer,
         "Files Clear file history": clear_file_history,
         "Files Remove selected from history": remove_selected_from_history,
+        "show_recent_files": show_recent_files,
       }
 
     @pyqtSlot(str)
@@ -136,15 +139,21 @@ def show_db_list():
     manage the list of db files,
     select DB to open
     """
-    open_db = OpenDB(ag.app)
-    open_db.move(48, 20)
-    open_db.resize(min(ag.app.width() // 2, MAX_WIDTH_DB_DIALOG),
+    if tug.open_db:
+        tug.open_db.close()
+        return
+
+    tug.open_db = OpenDB(ag.app)
+    tug.open_db.move(48, 20)
+    tug.open_db.resize(min(ag.app.width() // 2, MAX_WIDTH_DB_DIALOG),
         ag.app.height() - 60)
-    open_db.show()
+    tug.open_db.show()
 
 def create_open_db():
-    open_db = OpenDB(ag.app)
-    open_db.add_db()
+    if tug.open_db:
+        tug.open_db.close()
+    db_open = OpenDB(ag.app)
+    db_open.add_db()
 
 def scan_disk():
     """
@@ -200,47 +209,80 @@ def set_check_btn(new_mode: ag.appMode):
     """
     new_mode - a key of checkable_btn dict
     """
-    # logger.info(f'ag.mode={ag.mode.name}, ag.first_mode={ag.first_mode.name}')
+    # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}, {new_mode=!r}')
+    checkable_btn = {
+        ag.appMode.DIR: ag.app.ui.btnDir,
+        ag.appMode.FILTER: ag.app.ui.btnFilter,
+        ag.appMode.FILTER_SETUP: ag.app.ui.btnFilterSetup,
+    }
 
     # need loop to find button to upcheck
-    for key, btn in ag.checkable_btn.items():
-        btn.setIcon(icons.get_toolbar_icon(btn.objectName(), key is new_mode))
-        # (key is new_mode) is 0 or 1 -- index of two items list
+    for key, btn in checkable_btn.items():
+        btn.setIcon(tug.get_icon(btn.objectName(), int(key is new_mode)))
 
-    ag.checkable_btn[new_mode].setChecked(True)
+    checkable_btn[new_mode].setChecked(True)
     ag.set_mode(new_mode)
 
 def report_duplicates():
-    rep_creator = dup.Duplicates()
-    rep = rep_creator.get_report()
-    if rep:
-        save_report(rep)
+    rep_creator = rep.Duplicates()
+    repo = rep_creator.get_report()
+    if repo:
+        save_dup_report(repo)
     else:
         utils.show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )
 
-def save_report(rep):
+def report_same_names():
+    rep_creator = rep.sameFileNames()
+    repo = rep_creator.get_report()
+    if repo:
+        save_same_names_report(repo)
+    else:
+        utils.show_message_box(
+            "No duplicates found",
+            "No file duplicates found in DB"
+        )
+
+def save_same_names_report(rep: list):
+    file_name, ok = create_report_file()
+    if ok:
+        with open(file_name, "w") as out:
+            out.write(f'DB path: {ag.db.path}\n')
+            out.write(
+                'each line contains:\n    '
+                'file name, path, folder, modification date\n'
+            )
+
+            for rr in rep:
+                out.write(f"{'-='*20}-\n")
+                for r in rr:
+                    ts = datetime.datetime.fromtimestamp(r[-1])
+                    out.write(
+                        f'{".".join(r[:2])}, {r[2]}, {r[3]}, '
+                        f'{ts.strftime("%Y-%m-%d %H:%M:%S")}\n'
+                    )
+
+def create_report_file() -> tuple:
     pp = Path('~/fileo/report').expanduser()
-    path = utils.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
-    file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
-        caption='Open file to save duplicate files report',
+    path = tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+    return QFileDialog.getSaveFileName(parent=ag.app,
+        caption='Open file to save report',
         directory=(Path(path) / 'untitled').as_posix(),
-        filter='File list (*.filedups *.txt)'
+        filter='File list (*.report *.txt)'
     )
 
+def save_dup_report(rep: dict):
+    file_name, ok = create_report_file()
     if ok:
-        _save_report(rep, file_name)
-
-def _save_report(rep: dict, filename: str):
-
-    with open(filename, "w") as out:
-        for key,rr in rep.items():
-            out.write(f"{'-='*20}-\n")
-            for r in rr:
-                out.write(f"File:  {r[0]}\n")
-                out.write(f"  {'; '.join(r[1:])}\n")
+        with open(file_name, "w") as out:
+            out.write(f'DB path: {ag.db.path}\n')
+            for key,rr in rep.items():
+                out.write(f"{'-='*20}-\n")
+                for r in rr:
+                    out.write(f"File:  {r[0]}\n")
+                    out.write(f"  {'; '.join(r[1:])}\n")
 
 def enable_buttons():
     ag.app.ui.btn_search.setEnabled(True)
@@ -337,7 +379,7 @@ def define_branch(index: QModelIndex) -> list:
     """
     if not index.isValid():
         return []
-    item: TreeItem = index.internalPointer()
+    item: dirItem = index.internalPointer()
     branch = []
     while 1:
         u_dat = item.user_data()
@@ -352,7 +394,7 @@ def get_dir_names_path(index: QModelIndex) -> list:
     """
     return:  a list of node names from root to index
     """
-    item: TreeItem = index.internalPointer()
+    item: dirItem = index.internalPointer()
     branch = []
     while item:
         if not item.parent():
@@ -366,7 +408,7 @@ def get_dir_names_path(index: QModelIndex) -> list:
 def expand_branch(branch: list) -> QModelIndex:
     model = ag.dir_list.model()
     parent = QModelIndex()
-    item: TreeItem = model.rootItem
+    item: dirItem = model.rootItem
     for it in branch:
         if parent.isValid():
             if not ag.dir_list.isExpanded(parent):
@@ -386,7 +428,7 @@ def expand_branch(branch: list) -> QModelIndex:
 
 #region  Dirs
 def set_dir_model():
-    model: TreeModel = TreeModel()
+    model: dirModel = dirModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
@@ -593,15 +635,23 @@ def single_file(file_id: str):
     show_files([db_ut.get_file(file_id)])
     ag.file_list.setFocus()
 
-def fill_file_model(files) -> TableModel:
-    model: TableModel = TableModel()
+def fill_file_model(files) -> fileModel:
+    model: fileModel = fileModel()
 
     for ff in files:
+        if not ff[0]:
+            continue
         ff1 = []
         for i,typ in enumerate(field_types):
             ff1.append(field_val(typ, ff[i]))
 
-        model.append_row(ff1, ag.FileData(*ff[-3:]))
+        filename = Path(ff[0])
+        model.append_row(
+            ff1, (
+                ag.FileData(*ff[-3:]),
+                (filename.stem, filename.suffix)
+            )
+        )
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
@@ -610,14 +660,14 @@ def fill_file_model(files) -> TableModel:
         null_file_list(model)
     return model
 
-def null_file_list(model: TableModel):
+def null_file_list(model: fileModel):
     row = ["NO FILES HERE"]
     for _,typ in enumerate(field_types[1:]):
         row.append(field_val(typ))
-    model.append_row(row, ag.FileData(-1,0,0))  # -1 -> not valid key for files table
+    model.append_row(row)
 
 def set_current_file(file_id: int):
-    model: ProxyModel = ag.file_list.model()
+    model: fileProxyModel = ag.file_list.model()
     if file_id == 0:
         ag.file_list.setCurrentIndex(model.index(0, 0))
         return
@@ -638,8 +688,8 @@ def field_val(typ:str, val=None):
     a.setSecsSinceEpoch(-62135596800 if val is None else val)
     return a
 
-def set_file_model(model: TableModel):
-    proxy_model = ProxyModel()
+def set_file_model(model: fileModel):
+    proxy_model = fileProxyModel()
     proxy_model.setSourceModel(model)
     proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
@@ -720,10 +770,22 @@ def delete_files():
     )
 
     if res == QMessageBox.StandardButton.Ok:
+        edit_state = ag.file_data_holder.get_edit_state()
+        ed_file_id = edit_state[1] if edit_state[0] else 0
         row = ag.file_list.model().rowCount()
+        skip_edited = False
         for idx in ag.file_list.selectionModel().selectedRows(0):
+            del_file_id = idx.data(Qt.ItemDataRole.UserRole).id
+            if del_file_id == ed_file_id:
+                skip_edited = True
+                continue
             row = min(row, idx.row())
-            db_ut.delete_file(idx.data(Qt.ItemDataRole.UserRole).id)
+            db_ut.delete_file(del_file_id)
+        if skip_edited:
+            utils.show_message_box(
+                'Not deleted',
+                f'File "{db_ut.get_file_name(ed_file_id)}", '
+                'a note is editing')
         post_delete_file(row)
 
 def remove_files():
@@ -739,7 +801,7 @@ def remove_files():
     post_delete_file(row)
 
 def remove_file_from_location(param: str):
-    dir_id, file_id = param.split(',')
+    file_id, dir_id = param.split(',')
     db_ut.delete_file_dir_link(file_id, dir_id)
     # need branch instead of empty list []
     ag.file_data_holder.set_data(int(file_id), [])
@@ -769,7 +831,7 @@ def post_delete_file(row: int):
 #region  export-import
 def export_files():
     pp = Path('~/fileo/export').expanduser()
-    path = utils.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
     file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
         caption='Open file to save list of exported files',
         directory=(Path(path) / 'untitled').as_posix(),
@@ -792,7 +854,7 @@ def _export_files(out: QTextStream):
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
-    path = utils.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
     file_name, ok = QFileDialog.getOpenFileName(ag.app,
         caption="Open file to import list of files",
         directory=path,
@@ -885,6 +947,7 @@ def create_child_dir():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
         ag.dir_list.setCurrentIndex(new_idx)
+        ag.dir_list.edit(new_idx)
 
 def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
     model = ag.dir_list.model()
@@ -904,6 +967,7 @@ def create_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setCurrentIndex(new_idx)
+        ag.dir_list.edit(new_idx)
 
 def create_folder(index: QModelIndex):
     """
@@ -929,7 +993,7 @@ def delete_folders():
             continue
         if visited := delete_tree(u_dat):
             delete_visited(visited)
-    model: TreeModel = ag.dir_list.model()
+    model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
 
@@ -966,13 +1030,13 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
 
 def toggle_hidden_state():
     selected = ag.dir_list.selectionModel().selectedIndexes()
-    model: TreeModel = ag.dir_list.model()
+    model: dirModel = ag.dir_list.model()
     for idx in selected:
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         if u_dat.id:
             u_dat.hidden = not u_dat.hidden
             db_ut.toggle_hidden_dir_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
-            item: TreeItem = model.getItem(idx)
+            item: dirItem = model.getItem(idx)
             item.setUserData(u_dat)
 #endregion
 
@@ -990,7 +1054,7 @@ def tag_changed(new_tag: str):
         return
     db_ut.update_tag(ag.tag_list.current_id(), new_tag)
     populate_tag_list()
-    ag.tag_list.edit_finished.emit()
+    ag.tag_list.list_changed.emit()
 
 def delete_tags(tags: str):
     """
@@ -999,7 +1063,7 @@ def delete_tags(tags: str):
     for id in tags.split(','):
         db_ut.detele_tag(id)
     populate_tag_list()
-    ag.tag_list.edit_finished.emit()
+    ag.tag_list.list_changed.emit()
 #endregion
 
 def populate_ext_list():
@@ -1024,7 +1088,7 @@ def author_changed(new_author: str):
         return
     db_ut.update_author(ag.author_list.current_id(), new_author)
     populate_author_list()
-    ag.author_list.edit_finished.emit()
+    ag.author_list.list_changed.emit()
 
 def delete_authors(authors: str):
     """
@@ -1033,13 +1097,17 @@ def delete_authors(authors: str):
     for id in authors.split(','):
         db_ut.detele_author(id)
     populate_author_list()
-    ag.author_list.edit_finished.emit()
+    ag.author_list.list_changed.emit()
 #endregion
 
 def file_notes_show(file_idx: QModelIndex):
-    ag.file_data_holder.set_data(
+    file_id = (
         file_idx.data(Qt.ItemDataRole.UserRole).id
-        if file_idx.isValid() else 0,
+        if file_idx.isValid() else 0
+    )
+    branch = (
         define_branch(ag.dir_list.currentIndex())
         if ag.mode is ag.appMode.DIR else []
     )
+    # logger.info(f'{file_id=}, {branch=}')
+    ag.file_data_holder.set_data(file_id, branch)
