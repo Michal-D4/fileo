@@ -11,20 +11,19 @@ The graphical interface is shown in the image below.
 ## The GUI elements:
 
 1. application mode, it determinates how files in the list (7) is selected.
-2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane. 
-3. Describes how the list of files (7) was created. 
-4. buttons related to the file list (7):  
+2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane.
+3. Describes how the list of files (7) was created.
+4. buttons related to the file list (7):
    * ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files
-   * ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name, 
+   * ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,
    * ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the fields that will be visible in the file list
 6. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folders; collapse all branches - expand the last branch if all branches were collapsed.
 7. left toolbar, it contains the following buttons from top to bottom:
    1. menu button
-   2. button to chose/create the data base file
-   3. switch to "DIR" mode, the file list displays files from the current folder
-   4. switch to the "FILTER" mode, the file list displays files according to the filter settings
-   5. open filter settings dialog, switch to "FILTER_SETUP" mode
-   6. hide/show left pane
+   2. switch to "DIR" mode, the file list displays files from the current folder
+   3. switch to the "FILTER" mode, the file list displays files according to the filter settings
+   4. open filter settings dialog, switch to "FILTER_SETUP" mode
+   5. hide/show left pane
 8. the file list
 9. current database name, click on it to enter list of available databases.
 10. file name of the file which note is edited, empty if no note edited, click on it to go to this file and folder that contains this file
@@ -32,7 +31,7 @@ The graphical interface is shown in the image below.
 11. folder tree branch from root to current folder
 12. number of files in the file list
 13. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders).
-14. folder tree window. 
+14. folder tree window.
 
 The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
@@ -91,6 +90,7 @@ There are two method to add files:
    ![import-files](https://github.com/Michal-D4/fileo/raw/main/img/import-files.jpg)
 
    to the folder "New folder" in this case.
+   > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase referencies.
 
 ### How to work with filters
 
@@ -98,7 +98,7 @@ First you should setup the filter:
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and are open after `2022-09-14 00:00:00`.
+With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and were opened after `2022-09-14 00:00:00`.
 
 > **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`.
 
@@ -201,7 +201,7 @@ You can also open files by double clicking on "File name". If the file is execut
 
 ### DB selector
 
-All application data is stored into a data base (SQlite DB). The SQlite data base is a single file, you can create as many DB files as you want. All manipulation with the DB files are performing in the DB selector: 
+All application data is stored into a data base (SQlite DB). The SQlite data base is a single file, you can create as many DB files as you want. All manipulation with the DB files are performing in the DB selector:
 
 ![DB-selector](https://github.com/Michal-D4/fileo/raw/main/img/DB-selector.jpg)
 
@@ -231,4 +231,3 @@ The DB can also be opened in the current window by double click on the line in t
   ```
     > python -m fileo
   ```
-

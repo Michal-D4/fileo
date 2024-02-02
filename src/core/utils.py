@@ -34,7 +34,7 @@ def show_message_box(
 def get_log_path() -> str:
     log_path = tug.get_app_setting("DEFAULT_LOG_PATH", "")
     r_path = Path(log_path) if log_path else Path().resolve()
-    return r_path.as_posix()
+    return r_path
 
 def set_logger():
     logger.remove()
@@ -44,8 +44,8 @@ def set_logger():
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
 
-    log_path = get_log_path()
-    logger.add(log_path+"/fileo.log", format=fmt, rotation="1 days", retention=3)
+    log_path = (get_log_path() / 'fileo.log').as_posix()
+    logger.add(log_path, format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path}")
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}')

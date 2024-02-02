@@ -136,9 +136,10 @@ def short_delete_folder():
 def show_main_menu():
     is_db_opened = bool(ag.db.conn)
     menu = QMenu(self)
-    if not ag.single_instance:
-        menu.addAction('New window')
-        menu.addSeparator()
+    act_new = QAction('New window')
+    act_new.setEnabled(not ag.single_instance)
+    menu.addAction(act_new)
+    menu.addSeparator()
     menu.addAction('Create/Open DB')
     menu.addAction('Select DB from list')
     menu.addSeparator()

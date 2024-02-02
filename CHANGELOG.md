@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.1.04 - 2024, February 02
+* remove the pywinauto package from dependencies. It conflicts with PyQt. It was used for a single purpose only: in single instance mode to activate an existing instance when trying to open a second instance. Now this existing instance will not display in the foreground when you try to open a second instance. I was going to remove this package anyway because it is too big to be used for this sole purpose.
+
 ## 1.1.03 - 2024, January 30
 * frameless main window also in Linux
 * fix some issues with move-resize main window. Everything seems to be running smoothly now
