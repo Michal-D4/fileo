@@ -38,7 +38,6 @@ class Preferences(QDialog):
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
         if tug.config['instance_control']:
             form_layout.addRow('Allow single instance only:', self.single_instance)
-            form_layout.addRow('Server port:', self.port_no)
         form_layout.addRow('Switch on logging:', self.do_log)
         form_layout.addRow('Write QSS to log file:', self.qss_log)
 
@@ -73,7 +72,6 @@ class Preferences(QDialog):
         }
         if tug.config['instance_control']:
             settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
-            settings['PORT_NUMBER'] = self.port_no.value()
             ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         tug.save_app_setting(**settings)
         create_dir(Path(self.db_path.text()))
@@ -112,11 +110,6 @@ class Preferences(QDialog):
             self.single_instance.setChecked(
                 int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
-            self.port_no = QSpinBox()
-            self.port_no.setMinimum(1024)
-            self.port_no.setMaximum(65535)
-            val = tug.get_app_setting('PORT_NUMBER', 10010)
-            self.port_no.setValue(int(val))
         self.do_log = QCheckBox()
         self.do_log.setChecked(
             int(tug.get_app_setting('SWITCH_ON_LOGGING', 0))

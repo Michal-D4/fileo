@@ -3,30 +3,23 @@ import sys
 from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSlot, QCoreApplication, QTimer, QItemSelectionModel
+from PyQt6.QtCore import Qt, pyqtSlot, QItemSelectionModel, QLockFile, QDir
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from src import tug
-from .core import utils, app_globals as ag, iman
+from .core import utils, app_globals as ag
 from .core.sho import shoWindow
 
-timer = None
-
-from .core.win_win import activate, set_app_icon
+lock_file = None
 
 def run_instance(db_name: str='') -> bool:
     if tug.config['instance_control']:
-        iman.PORT = int(tug.get_app_setting('PORT_NUMBER', 10010))
-        global timer
-        iman.PID = QCoreApplication.applicationPid()
-        pid = iman.new_app_instance()
-        logger.info(f'{pid=}')
-        if pid:
-            ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
-            if ag.single_instance:
-                activate(pid)
-                iman.app_instance_close()
+        ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
+        if ag.single_instance:
+            global lock_file
+            lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
+            if not lock_file.tryLock():
                 return False
 
     ag.db.conn = None
@@ -35,12 +28,10 @@ def run_instance(db_name: str='') -> bool:
 
     return True
 
-@pyqtSlot()
-def is_active_message():
-    iman.send_message()
-
 # @logger.catch
 def start_app(app: QApplication):
+    from .core.win_win import set_app_icon
+
     thema_name = "default"
     try:
         log_qss = int(tug.get_app_setting("LOG_QSS", 0))
@@ -77,27 +68,24 @@ def start_app(app: QApplication):
         lambda: ag.signals_.user_signal.emit("show_recent_files")
     )
 
-    if tug.config['instance_control']:
-        timer = QTimer(ag.app)
-        timer.timeout.connect(is_active_message)
-        timer.setInterval(iman.TIME_CHECK * 1000)
-        timer.start()
-
     sys.exit(app.exec())
 
-
-def main(entry_point: str, db_name: str):
-    app = QApplication([])
-
-    utils.set_logger()
-    logger.info(f'{db_name=}')
-
+def set_entry_point(entry_point: str):
     tmp = Path(entry_point).resolve()
     if getattr(sys, "frozen", False):
         ag.entry_point = tmp.as_posix()   # str
     else:
         ag.entry_point = tmp.name
 
+def main(entry_point: str, db_name: str):
+    app = QApplication([])
+
+    utils.set_logger()
+    logger.info(f'{entry_point=}, {db_name=}')
+
     if run_instance(db_name):
-        logger.info(f'>>> {iman.PID=} {entry_point=}, {ag.entry_point=}')
+        set_entry_point(entry_point)
+        logger.info(f'>>> {entry_point=}, {ag.entry_point=}')
         start_app(app)
+        global lock_file
+        lock_file.unlock()

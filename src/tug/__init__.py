@@ -2,7 +2,6 @@ from loguru import logger
 import os
 from pathlib import Path
 from collections import defaultdict
-import sys
 import tomllib
 from typing import Any, Optional
 from importlib import resources
@@ -22,22 +21,6 @@ settings = None
 qss_params = {}
 dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
-icon_res = {}
-
-path = Path(qss.__file__).parent
-if getattr(sys, "frozen", False):
-    if sys.platform.startswith("win"):
-        cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
-    # elif sys.platform.startswith("linux"):
-    #     path = ''
-    else:
-        cfg_path = path / "fileo.toml"
-        # raise NotImplemented(f"doesn't support {sys.platform} system")
-else:
-    cfg_path = path / "fileo.toml"
-
-with cfg_path.open(mode="rb") as fp:
-    config = tomllib.load(fp)
 
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
@@ -79,6 +62,15 @@ def save_to_file(filename: str, msg: str):
     stream << msg
     stream.flush()
     flqss.close()
+
+cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
+if cfg_path.exists():
+    with open(cfg_path, "r") as ft:
+        fileo_toml = ft.read()
+else:
+    fileo_toml = resources.read_text(qss, "fileo.toml")
+    save_to_file(cfg_path, fileo_toml)
+config = tomllib.loads(fileo_toml)
 
 def translate_qss(styles: str) -> str:
     for key, val in qss_params.items():
@@ -179,9 +171,9 @@ def get_icon(key: str, index: int = 0) -> QIcon:
 
 def set_icons(keys: dict):
     """
-    add items into dict other_icons:
+    add items into dict m_icons:
     keys - dict of list of svgs
-    created item contains list of icons (or pixmaps)
+    created item contains list of icons
     """
     mode = {
         'normal':  QIcon.Mode.Normal,

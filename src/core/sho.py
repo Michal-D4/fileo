@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
                          QResizeEvent,
 )
@@ -20,9 +20,7 @@ from ..widgets.file_data import fileDataHolder
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer
 
-from . import (db_ut, bk_ut, history, low_bk,
-    app_globals as ag, iman,
-)
+from . import db_ut, bk_ut, history, low_bk, app_globals as ag
 from .win_win import setup_ui, update_grips
 
 
@@ -127,7 +125,7 @@ class shoWindow(QMainWindow):
     def restore_geometry(self):
         geometry = tug.get_app_setting("MainWindowGeometry")
 
-        if geometry:
+        if isinstance(geometry, QRect):
             self.setGeometry(geometry)
             if not ag.db.restore:
                 self.move(self.x() + 50, self.y() + 30)
@@ -410,8 +408,6 @@ class shoWindow(QMainWindow):
         super().resizeEvent(e)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if tug.config['instance_control']:
-            iman.app_instance_close()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.normalGeometry(),
