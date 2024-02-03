@@ -55,7 +55,7 @@ class AboutDialog(QDialog):
         v_layout.addLayout(h_layout)
         v_layout.addWidget(self.git_repo)
 
-        if tug.config['test']:
+        if tug.config.get('test', False):
             self.set_test_box(v_layout)
 
         v_layout.addWidget(self.buttonBox)

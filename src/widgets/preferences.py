@@ -11,9 +11,6 @@ from PyQt6.QtWidgets import (QDialog, QFormLayout, QFrame,
 from src import tug
 from ..core import app_globals as ag
 
-def create_dir(dir: Path):
-    dir.mkdir(parents=True, exist_ok=True)
-
 class Preferences(QDialog):
 
     def __init__(self, parent=None):
@@ -74,10 +71,10 @@ class Preferences(QDialog):
             settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
             ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         tug.save_app_setting(**settings)
-        create_dir(Path(self.db_path.text()))
-        create_dir(Path(self.export_path.text()))
-        create_dir(Path(self.report_path.text()))
-        create_dir(Path(self.log_path.text()))
+        tug.create_dir(Path(self.db_path.text()))
+        tug.create_dir(Path(self.export_path.text()))
+        tug.create_dir(Path(self.report_path.text()))
+        tug.create_dir(Path(self.log_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
         self.close()
 

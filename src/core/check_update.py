@@ -51,7 +51,7 @@ def installer_update_replay(replay: QNetworkReply):
                 utils.show_message_box(
                     'Check for update',
                     f'New version "{ver}" available.'
-                    'You can itstall it with "pip install md4-fileo" command'
+                    'You can itstall it with "pip install md2fileo" command'
                 )
         else:
             utils.show_message_box(

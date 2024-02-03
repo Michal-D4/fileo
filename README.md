@@ -225,7 +225,7 @@ The DB can also be opened in the current window by double click on the line in t
   install as Python package from PyPi:
 
   ```
-    > pip install md4-fileo
+    > pip install md2fileo
   ```
   and then run with
   ```
