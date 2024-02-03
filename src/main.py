@@ -14,7 +14,7 @@ from .core.sho import shoWindow
 lock_file = None
 
 def run_instance(db_name: str='') -> bool:
-    if tug.config['instance_control']:
+    if tug.config.get('instance_control', False):
         ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
         if ag.single_instance:
             global lock_file
@@ -80,7 +80,7 @@ def set_entry_point(entry_point: str):
 def main(entry_point: str, db_name: str):
     app = QApplication([])
 
-    utils.set_logger()
+    logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
     logger.info(f'{entry_point=}, {db_name=}')
 
     if run_instance(db_name):

@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.05 - 2024, February 02
+* define directory "~/.local/share/fileo" for app data in Linux. In windows it is '%LOCALAPPDATA%/fileo".
+* change the project name. The old name is “md4_fileo”, the new one is “md2fileo”. The goal is to avoid underscores and hyphens. PyPi converts underscores to hyphens; a module with that name is difficult to import. PEP 8 says "Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, *although the use of underscores is discouraged*".
+
 ## 1.1.04 - 2024, February 02
 * remove the pywinauto package from dependencies. It conflicts with PyQt. It was used for a single purpose only: in single instance mode to activate an existing instance when trying to open a second instance. Now this existing instance will not display in the foreground when you try to open a second instance. I was going to remove this package anyway because it is too big to be used for this sole purpose.
 
