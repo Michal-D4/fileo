@@ -1,39 +1,44 @@
 from pathlib import Path
 from loguru import logger
+from datetime import datetime
 
 from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QFileDialog, QLabel,
-    QListWidgetItem, QVBoxLayout, QWidget, QMenu,
+    QListWidgetItem, QHBoxLayout, QWidget, QMenu,
 )
 
 from ..core import create_db, app_globals as ag
 from .ui_open_db import Ui_openDB
 from src import tug
 
+TIME_0 = datetime(1, 1, 1)
 
 class listItem(QWidget):
 
-    def __init__(self, name: str, path: str, parent = None) -> None:
+    def __init__(self, item_data: tuple, parent = None) -> None:
         super().__init__(parent)
 
-        self.row = QVBoxLayout()
+        self.row = QHBoxLayout()
 
-        self.name = QLabel(name)
-        self.path = QLabel(path)
+        self.last_use: datetime = item_data[2]
+        self.path = item_data[1]
+        self.name = QLabel(item_data[0])
+        self.use_date = QLabel(f'{self.last_use!s}')
 
         self.row.addWidget(self.name)
-        self.row.addWidget(self.path)
+        self.row.addStretch(0)
+        self.row.addWidget(self.use_date)
 
         self.set_style()
         self.setLayout(self.row)
 
-    def get_db_name(self) -> str:
-        return '/'.join((self.path.text(), self.name.text()))
+    def get_item_data(self) -> tuple:
+        return '/'.join((self.path, self.name.text())), self.last_use
 
     def set_style(self):
         self.name.setStyleSheet(tug.dyn_qss['name'][0])
-        self.path.setStyleSheet(tug.dyn_qss['path'][0])
+        self.use_date.setStyleSheet(tug.dyn_qss['path'][0])
 
 
 class OpenDB(QWidget, Ui_openDB):
@@ -43,29 +48,26 @@ class OpenDB(QWidget, Ui_openDB):
 
         self.setupUi(self)
         self.msg = ''
-        self.path = ''
 
         self.restore_db_list()
 
-        self.listDB.doubleClicked.connect(self.item_click)
+        self.listDB.itemDoubleClicked.connect(self.item_click)
         self.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.listDB.customContextMenuRequested.connect(self.item_menu)
-        self.listDB.currentItemChanged.connect(self.row_changed)
         self.listDB.setCurrentRow(0)
+
+        enter = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
+        enter.activated.connect(self.item_enter)
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.close)
 
-    @pyqtSlot(QListWidgetItem, QListWidgetItem)
-    def row_changed(self, curr: QListWidgetItem, prev: QListWidgetItem):
-        wid: listItem = self.listDB.itemWidget(curr)
-        self.path = wid.get_db_name()
-
     @pyqtSlot(QPoint)
     def item_menu(self, pos: QPoint):
-        item = self.listDB.itemAt(pos)
+        item: QListWidgetItem = self.listDB.itemAt(pos)
         if item:
-            db_name = self.path
+            db_name, _ = self.listDB.itemWidget(item).get_item_data()
+            logger.info(f'{db_name=}')
             menu = self.db_list_menu(
                 db_name[db_name.rfind('/')+1:]
             )
@@ -74,12 +76,12 @@ class OpenDB(QWidget, Ui_openDB):
                 menu_item_text = action.text()
                 if menu_item_text.endswith('window'):
                     self.open_in_new_window(db_name)
-                    return
-                if menu_item_text.startswith('Delete'):
+                elif menu_item_text.startswith('Delete'):
                     self.remove_item(item)
-                    return
-                if menu_item_text.startswith('Open'):
+                elif menu_item_text.startswith('Open'):
                     self.open_db(db_name)
+                elif menu_item_text.startswith('Reveal'):
+                    tug.reveal_file(db_name)
 
     def db_list_menu(self, db_name: str) -> QMenu:
         menu = QMenu(self)
@@ -88,20 +90,25 @@ class OpenDB(QWidget, Ui_openDB):
         if not ag.single_instance:
             menu.addAction(f'Open DB "{db_name}" in new window')
             menu.addSeparator()
+        menu.addAction(f'Reveal "{db_name}" in explorer')
+        menu.addSeparator()
         menu.addAction(f'Delete DB "{db_name}" from list')
         return menu
 
     def restore_db_list(self):
         db_list = tug.get_app_setting("DB_List", []) or []
         for it in db_list:
-            self.add_item_widget(it)
+            # the last is the first in the list !!!
+            self.add_item_widget((it, TIME_0) if isinstance(it, str) else it)
 
-    def add_item_widget(self, full_name: str):
+    def add_item_widget(self, item_data: tuple):
         item = QListWidgetItem(type=QListWidgetItem.ItemType.UserType)
         self.listDB.addItem(item)
 
-        path = Path(full_name)
-        item_widget = listItem(path.name, path.parent.as_posix())
+        path = Path(item_data[0])
+        item_widget = listItem(
+            (path.name, path.parent.as_posix(), item_data[1])
+        )
         item.setSizeHint(item_widget.sizeHint())
 
         self.listDB.setItemWidget(item, item_widget)
@@ -157,7 +164,6 @@ class OpenDB(QWidget, Ui_openDB):
                 False otherwise
         """
         file_ = Path(file_name).resolve(strict=False)
-        self.path = file_name
         if file_.exists():
             if file_.is_file():
                 if create_db.check_app_schema(file_name):
@@ -180,8 +186,14 @@ class OpenDB(QWidget, Ui_openDB):
             return False
 
     @pyqtSlot()
-    def item_click(self):
-        self.open_db(self.path)
+    def item_enter(self):
+        self.item_click(self.listDB.currentItem())
+
+    @pyqtSlot(QListWidgetItem)
+    def item_click(self, item: QListWidgetItem):
+        item_data = self.listDB.itemWidget(item).get_item_data()
+        logger.info(f'{item_data=}')
+        self.open_db(item_data[0])
 
     def open_db(self, db_name: str):
         ag.signals_.get_db_name.emit(db_name)
@@ -193,12 +205,16 @@ class OpenDB(QWidget, Ui_openDB):
 
     def get_item_list(self) -> list:
         items = []
+        cur_db = ag.db.path
         for i in range(self.listDB.count()):
             item = self.listDB.item(i)
             wit: listItem = self.listDB.itemWidget(item)
-            items.append(wit.get_db_name())
-        items.sort(key=str.lower, reverse=True)
-        return items
+            data = wit.get_item_data()
+            if data[0] == cur_db:
+                dt = datetime.now()
+                data = (data[0], dt.replace(microsecond=0))
+            items.append(data)
+        return sorted(items, key=lambda x: x[1], reverse=False)
 
     def close(self) -> bool:
         tug.save_app_setting(DB_List=self.get_item_list())

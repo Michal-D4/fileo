@@ -5,7 +5,7 @@ from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtWidgets import QTreeView
+from PyQt6.QtWidgets import QTreeView, QMessageBox
 
 if TYPE_CHECKING:
     from .compact_list import aBrowser
@@ -22,7 +22,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.1.05'
+    return '1.1.06'
 
 entry_point: str = ''
 app: 'shoWindow' = None
@@ -159,6 +159,29 @@ def add_history_file(id_: int):
         pass
 
     file_history.append(id_)
+
+def show_message_box(
+        title: str, msg: str,
+        custom_btns=None,
+        btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
+        icon: QMessageBox.Icon = QMessageBox.Icon.Information,
+        details: str = '') -> int:
+    global app
+    dlg = QMessageBox(app)
+    dlg.setWindowTitle(title)
+    dlg.setText(msg)
+    dlg.setDetailedText(details)
+
+    if custom_btns:
+        btns = []
+        for btn in custom_btns:
+            btns.append(dlg.addButton(*btn))
+        dlg.setIcon(icon)
+    else:
+        dlg.setStandardButtons(btn)
+        dlg.setIcon(icon)
+
+    return dlg.exec()
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals

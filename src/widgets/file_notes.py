@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
     QVBoxLayout, QScrollArea, QAbstractScrollArea, QMenu,
 )
 
-from ..core import app_globals as ag, db_ut, utils
+from ..core import app_globals as ag, db_ut
 from .file_note import fileNote
 from .note_editor import noteEditor
 
@@ -63,20 +63,13 @@ class notesContainer(QScrollArea):
     def set_editing(self, state: bool):
         # logger.info(f'{state=}')
         self.editing = state
+        ag.app.ui.edited_file.setEnabled(state)
         if state:
-            self.edited_file_in_status(state)
-
-    def edited_file_in_status(self, show: bool):
-        # logger.info(f'{show=}')
-        if show:
             file_id = self.editor.get_file_id()
             filename = db_ut.get_file_name(file_id)
             ag.app.ui.edited_file.setText(filename)
-            ag.app.ui.edited_file.setEnabled(True)
-            ag.app.ui.edited_file.mousePressEvent = self.go_menu
         else:
             ag.app.ui.edited_file.clear()
-            ag.app.ui.edited_file.setEnabled(False)
 
     def set_file_id(self, file_id: int):
         self.file_id = file_id
@@ -149,7 +142,7 @@ class notesContainer(QScrollArea):
         if (self.editing and
             self.editor.get_note_id() == note_id and
             self.editor.get_file_id() == file_id):
-            utils.show_message_box(
+            ag.show_message_box(
                 'Note is editing now',
                 "The note can't be deleted right now.",
                 icon=QMessageBox.Icon.Warning,
@@ -157,7 +150,7 @@ class notesContainer(QScrollArea):
             )
             return
 
-        if utils.show_message_box(
+        if ag.show_message_box(
             'delete file note',
             'confirm deletion of note',
             btn=QMessageBox.StandardButton.Ok |

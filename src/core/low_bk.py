@@ -3,8 +3,6 @@ import apsw
 import json
 from pathlib import Path
 import pickle
-import sys
-import subprocess
 import datetime
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
@@ -16,7 +14,7 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox, QMenu,
 )
 
-from . import (db_ut, app_globals as ag, reports as rep, utils, check_update as upd,
+from . import (db_ut, app_globals as ag, reports as rep, check_update as upd,
 )
 from .file_model import fileModel, fileProxyModel
 from .dir_model import dirModel, dirItem
@@ -25,9 +23,8 @@ from ..widgets.open_db import OpenDB
 from ..widgets.scan_disk_for_files import diskScanner
 from src import tug
 
-MAX_WIDTH_DB_DIALOG = 400
+MAX_WIDTH_DB_DIALOG = 300
 
-file_path: Path = None
 hist_folder: bool = True
 fields = (
     'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
@@ -43,22 +40,6 @@ field_types = (
     'int', 'int', 'date', 'date', 'date',
 )
 
-
-if sys.platform.startswith("win"):
-    def reveal_file(path: str):
-        subprocess.run(['explorer.exe', '/select,', path])
-elif sys.platform.startswith("linux"):
-    def reveal_file(path: str):
-        cmd = [
-            'dbus-send', '--session', '--dest=org.freedesktop.FileManager1',
-            '--type=method_call', '/org/freedesktop/FileManager1',
-            'org.freedesktop.FileManager1.ShowItems',
-            f'array:string:file:////{path}', 'string:',
-        ]
-        subprocess.run(cmd)
-else:
-    def reveal_file(path: str):
-        raise NotImplemented(f"doesn't support {sys.platform} system")
 
 def set_user_actions_handler():
     """
@@ -117,7 +98,7 @@ def set_user_actions_handler():
             else:
                 data_methods[act](action[pos+1:].strip())
         except KeyError as err:
-            utils.show_message_box(
+            ag.show_message_box(
                 'Action not implemented',
                 f'Action name "{err}" not implemented',
                 icon=QMessageBox.Icon.Warning
@@ -134,6 +115,13 @@ def remove_selected_from_history():
         ag.file_history.remove(idx.data(Qt.ItemDataRole.UserRole).id)
     show_recent_files()
 
+def save_db_list():
+    if tug.open_db:
+        tug.open_db.close()
+    else:
+        db_open = OpenDB(ag.app)
+        db_open.close()
+
 def show_db_list():
     """
     manage the list of db files,
@@ -145,9 +133,11 @@ def show_db_list():
 
     tug.open_db = OpenDB(ag.app)
     tug.open_db.move(48, 20)
-    tug.open_db.resize(min(ag.app.width() // 2, MAX_WIDTH_DB_DIALOG),
+    tug.open_db.resize(
+        min(ag.app.width() // 2, MAX_WIDTH_DB_DIALOG),
         ag.app.height() - 60)
     tug.open_db.show()
+    tug.open_db.listDB.setFocus()
 
 def create_open_db():
     if tug.open_db:
@@ -175,6 +165,7 @@ def save_note_edit_state():
 
 def new_window(db_name: str=''):
     import subprocess
+    import sys
     # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
         # logger.info(f'1) {db_name=}, {ag.entry_point}')
@@ -229,7 +220,7 @@ def report_duplicates():
     if repo:
         save_dup_report(repo)
     else:
-        utils.show_message_box(
+        ag.show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )
@@ -240,7 +231,7 @@ def report_same_names():
     if repo:
         save_same_names_report(repo)
     else:
-        utils.show_message_box(
+        ag.show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )
@@ -254,7 +245,6 @@ def save_same_names_report(rep: list):
                 'each line contains:\n    '
                 'file name, path, folder, modification date\n'
             )
-
             for rr in rep:
                 out.write(f"{'-='*20}-\n")
                 for r in rr:
@@ -291,29 +281,11 @@ def enable_buttons():
     ag.app.collapse_btn.setEnabled(True)
 
 def rename_file():
-    global file_path
-    idx = ag.file_list.currentIndex()
-    old_name = full_file_name(idx)
-    file_path = Path(old_name)
-    if file_path.exists() and file_path.is_file():
-        ag.file_list.edit(ag.file_list.model().index(idx.row(), 0))
-
-@pyqtSlot(str)
-def rename_in_file_system(new_name: str):
-    '''
-    only file name may be changed,
-    file can't be moved to another dir
-    '''
-    new_path = file_path.rename(file_path.parent / new_name)
-    if new_path.name == new_name:
-        ag.app.ui.current_filename.setText(new_name)
-    else:
-        utils.show_message_box(
-            'Error renaming file',
-            f'File {file_path.name} was not renamed',
-            icon=QMessageBox.Icon.Critical,
-            details=file_path.as_posix()
-        )
+    idx: QModelIndex = ag.file_list.currentIndex()
+    logger.info(f'{idx.column()=}')
+    idx = ag.file_list.model().index(idx.row(), 0)
+    ag.file_list.setCurrentIndex(idx)
+    ag.file_list.edit(idx)
 
 def enable_next_prev(param: str):
     not_empty = param.split(',')
@@ -620,7 +592,6 @@ def show_files(files, file_id: int = 0):
     set_file_model(model)
 
     set_current_file(file_id)
-    model.model_data_changed.connect(rename_in_file_system)
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
@@ -646,12 +617,12 @@ def fill_file_model(files) -> fileModel:
             ff1.append(field_val(typ, ff[i]))
 
         filename = Path(ff[0])
-        model.append_row(
-            ff1, (
-                ag.FileData(*ff[-3:]),
-                (filename.stem, filename.suffix)
-            )
+        ff1.append(
+            (filename.stem, filename.suffix)
+            if filename.suffix else
+            (filename.stem,)
         )
+        model.append_row(ff1, ag.FileData(*ff[-3:]))
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
@@ -712,12 +683,12 @@ def open_folder():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
         path = full_file_name(idx)
-        reveal_file(str(Path(path)))
+        tug.reveal_file(str(Path(path)))
         ag.add_history_file(idx.data(Qt.ItemDataRole.UserRole).id)
 
 def reveal_in_explorer(file_id: int|str):
     path = db_ut.get_file_path(file_id)
-    reveal_file(str(Path(path)))
+    tug.reveal_file(str(Path(path)))
 
 def full_file_name(index: QModelIndex) -> str:
     file_id = index.data(Qt.ItemDataRole.UserRole).id
@@ -762,7 +733,7 @@ def delete_files():
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    res = utils.show_message_box(
+    res = ag.show_message_box(
         'delete file from DB',
         f'Selected files will be deleted. Please confirm',
         btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -782,7 +753,7 @@ def delete_files():
             row = min(row, idx.row())
             db_ut.delete_file(del_file_id)
         if skip_edited:
-            utils.show_message_box(
+            ag.show_message_box(
                 'Not deleted',
                 f'File "{db_ut.get_file_name(ed_file_id)}", '
                 'a note is editing')
@@ -904,7 +875,7 @@ def load_file(fl: dict) -> int:
 
 #region  Files - Dirs
 def open_manualy(index: QModelIndex):
-    btn = utils.show_message_box(
+    btn = ag.show_message_box(
         'File cannot be opened',
         'Please, select file',
         btn=QMessageBox.StandardButton.Open |

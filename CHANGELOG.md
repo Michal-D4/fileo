@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.06 - 2024, February 06
+* sort database list in order of last used first
+* You can now select a database using the arrow keys on your keyboard and pressing the "Return" key, often labeled "Enter" on the keyboard.
+* several other changes and improvements to the code
+
 ## 1.1.05 - 2024, February 02
 * define directory "~/.local/share/fileo" for app data in Linux. In windows it is '%LOCALAPPDATA%/fileo".
 * change the project name. The old name is “md4_fileo”, the new one is “md2fileo”. The goal is to avoid underscores and hyphens. PyPi converts underscores to hyphens; a module with that name is difficult to import. PEP 8 says "Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability. Python packages should also have short, all-lowercase names, *although the use of underscores is discouraged*".
@@ -13,7 +18,7 @@
 * many other changes and improvements in the code
 
 ## 1.1.02 - 2024, January 17
-* shortcuts for the most common actions: creating and deleting folders, creating and saving a note, searching for a file, and displaying file history.
+* shortcuts for the most common actions: creating (Ctrl-W, Ctrl-E) and deleting (Del) folders, creating (Ctrl-N) and saving (ctrl-S) a note, searching for a file, displaying file history, renaming folders, files, tags, authors with F2 key.
 * show the beginning of the note in the note header
 
 ## 1.1.01 - 2024, January 14

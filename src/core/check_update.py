@@ -9,7 +9,7 @@ from PyQt6.QtNetwork import (QNetworkRequest,
 )
 from PyQt6.QtWidgets import QMessageBox
 
-from . import app_globals as ag, utils
+from . import app_globals as ag
 
 URL = 'https://sourceforge.net/projects/fileo'
 
@@ -36,7 +36,7 @@ def installer_update_replay(replay: QNetworkReply):
         release = obj['platform_releases']['windows']
         filename = release['filename'].toString()
         if filename.count('.') <= 1:
-            utils.show_message_box(
+            ag.show_message_box(
                 'Check for update',
                 f"Something went wrong, can't find app.version in the repository. "
                 'Please try again later.',
@@ -48,19 +48,19 @@ def installer_update_replay(replay: QNetworkReply):
             if getattr(sys, "frozen", False):
                 get_sourceforge(ver)
             else:
-                utils.show_message_box(
+                ag.show_message_box(
                     'Check for update',
                     f'New version "{ver}" available.'
                     'You can itstall it with "pip install md2fileo" command'
                 )
         else:
-            utils.show_message_box(
+            ag.show_message_box(
                 'Check for update',
                 f'No new version available.'
             )
 
 def get_sourceforge(ver: str):
-    btn_clicked = utils.show_message_box(
+    btn_clicked = ag.show_message_box(
         'Check for update',
         f'New version "{ver}" available.',
         custom_btns=(

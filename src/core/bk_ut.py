@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
 )
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, utils,
+    drag_drop as dd,
 )
 from ..widgets import workers, find_files
 from src import tug
@@ -124,7 +124,7 @@ def short_delete_folder():
     if ag.app.focusWidget() is not ag.dir_list:
         return
     if ag.dir_list.currentIndex().isValid():
-        if utils.show_message_box(
+        if ag.show_message_box(
             'Delete folders',
             'Delete selected folders. Please confirm',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
