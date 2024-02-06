@@ -122,6 +122,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.notes = notesContainer(self.editor)
         self.notes.setObjectName('notes_container')
+        ag.app.ui.edited_file.mousePressEvent = self.notes.go_menu
 
         # add file notes page (4)
         self.stackedWidget.addWidget(self.notes)
@@ -208,8 +209,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.maximized = not self.maximized
 
     def short_cancel_editing(self):
-        if (not self.notes.is_editing() or
-            ag.app.focusWidget() is not self.notes):
+        if not self.notes.is_editing():
             return
         self.cancel_note_editing()
 

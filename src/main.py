@@ -8,7 +8,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from src import tug
-from .core import utils, app_globals as ag
+from .core import app_globals as ag
 from .core.sho import shoWindow
 
 lock_file = None

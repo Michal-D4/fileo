@@ -1,8 +1,10 @@
 from loguru import logger
+from pathlib import Path
 
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
-    QSortFilterProxyModel, pyqtSignal
+    QSortFilterProxyModel,
     )
+from PyQt6.QtWidgets import QMessageBox
 
 from . import db_ut, app_globals as ag
 
@@ -46,24 +48,13 @@ class fileProxyModel(QSortFilterProxyModel):
     def get_user_data(self) -> list:
         return self.sourceModel().get_user_data()
 
-    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        if left.column() == 0:
-            l_val = self.sourceModel().data(left, SORT_ROLE)
-            r_val = self.sourceModel().data(right, SORT_ROLE)
-            # logger.info(f'{l_val=}, {r_val}, {l_val[0] < r_val[0] or l_val[1] < r_val[1]}')
-            return l_val[0] < r_val[0] or l_val[1] < r_val[1]
-        return super().lessThan(left, right)
 
 class fileModel(QAbstractTableModel):
-
-    model_data_changed = pyqtSignal(str)
-
     def __init__(self, parent=None, *args):
         super().__init__(parent)
         self.header = ()
         self.rows = []
         self.user_data: list[ag.FileData] = []
-        self.file4sort: list[tuple] = []
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.rows)
@@ -74,25 +65,26 @@ class fileModel(QAbstractTableModel):
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
         if index.isValid():
             col = index.column()
+            line = self.rows[index.row()]
             if col == 0 and role == Qt.ItemDataRole.ToolTipRole:
-                return self.rows[index.row()][col]
+                return line[col]
             if role == Qt.ItemDataRole.DisplayRole:
                 # len(row) > col; len=1 -> col=0; len=2 -> col=(0,1) etc
-                if len(self.rows[index.row()]) > col:
+                if len(line) > col:
                     if self.header[col] in ('Date of last note','Modified','Open Date',):
-                        return self.rows[index.row()][col].toString("yyyy-MM-dd hh:mm")
+                        return line[col].toString("yyyy-MM-dd hh:mm")
                     if self.header[col] == 'Created':
-                        return self.rows[index.row()][col].toString("yyyy-MM-dd")
+                        return line[col].toString("yyyy-MM-dd")
                     if self.header[col] == 'Published':
-                        return self.rows[index.row()][col].toString("MMM yyyy")
-                    return self.rows[index.row()][col]
+                        return line[col].toString("MMM yyyy")
+                    return line[col]
                 return None
             elif role == Qt.ItemDataRole.EditRole:
-                return self.rows[index.row()][col]
+                return line[col]
             elif role == Qt.ItemDataRole.UserRole:
                 return self.user_data[index.row()]
             elif role == SORT_ROLE:
-                return self.rows[index.row()][col] if col else self.file4sort[index.row()]
+                return line[col] if col else line[-1]
             elif role == Qt.ItemDataRole.TextAlignmentRole:
                 if col:
                     return Qt.AlignmentFlag.AlignRight
@@ -102,10 +94,9 @@ class fileModel(QAbstractTableModel):
     def get_user_data(self):
         return self.user_data
 
-    def append_row(self, row:list, user_data=(ag.FileData(), '  ')):
+    def append_row(self, row:list, user_data=ag.FileData()):
         self.rows.append(row)
-        self.user_data.append(user_data[0])
-        self.file4sort.append(user_data[1])
+        self.user_data.append(user_data)
 
     def removeRows(self, row, count=1, parent=QModelIndex()):
         self.beginRemoveRows(QModelIndex(), row, row + count - 1)
@@ -132,19 +123,43 @@ class fileModel(QAbstractTableModel):
         if role != Qt.ItemDataRole.EditRole:
             return False
 
+        def _rename_file(new_name: str) -> bool:
+            row_ = index.row()
+            path = Path(db_ut.get_file_path(file_id))
+            try:
+                new_path = path.rename(path.parent / new_name)
+                line[0] = new_name
+                line[-1] = (
+                    (new_path.stem, new_path.suffix)
+                    if new_path.suffix else
+                    (new_path.stem,)
+                )
+                ag.app.ui.current_filename.setText(new_name)
+                return True
+            except (FileExistsError, FileNotFoundError) as e:
+                ag.show_message_box(
+                    'Error renaming file',
+                    f'{e}',
+                    icon=QMessageBox.Icon.Critical
+                )
+                return False
+
         col = index.column()
+        file_id = self.user_data[index.row()].id
         line = self.rows[index.row()]
         if col < 0 or col >= len(line):
             return False
         field = self.header[col]
-        val = value.toSecsSinceEpoch() if field == 'Published' else value
         if field == 'File Name':
+            if not _rename_file(value):
+                return False
             field = 'filename'
-        db_ut.update_files_field(self.user_data[index.row()].id, field, val)
-        line[col] = value
+        else:
+            if field == 'Published':
+                value = value.toSecsSinceEpoch()
+            line[col] = value
+        db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
-        if field == 'filename':
-            self.model_data_changed.emit(value)
         ag.add_history_file(self.user_data[index.row()].id)
         return True
 

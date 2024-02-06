@@ -242,7 +242,6 @@ class shoWindow(QMainWindow):
         ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
 
     def show_db_list(self, e: QMouseEvent):
-        logger.info(f'{e.buttons()=}')
         if e.buttons() == Qt.MouseButton.LeftButton:
             ag.signals_.user_signal.emit("MainMenu Select DB from list")
 
@@ -408,6 +407,8 @@ class shoWindow(QMainWindow):
         super().resizeEvent(e)
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if ag.db.conn:
+            low_bk.save_db_list()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.normalGeometry(),

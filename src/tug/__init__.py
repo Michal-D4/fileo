@@ -1,6 +1,7 @@
 from loguru import logger
 import os
 import sys
+import subprocess
 from pathlib import Path
 from collections import defaultdict
 import tomllib
@@ -12,12 +13,30 @@ from PyQt6.QtGui import QIcon, QPixmap
 
 from src import qss
 
-config = {}
-open_db = None
+if sys.platform.startswith("win"):
+    def reveal_file(path: str):
+        logger.info(f'{path=}')
+        pp = Path(path)
+        subprocess.run(['explorer.exe', '/select,', str(pp)])
+elif sys.platform.startswith("linux"):
+    def reveal_file(path: str):
+        cmd = [
+            'dbus-send', '--session', '--dest=org.freedesktop.FileManager1',
+            '--type=method_call', '/org/freedesktop/FileManager1',
+            'org.freedesktop.FileManager1.ShowItems',
+            f'array:string:file:////{path}', 'string:',
+        ]
+        subprocess.run(cmd)
+else:
+    def reveal_file(path: str):
+        raise NotImplemented(f"doesn't support {sys.platform} system")
+
 
 APP_NAME = "fileo"
 MAKER = 'miha'
 
+open_db = None  # keep OpenDB instance, need !!!
+config = {}
 settings = None
 qss_params = {}
 dyn_qss = defaultdict(list)

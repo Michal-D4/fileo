@@ -194,7 +194,7 @@ Besides them you can copy / move files from one folder to another.
 
 You can also open files by double clicking on "File name". If the file is executable, it will be executed, not opened. Thus, the application can be used as a "Start Menu", it can be even more convenient than the standard "Start Menu".
 
-> **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, you can find it by searching by name or part of the name, or with a filter, or at least it will appear in (hidden) folder "@@Lost".
+> **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, it can be found by searching by name or part of the name, or using a filter, or at least it will appear in (hidden) folder "@@Lost".
 > If you delete a file from the DB, it will be deleted from all folders, and all notes for this file and its links to tags and authors will be lost.
 
 ***
@@ -205,15 +205,7 @@ All application data is stored into a data base (SQlite DB). The SQlite data bas
 
 ![DB-selector](https://github.com/Michal-D4/fileo/raw/main/img/DB-selector.jpg)
 
-The elements of the DB selector:
-
-1. button to open the DB selector
-2. input filed to manually input the DB file name, full name including path, for example: `C:/Users/mihal/fileo/dbs/one-else.db`
-3. button to open the file dialog to select file in the file system
-4. list of DB names and paths to them.
-5. context menu of DB list: the database can be opened *in the current window*, *in a new window*, or *the database can be deleted from the list* - the database file in the file system will remain untouched.
-
-The DB can also be opened in the current window by double click on the line in the DB list.
+The DB can be opened in the current window by double click on the line in the DB list, or select with keybord up and down arrows key and choose with "Return" key, not "Enter" key on numeric keybord.
 
 # Installation
 
