@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.1.07 - 2024, February 21
+* managing duplicate files. It is not recommended to have multiple files with the same content. Now you will not be able to open a file from an application if it has a duplicate registered in the same database.
+Now you can remove all duplicates from the application at once. But it may be better to remove them manually, since the application may remove not the duplicate file you expected.
+* Notes for a file can be saved as a separate Markdown file. Old notes are deleted and one new note is created with a link to the file containing the saved notes.
+* several other changes and improvements to the code
+
 ## 1.1.06 - 2024, February 06
 * sort database list in order of last used first
 * You can now select a database using the arrow keys on your keyboard and pressing the "Return" key, often labeled "Enter" on the keyboard.

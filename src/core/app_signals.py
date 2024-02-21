@@ -21,3 +21,5 @@ class AppSignals(QObject):
     start_edit_note = pyqtSignal(QWidget)
 
     toggle_column = pyqtSignal()
+
+    refresh_note_list = pyqtSignal()

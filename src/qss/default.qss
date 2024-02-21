@@ -20,10 +20,6 @@ QTextBrowser#compact_list {
    font-family: $fontFamily;
    font-size: $FontSizeNormal;
 }
-#toolBar QToolButton {
-   border: none;
-   background-color: $toolBarToolButtonBackground;
-}
 QFrame[frameShape="4"] {
    border: none;
    background: $splitLineBackground;
@@ -110,9 +106,6 @@ QScrollBar::sub-line:vertical {
    border: 0px;
    height: 0px;
 }
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-   background: $ScrollBarUpDownArrowBG;
-}
 #topBar QToolButton:hover {
    border: none;
    background-color: $topBarToolButtonHoverBG;
@@ -128,6 +121,16 @@ QToolButton#menu_btn:hover {
 QFrame#status {
    background: $statusBackground;
 }
+QFrame#status QLabel#edited_file {
+   padding-right: 4px;
+   padding-left: 4px;
+   background-clip: padding;
+   background-color: $statusBackground;
+   color: $EditFileColor;
+}
+QFrame#status QLabel#edited_file:hover {
+   background-color: $statusLabelHover;
+}
 QFrame#status QLabel {
    padding-right: 4px;
    padding-left: 4px;
@@ -136,9 +139,6 @@ QFrame#status QLabel {
    color: $statusLabelColor;
 }
 QFrame#status QLabel:hover {
-   padding-right: 4px;
-   padding-left: 4px;
-   background-clip: padding;
    background-color: $statusLabelHover;
 }
 QFrame#item_header {
@@ -227,7 +227,6 @@ QTreeView::branch:open:has-children {
 ##decorator~#decorator:hover {background: $splitLineHoverBackground;}
 ##path~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputColor;
 ##name~border: none; font-family: $fontFamily; font-size: $FontSizeBig; color: $dialogInputColor;
-##input_path_message~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $ErrorMessage1Color;
 ##text_browser~<style type="text/css"> *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG}</style>
 ##active_selector~$bottomBorder color: $$activeColor
 ##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
@@ -246,3 +245,5 @@ QTreeView::branch:open:has-children {
 ##searchFrame~#frame QToolButton:checked {border: $shapeBorderRight1 $colorBorder; border-radius: 3px; background-color: $tagSelectedBG;}
 ##fileInfo~background: $treeViewBackground; border: none;
 ##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}
+##edit_message~font-family: $fontFamily; font-size: $FontSizeBig; color: $CarmineColor;  background-color: $treeViewBackground
+##edit_message~font-family: $fontFamily; font-size: $FontSizeNormal; color: $navigatorColor;  background-color: $treeViewBackground

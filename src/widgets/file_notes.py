@@ -17,12 +17,12 @@ class notesContainer(QScrollArea):
 
         self.editor = editor
         self.editing = False
-        self.ini = True
         self.set_ui()
 
         self.file_id = 0
 
         ag.signals_.delete_note.connect(self.remove_item)
+        ag.signals_.refresh_note_list.connect(self.set_notes_data)
 
     def set_ui(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -79,10 +79,6 @@ class notesContainer(QScrollArea):
         self.setUpdatesEnabled(False)
         self.clear_layout()
         self.scroll_layout.addStretch(1)
-        if self.ini:
-            self.ini = False
-            self.setUpdatesEnabled(True)
-            return
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
             note = fileNote(*row[1:], self.file_id)

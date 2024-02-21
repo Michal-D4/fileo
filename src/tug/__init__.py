@@ -15,9 +15,9 @@ from src import qss
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
-        logger.info(f'{path=}')
         pp = Path(path)
         subprocess.run(['explorer.exe', '/select,', str(pp)])
+
 elif sys.platform.startswith("linux"):
     def reveal_file(path: str):
         cmd = [

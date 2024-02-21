@@ -24,14 +24,14 @@ The graphical interface is shown in the image below.
    3. switch to the "FILTER" mode, the file list displays files according to the filter settings
    4. open filter settings dialog, switch to "FILTER_SETUP" mode
    5. hide/show left pane
-8. the file list
-9. current database name, click on it to enter list of available databases.
-10. file name of the file which note is edited, empty if no note edited, click on it to go to this file and folder that contains this file
-10. the current file in file list
+8. the folder tree window
+8. the file list window
+9. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders)
+10. current database name, click on it to enter list of available databases
 11. folder tree branch from root to current folder
-12. number of files in the file list
-13. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders).
-14. folder tree window.
+12. the current file in file list
+13. the name of the file whose note is open in the editor, this is not displaying if no note is edited, click here to go to this file and the folder containing this file
+14. number of files in the file list
 
 The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
 
@@ -90,6 +90,7 @@ There are two method to add files:
    ![import-files](https://github.com/Michal-D4/fileo/raw/main/img/import-files.jpg)
 
    to the folder "New folder" in this case.
+   
    > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase referencies.
 
 ### How to work with filters

@@ -22,7 +22,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.1.06'
+    return '1.1.07'
 
 entry_point: str = ''
 app: 'shoWindow' = None
@@ -176,10 +176,9 @@ def show_message_box(
         btns = []
         for btn in custom_btns:
             btns.append(dlg.addButton(*btn))
-        dlg.setIcon(icon)
     else:
         dlg.setStandardButtons(btn)
-        dlg.setIcon(icon)
+    dlg.setIcon(icon)
 
     return dlg.exec()
 

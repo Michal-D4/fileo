@@ -33,6 +33,7 @@ class Preferences(QDialog):
         form_layout.addRow('Report path:', self.report_path)
         form_layout.addRow('Log file path:', self.log_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
+        form_layout.addRow('Check duplicates:', self.check_dup)
         if tug.config['instance_control']:
             form_layout.addRow('Allow single instance only:', self.single_instance)
         form_layout.addRow('Switch on logging:', self.do_log)
@@ -66,6 +67,7 @@ class Preferences(QDialog):
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
             "SWITCH_ON_LOGGING": int(self.do_log.isChecked()),
             "LOG_QSS": int(self.qss_log.isChecked()),
+            "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
         }
         if tug.config['instance_control']:
             settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
@@ -102,6 +104,10 @@ class Preferences(QDialog):
         val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setValue(int(val))
         ag.history.set_limit(int(val))
+        self.check_dup = QCheckBox()
+        self.check_dup.setChecked(
+            int(tug.get_app_setting('CHECK_DUPLICATES', 1))
+        )
         if tug.config['instance_control']:
             self.single_instance = QCheckBox()
             self.single_instance.setChecked(

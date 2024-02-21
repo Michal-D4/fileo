@@ -29,7 +29,7 @@ class tagBrowser(aBrowser):
 
     @pyqtSlot(list)
     def update_tags(self, tags: list[str]):
-        self.tag_list_changed(self.new_tag_list(), tags)
+        self.tag_list_changed(self.editor_tag_list(), tags)
         self.editor.setText(', '.join(tags))
 
     def tag_list_changed(self, old: list[str], new: list[str]):
@@ -61,10 +61,10 @@ class tagBrowser(aBrowser):
     @pyqtSlot()
     def finish_edit_tag(self):
         old = self.get_selected()
-        new = self.new_tag_list()
+        new = self.editor_tag_list()
         self.tag_list_changed(old, new)
 
-    def new_tag_list(self):
+    def editor_tag_list(self):
         """
         tag can't contain blanks and can't be empty string
         """

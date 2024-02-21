@@ -48,6 +48,13 @@ class fileProxyModel(QSortFilterProxyModel):
     def get_user_data(self) -> list:
         return self.sourceModel().get_user_data()
 
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        if left.column() == 0:
+            l_val = self.sourceModel().data(left, SORT_ROLE)
+            r_val = self.sourceModel().data(right, SORT_ROLE)
+            return l_val < r_val
+        return super().lessThan(left, right)
+
 
 class fileModel(QAbstractTableModel):
     def __init__(self, parent=None, *args):
@@ -130,9 +137,9 @@ class fileModel(QAbstractTableModel):
                 new_path = path.rename(path.parent / new_name)
                 line[0] = new_name
                 line[-1] = (
-                    (new_path.stem, new_path.suffix)
+                    (new_path.stem.lower(), new_path.suffix.lower())
                     if new_path.suffix else
-                    (new_path.stem,)
+                    (new_path.stem.lower(),)
                 )
                 ag.app.ui.current_filename.setText(new_name)
                 return True

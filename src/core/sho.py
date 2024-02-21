@@ -5,11 +5,10 @@ import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-                         QResizeEvent,
+    QResizeEvent, QKeySequence, QShortcut,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
-                             QVBoxLayout, QTreeView, QVBoxLayout,
-                             QFrame, QWidget,
+    QVBoxLayout, QTreeView, QVBoxLayout, QFrame, QWidget,
 )
 
 from src import tug
@@ -56,6 +55,9 @@ class shoWindow(QMainWindow):
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
+        ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
+        ctrl_b.activated.connect(self.click_toggle_bar)
+
 
     def create_fold_container(self):
         self.fold_layout = QVBoxLayout(self.ui.container)
@@ -388,16 +390,11 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot()
     def click_toggle_bar(self):
-        if self.ui.container.isVisible():
-            self.ui.container.hide()
-            self.ui.btnToggleBar.setIcon(
-                tug.get_icon("btnToggleBar", 1)
-            )
-        else:
-            self.ui.container.show()
-            self.ui.btnToggleBar.setIcon(
-                tug.get_icon("btnToggleBar", 0)
-            )
+        visible = self.ui.container.isVisible()
+        self.ui.container.setVisible(not visible)
+        self.ui.btnToggleBar.setIcon(
+            tug.get_icon("btnToggleBar", int(visible))
+        )
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         update_grips(self)

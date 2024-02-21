@@ -59,6 +59,7 @@ def set_user_actions_handler():
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_current_file,
+        "Open file by path": open_with_url,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
         "Files Delete file(s) from DB": delete_files,
@@ -71,7 +72,6 @@ def set_user_actions_handler():
         "MainMenu Select DB from list": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
         "MainMenu About": show_about,
-        "MainMenu Report duplicate files": report_duplicates,
         "MainMenu Report files with same names": report_same_names,
         "MainMenu Preferences": set_preferences,
         "MainMenu Check for update": upd.check4update,
@@ -214,17 +214,6 @@ def set_check_btn(new_mode: ag.appMode):
     checkable_btn[new_mode].setChecked(True)
     ag.set_mode(new_mode)
 
-def report_duplicates():
-    rep_creator = rep.Duplicates()
-    repo = rep_creator.get_report()
-    if repo:
-        save_dup_report(repo)
-    else:
-        ag.show_message_box(
-            "No duplicates found",
-            "No file duplicates found in DB"
-        )
-
 def report_same_names():
     rep_creator = rep.sameFileNames()
     repo = rep_creator.get_report()
@@ -232,47 +221,29 @@ def report_same_names():
         save_same_names_report(repo)
     else:
         ag.show_message_box(
-            "No duplicates found",
-            "No file duplicates found in DB"
+            'Files with same names',
+            "No files with same names found",
         )
 
 def save_same_names_report(rep: list):
-    file_name, ok = create_report_file()
-    if ok:
-        with open(file_name, "w") as out:
-            out.write(f'DB path: {ag.db.path}\n')
-            out.write(
-                'each line contains:\n    '
-                'file name, path, folder, modification date\n'
-            )
-            for rr in rep:
-                out.write(f"{'-='*20}-\n")
-                for r in rr:
-                    ts = datetime.datetime.fromtimestamp(r[-1])
-                    out.write(
-                        f'{".".join(r[:2])}, {r[2]}, {r[3]}, '
-                        f'{ts.strftime("%Y-%m-%d %H:%M:%S")}\n'
-                    )
-
-def create_report_file() -> tuple:
     pp = Path('~/fileo/report').expanduser()
-    path = tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
-    return QFileDialog.getSaveFileName(parent=ag.app,
-        caption='Open file to save report',
-        directory=(Path(path) / 'untitled').as_posix(),
-        filter='File list (*.report *.txt)'
-    )
+    path = Path(
+        tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+    ) / f"same_names.{ag.app.ui.db_name.text()}.log"
+    with open(path, "w") as out:
+        out.write(f'DB path: {ag.db.path}\n')
+        out.write(
+            'each line contains:\n    '
+            '  file size, full file name\n'
+        )
+        for key, rr in rep.items():
+            out.write(f"{'-='*20}- {key}\n")
+            for f_name, size, *_ in rr:
+                out.write(
+                    f'{size:5}, {f_name} \n'
+                )
 
-def save_dup_report(rep: dict):
-    file_name, ok = create_report_file()
-    if ok:
-        with open(file_name, "w") as out:
-            out.write(f'DB path: {ag.db.path}\n')
-            for key,rr in rep.items():
-                out.write(f"{'-='*20}-\n")
-                for r in rr:
-                    out.write(f"File:  {r[0]}\n")
-                    out.write(f"  {'; '.join(r[1:])}\n")
+    open_with_url(str(path))
 
 def enable_buttons():
     ag.app.ui.btn_search.setEnabled(True)
@@ -282,7 +253,6 @@ def enable_buttons():
 
 def rename_file():
     idx: QModelIndex = ag.file_list.currentIndex()
-    logger.info(f'{idx.column()=}')
     idx = ag.file_list.model().index(idx.row(), 0)
     ag.file_list.setCurrentIndex(idx)
     ag.file_list.edit(idx)
@@ -618,9 +588,9 @@ def fill_file_model(files) -> fileModel:
 
         filename = Path(ff[0])
         ff1.append(
-            (filename.stem, filename.suffix)
+            (filename.stem.lower(), filename.suffix.lower())
             if filename.suffix else
-            (filename.stem,)
+            (filename.stem.lower(),)
         )
         model.append_row(ff1, ag.FileData(*ff[-3:]))
 
@@ -662,7 +632,6 @@ def field_val(typ:str, val=None):
 def set_file_model(model: fileModel):
     proxy_model = fileProxyModel()
     proxy_model.setSourceModel(model)
-    proxy_model.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
     model.setHeaderData(0, Qt.Orientation.Horizontal, fields)
     ag.file_list.setModel(proxy_model)
@@ -710,6 +679,17 @@ def open_current_file():
         open_file_by_model_index(idx)
 
 def open_file_by_model_index(index: QModelIndex):
+    file_id = index.data(Qt.ItemDataRole.UserRole).id
+    cnt = db_ut.duplicate_count(file_id)
+    if cnt[0] > 1:
+        ag.show_message_box(
+            "Duplicated file",
+            (f"There are {cnt} files with the same context\n"
+             "It is highly recommended to remove duplicate files;\n"
+             "the file will not be opened."),
+             icon=QMessageBox.Icon.Warning
+        )
+        return
     if open_with_url(full_file_name(index)):
         update_open_date(index)
     else:
@@ -717,6 +697,7 @@ def open_file_by_model_index(index: QModelIndex):
     ag.add_history_file(index.data(Qt.ItemDataRole.UserRole).id)
 
 def open_with_url(path: str) -> bool:
+    logger.info(f'{path=}')
     url = QUrl()
     return QDesktopServices.openUrl(url.fromLocalFile(path))
 

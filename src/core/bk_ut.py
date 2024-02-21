@@ -6,13 +6,13 @@ from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
-    QMessageBox, QApplication,
+    QMessageBox,
 )
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd,
 )
-from ..widgets import workers, find_files
+from ..widgets import workers, find_files, dup
 from src import tug
 
 if TYPE_CHECKING:
@@ -74,12 +74,15 @@ def bk_setup(main: 'shoWindow'):
     low_bk.dir_dree_view_setup()
     ag.file_list.currentChanged = current_file_changed
 
-    set_context_menu()
+    ag.dir_list.customContextMenuRequested.connect(dir_menu)
+    ag.file_list.customContextMenuRequested.connect(file_menu)
 
     if ag.db.conn:
         populate_all()
 
         QTimer.singleShot(10 * 1000, show_lost_files)
+        if bool(tug.get_app_setting("CHECK_DUPLICATES", 0)):
+            QTimer.singleShot(5 * 1000, duplicates)
         QTimer.singleShot(5 * 60 * 1000, run_update0_files)
         QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
         QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
@@ -165,6 +168,9 @@ def show_main_menu():
         pos + QPoint(53, 26)
     ))
     if action:
+        if action.text() == 'Report duplicate files':
+            duplicates()
+            return
         ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
 
 @pyqtSlot(QModelIndex, QModelIndex)
@@ -314,25 +320,6 @@ def refresh_dir_list():
 
     ag.dir_list.setCurrentIndex(idx)
 
-def set_context_menu():
-    """
-    Set context menus for each widget
-    :return:
-    """
-    ag.dir_list.customContextMenuRequested.connect(dir_menu)
-    ag.file_list.customContextMenuRequested.connect(file_menu)
-    ag.app.ui.msg.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-    ag.app.ui.msg.customContextMenuRequested.connect(msg_copy_menu)
-
-@pyqtSlot(QPoint)
-def msg_copy_menu(pos: QPoint):
-    menu = QMenu(ag.app)
-    menu.addAction("Copy message")
-    action = menu.exec(ag.app.ui.msg.mapToGlobal(pos))
-    if action:
-        QApplication.clipboard().setText(ag.app.ui.msg.text())
-        ag.app.ui.msg.clear()
-
 @pyqtSlot(QPoint)
 def dir_menu(pos):
     idx = ag.dir_list.indexAt(pos)
@@ -409,6 +396,13 @@ def finish_loading(has_new_ext: bool):
     if has_new_ext:
         ag.signals_.user_signal.emit("ext inserted")
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
+
+@pyqtSlot()
+def duplicates():
+    rep = workers.report_duplicates()
+    if rep:
+        dup_dlg = dup.dlgDup(rep)
+        dup_dlg.exec()
 
 @pyqtSlot()
 def show_lost_files():

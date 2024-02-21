@@ -6,7 +6,7 @@ from pathlib import PurePath
 from . import app_globals as ag, create_db
 
 
-def dir_tree_select() -> list:
+def dir_tree_select() -> list: # type: ignore
     sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
                'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
@@ -91,29 +91,46 @@ def get_ext_list() -> apsw.Cursor:
 #region files
 def file_duplicates():
     sql = (
-        'with x(hash, cnt) as (select hash, count(*) '
-        'from files group by hash) '
-        'select f.hash, f.filename, p.path, d.name '
-        'from files f join filedir fd on f.id = fd.file '
-        'join dirs d on fd.dir = d.id '
-        'join paths p on p.id = f.path '
-        'join x on x.hash = f.hash '
-        'where x.cnt > 1 order by f.filename, d.name '
+        'with x(hash, cnt) as ('
+            'select hash, count(*) from files group by hash), '
+        'y(hash, path, filename, id) as ('
+            'select f.hash, p.path, f.filename, f.id '
+            'from files f '
+            'join paths p on p.id = f.path) '
+        'select y.hash, y.path, y.filename, y.id from y '
+        'join x on x.hash = y.hash '
+        'where x.cnt > 1 order by y.hash'
     )
     return ag.db.conn.cursor().execute(sql)
 
-def files_4_report():
+def duplicate_count(file_id: int) -> int:
+    sql = (
+        'select count(*) from files where hash = '
+        '(select hash from files where id = ?)'
+    )
+    return ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
+
+def same_file_names_report():
     """
-    file name, path, folder, modification date
+    file name, ext, path, size, file_id, count
     """
     sql = (
-        'with x(file, dir) as (select file, min(dir) '
-        'from filedir group by file) '
-        'select f.filename, p.path, d.name, '
-        'f.modified from files f '
+    'with x(fn, cnt) as ( '
+        'select REPLACE(f.filename, "." || e.extension, "") as fn, count(*) as cnt '
+        'from files f '
+        'join extensions e on e.id = f.extid '
+        'group by fn '
+    ') , '
+    'y(fn, ext, path, size, id) as ( '
+        'select REPLACE(f.filename, "." || e.extension, "") as fn, '
+        'e.extension as ext, p.path as path, f.size as size, f.id as id '
+        'from files f '
+        'join extensions e on e.id = f.extid '
         'join paths p on p.id = f.path '
-        'join x on x.file = f.id '
-        'join dirs d on d.id = x.dir '
+    ') '
+    'select y.fn, y.ext, y.path, y.size, y.id, x.cnt from y '
+    'join x on x.fn = y.fn '
+    'where x.cnt > 1'
     )
     return ag.db.conn.cursor().execute(sql)
 
@@ -885,24 +902,29 @@ def get_file_hash(file_id: int) -> str:
     hash_ = ag.db.conn.cursor().execute(hash_sql, (file_id,)).fetchone()
     return hash_[0] if hash_ else ''
 
-def get_file_notes(file_id: int) -> apsw.Cursor:
+def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
     sql_hash = (
         "select filenote, fileid, id, modified, created from filenotes "
         "where fileid in (select id from files where hash = ?) "
-        "order by modified;"
+        "order by modified"
     )
     sql_id = (
         "select filenote, fileid, id, modified, created from filenotes "
-        "where fileid  = ? order by modified;"
+        "where fileid  = ? order by modified"
     )
-    if file_id < 0:
+    if file_id <= 0:
         return []
     hash_ = get_file_hash(file_id)
+
+    if hash_:  # hash may not have been calculated yet
+        sql = ' '.join((sql_hash, 'desc')) if desc else sql_hash
+        par = hash_
+    else:
+        sql = ' '.join((sql_id, 'desc')) if desc else sql_id
+        par = file_id
+
     with ag.db.conn as conn:
-        if hash_:
-            return conn.cursor().execute(sql_hash, (hash_,))
-        else:
-            return conn.cursor().execute(sql_id, (file_id,))
+        return conn.cursor().execute(sql, (par,))
 
 def get_note(file: int, note: int) -> str:
     sql = 'select filenote from filenotes where fileid = ? and id = ?;'
@@ -950,6 +972,10 @@ def update_note(fileid: int, id: int, note: str) -> int:
 def delete_note(file: int, note: int):
     sql = 'delete from filenotes where fileid = ? and id = ?;'
     ag.db.conn.cursor().execute(sql, (file, note))
+
+def delete_file_notes(file: int):
+    sql = 'delete from filenotes where fileid = ?;'
+    ag.db.conn.cursor().execute(sql, (file,))
 
 def get_tags() -> apsw.Cursor:
     sql = 'select Tag, ID from Tags order by Tag COLLATE NOCASE;'

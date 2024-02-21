@@ -10,9 +10,6 @@ $ico_angleRight~angle_right.svg
 $ico_angleDown~angle_down.svg
 $ico_app~app.ico
 *
-$toolBarToolButtonBackground~transparent
-$ScrollBarUpDownArrowBG~transparent
-*
 $toolBarBackground~#2C2C2C
 $colorBorder~#A0A0A0
 $colorBorder2~#ADADAD
@@ -39,14 +36,13 @@ $dialogBackground~#FFFFFF
 $dialogInputColor~#A0A0A0
 $topBarBackground~#B3B3B3
 $navigatorBackground~#E3E3E3
-$statusBackground~#2A7BCF
-$statusLabelHover~#398BCF
+$statusBackground~#6F5699
+$statusLabelHover~#806AA4
 $ScrollBarHandleBG~#888888
 $topBarToolButtonHoverBG~#C6C6C6
 $ToolButtonCloseHoverBG~#DE1B2E
-$ErrorMessage1Color~#ff9d00
+$EditFileColor~#FFCF32
 $ToolButtonMenuHoverBG~#D2D2D2
-$ToolButtonActiveColor~#FFFFFF
 $ToolButtonColor~#808080
 $$activeColor~#424242
 $passiveColor~#717171

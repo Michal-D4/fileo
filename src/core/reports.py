@@ -6,42 +6,55 @@ from . import db_ut
 
 class Duplicates():
     def __init__(self) -> None:
-        self.report = defaultdict(list)
+        self.report = {}
         self.create_rep()
 
     def create_rep(self):
+        def min_idx():
+            """
+            find index of the shortest path
+            """
+            d = len(str(xx[0][0]))
+            k = -1
+            for i, x in enumerate(xx[1:]):
+                if len(str(x)) < d:
+                    k, d = i, len(str(x[0]))
+            return k+1
+
         dups = db_ut.file_duplicates()
+        repo = defaultdict(list)
         for dd in dups:
-            self.report[dd[0]].append(dd[1:])
+            repo[dd[0]].append(
+                (Path(dd[1]) / dd[2], dd[3])
+            )
+
+        # put the duplicate with the shortest path first
+        for key, xx in repo.items():
+            k = min_idx()
+            self.report[key] = [*xx[k:], *xx[:k]]
 
     def get_report(self) -> dict[list]:
         return self.report
 
 class sameFileNames():
     """
-    only file name id taking into acount, without extension;
+    only file name taking into acount, without extension;
     include into report:
-    file name, path, folder, modification date
+    full file name, size, file_id, count
     """
     def __init__(self) -> None:
-        self.report = []
+        self.report = defaultdict(list)
         self.create_rep()
 
     def create_rep(self):
         def create_dict(files):
-            for ff in files:
-                logger.info(ff)
-                pp = Path(ff[0])
-                res[pp.stem].append((pp.stem, pp.suffix, *ff[1:]))
+            for name, ext, path, size, file_id, count in files:
+                pp = Path(path) / '.'.join((name, ext))
+                self.report[name].append((pp, size, file_id, count))
+                logger.info(f'{name=}, {self.report[name][-1]}')
 
-        files = db_ut.files_4_report()
-
-        res = defaultdict(list)
+        files = db_ut.same_file_names_report()
         create_dict(files)
-
-        for val in res.values():
-            if len(val) > 1:
-                self.report.append(val)
 
     def get_report(self) -> list:
         return self.report

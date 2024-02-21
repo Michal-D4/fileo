@@ -6,7 +6,11 @@ import PyPDF2
 
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 
-from ..core import app_globals as ag, db_ut, low_bk
+from ..core import app_globals as ag, db_ut, reports
+
+def report_duplicates() -> dict[list]:
+    rep_creator = reports.Duplicates()
+    return rep_creator.get_report()
 
 def find_lost_files():
     db_ut.lost_files()

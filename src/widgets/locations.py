@@ -27,7 +27,7 @@ class Locations(QTextBrowser):
         self.setTabChangesFocus(False)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
-        _menu_dscr = { # key is menu items text, (obligatory item, method to call, shortcut)
+        _menu_dscr = { # key is menu items text, (the_must, method, shortcut)
             "Copy": (True, self.copy, QKeySequence.StandardKey.Copy),
             "goto this location": (False, self.go_file, None),
             "Reveal in explorer": (False, self.reveal_file, None),

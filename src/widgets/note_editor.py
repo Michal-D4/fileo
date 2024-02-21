@@ -76,9 +76,6 @@ class noteEditor(QWidget):
         super().focusOutEvent(e)
 
     def start_edit(self, note: fileNote):
-        # logger.info(
-        #     f'fileId={note.get_file_id()}, note fileId={note.get_note_file_id()}, noteId={note.get_note_id()}'
-        # )
         self.note = note
         self.editor.setPlainText(db_ut.get_note(
             self.get_file_id(), self.get_note_id()

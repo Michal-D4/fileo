@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QFileDialog, QLabel,
     QListWidgetItem, QHBoxLayout, QWidget, QMenu,
+    QMessageBox,
 )
 
 from ..core import create_db, app_globals as ag
@@ -67,7 +68,6 @@ class OpenDB(QWidget, Ui_openDB):
         item: QListWidgetItem = self.listDB.itemAt(pos)
         if item:
             db_name, _ = self.listDB.itemWidget(item).get_item_data()
-            logger.info(f'{db_name=}')
             menu = self.db_list_menu(
                 db_name[db_name.rfind('/')+1:]
             )
@@ -116,15 +116,6 @@ class OpenDB(QWidget, Ui_openDB):
     def remove_item(self, item: 'QListWidgetItem'):
         self.listDB.takeItem(self.listDB.row(item))
 
-    def show_error_message(self):
-        if not self.msg:
-            return
-        ag.app.ui.msg.setStyleSheet(tug.dyn_qss['input_path_message'][0])
-        ag.app.ui.msg.setText(self.msg)
-
-        ag.app.ui.msg.setToolTip(self.msg)
-        self.msg = ''
-
     def add_db_name(self, db_name:str):
         db_ = db_name.strip()
         if self.open_if_here(db_):
@@ -137,7 +128,11 @@ class OpenDB(QWidget, Ui_openDB):
             self.add_item_widget(db_name)
             self.open_db(db_name)
             return
-        self.show_error_message()
+        ag.show_message_box(
+            'Error open DB',
+            self.msg,
+            icon=QMessageBox.Icon.Critical
+        )
 
     def open_if_here(self, db_name: str) -> bool:
         for item in self.get_item_list():
@@ -192,7 +187,6 @@ class OpenDB(QWidget, Ui_openDB):
     @pyqtSlot(QListWidgetItem)
     def item_click(self, item: QListWidgetItem):
         item_data = self.listDB.itemWidget(item).get_item_data()
-        logger.info(f'{item_data=}')
         self.open_db(item_data[0])
 
     def open_db(self, db_name: str):

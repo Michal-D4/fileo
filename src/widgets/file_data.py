@@ -1,6 +1,7 @@
 from loguru import logger
 from enum import Enum, unique
 
+from PyQt6.QtCore import QTimer, pyqtSlot
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -45,6 +46,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         }
 
         self.set_stack_pages()
+        self.cur_page: Page = Page.TAGS
+
         self.l_editor.hide()
 
         ag.signals_.start_edit_note.connect(self.start_edit)
@@ -53,7 +56,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.tagEdit.editingFinished.connect(self.tag_selector.finish_edit_tag)
 
-        self.cur_page: Page = Page.TAGS
         self.l_file_notes_press(None)
 
         self.l_tags.mousePressEvent = self.l_tags_press
@@ -77,9 +79,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.collapse_all.clicked.connect(self.notes.collapse_all)
 
         self.save.setIcon(tug.get_icon("ok"))
-        self.save.clicked.connect(self.note_changed)
+        self.save.clicked.connect(self.save_note)
         ctrl_s = QShortcut(QKeySequence("Ctrl+s"), self)
-        ctrl_s.activated.connect(self.note_changed)
+        ctrl_s.activated.connect(self.save_note)
 
         self.cancel.setIcon(tug.get_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
@@ -87,7 +89,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ctrl_q.activated.connect(self.short_cancel_editing)
 
         self.edit_btns.hide()
-        self.note_btns.hide()
 
     def set_stack_pages(self):
         self.stackedWidget = QStackedWidget(self)
@@ -219,7 +220,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.notes.set_editing(False)
         self.l_file_notes_press(None)
 
-    def note_changed(self):
+    def save_note(self):
         if self.notes.is_editing():
             self.notes.finish_editing()
             self.l_editor.hide()
@@ -231,7 +232,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.author_selector.set_authors()
 
     def short_new_note(self):
-        logger.info(f'{ag.app.focusWidget()=}')
+        # logger.info(f'{ag.app.focusWidget()=}')
         if ag.app.focusWidget() is self.notes:
             self.new_file_note()
 
@@ -243,11 +244,24 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def start_edit(self, note: fileNote):
         # logger.info(f'editing: {self.notes.is_editing()}')
         if self.notes.is_editing():
+            self.is_edit_message()
             self.edit_btns.show()
             self.switch_page(Page.EDIT)
             return
         self.editor.start_edit(note)
         self.show_editor()
+
+    def is_edit_message(self):
+        @pyqtSlot()
+        def restore_selected_tags():
+            self.tagEdit.setText(selected_tags)
+            self.tagEdit.setStyleSheet(tug.dyn_qss['edit_message'][1])
+
+        selected_tags = self.tagEdit.text()
+        self.tagEdit.setStyleSheet(tug.dyn_qss['edit_message'][0])
+        self.tagEdit.setText("Only one note editor can be opened at a time")
+        if selected_tags:
+            QTimer.singleShot(3000, restore_selected_tags)
 
     def show_editor(self):
         self.notes.set_editing(True)
@@ -270,7 +284,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         return get_attributes() if self.notes.is_editing() else (False,)
 
     def set_edit_state(self, vals: tuple):
-        # logger.info(f'{vals=}')
+        # logger.info(f'editing: {vals[0]}')
         if not vals[0]:
             self.cancel_note_editing()
             return
@@ -284,10 +298,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def set_data(self, file_id: int, branch: list):
         # logger.info(f'{file_id=}')
         self.file_id = file_id
-        if not file_id:
-            self.note_btns.hide()
-        else:
-            self.note_btns.show()
+
         self.tag_selector.set_file_id(file_id)
         self.author_selector.set_file_id(file_id)
         self.file_info.set_file_id(file_id)

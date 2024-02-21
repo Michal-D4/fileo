@@ -1,11 +1,12 @@
 from loguru import logger
 from datetime import datetime
+from pathlib import Path
 
-from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize
+from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QApplication
 
-from ..core import app_globals as ag
+from ..core import app_globals as ag, db_ut
 from .ui_file_note import Ui_fileNote
 from src import tug
 
@@ -53,15 +54,78 @@ class fileNote(QWidget):
 
         self.set_collapse_icon(False)
 
+        self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
+
+    @pyqtSlot(QPoint)
+    def context_menu(self, pos: QPoint):
+        def copy_link():
+            QApplication.clipboard().setText(self.ui.textBrowser.anchorAt(pos))
+
+        def read_note_file(pp: Path):
+            with open(pp) as ff:
+                return ff.read()
+
+        def save_notes_to_file():
+            def save_note():
+                if link in txt:
+                    return
+                mod_ = datetime.fromtimestamp(md)
+                cre_ = datetime.fromtimestamp(cr)
+                fn.write('\n***\n')
+                fn.write(
+                    f'Modified: {mod_.strftime(TIME_FORMAT)},   '
+                    f'created: {cre_.strftime(TIME_FORMAT)}\n')
+                if not txt.startswith('#'):
+                    ww = txt[:40].split()
+                    fn.write(' '.join(
+                        ('##', *ww[:-1], '\n')
+                    ))
+                fn.write(f'{txt}\n')
+
+            def delete_notes_from_db():
+                db_ut.delete_file_notes(self.file_id)
+                db_ut.insert_note(self.file_id, link)
+                ag.signals_.refresh_note_list.emit()
+
+            note_file = Path(filepath.parent, f'{filepath.stem}.notes.md')
+            old_content = read_note_file(note_file) if note_file.exists() else ''
+
+            link = f"[{note_file.name}](file:///{note_file.as_posix().replace(' ', '%20')})"
+
+            with open(note_file, "w") as fn:
+                notes = db_ut.get_file_notes(self.file_id, desc=True)
+                for txt, *_, md, cr in notes:
+                    save_note()
+                fn.write(old_content)
+            delete_notes_from_db()
+
+        filepath = Path(db_ut.get_file_path(self.file_id))
+        menu = self.ui.textBrowser.createStandardContextMenu()
+        acts = menu.actions()
+        acts[1].setEnabled(bool(self.ui.textBrowser.anchorAt(pos)))
+        menu.addSeparator()
+        menu.addAction(f'Save "{filepath.name}" notes')
+        act = menu.exec(self.ui.textBrowser.mapToGlobal(pos))
+        if act:
+            if act.text().startswith('Save'):
+                save_notes_to_file()
+            elif 'Link' in act.text():
+                copy_link()
+
     def set_text(self, note: str):
+        def set_note_title():
+            # find first not empty line
+            for pp in note.split('\n'):
+                if pp:
+                    txt = pp
+                    break
+            else:
+                return
+            self.ui.title.setText(txt[:40])
+
         self.text = note
-        for pp in note.split('\n'):
-            if pp:
-                txt = pp
-                break
-        else:
-            return
-        self.ui.title.setText(txt[:40])
+        set_note_title()
 
     def set_browser_text(self):
         self.ui.textBrowser.setMarkdown(self.text)

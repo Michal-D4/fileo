@@ -176,9 +176,10 @@ class aBrowser(QWidget):
 
     def set_selection(self, sel_ids):
         _sels = list(sel_ids)
-        if len(_sels) > 0:
-            self.sel_tags = [key for key, val in self.tags.items() if val in _sels]
-            self.show_in_bpowser()
+        # logger.info(f'{self.objectName()}:{_sels=}')
+        self.sel_tags = [key for key, val in self.tags.items() if val in _sels]
+        # logger.info(f'{self.objectName()}:{self.sel_tags=}')
+        self.show_in_bpowser()
 
     def select_all(self):
         self.sel_tags = list(self.tags.keys())
@@ -208,6 +209,7 @@ class aBrowser(QWidget):
         self._to_edit = txt[q:q+r] if r > -1 else txt[q:]
 
     def get_selected(self) -> list[str]:
+        # logger.info(f'{self.objectName()}: {self.sel_tags=}')
         return sorted(self.sel_tags, key=str.lower)
 
     def get_current(self) -> str:

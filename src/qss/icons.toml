@@ -13,12 +13,12 @@ ico = """\
 <svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
 font-family="Cascadia Code" fill="$Hourbour">L</text></svg>\
 """
-[arrow_back]
+[arrow_forward]
 ico = """\
 <svg viewBox="0 -960 960 960"><path d="m560-240 240-240-240-240-58 56 \
 142 142H158v80h486L502-300"/></svg>\
 """
-[arrow_forward]
+[arrow_back]
 ico = """\
 <svg viewBox="0 -960 960 960"><path d="M400-240 160-480l240-240 56 58\
 -142 142h486v80H314l142 142"/></svg>\
