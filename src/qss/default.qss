@@ -4,6 +4,9 @@ QAbstractButton::menu-indicator {
 QFrame#toolBar {
    background-color: $toolBarBackground;
 }
+#toolBar QToolButton:hover {
+   background-color: $toolBarBackground;
+}
 QFrame#title {
    background-color: $treeViewBackground;
 }
@@ -187,7 +190,7 @@ QTreeView::item:hover{
 }
 QTreeView::item:selected:active{
    background: $itemSelectBG;
-   color: white;
+   color: $statusLabelColor;
 }
 QTreeView::item:selected:!active {
    /* background: $itemSelectBG;
@@ -197,7 +200,9 @@ QTreeView::item:selected:!active {
 QTreeView::branch {
    background-color: transparent;
 }
-QTreeView::branch:hover{background-color: $treeHoverBackground;}
+QTreeView::branch:hover{
+   background-color: $treeHoverBackground;
+}
 QTreeView::branch:selected:active{
    background: $itemSelectBG;
 }

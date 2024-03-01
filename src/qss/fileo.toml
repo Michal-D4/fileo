@@ -1,2 +1,4 @@
 instance_control = false
+logging = false
+save_prepared_qss = false
 test = false

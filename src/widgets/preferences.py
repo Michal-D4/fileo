@@ -36,8 +36,6 @@ class Preferences(QDialog):
         form_layout.addRow('Check duplicates:', self.check_dup)
         if tug.config['instance_control']:
             form_layout.addRow('Allow single instance only:', self.single_instance)
-        form_layout.addRow('Switch on logging:', self.do_log)
-        form_layout.addRow('Write QSS to log file:', self.qss_log)
 
         v_layout = QVBoxLayout(self)
         v_layout.setContentsMargins(9, 9, 9, 9)
@@ -65,8 +63,6 @@ class Preferences(QDialog):
             "DEFAULT_REPORT_PATH": self.report_path.text(),
             "DEFAULT_LOG_PATH": self.log_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
-            "SWITCH_ON_LOGGING": int(self.do_log.isChecked()),
-            "LOG_QSS": int(self.qss_log.isChecked()),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
         }
         if tug.config['instance_control']:
@@ -113,11 +109,3 @@ class Preferences(QDialog):
             self.single_instance.setChecked(
                 int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
-        self.do_log = QCheckBox()
-        self.do_log.setChecked(
-            int(tug.get_app_setting('SWITCH_ON_LOGGING', 0))
-        )
-        self.qss_log = QCheckBox()
-        self.qss_log.setChecked(
-            int(tug.get_app_setting('LOG_QSS', 0))
-        )

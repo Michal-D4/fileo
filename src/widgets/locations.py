@@ -1,27 +1,28 @@
 from loguru import logger
+import os
+from pathlib import Path
 
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, pyqtSlot
 from PyQt6.QtGui import (
     QMouseEvent, QTextCursor, QAction,
     QKeySequence,
 )
-from PyQt6.QtWidgets import QTextBrowser, QMenu
-
-from collections import defaultdict
+from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox
 
 from ..core import app_globals as ag, db_ut
 
 
-def add_link_hide_str(dd: ag.DirData):
+def link_hide_suffix(dd: ag.DirData):
     tt = f'{"L" if dd.is_link else ""}{"H" if dd.hidden else ""}'
-    return f'({tt})' if tt else ''   ## () around "L", "H", "LH"
+    return f'({tt})' if tt else ''   # add () around "L", "H", "LH"; or "" without ()
 
 class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
         self.branches = []
-        self.names = defaultdict(list)
+        self.is_all_selected = False
+        self.names = {}
 
         self.cur_pos = QPoint()
         self.setTabChangesFocus(False)
@@ -29,9 +30,11 @@ class Locations(QTextBrowser):
     def mousePressEvent(self, e: QMouseEvent) -> None:
         _menu_dscr = { # key is menu items text, (the_must, method, shortcut)
             "Copy": (True, self.copy, QKeySequence.StandardKey.Copy),
-            "goto this location": (False, self.go_file, None),
+            "go to this location": (False, self.go_file, None),
             "Reveal in explorer": (False, self.reveal_file, None),
             "delete file from this location": (False, self.delete_file, None),
+            "delimiter": (True, None, None),
+            "Remove duplicate file": (False, self.remove_duplicate, None),
             "delimiter": (True, None, None),
             "Select All": (True, self.selectAll, QKeySequence.StandardKey.SelectAll),
         }
@@ -41,8 +44,11 @@ class Locations(QTextBrowser):
             actions = []
             for key, dscr in _menu_dscr.items():
                 must, meth, short = dscr
-                if must or self.branch:
-                    if meth:
+                if must or line:
+                    if key == "Remove duplicate file":
+                        if self.has_dups:
+                            actions.append(QAction(key, self))
+                    elif meth:
                         actions.append(QAction(key, self))
                         if short:
                             actions[-1].setShortcut(short)
@@ -55,50 +61,93 @@ class Locations(QTextBrowser):
         def local_menu():
             action = menu.exec(self.mapToGlobal(self.cur_pos))
             if action:
+                self.setUpdatesEnabled(False)
                 _menu_dscr[action.text()][1]()
-
-        def branch_under_mouse():
-            line = self.select_line_under_mouse(self.cur_pos)
-            return self.names.get(line, [])
+                if self.is_all_selected:
+                    self.selectAll()
+                self.setUpdatesEnabled(True)
 
         self.cur_pos = e.pos()
 
+        line = self.set_current_branch()
         if e.buttons() is Qt.MouseButton.LeftButton:
-            self.select_line_under_mouse(self.cur_pos)
+            self.is_all_selected = False
         elif e.buttons() is Qt.MouseButton.RightButton:
-            self.branch = branch_under_mouse()
             menu = create_menu()
             local_menu()
+
+    @pyqtSlot()
+    def selectAll(self):
+        super().selectAll()
+        self.is_all_selected = True
+
+    @pyqtSlot()
+    def copy(self):
+        if self.is_all_selected:
+            self.selectAll()
+        super().copy()
 
     def get_branch(self, file_id: int=0) -> list:
         """
         returns the first branch the file belongs to
         """
-        branches = list(self.names.values())
         if file_id == 0:
             return []
-        for blist in branches:
-            for bb in blist:
-                if bb[1] == file_id:
-                    return bb[0]
+        for branch, f_id in self.names.values():
+            if f_id == file_id:
+                return branch
         return []
 
     def go_file(self):
-        branch = ','.join((str(i) for i in self.branch[0][0]))
+        branch = ','.join((str(i) for i in self.branch[0]))
         ag.signals_.user_signal.emit(
-            f'file-note: Go to file\\{self.branch[0][1]}-{branch}'
+            f'file-note: Go to file\\{self.branch[1]}-{branch}'
         )
 
     def delete_file(self):
         ag.signals_.user_signal.emit(
-            f'remove_file_from_location\\{self.branch[0][-1]},{self.branch[0][0][-1]}'
+            f'remove_file_from_location\\{self.branch[-1]},{self.branch[0][-1]}' # file_id, dir_id
         )
 
-    def reveal_file(self):
-        ag.signals_.user_signal.emit(f'file reveal\\{self.branch[0][1]}')
+    def set_current_branch(self) -> str:
+        line = self.select_line_under_mouse()
+        self.branch = self.names.get(line, [])
+        return line
 
-    def select_line_under_mouse(self, pos: QPoint) -> QTextCursor:
-        txt_cursor = self.cursorForPosition(pos)
+    def reveal_file(self):
+        ag.signals_.user_signal.emit(f'file reveal\\{self.branch[1]}')
+
+    def remove_duplicate(self):
+        def get_other_branch():
+            for key, bb in self.names.items():
+                if bb[1] != file_id:
+                    return bb
+            return ((0,), 0)
+
+        logger.info(f'{self.branch=}')
+        file_id = self.branch[1]
+        path = db_ut.get_file_path(file_id)
+        res = ag.show_message_box(
+            'Removing duplicate file',
+            f'A file will be deleted to the trash. Please confirm',
+            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            icon=QMessageBox.Icon.Question
+        )
+        if res == QMessageBox.StandardButton.Ok:
+            other_branch, other_id = get_other_branch()
+            pp = Path(path)
+            logger.info(f'{file_id=}, {str(pp)}')
+            try:
+                os.remove(str(pp))
+            except FileNotFoundError:
+                pass
+            finally:   # delete from DB independent on os.remove result
+                logger.info(f'{other_id=}, {other_branch}')
+                db_ut.delete_file(file_id)
+                ag.file_data_holder.set_data(other_id, other_branch)
+
+    def select_line_under_mouse(self) -> QTextCursor:
+        txt_cursor = self.cursorForPosition(self.cur_pos)
         txt_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
         sel_text = txt_cursor.selectedText().split(' \xa0'*4)[0]  # exclude duplication info, if any
         self.setTextCursor(txt_cursor)
@@ -110,6 +159,7 @@ class Locations(QTextBrowser):
         self.show_branches(curr_branch)
 
     def set_file_id(self, file_id: int):
+        self.has_dups = False
         self.file_id = file_id
         self.get_leaves()
         self.build_branches()
@@ -120,22 +170,22 @@ class Locations(QTextBrowser):
         self.branches.clear()
         for dd in dirs:
             self.branches.append(
-                [(dd.id, add_link_hide_str(dd), dd.file_id), dd.parent_id]
+                [(dd.id, link_hide_suffix(dd), dd.file_id), dd.parent_id]
             )
 
     def get_file_dirs(self) -> list:
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         dirs = []
-        for row in dir_ids:         # row = (dir_id, file_id)
-            parents = db_ut.dir_parents(row[0])
+        for dir_id, file_id in dir_ids:
+            parents = db_ut.dir_parents(dir_id)
             for pp in parents:
-                dirs.append(ag.DirData(*pp, row[1]))
+                dirs.append(ag.DirData(*pp, file_id))
         return dirs
 
     def build_branches(self):
         def add_dir_parent() -> list:
             ss = tt[:-1]
-            tt[-1] = (qq.id, add_link_hide_str(qq))
+            tt[-1] = (qq.id, link_hide_suffix(qq))
             tt.append(qq.parent_id)
             return ss
 
@@ -157,26 +207,29 @@ class Locations(QTextBrowser):
                         first = False
                         continue
                     self.branches.append(
-                        [*ss, (qq.id, add_link_hide_str(qq)), qq.parent_id]
+                        [*ss, (qq.id, link_hide_suffix(qq)), qq.parent_id]
                     )
+                    logger.info(f'{self.branches[-1]=}')
             curr += 1
 
     def show_branches(self, curr_branch: list) -> str:
+        self.has_dups = False
         def file_branch_line():
             return (
                 f'<ul><li type="circle">{key}</li></ul>'
-                if vv[0] == curr_branch else
+                if val[0] == curr_branch else
                 f'<p><blockquote>{key}</p>'
             )
 
         def dup_file_branch_line():
-            file_name = db_ut.get_file_name(vv[1])
+            file_name = db_ut.get_file_name(val[1])
+            self.has_dups = True
             return (
                 (
                     f'<ul><li type="circle">{key} &nbsp; &nbsp; '
                     f'&nbsp; &nbsp; ----> &nbsp; Dup: {file_name}</li></ul>'
                 )
-                if vv[0] == curr_branch else
+                if val[0] == curr_branch else
                 (
                     f'<p><blockquote>{key} &nbsp; &nbsp; &nbsp; '
                     f'&nbsp; ----> &nbsp; Dup: {file_name}</p>'
@@ -188,30 +241,32 @@ class Locations(QTextBrowser):
             'text-indent:-28px; line-height: 66%} </STYLE> </HEAD> <BODY> '
         ]
         for key, val in self.names.items():
-            for vv in val:
-                tt = (
-                    file_branch_line()
-                    if vv[1] == self.file_id else
-                    dup_file_branch_line()
-                )
-                txt.append(tt)
+            tt = (
+                file_branch_line()
+                if val[1] == self.file_id else
+                dup_file_branch_line()
+            )
+            txt.append(tt)
 
         txt.append('<p/></BODY>')
+
         self.setHtml(''.join(txt))
 
     def build_branch_data(self):
         self.names.clear()
         for bb in self.branches:
             key, val = self.branch_names(bb)
-            self.names[key].append(val)
+            self.names[key] = val
 
     def branch_names(self, bb: list) -> str:
         tt = bb[:-1]
         tt.reverse()
         ww = []
         vv = []
-        for node in tt:
-            name = db_ut.get_dir_name(node[0])
-            ww.append(f'{name}{node[1]}')
-            vv.append(node[0])
+        for folder, suffix, *_ in tt:
+            # logger.info(f'{folder=}, {suffix=}')
+            name = db_ut.get_dir_name(folder)
+            ww.append(f'{name}{suffix}')
+            vv.append(folder)
+        # logger.info(f'{">".join(ww)}, {(vv, tt[-1][-1])}')
         return ' > '.join(ww), (vv, tt[-1][-1])

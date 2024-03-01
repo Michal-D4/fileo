@@ -67,25 +67,27 @@ class fileNote(QWidget):
                 return ff.read()
 
         def save_notes_to_file():
-            def save_note():
-                if link in txt:
-                    return
-                mod_ = datetime.fromtimestamp(md)
-                cre_ = datetime.fromtimestamp(cr)
-                fn.write('\n***\n')
-                fn.write(
-                    f'Modified: {mod_.strftime(TIME_FORMAT)},   '
-                    f'created: {cre_.strftime(TIME_FORMAT)}\n')
-                if not txt.startswith('#'):
-                    ww = txt[:40].split()
-                    fn.write(' '.join(
-                        ('##', *ww[:-1], '\n')
-                    ))
-                fn.write(f'{txt}\n')
+            def prepare_note_text() -> str:
+                def create_title() -> str:
+                    uu = ttt[0][:40].split()
+                    uu = uu[:-1] if len(ttt[0]) > 40 else uu
+                    return ' '.join(('##', *uu, '\n'))
+
+                modi = datetime.fromtimestamp(md)
+                crea = datetime.fromtimestamp(cr)
+                vvv = (
+                    f'`Modified: {modi.strftime(TIME_FORMAT)};   '
+                    f'Created: {crea.strftime(TIME_FORMAT)}`\n'
+                )
+                ttt = txt.split('\n')
+                if ttt[0].startswith('#'):
+                    return '\n'.join((ttt[0], vvv, *ttt[1:]))
+                return '\n'.join((create_title(), vvv, *ttt))
 
             def delete_notes_from_db():
                 db_ut.delete_file_notes(self.file_id)
-                db_ut.insert_note(self.file_id, link)
+                note_text = f'{link}`     Created: {datetime.now().strftime(TIME_FORMAT)}`'
+                db_ut.insert_note(self.file_id, note_text)
                 ag.signals_.refresh_note_list.emit()
 
             note_file = Path(filepath.parent, f'{filepath.stem}.notes.md')
@@ -94,9 +96,18 @@ class fileNote(QWidget):
             link = f"[{note_file.name}](file:///{note_file.as_posix().replace(' ', '%20')})"
 
             with open(note_file, "w") as fn:
+                fn.write(
+                    f'{note_file.name},    `Created: '
+                    f'{datetime.now().strftime(TIME_FORMAT)}`\n***\n'
+                )
                 notes = db_ut.get_file_notes(self.file_id, desc=True)
                 for txt, *_, md, cr in notes:
-                    save_note()
+                    # _ = fileid, noteid
+                    if link in txt:
+                        continue
+                    fn.write(prepare_note_text())
+                    fn.write('\n***\n')
+
                 fn.write(old_content)
             delete_notes_from_db()
 

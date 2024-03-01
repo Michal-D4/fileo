@@ -93,7 +93,7 @@ def get_log_path() -> str:
 
 def set_logger():
     logger.remove()
-    use_logging = int(get_app_setting("SWITCH_ON_LOGGING", 0))
+    use_logging = config.get('logging', False)
     if not use_logging:
         return
 
@@ -103,14 +103,12 @@ def set_logger():
     logger.add(log_path, format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path}")
-
-set_logger()
+    logger.info(f'{cfg_path=}')
 
 if sys.platform.startswith("win"):
     cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
 elif sys.platform.startswith("linux"):
     cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
-logger.info(f'{cfg_path=}')
 
 if cfg_path.exists():
     with open(cfg_path, "r") as ft:
@@ -120,6 +118,8 @@ else:
     create_dir(cfg_path.parent)
     save_to_file(cfg_path, fileo_toml)
 config = tomllib.loads(fileo_toml)
+
+set_logger()
 
 def translate_qss(styles: str) -> str:
     for key, val in qss_params.items():

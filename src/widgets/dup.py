@@ -18,10 +18,18 @@ class dlgDup(QDialog, Ui_DlgDup):
         self.setFixedSize(self.size())
         self.report = report
         self.ico.setPixmap(self.get_dlg_icon())
+        self.is_user_request = False
 
         self.close_btn.clicked.connect(self.close)
         self.del_btn.clicked.connect(self.delete_duplicates)
         self.show_btn.clicked.connect(self.show_duplicates)
+
+    def asked_by_user(self, user_request: bool):
+        self.is_user_request = user_request
+        logger.info(f'{user_request=}')
+        if self.is_user_request:
+            self.checkBox.hide()
+            self.save_report()
 
     @pyqtSlot()
     def delete_duplicates(self):
@@ -36,13 +44,21 @@ class dlgDup(QDialog, Ui_DlgDup):
                     db_ut.delete_file(file_id)
         self.close()
 
-    @pyqtSlot()
-    def show_duplicates(self):
+    def save_report(self) -> Path:
+        path = self.get_report_path()
+        self.save_dup_report(path)
+        return path
+
+    def get_report_path(self) -> Path:
         pp = Path('~/fileo/report').expanduser()
-        path = Path(
+        return Path(
             tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
         ) / f"duplicate_files.{ag.app.ui.db_name.text()}.log"
-        self.save_dup_report(path)
+
+
+    @pyqtSlot()
+    def show_duplicates(self):
+        path = self.get_report_path() if self.is_user_request else self.save_report()
         ag.signals_.user_signal.emit(f"Open file by path\\{str(path)}")
 
     def save_dup_report(self, path: Path):

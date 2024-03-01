@@ -37,7 +37,7 @@ The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR 
 
 In FILTER mode, the list of files depends on the filter options set in FILTER_SETUP mode. The filter may depend on the selected folders, selected tags, and selected authors in the boxes in the left pane. In FILTER_SETUP mode, the list of files does not change when changing the selected folders, tags, authors. But in FILTER mode, any changes are immediately displayed in the list of files.
 
-## How it's done
+## Files
 
 As said, the app is about files. Files have a number of attributes:
 
@@ -57,12 +57,20 @@ As said, the app is about files. Files have a number of attributes:
 9. size in bytes
 10. number of pages - usually for books
 
-The following attributes are used in filter: all dates (but only one can be used at a time), extension, tags, rating, authors, and folder which was intentionally not included in the file attributes.
+## Folders
 
 Folders are not associated with file system directories, the path is used for that. You can freely create, move, copy and delete folders in the folder tree, the files will remain intact. You can, for example, create multiple folder hierarchies, this can be handy. Of course, if you delete all folders it will be impossible to access files using folder tree, but they remain accessible by filter. The next time the **`@@Lost`** folder will appear, it can be used to access files that are not in any other folder.
 You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
 
+## File duplicates
 
+It may happen that there are duplicate files on your disk. It is highly recommended to delete duplicate files. If you need different versions of a file, consider using a version control system such as Git.
+
+Fileo can find files that are identical in content, but only if these files are added to the same fileo session, or rather to the same database. Fileo works with only one database at a time. You can create a report on duplicate files from the main menu:
+
+![Duplicates](https://github.com/Michal-D4/fileo/raw/main/img/Duplicates.jpg)
+
+After creating the report (if duplicates are detected), you can delete all duplicates at once. But it may be better to remove them manually or delete the selected file in the "Locations" page, since the application may remove not the duplicate file you expected.
 
 ## How it works
 
@@ -91,7 +99,9 @@ There are two method to add files:
 
    to the folder "New folder" in this case.
    
-   > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase referencies.
+   > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase references.
+
+File duplicates
 
 ### How to work with filters
 
@@ -154,23 +164,38 @@ Note is a markdown text. You can insert web links here, but the links to files i
 
 ### Locations
 
+The file may be located in different folders. In fact, these are links to the same file[^1] in different folders. The file location is represented as a branch of folders from the root folder to the folder in which the link to the file is saved. 
+
 ![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
-1-4 are locations of the current file, 5 is a context menu.
+1 - list of branches, where the current file can be found. The list also includes the file duplicates, if any. Duplicates are marked with "`----> Dup:`" followed by the name of the duplicate; A duplicate file may have a different name than the file itself; duplicates are identified by identical content.
 
-The location marked with bullet is a current location.
+The location marked with a bullet is a current location.
 
-All 4 locations end with the Poetry folder. This means that the file exists only in this folder (Poetry), the folder Poetry is presented in 4 branches. That's why the file has 4 locations.
+2 - a context menu:
 
-The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fileo" in the branch 2 is a link to the folder "fileo"[^1] in the branch 1; the folder "A folder"  in folder "my" is "Hidden", but it is shown in the picture below because of the "FOLDERS" widget is in "Show hidden folders" mode:
+1. copy - copy selected lines
+2. go to this location - go to the file in the folder under mouse cursor
+3. Reveal in explorer - show file in explorer
+4. delete file from this location - in fact the link to the file is removed from the folder under the mouse cursor, the file itself remains intact
+5. Remove duplicate file - the file under mouse cursor will be removed to the trash bin if duplicate of the file exists
+6. Select All
 
-![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg)
+3 - the current branch
 
-1. The current folder (Poetry).
-2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "Linux" are hidden; "A folder" and "fileo" in the folder "my" are links. The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
-3. The current file "Python Poetry.md".
+4 - the current file selected in the file list
 
-[^1]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another folder. This other folder becomes its parent.
+The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fill" in the branch 2 is a link to the folder "fill"[^2] in the second line both "Link" and "Hidden"
+
+<img src="https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg" alt="Folders"  />
+
+1. The current folder (fill).
+2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "fill" are hidden; "folder2"[^2] is link to "folder2" above "to have 2 folders". 
+   **Note.** The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
+3. The current file "angle_down_20221002213631.svg".
+
+[^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.
+[^2]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another (parent) folder.
 
 ### File info
 

@@ -82,7 +82,7 @@ def bk_setup(main: 'shoWindow'):
 
         QTimer.singleShot(10 * 1000, show_lost_files)
         if bool(tug.get_app_setting("CHECK_DUPLICATES", 0)):
-            QTimer.singleShot(5 * 1000, duplicates)
+            QTimer.singleShot(5 * 1000, check_duplicates)
         QTimer.singleShot(5 * 60 * 1000, run_update0_files)
         QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
         QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
@@ -169,7 +169,7 @@ def show_main_menu():
     ))
     if action:
         if action.text() == 'Report duplicate files':
-            duplicates()
+            check_duplicates(auto=False)
             return
         ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
 
@@ -398,11 +398,17 @@ def finish_loading(has_new_ext: bool):
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
-def duplicates():
+def check_duplicates(auto=True):
     rep = workers.report_duplicates()
     if rep:
         dup_dlg = dup.dlgDup(rep)
+        dup_dlg.asked_by_user(not auto)
         dup_dlg.exec()
+    elif not auto:
+        ag.show_message_box(
+            "No duplicates found",
+            "No file duplicates found in DB"
+        )
 
 @pyqtSlot()
 def show_lost_files():

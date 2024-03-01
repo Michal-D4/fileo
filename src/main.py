@@ -34,7 +34,7 @@ def start_app(app: QApplication):
 
     thema_name = "default"
     try:
-        log_qss = int(tug.get_app_setting("LOG_QSS", 0))
+        log_qss = tug.config.get("save_prepared_qss", False)
         styles = tug.prepare_styles(thema_name, to_save=log_qss)
         app.setStyleSheet(styles)
         set_app_icon(app)

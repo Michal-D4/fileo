@@ -3,7 +3,6 @@ import apsw
 import json
 from pathlib import Path
 import pickle
-import datetime
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,

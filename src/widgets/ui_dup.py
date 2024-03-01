@@ -82,7 +82,7 @@ class Ui_DlgDup(object):
 
     def retranslateUi(self, DlgDup):
         _translate = QtCore.QCoreApplication.translate
-        DlgDup.setWindowTitle(_translate("DlgDup", "Form"))
+        DlgDup.setWindowTitle(_translate("DlgDup", "File duplicates"))
         self.txt1.setText(_translate("DlgDup", "Duplicate files found"))
         self.txt2.setText(_translate("DlgDup", "It is highly recommended to remove duplicate files"))
         self.show_btn.setText(_translate("DlgDup", "Show list of duplicates"))
