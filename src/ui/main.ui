@@ -322,7 +322,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="container">
+       <widget class="QFrame" name="left_pane">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -353,7 +353,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="fileFrame">
+       <widget class="QFrame" name="main_pane">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -542,8 +542,8 @@
                <widget class="QToolButton" name="field_menu">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>22</horstretch>
-                  <verstretch>22</verstretch>
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
@@ -675,7 +675,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QFrame" name="bottomFileFrame">
+          <widget class="QFrame" name="fileFrame">
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <property name="spacing">
              <number>0</number>
@@ -962,7 +962,7 @@
        <item>
         <widget class="QLabel" name="edited_file">
          <property name="toolTip">
-          <string>click go to the edited file</string>
+          <string>click to go to the editable file</string>
          </property>
          <property name="text">
           <string/>

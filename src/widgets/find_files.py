@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
 )
 
 from ..core  import app_globals as ag, db_ut
-from src import tug
+from .. import tug
 
 
 class findFile(QWidget):
@@ -20,7 +20,6 @@ class findFile(QWidget):
         super().__init__(parent)
         self.file_id = 0
 
-        self.setStyleSheet(' '.join(tug.dyn_qss['searchFrame']))
         self.setup_ui()
         self.srch_pattern.editingFinished.connect(self.search_files)
 
@@ -51,20 +50,20 @@ class findFile(QWidget):
         self.case.setChecked(case)
         self.word.setChecked(word)
 
-        self.frame = QFrame()
-        self.frame.setObjectName('frame')
+        self.srchFrame = QFrame()
+        self.srchFrame.setObjectName('srchFrame')
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.srch_pattern)
         layout.addWidget(self.case)
         layout.addWidget(self.word)
-        self.frame.setLayout(layout)
-        self.resize(320, 32)
+        self.srchFrame.setLayout(layout)
+        self.resize(320, 36)
 
         m_layout = QHBoxLayout(self)
         m_layout.setContentsMargins(0,0,0,0)
-        m_layout.addWidget(self.frame)
+        m_layout.addWidget(self.srchFrame)
         si_policy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setSizePolicy(si_policy)
 

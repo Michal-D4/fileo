@@ -1,11 +1,11 @@
 from loguru import logger
 
 from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QLineEdit
 
 from ..core import app_globals as ag, db_ut
 from .ui_set_filter import Ui_filterSetup
-from src import tug
+from .. import tug
 
 UNIX_EPOCH = 2440588   # julian date of 1970-01-01
 
@@ -29,25 +29,27 @@ class FilterSetup(QWidget):
         self.ui.selected_ext.setText(titles[2])
         self.ui.selected_author.setText(titles[3])
 
-        self.setStyleSheet(tug.dyn_qss["dialog"][0])
-        self.ui.hrdFrame.setStyleSheet(tug.dyn_qss["dialog_hdr"][0])
-
         self.ui.after_date.setDisplayFormat("yyyy-MM-dd")
         self.ui.before_date.setDisplayFormat("yyyy-MM-dd")
 
+        self.ui.selected_tag.stateChanged.connect(self.toggle_tag_check)
         self.ui.btnDone.clicked.connect(self.done_clicked)
         self.ui.btnApply.clicked.connect(self.apply_clicked)
-        self.ui.after.clicked.connect(self.after_changed)
-        self.ui.before.clicked.connect(self.before_changed)
-        self.ui.open_sel.clicked.connect(self.open_changed)
-        self.ui.rating_sel.clicked.connect(self.rating_changed)
+        self.ui.after.clicked.connect(self.after_clicked)
+        self.ui.before.clicked.connect(self.before_clicked)
+        self.ui.open_sel.clicked.connect(self.open_clicked)
+        self.ui.rating_sel.clicked.connect(self.rating_clicked)
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
+
+    def toggle_tag_check(self, state: int):
+        self.ui.all_btn.setEnabled(state)
+        self.ui.any_btn.setEnabled(state)
 
     def is_single_folder(self) -> bool:
         return self.single_folder
 
-    def after_changed(self, st: bool):
+    def after_clicked(self, st: bool):
         self.ui.after_date.setEnabled(st)
         if not st:
             self.ui.before_date.clearMinimumDate()
@@ -59,7 +61,7 @@ class FilterSetup(QWidget):
         else:
             self.ui.after_date.clearMaximumDate()
 
-    def before_changed(self, st: bool):
+    def before_clicked(self, st: bool):
         self.ui.before_date.setEnabled(st)
         if not st:
             self.ui.after_date.clearMaximumDate()
@@ -79,10 +81,10 @@ class FilterSetup(QWidget):
         if self.ui.after.isChecked():
             self.ui.after_date.setMaximumDate(self.ui.before_date.date())
 
-    def open_changed(self, st: bool):
+    def open_clicked(self, st: bool):
         self.ui.open_edit.setEnabled(st)
 
-    def rating_changed(self, st: bool):
+    def rating_clicked(self, st: bool):
         self.ui.rating_edit.setEnabled(st)
 
     def done_clicked(self) -> bool:
@@ -96,10 +98,10 @@ class FilterSetup(QWidget):
         self.store_temp()
         self.checks['open_check'] = self.ui.open_sel.isChecked()
         self.checks['open_op'] = self.ui.open_cond.currentIndex()
-        self.checks['open_val'] = self.ui.open_edit.value()
+        self.checks['open_val'] = self.ui.open_edit.text()
         self.checks['rating_check'] = self.ui.rating_sel.isChecked()
         self.checks['rating_op'] = self.ui.rating_cond.currentIndex()
-        self.checks['rating_val'] = self.ui.rating_edit.value()
+        self.checks['rating_val'] = self.ui.rating_edit.text()
         self.checks['date'] = self.ui.date_type.currentText()
         self.checks['after'] = self.ui.after.isChecked()
         self.checks['before'] = self.ui.before.isChecked()
@@ -203,10 +205,10 @@ class FilterSetup(QWidget):
             "AUTHOR_CHECK": self.ui.selected_author.isChecked(),
             "OPEN_CHECK": self.ui.open_sel.isChecked(),
             "OPEN_OP": self.ui.open_cond.currentIndex(),
-            "OPEN_VAL": self.ui.open_edit.value(),
+            "OPEN_VAL": self.ui.open_edit.text(),
             "RATING_CHECK": self.ui.rating_sel.isChecked(),
             "RATING_OP": self.ui.rating_cond.currentIndex(),
-            "RATING_VAL": self.ui.rating_edit.value(),
+            "RATING_VAL": self.ui.rating_edit.text(),
             "DATE_TYPE": self.ui.date_type.currentIndex(),
             "AFTER": self.ui.after.isChecked(),
             "BEFORE": self.ui.before.isChecked(),
@@ -225,10 +227,10 @@ class FilterSetup(QWidget):
         self.ui.selected_author.setChecked(ag.get_setting("AUTHOR_CHECK", False))
         self.ui.open_sel.setChecked(ag.get_setting("OPEN_CHECK", False))
         self.ui.open_cond.setCurrentIndex(ag.get_setting("OPEN_OP", 0))
-        self.ui.open_edit.setValue(ag.get_setting("OPEN_VAL", 0))
+        self.ui.open_edit.setText(str(ag.get_setting("OPEN_VAL", "0")))
         self.ui.rating_sel.setChecked(ag.get_setting("RATING_CHECK", False))
         self.ui.rating_cond.setCurrentIndex(ag.get_setting("RATING_OP", 0))
-        self.ui.rating_edit.setValue(ag.get_setting("RATING_VAL", 0))
+        self.ui.rating_edit.setText(str(ag.get_setting("RATING_VAL", "0")))
         self.ui.date_type.setCurrentIndex(ag.get_setting("DATE_TYPE", 0))
         self.ui.after.setChecked(ag.get_setting("AFTER", False))
         self.ui.before.setChecked(ag.get_setting("BEFORE", False))

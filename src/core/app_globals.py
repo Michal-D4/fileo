@@ -3,6 +3,7 @@ import apsw
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QMessageBox
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
+    from ..widgets.fold_container import FoldState
 
 
 def app_name() -> str:
@@ -22,17 +24,20 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.1.08'
+    return '1.2.01'
 
-entry_point: str = ''
+entry_point: Path = None
 app: 'shoWindow' = None
 dir_list: QTreeView = None
 tag_list: 'aBrowser' = None
 ext_list: 'aBrowser' = None
 file_list: QTreeView = None
 author_list: 'aBrowser' = None
-file_data_holder: 'fileDataHolder' = None
+file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
+fold_states: 'list[FoldState]' = None
+buttons = []
+note_buttons = []
 history: 'History' = None
 file_history = []
 single_instance = False
@@ -166,7 +171,6 @@ def show_message_box(
         btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
         icon: QMessageBox.Icon = QMessageBox.Icon.Information,
         details: str = '') -> int:
-    global app
     dlg = QMessageBox(app)
     dlg.setWindowTitle(title)
     dlg.setText(msg)

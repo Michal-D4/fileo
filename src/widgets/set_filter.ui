@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>362</width>
+    <width>370</width>
     <height>419</height>
    </rect>
   </property>
@@ -103,7 +103,7 @@
            <enum>QFrame::Plain</enum>
           </property>
           <property name="readOnly">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -241,7 +241,29 @@
            </spacer>
           </item>
           <item>
-           <widget class="QSpinBox" name="open_edit"/>
+           <widget class="QLineEdit" name="open_edit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>32</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>32</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -303,7 +325,29 @@
            </spacer>
           </item>
           <item>
-           <widget class="QSpinBox" name="rating_edit"/>
+           <widget class="QLineEdit" name="rating_edit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>32</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>32</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -356,6 +400,9 @@
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="leftMargin">
+             <number>3</number>
+            </property>
             <item>
              <widget class="QCheckBox" name="after">
               <property name="font">
@@ -387,6 +434,9 @@
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <property name="leftMargin">
+             <number>3</number>
+            </property>
             <item>
              <widget class="QCheckBox" name="before">
               <property name="font">
@@ -536,7 +586,7 @@
            <string>Done</string>
           </property>
           <property name="default">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>

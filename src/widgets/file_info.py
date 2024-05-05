@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
 )
 
 from ..core import app_globals as ag, db_ut
-from src import tug
+from .. import tug
 
 
 class fileInfo(QWidget):
@@ -23,8 +23,6 @@ class fileInfo(QWidget):
         self.pages.editingFinished.connect(self.pages_changed)
 
         self.form_setup()
-        self.setObjectName('fileInfo')
-        self.setStyleSheet(tug.dyn_qss["fileInfo"][0])
 
     def rating_changed(self):
         db_ut.update_files_field(self.file_id, 'rating', self.rating.text())
@@ -52,11 +50,12 @@ class fileInfo(QWidget):
         self.form_layout.addRow("Pages(book):", self.pages)
 
 
-        form = QFrame(self)
-        form.setLayout(self.form_layout)
+        self.form_info = QFrame(self)
+        self.form_info.setObjectName('form_info')
+        self.form_info.setLayout(self.form_layout)
 
         scroll = QScrollArea()
-        scroll.setWidget(form)
+        scroll.setWidget(self.form_info)
         scroll.setWidgetResizable(True)
 
         v_layout = QVBoxLayout(self)

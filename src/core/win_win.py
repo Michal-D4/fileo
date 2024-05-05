@@ -6,7 +6,7 @@ from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon
 from PyQt6.QtWidgets import QApplication
 
 from ..widgets import custom_grips as cg
-from src import tug
+from .. import tug
 
 MOVE_THRESHOLD = 50
 

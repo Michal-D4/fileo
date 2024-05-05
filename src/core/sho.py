@@ -1,6 +1,5 @@
 from loguru import logger
 from pathlib import Path
-import sys
 import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect
@@ -11,7 +10,7 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
     QVBoxLayout, QTreeView, QVBoxLayout, QFrame, QWidget,
 )
 
-from src import tug
+from .. import tug
 from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate
 from ..ui.ui_main import Ui_Sho
@@ -48,7 +47,7 @@ class shoWindow(QMainWindow):
 
         self.set_button_icons()
         self.connect_slots()
-        self.set_extra_widgets()
+        self.set_extra_buttons()
 
         self.setup_global_widgets()
         self.restore_settings()
@@ -60,12 +59,11 @@ class shoWindow(QMainWindow):
 
 
     def create_fold_container(self):
-        self.fold_layout = QVBoxLayout(self.ui.container)
-        self.fold_layout.setContentsMargins(0, 0, 0, 0)
-        self.fold_layout.setSpacing(0)
-        self.container = FoldContainer(self.ui.container)
-        self.fold_layout.addWidget(self.container)
-        self.container.set_qss_fold(tug.dyn_qss['decorator'])
+        fold_layout = QVBoxLayout(self.ui.left_pane)
+        fold_layout.setContentsMargins(0, 0, 0, 0)
+        fold_layout.setSpacing(0)
+        self.container = FoldContainer(self.ui.left_pane)
+        fold_layout.addWidget(self.container)
 
     def restore_settings(self):
         ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
@@ -74,9 +72,9 @@ class shoWindow(QMainWindow):
         self.restore_container()
         self.restore_note_height()
 
-        ag.file_data_holder = fileDataHolder()
-        ag.file_data_holder.setObjectName("file_data_holder")
-        set_widget_to_frame(self.ui.noteHolder, ag.file_data_holder)
+        ag.file_data = fileDataHolder()
+        ag.file_data.setObjectName("file_data_holder")
+        set_widget_to_frame(self.ui.noteHolder, ag.file_data)
         ag.history = history.History(
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
@@ -95,11 +93,11 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
-        # logger.info(f'{ag.PID=}, {path}')
+        # logger.info(f'{path}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
-            ag.file_data_holder.set_tag_author_data()
+            ag.file_data.set_tag_author_data()
             return True
         return False
 
@@ -107,7 +105,7 @@ class shoWindow(QMainWindow):
         state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
-            self.ui.container.setMinimumWidth(int(state[0]))
+            self.ui.left_pane.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
         # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
@@ -117,6 +115,7 @@ class shoWindow(QMainWindow):
         if mode.value > ag.appMode.FILTER_SETUP.value:
             mode = ag.appMode.DIR
         low_bk.set_check_btn(mode)
+        self.toggle_filter_show()
         # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
 
     def restore_note_height(self):
@@ -134,7 +133,7 @@ class shoWindow(QMainWindow):
 
         setup_ui(self)
 
-    def set_extra_widgets(self):
+    def set_extra_buttons(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Prev folder')
         self.btn_prev.clicked.connect(low_bk.to_prev_folder)
         self.btn_prev.setDisabled(True)
@@ -157,13 +156,14 @@ class shoWindow(QMainWindow):
         self.collapse_btn.clicked.connect(bk_ut.toggle_collapse)
         self.collapse_btn.setDisabled(True)
 
-    def _create_button(self, icon_name: str, o_name: str, tool_tip: str) -> QToolButton:
+    def _create_button(self, icon_name: str, btn_name: str, tool_tip: str) -> QToolButton:
         btn = QToolButton()
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
         btn.setIcon(tug.get_icon(icon_name))
-        btn.setObjectName(o_name)
+        ag.buttons.append((btn, icon_name))
+        btn.setObjectName(btn_name)
         self.container.add_widget(btn, 0)
         btn.setToolTip(tool_tip)
         return btn
@@ -200,7 +200,7 @@ class shoWindow(QMainWindow):
         set_widget_to_frame(frames[3], ag.author_list)
 
         ag.file_list = self.ui.file_list
-        ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(ag.file_list))
+        ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
 
     @pyqtSlot()
     def branch_expanded(self):
@@ -214,12 +214,16 @@ class shoWindow(QMainWindow):
         for icon_name in m_icons:
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
+            ag.buttons.append((btn, icon_name))
         self.ui.btn_search.setIcon(tug.get_icon("search"))
+        ag.buttons.append((self.ui.btn_search, "search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         self.ui.btn_search.setDisabled(True)
         self.ui.recent_files.setIcon(tug.get_icon("history"))
+        ag.buttons.append((self.ui.recent_files, "history"))
         self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
         self.ui.field_menu.setIcon(tug.get_icon("more"))
+        ag.buttons.append((self.ui.field_menu, "more"))
 
     def connect_slots(self):
         ag.app = bk_ut.self = self
@@ -261,7 +265,7 @@ class shoWindow(QMainWindow):
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
-            # logger.info(f'ag.mode={ag.mode.name}')
+            # logger.info(f'{ag.mode=!r}')
             bk_ut.restore_dirs()
 
     @pyqtSlot(QMouseEvent)
@@ -296,7 +300,7 @@ class shoWindow(QMainWindow):
         delta = y0 - y
         cur_height = self.ui.noteHolder.height()
         h = max(cur_height + delta, MIN_NOTE_HEIGHT)
-        h = min(h, self.ui.fileFrame.height() - MIN_NOTE_HEIGHT - 35)
+        h = min(h, self.ui.main_pane.height() - MIN_NOTE_HEIGHT - 35)
         self.ui.noteHolder.setMinimumHeight(h)
         self.ui.noteHolder.setMaximumHeight(h)
 
@@ -333,14 +337,14 @@ class shoWindow(QMainWindow):
     def navigator_resize(self, x: int) -> int:
         x0 = self.start_pos.x()
         delta = x - x0
-        cur_width = self.ui.container.width()
+        cur_width = self.ui.left_pane.width()
         w = max(cur_width + delta, MIN_CONTAINER_WIDTH)
-        w = min(w, (self.ui.fileFrame.width() + cur_width) // 2)
+        w = min(w, (self.ui.main_pane.width() + cur_width) // 2)
 
-        self.ui.container.setMinimumWidth(w)
+        self.ui.left_pane.setMinimumWidth(w)
 
         self.start_pos.setX(x0 + w)
-        return self.ui.container.x() + w
+        return self.ui.left_pane.x() + w
 
     def leave_event(self, e):
         self.unsetCursor()
@@ -386,12 +390,10 @@ class shoWindow(QMainWindow):
         ag.ext_list.change_selection.connect(ag.filter_dlg.ext_selection_changed)
         ag.author_list.change_selection.connect(ag.filter_dlg.author_selection_changed)
 
-        self.toggle_filter_show()
-
     @pyqtSlot()
     def click_toggle_bar(self):
-        visible = self.ui.container.isVisible()
-        self.ui.container.setVisible(not visible)
+        visible = self.ui.left_pane.isVisible()
+        self.ui.left_pane.setVisible(not visible)
         self.ui.btnToggleBar.setIcon(
             tug.get_icon("btnToggleBar", int(visible))
         )

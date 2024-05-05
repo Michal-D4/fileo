@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
     QMenu, QLineEdit, QApplication,
 )
 
-from src import tug
+from .. import tug
 
 class editTag(QWidget):
     def __init__(self, text: str, parent = None) -> None:
@@ -240,9 +240,9 @@ class aBrowser(QWidget):
 
     def show_in_bpowser(self):
         self.browser.clear()
-        style = tug.dyn_qss['text_browser'][0]
+        css = tug.get_dyn_qss('text_browser')
         inn = self.html_selected()
-        self.browser.setText(''.join((style, inn)))
+        self.browser.setText(''.join((css, inn)))
         self.browser.verticalScrollBar().setValue(self.scroll_pos)
 
     def html_selected(self):

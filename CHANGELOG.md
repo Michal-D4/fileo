@@ -1,6 +1,12 @@
 # Change Log
 
+## 1.2.01 - 2024, May 05 
+
+* Three color themes have been created for the application: “Default”, “Light” and “Dark”.
+* several other changes and improvements to the code
+
 ## 1.1.08 - 2024, March 01
+
 * use Inno Setup yo make Windows Installer instead of InstallForge.
 * implement the duplicate removal on the "Locations" page. This allows to choose a particular file to delete, but only if that file has duplicates.
 * several other changes and improvements to the code

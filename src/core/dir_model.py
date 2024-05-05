@@ -5,7 +5,7 @@ from collections import defaultdict
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 from . import db_ut, app_globals as ag
-from src import tug
+from .. import tug
 
 class dirItem(object):
     def __init__(self, data, user_data: ag.DirData=None, parent=None):

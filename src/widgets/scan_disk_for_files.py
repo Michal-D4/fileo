@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QWidget, QFileDialog
 from .ui_scan_disk import Ui_scanDisk
 
 from ..core import app_globals as ag
-from src import tug
+from .. import tug
 
 
 class diskScanner(QWidget):
@@ -28,7 +28,6 @@ class diskScanner(QWidget):
         self.mouseMoveEvent = self.move_self
 
         self.set_exts()
-        self.ui.srch_title.setStyleSheet(tug.dyn_qss['name'][0])
 
     @pyqtSlot()
     def go(self):

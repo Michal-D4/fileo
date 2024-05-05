@@ -43,7 +43,7 @@
   <property name="windowFilePath">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="noteLayout">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -60,7 +60,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="item_header">
+    <widget class="QFrame" name="note_header">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -92,6 +92,9 @@
       <number>0</number>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,1,0,0">
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
       <property name="topMargin">
        <number>0</number>
       </property>
@@ -121,26 +124,32 @@
         <property name="accessibleDescription">
          <string notr="true"/>
         </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="text">
          <string notr="true"/>
         </property>
         <property name="checkable">
-         <bool>false</bool>
+         <bool>true</bool>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
         </property>
         <property name="autoRaise">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="title">
+       <widget class="QLabel" name="note_title">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="labels">
+       <layout class="QHBoxLayout" name="labelsLayout">
         <property name="spacing">
          <number>12</number>
         </property>
@@ -337,6 +346,9 @@
      </property>
      <property name="accessibleDescription">
       <string notr="true"/>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">padding-left: 6px;</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::NoFrame</enum>

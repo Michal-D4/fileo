@@ -20,7 +20,7 @@ from .dir_model import dirModel, dirItem
 from ..widgets import about, preferences
 from ..widgets.open_db import OpenDB
 from ..widgets.scan_disk_for_files import diskScanner
-from src import tug
+from .. import tug
 
 MAX_WIDTH_DB_DIALOG = 300
 
@@ -159,7 +159,7 @@ def scan_disk():
 
 def save_note_edit_state():
     ag.save_settings(
-        NOTE_EDIT_STATE=ag.file_data_holder.get_edit_state()
+        NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
 
 def new_window(db_name: str=''):
@@ -168,11 +168,11 @@ def new_window(db_name: str=''):
     # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
         # logger.info(f'1) {db_name=}, {ag.entry_point}')
-        subprocess.Popen([ag.entry_point, db_name, ])
+        subprocess.Popen([str(ag.entry_point), db_name, ])
     else:
         # logger.info(f'2) {db_name=}, {ag.entry_point}')
         subprocess.Popen(
-            [sys.executable, ag.entry_point, db_name, ], # sys.executable - python interpreter
+            [sys.executable, str(ag.entry_point), db_name, ], # sys.executable - python interpreter
         )
 
 def goto_edited_file(param: str):
@@ -196,17 +196,13 @@ def goto_edited_file(param: str):
         set_current_file(int(file_id))
 
 def set_check_btn(new_mode: ag.appMode):
-    """
-    new_mode - a key of checkable_btn dict
-    """
-    # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}, {new_mode=!r}')
     checkable_btn = {
         ag.appMode.DIR: ag.app.ui.btnDir,
         ag.appMode.FILTER: ag.app.ui.btnFilter,
         ag.appMode.FILTER_SETUP: ag.app.ui.btnFilterSetup,
     }
 
-    # need loop to find button to upcheck
+    # need loop to find button to uncheck
     for key, btn in checkable_btn.items():
         btn.setIcon(tug.get_icon(btn.objectName(), int(key is new_mode)))
 
@@ -227,7 +223,7 @@ def report_same_names():
 def save_same_names_report(rep: list):
     pp = Path('~/fileo/report').expanduser()
     path = Path(
-        tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+        tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp))
     ) / f"same_names.{ag.app.ui.db_name.text()}.log"
     with open(path, "w") as out:
         out.write(f'DB path: {ag.db.path}\n')
@@ -281,10 +277,18 @@ def find_files_by_name(param: str):
 
 def set_preferences():
     pref = preferences.Preferences(ag.app)
+    pref.move(
+        (ag.app.width()-pref.width()) // 3,
+        (ag.app.height()-pref.height()) // 3
+    )
     pref.show()
 
 def show_about():
     dlg = about.AboutDialog(ag.app)
+    dlg.move(
+        (ag.app.width()-dlg.width()) // 3,
+        (ag.app.height()-dlg.height()) // 3
+    )
     dlg.show()
 
 #region Common
@@ -401,6 +405,8 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         save_file_id(prev_idx)
         show_folder_files()
         new_history_item()
+    else:
+        show_files([])
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
@@ -463,6 +469,7 @@ def app_mode_changed(prev_mode: int):
 
     if not ag.db.conn:
         return
+    # logger.info(f'{ag.mode=!r}, {prev=!r}')
     if (ag.mode is ag.appMode.FILTER_SETUP
         or ag.mode is prev):
         return
@@ -696,7 +703,7 @@ def open_file_by_model_index(index: QModelIndex):
     ag.add_history_file(index.data(Qt.ItemDataRole.UserRole).id)
 
 def open_with_url(path: str) -> bool:
-    logger.info(f'{path=}')
+    # logger.info(f'{path=}')
     url = QUrl()
     return QDesktopServices.openUrl(url.fromLocalFile(path))
 
@@ -721,7 +728,7 @@ def delete_files():
     )
 
     if res == QMessageBox.StandardButton.Ok:
-        edit_state = ag.file_data_holder.get_edit_state()
+        edit_state = ag.file_data.get_edit_state()
         ed_file_id = edit_state[1] if edit_state[0] else 0
         row = ag.file_list.model().rowCount()
         skip_edited = False
@@ -755,7 +762,7 @@ def remove_file_from_location(param: str):
     file_id, dir_id = param.split(',')
     db_ut.delete_file_dir_link(file_id, dir_id)
     # need branch instead of empty list []
-    ag.file_data_holder.set_data(int(file_id), [])
+    ag.file_data.set_data(int(file_id), [])
 
 def get_dir_id(file: int) -> int:
     """
@@ -782,10 +789,10 @@ def post_delete_file(row: int):
 #region  export-import
 def export_files():
     pp = Path('~/fileo/export').expanduser()
-    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', str(pp))
     file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
         caption='Open file to save list of exported files',
-        directory=(Path(path) / 'untitled').as_posix(),
+        directory=str((Path(path) / 'untitled')),
         filter='File list (*.file_list *.json *.txt)'
     )
 
@@ -805,7 +812,7 @@ def _export_files(out: QTextStream):
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
-    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', pp.as_posix())
+    path = tug.get_app_setting('DEFAULT_EXPORT_PATH', str(pp))
     file_name, ok = QFileDialog.getOpenFileName(ag.app,
         caption="Open file to import list of files",
         directory=path,
@@ -872,7 +879,7 @@ def open_manualy(index: QModelIndex):
         while not d_path.exists():
             d_path = d_path.parent
         filename, ok = QFileDialog.getOpenFileName(ag.app,
-            directory=d_path.as_posix()
+            directory=str(d_path)
         )
 
         if ok:
@@ -1061,4 +1068,4 @@ def file_notes_show(file_idx: QModelIndex):
         if ag.mode is ag.appMode.DIR else []
     )
     # logger.info(f'{file_id=}, {branch=}')
-    ag.file_data_holder.set_data(file_id, branch)
+    ag.file_data.set_data(file_id, branch)

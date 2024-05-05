@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QWidget, QApplication
 
 from ..core import app_globals as ag, db_ut
 from .ui_file_note import Ui_fileNote
-from src import tug
+from .. import tug
 
 MIN_HEIGHT = 50
 TIME_FORMAT = "%Y-%m-%d %H:%M"
@@ -28,7 +28,6 @@ class fileNote(QWidget):
         self.file_id = file_id if file_id else note_file_id
         self.id = note_id
         self.note_file_id = note_file_id
-        self.collapsed = False
 
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -52,7 +51,10 @@ class fileNote(QWidget):
         self.ui.remove.clicked.connect(self.remove_note)
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
-        self.set_collapse_icon(False)
+        self.set_collapse_icon()
+        ag.note_buttons.append((self.ui.edit, "toEdit"))
+        ag.note_buttons.append((self.ui.remove, "cancel2"))
+        ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
@@ -79,7 +81,7 @@ class fileNote(QWidget):
                     f'`Modified: {modi.strftime(TIME_FORMAT)};   '
                     f'Created: {crea.strftime(TIME_FORMAT)}`\n'
                 )
-                ttt = txt.split('\n')
+                ttt = txt.splitlines()
                 if ttt[0].startswith('#'):
                     return '\n'.join((ttt[0], vvv, *ttt[1:]))
                 return '\n'.join((create_title(), vvv, *ttt))
@@ -93,7 +95,7 @@ class fileNote(QWidget):
             note_file = Path(filepath.parent, f'{filepath.stem}.notes.md')
             old_content = read_note_file(note_file) if note_file.exists() else ''
 
-            link = f"[{note_file.name}](file:///{note_file.as_posix().replace(' ', '%20')})"
+            link = f"[{note_file.name}](file:///{str(note_file).replace(' ', '%20')})"
 
             with open(note_file, "w") as fn:
                 fn.write(
@@ -127,13 +129,13 @@ class fileNote(QWidget):
     def set_text(self, note: str):
         def set_note_title():
             # find first not empty line
-            for pp in note.split('\n'):
+            for pp in note.splitlines():
                 if pp:
                     txt = pp
                     break
             else:
                 return
-            self.ui.title.setText(txt[:40])
+            self.ui.note_title.setText(txt[:20])
 
         self.text = note
         set_note_title()
@@ -146,7 +148,7 @@ class fileNote(QWidget):
     def set_height_by_text(self):
         self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
         size = self.ui.textBrowser.document().size().toSize()
-        self.visible_height = size.height() + self.ui.item_header.height()
+        self.visible_height = size.height() + self.ui.note_header.height()
 
     def get_note_id(self) -> int:
         return self.id
@@ -165,31 +167,30 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def toggle_collapse(self):
-        self.collapsed = not self.collapsed
         self.collapse_item()
 
     def collapse_item(self):
-        if self.collapsed:
+        if self.ui.collapse.isChecked():
             self.expanded_height = self.visible_height
-            self.visible_height = self.ui.item_header.height()
+            self.visible_height = self.ui.note_header.height()
             self.ui.textBrowser.hide()
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
             self.ui.textBrowser.show()
-        self.set_collapse_icon(self.collapsed)
+        self.set_collapse_icon()
 
     @pyqtSlot()
     def check_collapse_button(self):
-        if self.collapsed:
+        if self.ui.collapse.isChecked():
             return
-        self.collapsed = True
+        self.ui.collapse.setChecked(True)
         self.collapse_item()
 
-    def set_collapse_icon(self, collapse: bool):
+    def set_collapse_icon(self):
         self.ui.collapse.setIcon(
-            tug.get_icon("right") if collapse
-            else tug.get_icon("down")
+            tug.get_icon("right3") if self.ui.collapse.isChecked()
+            else tug.get_icon("down3")
         )
 
     @pyqtSlot()
@@ -209,6 +210,6 @@ class fileNote(QWidget):
             QDesktopServices.openUrl(href)
 
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        if not self.collapsed:
+        if not self.ui.collapse.isChecked():
             self.set_browser_text()
         return super().resizeEvent(a0)

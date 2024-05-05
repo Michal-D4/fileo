@@ -1,254 +1,566 @@
+QLabel, QTextEdit, QTreeView, QHeaderView::section {
+   font-family: $fontFamily;
+   font-size: $normalSize;
+}
+QToolButton {
+   font-family: $fontFamily;
+   font-size: $normalSize;
+   background-color: transparent;
+}
 QAbstractButton::menu-indicator {
    image: none;
 }
 QFrame#toolBar {
-   background-color: $toolBarBackground;
+   border-left: none;
+   border-top: none;
+   border-right: $shapeBorder2 $toolBarBorderColor;
+   border-bottom: none;
+   background-color: $toolBarBG;
 }
 #toolBar QToolButton:hover {
-   background-color: $toolBarBackground;
-}
-QFrame#title {
-   background-color: $treeViewBackground;
-}
-QTextBrowser, QListView {
-   border: none;
-   background-color: $treeViewBackground;
-   color: $navigatorColor;
-   font-family: $fontFamily;
-   font-size: $FontSizeNormal;
-}
-QTextBrowser#compact_list {
-   selection-color: $navigatorColor;
-   selection-background-color: $treeViewBackground;
-   font-family: $fontFamily;
-   font-size: $FontSizeNormal;
-}
-QFrame[frameShape="4"] {
-   border: none;
-   background: $splitLineBackground;
-}
-QFrame[frameShape="4"]:hover {
-   border: none;
-   background: $splitLineHoverBackground;
-}
-QFrame[frameShape="5"] {
-   border: none;
-   background: $splitLineBackground;
-}
-QFrame[frameShape="5"]:hover {
-   border: none;
-   background: $splitLineHoverBackground;
-}
-#frameDB, #frame {
-   background-color: $dialogBackground;
-   border: $shapeBorderRight2 $colorBorder;
-}
-#input_path {
-   border: none;
-   font-family: $fontFamily;
-   font-size: FontSizeNormal;
-   color: $dialogInputColor;
-}
-#listDB {
-   border: none;
+   background-color: transparent;
 }
 #toolBar QToolButton:checked {
-   border-left: $shapeBorderRight2 $buttonCheckMark;
+   border-left: $shapeBorder2 $buttonCheckMark;
    border-top: none;
    border-right: none;
    border-bottom: none;
 }
-QFrame#filter_frame {
-   background-color: $filterFrameBackground;
-   color: $filterFrameColor;
-   border: $shapeBorderRight2 $colorBorder;
+QFrame#fold_head {
+   background-color: $leftPaneHeadBG;
+   color: $leftPaneHeadColor;
 }
-#filter_frame > QPlainTextEdit {
-   background-color: $filterFrameTextEditBG;
+QFrame#fold_head QToolButton:checked {
+   background-color: transparent;
 }
-FoldContainer {
-   background-color: $FoldContainerBackground;
-   color: $FoldContainerColor;
+QFrame#fold_head QToolButton:hover:enabled {
+   border: none;
+   background-color: $leftPaneHeadHoverBG;
 }
-QFrame#topBar, #navi_header {
-   background-color: $topBarBackground;
+#toFold {
+   border: none;
+   color: $leftPaneHeadColor;
+   font-family: $SemiboldFamily;
+}
+QFrame#fold_head #toFold:checked {
+   border: none;
+   background-color: $leftPaneHeadBG;
+}
+QFrame#fold_head #toFold:hover {
+   background-color: $leftPaneHeadBG;
+}
+QFrame#navi_header #app_mode {
+   font-family: $SemiboldFamily;
+}
+QFrame#navi_header, #topBar {
+   background-color: $topBarBG;
    color: $topBarColor;
 }
-QFrame#bottomFileFrame {
+#navi_header QLabel, #topBar QLabel {
+   color: $topBarColor;
+}
+#navi_header QToolButton:hover, #topBar QToolButton:hover {
    border: none;
-   border-right: $shapeBorderRight2 $colorBorder;
-}
-QFrame#comments {
-   border: none;
-   background: $commentsBackground;
-}
-QFrame#item_comment0  {
-   border: none;
-   background: $commentsBackground;
-}
-QScrollBar:vertical {
-   border: 0px;
-/* background: transparent;                                           */
-/*
-   TODO hide ScrollBar when container not in focus
-   because of WA_TranslucentBackground the desktop is visible through
-   the application, but i want to see an underlaing widget only       */
-   width: 9px;
-   margin: 0px;
-   /* background: */
-   }
-QScrollBar::handle:vertical {
-   background: $ScrollBarHandleBG;
-   min-height: 20px;
-}
-QScrollBar::add-line:vertical {
-   border: 0px;
-   height: 0px;
-}
-QScrollBar::sub-line:vertical {
-   border: 0px;
-   height: 0px;
-}
-#topBar QToolButton:hover {
-   border: none;
-   background-color: $topBarToolButtonHoverBG;
+   background-color: transparent;
 }
 QToolButton#close:hover {
    border: none;
-   background-color: $ToolButtonCloseHoverBG;
-}
-QToolButton#menu_btn:hover {
-   border: none;
-   background-color: $ToolButtonMenuHoverBG
+   background-color: $CloseHoverBG;
 }
 QFrame#status {
-   background: $statusBackground;
-}
-QFrame#status QLabel#edited_file {
-   padding-right: 4px;
-   padding-left: 4px;
-   background-clip: padding;
-   background-color: $statusBackground;
-   color: $EditFileColor;
-}
-QFrame#status QLabel#edited_file:hover {
-   background-color: $statusLabelHover;
+   background: $statusBG;
+   border-left: $shapeBorder1 $statusBorder;
+   border-top: $shapeBorder1 $statusTopBorder;
+   border-right: $shapeBorder1 $statusBorder;
+   border-bottom: $shapeBorder1 $statusBorder;
 }
 QFrame#status QLabel {
    padding-right: 4px;
    padding-left: 4px;
    background-clip: padding;
-   background-color: $statusBackground;
+   background-color: $statusBG;
    color: $statusLabelColor;
 }
 QFrame#status QLabel:hover {
-   background-color: $statusLabelHover;
+   background-color: $statusHoverBG;
 }
-QFrame#item_header {
-   background-color: $navigatorBackground;
-   color: $navigatorColor;
+QFrame#status QLabel#edited_file {
+   color: $EditFileColor;
 }
-QFrame#item_header QLabel {
-   background-color: $navigatorBackground;
-   color: $navigatorColor;
+#frameDB {
+   background-color: $dlgBG;
+   border: $shapeBorder2 $colorBorder;
 }
-QFrame#header {
-   background-color: $navigatorBackground;
-   color: $navigatorColor;
-}
-QFrame#header QToolButton:checked {
-   border: $shapeBorderRight1 $colorBorder;
-   background-color: $tagSelectedBG;
-}
-QFrame#header QToolButton:hover:enabled {
+#listDB {
    border: none;
-   background-color: $ToolButtonMenuHoverBG;
 }
-QToolButton#more:hover {
-   border: none;
-   background-color: $ToolButtonMenuHoverBG;
+QFrame#ttl_frame, QFrame#pref_ttl {
+   background-color: $dlgAltBG;
+   border-bottom: $shapeBorder2 $dlgInnerBorder;
 }
-#toFold {
+QFrame#ttl_frame QLabel, QFrame#pref_ttl QLabel,
+QFrame#fr_about QLabel {
+   font-family: $fontFamily;
+   font-size: $bigSize;
+   color: $dlgAltColor;
+}
+QFrame#scan_disk QLabel#win_title {
+   background-color: $dlgAltBG;
+   font-family: $fontFamily;
+   font-size: $bigSize;
+   color: $dlgAltColor;
+}
+QFrame#scan_disk, QFrame#frame_pref, QFrame#frame_about {
+   border: $shapeBorder2 $dlgBorder;
+   background-color: $dlgBG;
+}
+QFrame#scan_disk QLabel, QFrame#frame_pref QLabel {
+   color: $dlgColor;
+}
+QPushButton {
    border: none;
-   margin:0px;
-   padding:0px;
-   color: $navigatorColor;
-   font: $foldableHeaderFont;
+   font-family: $fontFamily;
+   font-size: $normalSize;
+   background: $dlgAltBG;
+   color: $dlgAltColor;
+}
+QPushButton:hover {
+   background-color: $dlgHoverBG;
+}
+QFrame#dup_btns QPushButton {
+   border: none;
+   font-family: $fontFamily;
+   font-size: $normalSize;
+   background: $dlgAltBG;
+   color: $dlgAltColor;
+   padding-bottom: 4px;
+   background-clip: padding;
+}
+QFrame#dup_btns QPushButton:hover {
+   background-color: $dlgHoverBG;
+}
+QFrame#scan_disk QLineEdit, QFrame#frame_pref QLineEdit {
+   border: none;
+   background-color: $dlgInputBG;
+   color: $dlgColor;
+}
+QTextEdit {
+   border: none;
+   background-color: $notesBG;
+   color: $filesColor;
+}
+QFrame[frameShape="4"] {
+   border: none;
+   background: $mainPaneSplitBG;
+}
+QFrame[frameShape="4"]:hover {
+   background: $splitHoverBG;
+}
+QFrame[frameShape="5"] {
+   border: none;
+   background: $mainPaneSplitBG;
+}
+QFrame[frameShape="5"]:hover {
+   background: $splitHoverBG;
+}
+QFrame#fileFrame {
+   border: none;
+   border-right: $shapeBorder2 $colorBorder;
+}
+QScrollBar:vertical {
+   border: none;
+   background: $dlgBG;
+   width: 6px;
+   margin: 0px;
+}
+QScrollBar::handle:vertical {
+   background: $ScrollBarHandleBG;
+   min-height: 20px;
+}
+QScrollBar::add-line:vertical {
+   border: none;
+   background: $leftPaneBG;
+   height: 0px;
+}
+QScrollBar::sub-line:vertical {
+   border: none;
+   background: $leftPaneBG;
+   height: 0px;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+   background: none;
+}
+QFrame#note_header {
+   background-color: $noteHeaderBG;
+}
+QFrame#note_header QLabel {
+   color: $filesColor;
 }
 /* QTreeView */
-QTreeView#dir_list, QTreeView#file_list {
+QTreeView#dir_list {
    border: none;
-   background-color: $treeViewFileBG;
-   color: $navigatorColor;
-   padding-left: 12px;
+   background-color: $leftPaneBG;
+   color: $leftPaneColor;
+   padding-left: 8px;
    show-decoration-selected: 1;
-   font-family: $fontFamily;
-   font-size: $FontSizeNormal;
+   outline: none;
 }
-QTreeView::item:hover{
-   background-color: $treeHoverBackground;
+QTreeView#dir_list::item:hover{
+   background-color: $itemHoverBG;
 }
-QTreeView::item:selected:active{
+QTreeView#dir_list::item:selected:active{
    background: $itemSelectBG;
-   color: $statusLabelColor;
+   color: $itemSelectedColor;
 }
-QTreeView::item:selected:!active {
-   /* background: $itemSelectBG;
-   color: white; */
-   background: $itemSelectNoActive;
-}
-QTreeView::branch {
-   background-color: transparent;
+QTreeView#dir_list::item:selected:!active {
+   background: $itemSelectNoActiveBG;
+   color: $leftPaneColor;
 }
 QTreeView::branch:hover{
-   background-color: $treeHoverBackground;
+   background-color: $itemHoverBG;
 }
 QTreeView::branch:selected:active{
    background: $itemSelectBG;
 }
 QTreeView::branch:selected:!active {
-   background: $itemSelectNoActive;
+   background: $itemSelectNoActiveBG;
 }
 QTreeView::branch:!adjoins-item {
-   border-image: url($ico_VLINE) 0;
+   border-image: url('$vline3') 0;
 }
 QTreeView::branch:adjoins-item {
-   border-image: url($ico_VLINE) 0;
+   border-image: url('$vline3') 0;
 }
 QTreeView::branch:!has-children:!has-siblings:adjoins-item {
-   border-image: url($ico_VLINE) 0;
+   border-image: url('$vline3') 0;
 }
 QTreeView::branch:closed:has-children {
    border-image: none;
-   image: url($ico_angleRight);
+   image: url('$angle_right');
 }
 QTreeView::branch:open:has-children {
    border-image: none;
-   image: url($ico_angleDown);
+   image: url('$angle_down');
+}
+QHeaderView {
+   background-color: $filesHeaderBG;
+}
+QHeaderView::section {
+   padding-left: 8px;
+   background-color: $filesHeaderBG;
+   color: $filesHeaderColor;
+   border: 1px solid $filesColumnBorder;
+}
+QTreeView#file_list {
+   border: none;
+   background-color: $filesBG;
+   color: $filesColor;
+   show-decoration-selected: 1;
+   outline: none;
+}
+QTreeView#file_list::item:hover {
+   background-color: $fileHoverBG;
+}
+QTreeView#file_list::item:selected:active {
+   background: $fileSelectBG;
+   color: $fileSelectedColor;
+}
+QTreeView#file_list::item:selected:!active {
+   background: $fileSelectNoActiveBG;
+   color: $filesColor;
+}
+/* ------------------------- */
+QFrame#head {
+   $bottomBorder 2px solid $mainPaneSplitBG;
+   background-color: $notesBG;
+}
+QFrame#head QLineEdit {
+   background-color: $inputBG;
+   color: $filesColor;
+}
+QFrame#head QToolButton {
+   background-color: transparent;
+}
+QFrame#head QToolButton:hover {
+   border: none;
+   background-color: $dlgHoverBG;
+}
+QFrame#labels {
+   border: none;
+   background-color: $inputBG;
+}
+QFrame#labels QLabel {
+   padding-right: 2px;
+   padding-left: 2px;
+}
+QFrame#labels QToolButton {
+   background-color: transparent;
+}
+QFrame#labels QToolButton:hover {
+   border: none;
+   background-color: $dlgHoverBG;
+}
+QFrame#btns QToolButton {
+   background-color: transparent;
+}
+QFrame#btns QToolButton:hover {
+   border: none;
+   background-color: $dlgHoverBG;
+}
+/* ------------------------- */
+QFrame#inner QTextBrowser{
+   border: none;
+   background-color: $leftPaneBG;
+   color: $leftPaneColor;
+}
+QWidget#scrollWidget {
+   border: none;
+   background-color: $notesBG;
+}
+QFrame#srchFrame {
+  border: $shapeBorder1 $dlgBorder;
+  margin: 0px;
+  padding: 0px 5px;
+  background-color: $dlgBG;
+}
+QLineEdit#searchLine {
+  border: none;
+  margin: 0px;
+  background-color: $inputBG;
+  color: $dlgAltColor;
+}
+#srchFrame QToolButton {
+  border: none;
+  background-color: transparent;
+}
+#srchFrame QToolButton:hover {
+  background-color: $dlgHoverBG;
+}
+#srchFrame QToolButton:checked {
+  border: $shapeBorder1 $dlgInnerBorder;
+  background-color: $dlgCheckedBG;
+}
+/* ------- filter setup ----- */
+QFrame#form {
+   background-color: $dlgBG;
+   border: $shapeBorder2 $colorBorder;
+   color: $dlgColor;
+}
+QFrame#hrdFrame {
+   background-color: $dlgAltBG;
+}
+QFrame#hrdFrame QLabel {
+   font-family: $fontFamily;
+   font-size: $bigSize;
+   color: $dlgAltColor;
+}
+QFrame#form QPlainTextEdit {
+   font-family: $fontFamily;
+   font-size: $normalSize;
+   background: $inputBG;
+   color: $dlgColor;
+}
+QFrame#form QLineEdit {
+   border: none;
+   font-family: $fontFamily;
+   font-size: $normalSize;
+   background: $inputBG;
+   color: $dlgColor;
+}
+QFrame#form QLabel#label_2 {
+   color: $dlgColor;
+}
+/* ----- QDateEdit ----- */
+QDateEdit {
+   border: none;
+   background: $inputBG;
+   color: $dlgColor;
+}
+QDateEdit::drop-down {
+   border: none;
+   background-color: transparent;
+}
+QDateEdit::down-arrow {
+   border: none;
+   image: url('$angle_down2');
+}
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+   background-color : $dlgAltBG;
+}
+#qt_calendar_prevmonth, #qt_calendar_nextmonth {
+   border: none;
+   color: $dlgAltColor;
+   font-weight: bold;
+   qproperty-icon: none;
+   background-color: transparent;
+}
+#qt_calendar_prevmonth {
+    qproperty-text: "<";
+}
+#qt_calendar_nextmonth {
+    qproperty-text: ">";
+}
+#qt_calendar_prevmonth:hover, #qt_calendar_nextmonth:hover {
+    background-color: $dlgHoverBG;
+}
+#qt_calendar_prevmonth:pressed, #qt_calendar_nextmonth:pressed {
+    background-color: $dlgHoverBG;
+}
+#qt_calendar_yearbutton {
+    min-width: 50px;
+}
+#qt_calendar_yearbutton:hover, #qt_calendar_monthbutton:hover {
+    background-color: $dlgHoverBG;
+    color: $dlgColor;
+}
+#qt_calendar_yearbutton:pressed, #qt_calendar_monthbutton:pressed {
+    background-color: $dlgHoverBG;
+    color: $dlgColor;
+}
+#qt_calendar_yearedit {
+    min-width: 50px;
+    color: $dlgColor;
+    background: $dlgHoverBG;
+}
+#qt_calendar_yearedit::up-button {
+    width: 20px;
+    subcontrol-position: right;
+}
+#qt_calendar_yearedit::down-button {
+    width: 20px;
+    subcontrol-position: left;
+}
+#qt_calendar_calendarview {
+   outline: none;
+   background-color: $dlgAltBG;
+   color: $dlgAltColor;
+   selection-background-color: $dlgHoverBG;
+}
+QCalendarWidget QTableView {
+   alternate-background-color: $dlgAltBG;
+}
+QCalendarWidget QTableView QLabel {
+   color: $dlgAltColor;
+}
+/* ----- QSpinBox ----- */
+QSpinBox {
+   border: none;
+   background: $inputBG;
+   color: $dlgColor;
+}
+/* ----- QComboBox ----- */
+QComboBox {
+   border: none;
+   background: $inputBG;
+   color: $dlgColor;
+}
+QComboBox QAbstractItemView {
+   color: $dlgColor;
+   background-color: $inputBG;
+}
+QComboBox::drop-down {
+   border: none;
+   background-color: transparent;
+}
+QComboBox::down-arrow {
+   border: none;
+   image: url('$angle_down2');
+}
+/* ----- QCheckBox ----- */
+QCheckBox {
+   background: $dlgBG;
+   color: $dlgColor;
+}
+QCheckBox::indicator {
+   width: 20;
+   height: 20;
+   border-image: url($check_box_off);
+}
+QCheckBox::indicator:checked {
+   border-image: url($check_box_on);
+}
+/* ----- QRadioButton ----- */
+QRadioButton {
+   background: $dlgBG;
+   color: $dlgColor;
+}
+QRadioButton::indicator {
+   width: 20;
+   height: 20;
+   background: $dlgBG;
+   color: $dlgColor;
+   border-image: url($radio_btn);
+}
+QRadioButton::indicator:checked {
+   border-image: url($radio_btn_active);
+}
+/* ---------- Menu ----------- */
+QMenu {
+   background-color: $dlgBG;
+   border: $shapeBorder2 $dlgAltBG;
+}
+
+QMenu::item {
+   background-color: transparent;
+   color: $dlgColor;
+}
+
+QMenu::item:selected { /* when user selects item using mouse or keyboard */
+   background-color: $dlgAltBG;
+}
+QMenu::separator {
+   height: 2px;
+   background: $dlgAltBG;
+}
+/* ---- fileInfo ---- */
+QFrame#form_info {
+   background: $notesBG;
+   border: none;
+}
+QFrame#form_info QLabel {
+   color: $filesColor;
+}
+QFrame#form_info QLineEdit {
+   color: $filesColor;
+   background: $inputBG;
+}
+/* ---- openDB ---- */
+QListWidget {
+    show-decoration-selected: 1;
+    background: $dlgBG;
+}
+QListWidget::item:selected:!active {
+    background: $itemSelectNoActiveBG;
+}
+QListWidget::item:selected:active {
+    background: $itemSelectBG;
+}
+QListWidget::item:hover {
+    background: $itemHoverBG;
+}
+/* ---- Dup files ---- */
+QFrame#dup_main {
+   background-color: $dlgBG;
+   border: $shapeBorder2 $colorBorder;
+}
+QFrame#dup_frame {
+   border: none;
+}
+QFrame#dup_frame QLabel {
+   color: $dlgColor;
 }
 /* END of common qss */
 /* below are special qss which are used for dynamic style switching in code */
-##decorator~#decorator {background: $splitLineBackground;}
-##decorator~#decorator:hover {background: $splitLineHoverBackground;}
-##path~border: none; font-family: $fontFamily; font-size: $FontSizeNormal; color: $dialogInputColor;
-##name~border: none; font-family: $fontFamily; font-size: $FontSizeBig; color: $dialogInputColor;
-##text_browser~<style type="text/css"> *[href]{ color: $toolBarBackground; text-decoration: none } .s {background: $tagSelectedBG}</style>
-##active_selector~$bottomBorder color: $$activeColor
-##passive_selector~QLabel {border: none; color: $passiveColor} QLabel::hover {color: $$activeColor}
-##noteFrames~QFrame#head {$bottomBorder background-color: $treeViewBackground; }
-##noteFrames~QLineEdit#tagEdit {background-color: $commentsBackground}
-##noteFrames~QFrame#labels {border: none; background-color: $commentsBackground}
-##noteFrames~QFrame#authors {border: none; background-color: $commentsBackground}
-##noteFrames~QPlainTextEdit#edit_authors {border: $shapeBorderRight1 $colorBorder2;}
-##note_editor~QTextEdit {border: none; background-color: $treeViewBackground}
-##line_edit~QLineEdit#tagEdit {background-color: $commentsBackground}
-##line_edit_ro~QLineEdit {background-color: $treeViewBackground}
-##dialog~QFrame#form {background-color: $dialogBackground; border: $shapeBorderRight1 $colorBorder;} QPlainTextEdit {border: $shapeBorderRight1 $colorBorder;}
-##searchFrame~QFrame#frame {border: $shapeBorderRight1 $colorBorder; margin: 0px; padding: 0px 5px; }
-##searchFrame~QLineEdit#searchLine {border: none; margin: 0px; }
-##searchFrame~#frame QToolButton {border: none; background-color: $dialogBackground;}
-##searchFrame~#frame QToolButton:checked {border: $shapeBorderRight1 $colorBorder; border-radius: 3px; background-color: $tagSelectedBG;}
-##fileInfo~background: $treeViewBackground; border: none;
-##dialog_hdr~QLabel#hdr_lbl {font-family: $fontFamily; font-size: $FontSizeBig;} QFrame#hrdFrame {background-color: $filterFrameBackground;}
-##edit_message~font-family: $fontFamily; font-size: $FontSizeBig; color: $CarmineColor;  background-color: $treeViewBackground
-##edit_message~font-family: $fontFamily; font-size: $FontSizeNormal; color: $navigatorColor;  background-color: $treeViewBackground
+##decorator~#decorator {background: $leftPaneSplitBG;}
+##decorator~#decorator:hover {background: $splitHoverBG;}
+##use-date~border: none; font-family: $fontFamily; font-size: $normalSize; color: $dlgColor;
+##the-name~border: none; font-family: $fontFamily; font-size: $bigSize; color: $dlgColor;
+##text_browser~<style type="text/css"> *[href]{ color: $browserText; text-decoration: none } .s {background: $browserSelectedBG}</style>
+##active_selector~$bottomBorder 1px solid $activeMarkColor; color: $activeColor
+##passive_selector~QLabel {border: none; color: $passiveColor} QLabel:hover {color: $activeColor}
+##line_edit~QLineEdit#tagEdit {background-color: $inputBG}
+##line_edit_ro~QLineEdit {background-color: $notesBG}
+##dialog~{background-color: $dlgBG; border: $shapeBorder1 $dlgBorder; color: $dlgColor;} QPlainTextEdit {border: $shapeBorder1 $dlgBorder;}
+##dialog_hdr~background-color: $dlgAltBG; font-family: $fontFamily; font-size: $bigSize; color: $dlgAltColor;
+##edit_message~font-family: $fontFamily; font-size: $bigSize; color: $messageColor
+##edit_message~font-family: $fontFamily; font-size: $normalSize; color: $filesColor;  background-color: $notesBG

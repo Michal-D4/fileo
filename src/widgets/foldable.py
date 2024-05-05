@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget
 
 from ..core import app_globals as ag
 from .ui_foldable import Ui_foldable
-from src import tug
+from .. import tug
 
 class Foldable(QWidget):
     """
@@ -20,11 +20,12 @@ class Foldable(QWidget):
 
         self.ui = Ui_foldable()
         self.ui.setupUi(self)
+        self.ui.decorator.setStyleSheet(self.qss_decorator[0])
 
-        self.is_collapsed = False
         self._toggle_icon()
 
         self.ui.toFold.clicked.connect(self.on_click)
+        ag.buttons.append((self.ui.toFold, "down", "right"))
 
     def set_decoration(self, to_show: bool) -> None:
         """
@@ -39,7 +40,7 @@ class Foldable(QWidget):
         """
         self.toggle_collapse()
 
-        ag.signals_.collapseSignal.emit(self, self.is_collapsed)
+        ag.signals_.collapseSignal.emit(self, self.ui.toFold.isChecked())
 
     def set_hovering(self, hover: bool):
         if hover:
@@ -55,12 +56,13 @@ class Foldable(QWidget):
 
     def _toggle_icon(self):
         self.ui.toFold.setIcon(
-           tug.get_icon("right") if self.is_collapsed else tug.get_icon("down")
+           tug.get_icon("right") if self.ui.toFold.isChecked()
+           else tug.get_icon("down")
         )
 
     def toggle_collapse(self):
-        self.is_collapsed = not self.is_collapsed
-        self.ui.inner.setVisible(not self.is_collapsed)
+        is_collapsed = self.ui.toFold.isChecked()
+        self.ui.inner.setVisible(not is_collapsed)
         self._toggle_icon()
 
     def set_title(self, title: str):
@@ -71,7 +73,7 @@ class Foldable(QWidget):
 
     def add_widget(self, w: QWidget) -> None:
         """
-        add QWidget to the header
+        add QWidget to the QFrame fold_head
         """
         self.ui.headerLayout.addWidget(w)
 

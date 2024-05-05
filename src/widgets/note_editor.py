@@ -6,22 +6,21 @@ from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout
 
 from .file_note import fileNote
 from ..core import app_globals as ag, db_ut
-from src import tug
+
 
 class noteEditor(QWidget):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.editor = QTextEdit()
-        self.layout.addWidget(self.editor)
+        self.note_editor = QTextEdit()
+        self.layout.addWidget(self.note_editor)
 
         self.note: fileNote = None
         self.branch = None
 
-        self.editor.setAcceptDrops(False)
+        self.note_editor.setAcceptDrops(False)
         self.setAcceptDrops(True)
-        self.setStyleSheet(tug.dyn_qss['note_editor'][0])
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
@@ -48,7 +47,7 @@ class noteEditor(QWidget):
             return f'[{name}]({ref})'
 
         data: QMimeData = e.mimeData()
-        t: QTextCursor = self.editor.cursorForPosition(e.position().toPoint())
+        t: QTextCursor = self.note_editor.cursorForPosition(e.position().toPoint())
         if data.hasFormat(ag.mimeType.files_uri.value):
             url: QUrl = data.urls()[0]
             if url.scheme() == 'file':
@@ -77,7 +76,7 @@ class noteEditor(QWidget):
 
     def start_edit(self, note: fileNote):
         self.note = note
-        self.editor.setPlainText(db_ut.get_note(
+        self.note_editor.setPlainText(db_ut.get_note(
             self.get_file_id(), self.get_note_id()
             )
         )
@@ -95,10 +94,10 @@ class noteEditor(QWidget):
         return self.branch
 
     def set_text(self, text: str):
-        self.editor.setPlainText(text)
+        self.note_editor.setPlainText(text)
 
     def get_text(self):
-        return self.editor.toPlainText()
+        return self.note_editor.toPlainText()
 
     def get_note(self) -> fileNote:
         return self.note

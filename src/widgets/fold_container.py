@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QMenu, QWidget
 from ..core import app_globals as ag
 from .foldable import Foldable
 from .ui_fold_container import Ui_Foldings
-from src import tug
+from .. import tug
 
 MIN_HEIGHT = 62
 
@@ -78,7 +78,7 @@ class FoldState():
         self.wid.setMinimumHeight(self._collapsed_height())
 
     def _collapsed_height(self) -> int:
-        hh = self.wid.ui.header.height()
+        hh = self.wid.ui.fold_head.height()
         if not self.wid.ui.decorator.isHidden():
             hh += self.wid.ui.decorator.height()
         return hh
@@ -102,6 +102,9 @@ class FoldState():
             return self._collapsed_height()
         return self.__height
 
+    def store_height(self) -> int:
+        return self.__height
+
     @height.setter
     def height(self, height: int):
         self.__height = height
@@ -116,6 +119,7 @@ class FoldState():
 class FoldContainer(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
+        Foldable.set_decorator_qss(tug.get_dyn_qss('decorator', -1))
 
         self.height_ = 0
 
@@ -123,6 +127,8 @@ class FoldContainer(QWidget):
         self.ui.setupUi(self)
         self.widgets: list[FoldState] = [FoldState(getattr(self.ui, m))
             for m in dir(self.ui) if type(getattr(self.ui, m)) is Foldable]
+
+        ag.fold_states = self.widgets
 
         self.__first_visible: int = -1
 
@@ -168,6 +174,7 @@ class FoldContainer(QWidget):
 
     def set_menu_more(self):
         self.ui.more.setIcon(tug.get_icon("more"))
+        ag.buttons.append((self.ui.more, "more"))
         menu = QMenu(self)
         for i,item in enumerate(tug.qss_params['$FoldTitles'].split(',')):
             act = QAction(item, self, checkable=True)
@@ -334,7 +341,7 @@ class FoldContainer(QWidget):
 
         for ff in self.widgets:
             state.append(
-                (ff.is_hidden, ff.is_collapsed, ff.height)
+                (ff.is_hidden, ff.is_collapsed, ff.store_height())
             )
         return state
 

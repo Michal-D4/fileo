@@ -25,10 +25,11 @@ class fileProxyModel(QSortFilterProxyModel):
              Qt.ItemFlag.ItemIsDragEnabled |
              super().flags(index))
             if self.sourceModel().headerData(index.column()) in (
-                'rating', 'Pages', 'Published', 'File Name'
+                'rating', 'Pages', 'Published', 'File Name'   # ItemIsEditable
             )
-            else (Qt.ItemFlag.ItemIsDragEnabled |
-                  super().flags(index))
+            else  # is not ItemIsEditable
+            (Qt.ItemFlag.ItemIsDragEnabled |
+             super().flags(index))
         )
 
     def update_opened(self, ts: int, index: QModelIndex):
@@ -162,9 +163,9 @@ class fileModel(QAbstractTableModel):
                 return False
             field = 'filename'
         else:
+            line[col] = value
             if field == 'Published':
                 value = value.toSecsSinceEpoch()
-            line[col] = value
         db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
         ag.add_history_file(self.user_data[index.row()].id)

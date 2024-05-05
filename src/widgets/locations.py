@@ -3,8 +3,7 @@ import os
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QPoint, pyqtSlot
-from PyQt6.QtGui import (
-    QMouseEvent, QTextCursor, QAction,
+from PyQt6.QtGui import (QMouseEvent, QTextCursor, QAction,
     QKeySequence,
 )
 from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox
@@ -144,7 +143,7 @@ class Locations(QTextBrowser):
             finally:   # delete from DB independent on os.remove result
                 logger.info(f'{other_id=}, {other_branch}')
                 db_ut.delete_file(file_id)
-                ag.file_data_holder.set_data(other_id, other_branch)
+                ag.file_data.set_data(other_id, other_branch)
 
     def select_line_under_mouse(self) -> QTextCursor:
         txt_cursor = self.cursorForPosition(self.cur_pos)

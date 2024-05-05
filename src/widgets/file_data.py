@@ -15,7 +15,7 @@ from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 from .note_editor import noteEditor
-from src import tug
+from .. import tug
 
 @unique
 class Page(Enum):
@@ -31,7 +31,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
-        self.maximized = False
         self.s_height = 0
 
         self.setupUi(self)
@@ -45,7 +44,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             Page.EDIT: self.l_editor,
         }
 
-        self.set_stack_pages()
+        self.set_pages()
         self.cur_page: Page = Page.TAGS
 
         self.l_editor.hide()
@@ -75,8 +74,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ctrl_n = QShortcut(QKeySequence("Ctrl+n"), self)
         ctrl_n.activated.connect(self.short_new_note)
 
-        self.collapse_all.setIcon(tug.get_icon("collapse_all"))
-        self.collapse_all.clicked.connect(self.notes.collapse_all)
+        self.collapse_notes.setIcon(tug.get_icon("collapse_notes"))
+        self.collapse_notes.clicked.connect(self.notes.collapse_all)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.save_note)
@@ -89,34 +88,39 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ctrl_q.activated.connect(self.short_cancel_editing)
 
         self.edit_btns.hide()
+        ag.buttons.append((self.expand, "up", "down3"))
+        ag.buttons.append((self.plus, "plus"))
+        ag.buttons.append((self.collapse_notes, "collapse_notes"))
+        ag.buttons.append((self.save, "ok"))
+        ag.buttons.append((self.cancel, "cancel2"))
 
-    def set_stack_pages(self):
-        self.stackedWidget = QStackedWidget(self)
-        self.stackedWidget.setObjectName("stackedWidget")
+    def set_pages(self):
+        self.pages = QStackedWidget(self)
+        self.pages.setObjectName("pages")
 
         # add tag selector page (0)
         self.tag_selector = tagBrowser(self.tagEdit)
-        self.stackedWidget.addWidget(self.tag_selector)
+        self.pages.addWidget(self.tag_selector)
         self.tag_selector.setObjectName('tag_selector')
         self.tag_selector.change_selection.connect(self.tag_selector.update_tags)
         ag.tag_list.list_changed.connect(self.tag_selector.update_tag_list)
 
         # add author selector page (1)
         self.author_selector = authorBrowser(self.authorEdit)
-        self.stackedWidget.addWidget(self.author_selector)
+        self.pages.addWidget(self.author_selector)
         self.author_selector.setObjectName('author_selector')
         self.authorEdit.editingFinished.connect(self.author_selector.finish_edit_list)
         self.authorEdit.hide()
 
         # add file locations page (2)
         self.locator = Locations()
-        self.stackedWidget.addWidget(self.locator)
+        self.pages.addWidget(self.locator)
         self.locator.setObjectName('locator')
 
         # add file info page (3)
         self.file_info = fileInfo()
         self.file_info.setObjectName('file_info')
-        self.stackedWidget.addWidget(self.file_info)
+        self.pages.addWidget(self.file_info)
 
         self.editor = noteEditor()
         self.editor.setObjectName('note_editor')
@@ -126,20 +130,22 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ag.app.ui.edited_file.mousePressEvent = self.notes.go_menu
 
         # add file notes page (4)
-        self.stackedWidget.addWidget(self.notes)
+        self.pages.addWidget(self.notes)
         # add note editor page (5)
-        self.stackedWidget.addWidget(self.editor)
+        self.pages.addWidget(self.editor)
 
-        ss = tug.dyn_qss['passive_selector'][0]
+        self.passive_style()
+
+        self.main_layout.addWidget(self.pages)
+
+    def passive_style(self):
+        ss = tug.get_dyn_qss('passive_selector')
         for lbl in self.page_selectors.values():
             lbl.setStyleSheet(ss)
 
-        self.main_layout.addWidget(self.stackedWidget)
-        self.setStyleSheet(' '.join(tug.dyn_qss['noteFrames']))
-
     def l_tags_press(self, e: QMouseEvent):
         self.tagEdit.setReadOnly(False)
-        self.tagEdit.setStyleSheet(tug.dyn_qss["line_edit"][0])
+        self.tagEdit.setStyleSheet(tug.get_dyn_qss("line_edit"))
         self.tag_selector.set_selected_text()
         self.switch_page(Page.TAGS)
 
@@ -171,10 +177,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         # logger.info(f'{self.cur_page.name=}, {new_page.name=}')
 
         self.page_selectors[self.cur_page].setStyleSheet(
-            tug.dyn_qss['passive_selector'][0]
+            tug.get_dyn_qss('passive_selector')
         )
         self.page_selectors[new_page].setStyleSheet(
-            tug.dyn_qss['active_selector'][0]
+            tug.get_dyn_qss('active_selector')
         )
 
         if self.cur_page is Page.NOTE:
@@ -185,29 +191,28 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         if self.cur_page is Page.TAGS:
             self.tagEdit.setReadOnly(True)
-            self.tagEdit.setStyleSheet(tug.dyn_qss["line_edit_ro"][0])
+            self.tagEdit.setStyleSheet(tug.get_dyn_qss("line_edit_ro"))
 
         if self.cur_page is Page.AUTHORS:
             self.authorEdit.hide()
             self.tagEdit.show()
 
         self.cur_page = new_page
-        self.stackedWidget.setCurrentIndex(new_page.value)
+        self.pages.setCurrentIndex(new_page.value)
 
     def toggle_collapse(self):
-        if self.maximized:
-            self.expand.setIcon(tug.get_icon("up"))
-            ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
-            ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
-            ag.file_list.show()
-        else:
+        if self.expand.isChecked():
             self.s_height = self.height()
-            self.expand.setIcon(tug.get_icon("down"))
+            self.expand.setIcon(tug.get_icon("down3"))
             hh = ag.file_list.height() + self.s_height
             ag.app.ui.noteHolder.setMinimumHeight(hh)
             ag.app.ui.noteHolder.setMaximumHeight(hh)
             ag.file_list.hide()
-        self.maximized = not self.maximized
+        else:
+            self.expand.setIcon(tug.get_icon("up"))
+            ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
+            ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
+            ag.file_list.show()
 
     def short_cancel_editing(self):
         if not self.notes.is_editing():
@@ -232,7 +237,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.author_selector.set_authors()
 
     def short_new_note(self):
-        # logger.info(f'{ag.app.focusWidget()=}')
         if ag.app.focusWidget() is self.notes:
             self.new_file_note()
 
@@ -255,20 +259,19 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         @pyqtSlot()
         def restore_selected_tags():
             self.tagEdit.setText(selected_tags)
-            self.tagEdit.setStyleSheet(tug.dyn_qss['edit_message'][1])
+            self.tagEdit.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
 
         selected_tags = self.tagEdit.text()
-        self.tagEdit.setStyleSheet(tug.dyn_qss['edit_message'][0])
+        self.tagEdit.setStyleSheet(tug.get_dyn_qss('edit_message'))
         self.tagEdit.setText("Only one note editor can be opened at a time")
-        if selected_tags:
-            QTimer.singleShot(3000, restore_selected_tags)
+        QTimer.singleShot(3000, restore_selected_tags)
 
     def show_editor(self):
         self.notes.set_editing(True)
         self.edit_btns.show()
         self.l_editor.show()
         self.switch_page(Page.EDIT)
-        self.editor.setFocus()
+        self.editor.note_editor.setFocus()
 
     def get_edit_state(self) -> tuple:
         def get_attributes():

@@ -3,7 +3,7 @@ from loguru import logger
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
-    QVBoxLayout, QScrollArea, QAbstractScrollArea, QMenu,
+    QVBoxLayout, QScrollArea, QAbstractScrollArea,
 )
 
 from ..core import app_globals as ag, db_ut
@@ -40,7 +40,7 @@ class notesContainer(QScrollArea):
         self.scrollWidget.setObjectName("scrollWidget")
         self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
-        self.scroll_layout.setContentsMargins(6,0,0,0)
+        self.scroll_layout.setContentsMargins(0,0,0,0)
         self.scroll_layout.setSpacing(2)
         self.scroll_layout.setObjectName('scroll_layout')
         self.setStyleSheet("border: none;")
@@ -76,6 +76,7 @@ class notesContainer(QScrollArea):
         self.set_notes_data()
 
     def set_notes_data(self):
+        ag.note_buttons.clear()
         self.setUpdatesEnabled(False)
         self.clear_layout()
         self.scroll_layout.addStretch(1)

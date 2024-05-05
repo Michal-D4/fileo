@@ -233,9 +233,19 @@ All application data is stored into a data base (SQlite DB). The SQlite data bas
 
 The DB can be opened in the current window by double click on the line in the DB list, or select with keybord up and down arrows key and choose with "Return" key, not "Enter" key on numeric keybord.
 
+## Color themes
+
+Three color themes have been created for the application: “Default”, “Light” and “Dark”.
+
+You can switch theme in the preferences menu item:
+
+![image-20240505145226631](https://github.com/Michal-D4/fileo/raw/main/img//preferences_in_main_menu.png)
+
+![image-20240505145706247](https://github.com/Michal-D4/fileo/raw/main/img//color_themes.png)
+
 # Installation
 
-* Windows. Download the installer `setup.x.y.z.exe`  from [sourceforge](https://sourceforge.net/projects/fileo/) where `x.y.z` - version and run it.
+* Windows. Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge](https://sourceforge.net/projects/fileo/) where `x.y.z` - version and run it.
 
 
 

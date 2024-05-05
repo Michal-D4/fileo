@@ -13,7 +13,7 @@ from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd,
 )
 from ..widgets import workers, find_files, dup
-from src import tug
+from .. import tug
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -39,7 +39,7 @@ def save_bk_settings():
             "DIR_HISTORY": ag.history.get_history(),
             "FILE_HISTORY": ag.file_history,
             "APP_MODE": mode,
-            "NOTE_EDIT_STATE": ag.file_data_holder.get_edit_state(),
+            "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
             "FILTER_FILE_ROW": (
                 ag.file_list.currentIndex().row()
                 if ag.mode is ag.appMode.FILTER else 0
@@ -245,7 +245,6 @@ def header_restore(model: QAbstractTableModel):
         )
     else:
         sum_width = min_width = 0
-    # logger.info(f'{sum_width=}, {min_width=}')
 
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
@@ -265,6 +264,8 @@ def header_menu(pos: QPoint):
         )
         if action:
             low_bk.toggle_show_column(False, idx)
+            menu = ag.app.ui.field_menu.menu()
+            menu.actions()[idx].setChecked(False)
 
 @pyqtSlot(int, int, int)
 def resized_column(localIdx: int, oldSize: int, newSize: int):
@@ -285,8 +286,9 @@ def populate_all():
     hide_state = ag.get_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
+    ag.buttons.append((self.show_hidden, "show_hide"))
 
-    ag.file_data_holder.set_edit_state(
+    ag.file_data.set_edit_state(
         ag.get_setting("NOTE_EDIT_STATE", (False,))
     )
 
@@ -401,9 +403,13 @@ def finish_loading(has_new_ext: bool):
 def check_duplicates(auto=True):
     rep = workers.report_duplicates()
     if rep:
-        dup_dlg = dup.dlgDup(rep)
+        dup_dlg = dup.dlgDup(rep, ag.app)
+        dup_dlg.move(
+            (ag.app.width()-dup_dlg.width()) // 3,
+            (ag.app.height()-dup_dlg.height()) // 3
+        )
         dup_dlg.asked_by_user(not auto)
-        dup_dlg.exec()
+        dup_dlg.show()
     elif not auto:
         ag.show_message_box(
             "No duplicates found",

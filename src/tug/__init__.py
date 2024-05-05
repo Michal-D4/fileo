@@ -4,6 +4,7 @@ import sys
 import subprocess
 from pathlib import Path
 from collections import defaultdict
+import tempfile
 import tomllib
 from typing import Any, Optional
 from importlib import resources
@@ -11,7 +12,7 @@ from importlib import resources
 from PyQt6.QtCore import QSettings, QVariant, QFile, QTextStream
 from PyQt6.QtGui import QIcon, QPixmap
 
-from src import qss
+from .. import qss
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -41,10 +42,9 @@ settings = None
 qss_params = {}
 dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
+themes = {}
 
-def create_dir(dir: Path):
-    dir.mkdir(parents=True, exist_ok=True)
-
+#region  function_used_in___init___py
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
     used to restore settings on application level
@@ -57,34 +57,6 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     except (TypeError, SystemError) as e:
         to_set = default
     return to_set
-
-def save_app_setting(**kwargs):
-    """
-    used to save settings on application level
-    """
-    if not kwargs:
-        return
-    global settings
-    if not settings:
-        settings = QSettings(MAKER, APP_NAME)
-
-    for key, value in kwargs.items():
-        settings.setValue(key, QVariant(value))
-
-def save_to_file(filename: str, msg: str):
-    """ save translated qss """
-    pp = Path('~/fileo/report').expanduser()
-    path = get_app_setting(
-        'DEFAULT_REPORT_PATH', pp.as_posix()
-    )
-    path = Path(path) / filename
-
-    flqss = QFile(path.as_posix())
-    flqss.open(QFile.OpenModeFlag.WriteOnly)
-    stream = QTextStream(flqss)
-    stream << msg
-    stream.flush()
-    flqss.close()
 
 def get_log_path() -> str:
     log_path = get_app_setting("DEFAULT_LOG_PATH", "")
@@ -99,11 +71,12 @@ def set_logger():
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {level} | {module}.{function}({line}): {message}"
 
-    log_path = (get_log_path() / 'fileo.log').as_posix()
-    logger.add(log_path, format=fmt, rotation="1 days", retention=3)
+    log_path = get_log_path() / 'fileo.log'
+    logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
-    logger.info(f"START =================> {log_path}")
-    logger.info(f'{cfg_path=}')
+    logger.info(f"START =================> {log_path.as_posix()}")
+    logger.info(f'cfg_path={cfg_path.as_posix()}')
+#endregion
 
 if sys.platform.startswith("win"):
     cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
@@ -113,74 +86,176 @@ elif sys.platform.startswith("linux"):
 if cfg_path.exists():
     with open(cfg_path, "r") as ft:
         fileo_toml = ft.read()
+    cfg_path: Path = cfg_path.parent
 else:
     fileo_toml = resources.read_text(qss, "fileo.toml")
-    create_dir(cfg_path.parent)
-    save_to_file(cfg_path, fileo_toml)
+    cfg_path: Path = Path(qss.__path__)
+
 config = tomllib.loads(fileo_toml)
 
 set_logger()
+
+theme_toml_file = cfg_path / "themes.toml"
+if theme_toml_file.exists():
+    with open(theme_toml_file, "rb") as f:
+        themes = tomllib.load(f)
+
+temp_dir = tempfile.TemporaryDirectory()
+
+def create_dir(dir: Path):
+    dir.mkdir(parents=True, exist_ok=True)
+
+def save_to_file(filename: str, msg: str):
+    """ save translated qss """
+    pp = Path('~/fileo/report').expanduser()
+    path = get_app_setting('DEFAULT_REPORT_PATH', str(pp))
+    path = Path(path) / filename
+    path.write_text(msg)
+
+def save_app_setting(**kwargs):
+    """
+    used to save settings on application level
+    """
+    if not kwargs:
+        return
+    global settings
+    if not settings:
+        settings = QSettings(MAKER, APP_NAME)
+
+    for key, value in kwargs.items():
+        settings.setValue(key, QVariant(value))
 
 def translate_qss(styles: str) -> str:
     for key, val in qss_params.items():
         styles = styles.replace(key, val)
     return styles
 
-def prepare_styles(theme: str, to_save: bool = False) -> str:
-    global icons_res
+def prepare_styles(theme_key: str, to_save: bool = False) -> str:
+    global qss_params
+    icons_txt = res_path = styles = params = ''
+    dyn_qss.clear()
+
+    def default_theme():
+        nonlocal icons_txt, res_path, styles, params
+        with resources.path(qss, "default.qss") as _path:
+            res_path = _path.parent.as_posix()
+        styles = resources.read_text(qss, "default.qss")
+        params = resources.read_text(qss, "default.param")
+        icons_txt = resources.read_text(qss, "icons.toml")
+
+    def read_theme():
+        def read_params():
+            nonlocal params
+            par_file = cfg_path / _param
+            if par_file.exists():
+                logger.info(f'"{_param}" file exist in {cfg_path}')
+                with open(par_file, "r") as ft:
+                    params = ft.read()
+            else:
+                logger.info(f'"{_param}" file not exist in {cfg_path}')
+                params = resources.read_text(qss, _param)
+
+        def read_qss():
+            nonlocal styles
+            _qss = theme.get('qss', '')
+            if not _qss:
+                styles = resources.read_text(qss, "default.qss")
+            else:
+                with open(cfg_path / _qss, "r") as ft:
+                    styles = ft.read()
+
+        def read_ico():
+            nonlocal icons_txt, res_path
+            _ico = theme.get('ico', '')
+            if not _ico:
+                with resources.path(qss, "default.qss") as _path:
+                    res_path = _path.parent
+                icons_txt = resources.read_text(qss, "icons.toml")
+            else:
+                with open(cfg_path / _ico, "r") as ft:
+                    res_path = cfg_path
+                    icons_txt = ft.read()
+
+        nonlocal icons_txt, res_path, styles, params
+        logger.info(f'{theme_key=}')
+        if theme_key == "Default_Theme":
+            default_theme()
+            return
+
+        theme = themes.get(theme_key, {})
+        _param = theme.get('param', '')
+
+        read_params()
+        read_qss()
+        read_ico()
 
     def parse_params(params):
         global qss_params
-        params = [it.split('~') for it in params.split('\n') if it.startswith("$") and ('~' in it)]
+        params = [it.split('~') for it in params.splitlines() if it.startswith("$") and ('~' in it)]
         params.sort(key=lambda x: x[0], reverse=True)
         qss_params = {key.strip():value.strip() for key,value in params}
         param_substitution()
 
     def param_substitution():
+        global qss_params
+        def val_subst(val: str) -> str:
+            nonlocal loop_check
+            if val.startswith("$"):
+                if val in loop_check:
+                    raise Exception(f'Loop in parameter {val} substitution')
+                loop_check.add(val)
+                return val_subst(qss_params[val])
+            return val
+
+        qss_params['$ico_app'] = (Path(res_path) / qss_params['$ico_app']).as_posix()
         for key, val in qss_params.items():
-            if key.startswith("$ico_"):
-                qss_params[key] = '/'.join((res_path, val))
-            elif key.startswith("$"):
-                qss_params[key] = val
+            loop_check = set(key)
+            qss_params[key] = val_subst(val)
 
     def extract_dyn_qss() -> int:
         it = tr_styles.find("/* END")
         aa: str = tr_styles
         it2 = aa.find('##', it)
-        lines = tr_styles[it2:].split("\n")
+        lines = tr_styles[it2:].splitlines()
         dyn_qss_add_lines(lines)
         return it
 
     def dyn_qss_add_lines(lines: list[str]):
-        global dyn_qss
         for line in lines:
             if line.startswith('##'):
                 key, val = line.split('~')
                 dyn_qss[key[2:]].append(val)
 
-    with resources.path(qss, "default.qss") as pic_path:
-        res_path = pic_path.parent.as_posix()
-
-    styles = resources.read_text(qss, '.'.join((theme, "qss")))
-    params = resources.read_text(qss, '.'.join((theme, "param")))
+    read_theme()
 
     parse_params(params)
-    tr_styles = translate_qss(styles)
-    start_dyn = extract_dyn_qss()
 
     icons_txt = resources.read_text(qss, "icons.toml")
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)
 
-    if to_save:
-        save_to_file('QSS.log', tr_styles)
-        save_to_file('icons.toml.log', tr_icons)
+    collect_all_icons(icons_res)
 
-    collect_all_icons()
+    params = [(key, val) for key, val in qss_params.items()]
+    params.sort(key=lambda x: x[0], reverse=True)
+    qss_params = {key:value for key,value in params}
+    tr_styles = translate_qss(styles)
+    start_dyn = extract_dyn_qss()
+
+    if to_save:
+        save_to_file(f'{theme_key}_QSS.log', tr_styles)
+        save_to_file(f'{theme_key}_qss-params.log',
+            '\n'.join([f'{key}: {val}' for key, val in qss_params.items()])
+        )
+        save_to_file(f'{theme_key}_icons.toml.log', tr_icons)
 
     return tr_styles[:start_dyn]
 
-def collect_all_icons():
+def get_dyn_qss(key: str, idx: int=0) -> str|list:
+    return dyn_qss[key][idx] if idx >= 0 else dyn_qss[key]
+
+def collect_all_icons(icons_res: dict):
+    m_icons.clear()
     keys = {
         'folder': ('alphaF',),
         'hidden': ('alphaH',),
@@ -192,33 +267,42 @@ def collect_all_icons():
         'match_case': ('match_case',),
         'match_word': ('match_word',),
         'ok': ('ok',),
-        'busy': ('busy_on', 'busy_off',),
-        'show_hide': ('show_hide_off', 'show_hide_on'),
-        'btnFilterSetup': ('filter_setup', 'filter_setup_active'),
-        'btnDir': ('folders', 'folders_active'),
+        'busy': ('busy_off', 'busy_on',),
+        'show_hide': ('show_hide_off', 'show_hide_on',),
+        'btnFilterSetup': ('filter_setup', 'filter_setup_active',),
+        'btnDir': ('folders', 'folders_active',),
         'btnSetup': ('menu', ),
-        'btnFilter': ('filter', 'filter_active'),
-        'btnToggleBar': ('angle_left', 'angle_right'),
+        'btnFilter': ('filter', 'filter_active',),
+        'btnToggleBar': ('angle_left', 'angle_right',),
         'more': ('more',),
         'refresh': ('refresh',),
         'collapse_all': ('collapse_all',),
+        'collapse_notes': ('collapse_notes',),
         'plus': ('plus',),
         'cancel2': ('cancel2',),
         'up': ('angle_up',),
         'down': ('angle_down',),
         'right': ('angle_right_2',),
+        'down3': ('angle_down_3',),
+        'right3': ('angle_right_3',),
         'toEdit': ('pencil',),
         'folder_open': ('folder_open',),
         'minimize': ('minimize',),
-        'maximize': ('maximize', 'restore'),
-        'close': ('close', 'close_active'),
+        'maximize': ('maximize', 'restore',),
+        'close': ('close',),
+        'svg_files': (
+            'check_box_off', 'check_box_on',
+            'radio_btn',
+            'vline3', 'angle_down3', 'angle_right3',
+            'angle_down2',
+        ),
     }
-    set_icons(keys)
+    set_icons(keys, icons_res)
 
 def get_icon(key: str, index: int = 0) -> QIcon:
     return m_icons[key][index]
 
-def set_icons(keys: dict):
+def set_icons(keys: dict, icons_res: dict):
     """
     add items into dict m_icons:
     keys - dict of list of svgs
@@ -233,39 +317,65 @@ def set_icons(keys: dict):
 
     def get_pixmaps(svg_key: str) -> list|None:
         def get_svg() -> str:
-            ico_subst = ico_svg.get('ico_subst', '')
+            ico_subst = svg_stamp.get('ico_subst', '')
             if ico_subst:
-                ico_svg2 = icons_res[ico_subst]
-                return ico_svg2.get('ico', ''), ico_svg.get('colors', '')
-            return ico_svg.get('ico', ''), ico_svg.get('colors', '')
+                svg_root = icons_res[ico_subst]
+                return svg_root.get('ico', ''), svg_stamp.get('colors', '')
+            return svg_stamp.get('ico', ''), svg_stamp.get('colors', '')
+
+        def get_colors():
+            def get_color() -> tuple:
+                tmp = clr.split('|')
+                return tmp if len(tmp) == 2 else ('normal', tmp[0])
+
+            colors = defaultdict(list)
+
+            for clr in color_set:
+                mm, color = get_color()
+                colors[mm].append(
+                    color if color else
+                    colors['normal'][len(colors[mm])]
+                )
+            return colors
 
         def create_pixs():
-            def set_color() -> str:
-                tmp = clr.split('|')
-                if len(tmp) == 1:
-                    tmp.insert(0, 'normal')
-                return tmp[0], tmp[1].join(svg.split('|'))
+            nonlocal svg
+            colors = get_colors()
+            pics = []
+            for mode_, color in colors.items():
+                tmp = svg
+                for i in range(svg.count('|')):
+                    j = i % len(color)
+                    tmp = tmp.replace('|', color[j], 1)
 
-            pix = []
-            for clr in colors:
-                mm, svg_ico = set_color()
-                px = QPixmap()
-                px.loadFromData(bytearray(svg_ico, 'utf-8'),)
-                pix.append((mm, px))
+                if file_name:
+                    create_image_file(mode_, tmp)
+                    continue
+                pic = QPixmap()
+                # logger.info(svg)
+                pic.loadFromData(bytearray(tmp, 'utf-8'),)
+                pics.append((mode_, pic))
 
-            return pix
+            return pics
 
-        def create_pix():
-            px = QPixmap()
-            px.loadFromData(bytearray(svg, 'utf-8'),)
-            return [('normal', px)]
+        def create_image_file(icon_mode: str, svg: str):
+            # logger.info(f'{file_name=}, {icon_mode=}')
+            if icon_mode == 'normal':
+                file_ = Path(temp_dir.name) / f'{file_name}.svg'
+            else:
+                file_ = Path(temp_dir.name) / f'{file_name}_{icon_mode}.svg'
+            qss_params[f'${file_.stem}'] = file_.as_posix()
+            # logger.info(f'{file_.stem=}: {file_.as_posix()}')
 
-        ico_svg: dict = icons_res.get(svg_key, "")
-        if not ico_svg:
+            file_.write_text(svg)
+
+        svg_stamp: dict = icons_res.get(svg_key, "")
+        if not svg_stamp:
             return []
 
-        svg, colors = get_svg()
-        return create_pixs() if colors else create_pix()
+        svg, color_set = get_svg()
+        file_name = svg_stamp.get('save_in_file', '')
+        return create_pixs()
 
     def create_icon():
         pixs = get_pixmaps(svg_key)

@@ -2,18 +2,19 @@ from loguru import logger
 import os
 from pathlib import Path
 
-from PyQt6.QtCore import pyqtSlot, QSize
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QDialog, QStyle
+from PyQt6.QtCore import pyqtSlot, QSize, QPoint, Qt
+from PyQt6.QtGui import QPixmap, QMouseEvent
+from PyQt6.QtWidgets import QStyle, QWidget
 
 from ..core import app_globals as ag, db_ut
 from .ui_dup import Ui_DlgDup
-from src import tug
+from .. import tug
 
-class dlgDup(QDialog, Ui_DlgDup):
+class dlgDup(QWidget, Ui_DlgDup):
     def __init__(self, report: dict[list], parent=None) -> None:
         super().__init__(parent)
         self.setupUi(self)
+        self.start_pos = QPoint()
 
         self.setFixedSize(self.size())
         self.report = report
@@ -23,10 +24,20 @@ class dlgDup(QDialog, Ui_DlgDup):
         self.close_btn.clicked.connect(self.close)
         self.del_btn.clicked.connect(self.delete_duplicates)
         self.show_btn.clicked.connect(self.show_duplicates)
+        self.mouseMoveEvent = self.move_self
+
+    def move_self(self, e: QMouseEvent):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            pos_ = e.globalPosition().toPoint()
+            dist = pos_ - self.start_pos
+            if dist.manhattanLength() < 50:
+                self.move(self.pos() + dist)
+                e.accept()
+            self.start_pos = pos_
 
     def asked_by_user(self, user_request: bool):
         self.is_user_request = user_request
-        logger.info(f'{user_request=}')
+        # logger.info(f'{user_request=}')
         if self.is_user_request:
             self.checkBox.hide()
             self.save_report()
@@ -52,7 +63,7 @@ class dlgDup(QDialog, Ui_DlgDup):
     def get_report_path(self) -> Path:
         pp = Path('~/fileo/report').expanduser()
         return Path(
-            tug.get_app_setting('DEFAULT_REPORT_PATH', pp.as_posix())
+            tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp))
         ) / f"duplicate_files.{ag.app.ui.db_name.text()}.log"
 
 
@@ -77,5 +88,6 @@ class dlgDup(QDialog, Ui_DlgDup):
         return ico.pixmap(QSize(32, 32))
 
     def close(self) -> bool:
-        tug.save_app_setting(CHECK_DUPLICATES = int(not self.checkBox.isChecked()))
+        if not self.is_user_request:
+            tug.save_app_setting(CHECK_DUPLICATES = int(not self.checkBox.isChecked()))
         return super().close()

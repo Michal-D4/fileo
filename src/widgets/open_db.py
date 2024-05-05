@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (QFileDialog, QLabel,
 
 from ..core import create_db, app_globals as ag
 from .ui_open_db import Ui_openDB
-from src import tug
+from .. import tug
 
 TIME_0 = datetime(1, 1, 1)
 
@@ -38,8 +38,8 @@ class listItem(QWidget):
         return '/'.join((self.path, self.name.text())), self.last_use
 
     def set_style(self):
-        self.name.setStyleSheet(tug.dyn_qss['name'][0])
-        self.use_date.setStyleSheet(tug.dyn_qss['path'][0])
+        self.name.setStyleSheet(tug.get_dyn_qss('the-name'))
+        self.use_date.setStyleSheet(tug.get_dyn_qss('use-date'))
 
 
 class OpenDB(QWidget, Ui_openDB):
@@ -107,7 +107,7 @@ class OpenDB(QWidget, Ui_openDB):
 
         path = Path(item_data[0])
         item_widget = listItem(
-            (path.name, path.parent.as_posix(), item_data[1])
+            (path.name, str(path.parent), item_data[1])
         )
         item.setSizeHint(item_widget.sizeHint())
 
@@ -143,14 +143,14 @@ class OpenDB(QWidget, Ui_openDB):
 
     def add_db(self):
         pp = Path('~/fileo/dbs').expanduser()
-        path = tug.get_app_setting('DEFAULT_DB_PATH', pp.as_posix())
+        path = tug.get_app_setting('DEFAULT_DB_PATH', str(pp))
         db_name, ok_ = QFileDialog.getSaveFileName(
             self, caption="Select DB file",
             directory=path,
             options=QFileDialog.Option.DontConfirmOverwrite
         )
         if ok_:
-            self.add_db_name(Path(db_name).as_posix())
+            self.add_db_name(str(Path(db_name)))
 
     def verify_db_file(self, file_name: str) -> bool:
         """
