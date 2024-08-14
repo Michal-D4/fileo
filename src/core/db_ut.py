@@ -7,7 +7,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list: # type: ignore
-    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, p.tool_tip, '
                'd.name from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
@@ -252,7 +252,7 @@ def lost_files():
     # check if link to the @@Lost exists in dir tree
     sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
     # add hidden link into dir tree to folder @@Lost
-    sql3 = 'insert into parentdir values (0, 1, 0, 1, 0)'
+    sql3 = 'insert into parentdir values (0, 1, 0, 1, 0, "@@Lost")'
     # clear @@Lost
     sql4 = 'delete from filedir where dir = 1'
     # check if the @@Lost dir exists
@@ -560,7 +560,7 @@ def filter_files(param: dict) -> apsw.Cursor:
         if par else ag.db.conn.cursor().execute(sql)
     )
 
-def delete_not_exest_file(id: int):
+def delete_not_exist_file(id: int):
     sql_del = 'delete from files where id = ?'
     ag.db.conn.cursor().execute(sql_del, (id,))
 
@@ -801,6 +801,7 @@ def get_export_data(fileid: int) -> dict:
 
 def update_dir_name(name: str, id: int):
     sql = 'update dirs set name = ? where id = ?'
+    logger.info(f'{name=}, {id=}')
     with ag.db.conn as conn:
         conn.cursor().execute(sql, (name, id))
 
@@ -814,13 +815,21 @@ def update_file_id(d_data: ag.DirData):
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0);'
+    sql3 = f'insert into parentdir values (?, ?, 0, 0, 0, ?);'
     with ag.db.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
         id = conn.last_insert_rowid()
-        curs.execute(sql3, (parent, id))
+        curs.execute(sql3, (parent, id, dir_name))
     return id
+
+def update_tooltip(data: ag.DirData):
+    sql = 'update parentdir set tool_tip = ? where parent = ? and id = ?'
+    logger.info(f'{data=}')
+    with ag.db.conn as conn:
+        conn.cursor().execute(
+            sql, (data.tool_tip, data.parent_id, data.id)
+        )
 
 def copy_existent(file_id: int, parent_dir: int) -> int:
     """
@@ -873,11 +882,11 @@ def remove_dir_copy(id: int, parent: int):
         conn.cursor().execute(sql, (parent, id))
 
 def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
-    sql = 'insert into parentdir values (?, ?, 1, 0, ?);'
+    sql = 'insert into parentdir values (?, ?, 1, 0, ?, ?);'
     with ag.db.conn as conn:
         try:
             conn.cursor().execute(
-                sql, (parent, dir_data.id, dir_data.file_id)
+                sql, (parent, dir_data.id, dir_data.file_id, dir_data.tool_tip)
             )
             return True
         except apsw.ConstraintError:

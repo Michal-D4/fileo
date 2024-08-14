@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
-    <widget class="QFrame" name="frame_about">
+    <widget class="QFrame" name="dlg_frame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>

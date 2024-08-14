@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
 )
 
 from ..core import app_globals as ag, db_ut
-from .. import tug
 
 
 class fileInfo(QWidget):
@@ -55,6 +54,7 @@ class fileInfo(QWidget):
         self.form_info.setLayout(self.form_layout)
 
         scroll = QScrollArea()
+        scroll.setObjectName("scrollFileInfo")
         scroll.setWidget(self.form_info)
         scroll.setWidgetResizable(True)
 

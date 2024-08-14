@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (QTextBrowser, QWidget, QVBoxLayout,
 )
 
 from .. import tug
+from ..core import app_globals as ag
 
 class editTag(QWidget):
     def __init__(self, text: str, parent = None) -> None:
@@ -74,6 +75,7 @@ class aBrowser(QWidget):
         self.scroll_pos = 0
 
         self.browser.anchorClicked.connect(self.ref_clicked)
+        ag.signals_.color_theme_changed.connect(self.show_in_bpowser)
 
         if not self.read_only:
             f2 = QShortcut(QKeySequence(Qt.Key.Key_F2), self.browser)
@@ -240,7 +242,7 @@ class aBrowser(QWidget):
 
     def show_in_bpowser(self):
         self.browser.clear()
-        css = tug.get_dyn_qss('text_browser')
+        css = tug.get_dyn_qss('browser_style')
         inn = self.html_selected()
         self.browser.setText(''.join((css, inn)))
         self.browser.verticalScrollBar().setValue(self.scroll_pos)

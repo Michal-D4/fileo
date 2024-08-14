@@ -6,7 +6,7 @@ import pickle
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
-    QIODeviceBase,
+    QIODeviceBase, QItemSelectionModel
 )
 from PyQt6.QtGui import QDesktopServices, QAction, QFocusEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
@@ -21,6 +21,7 @@ from ..widgets import about, preferences
 from ..widgets.open_db import OpenDB
 from ..widgets.scan_disk_for_files import diskScanner
 from .. import tug
+from .filename_editor import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 300
 
@@ -29,11 +30,6 @@ fields = (
     'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
     'Pages', 'Size', 'Published', 'Date of last note', 'Created',
 )
-tool_tips = (
-    ",Last opening date,rating of file,number of file openings,"
-    "Last modified date,Number of pages(in book),Size of file,"
-    "Publication date(book),Date of last note,File creation date"
-).split(',')
 field_types = (
     'str', 'date', 'int', 'int', 'date',
     'int', 'int', 'date', 'date', 'date',
@@ -50,6 +46,7 @@ def set_user_actions_handler():
         "Dirs Create folder": create_dir,
         "Dirs Create folder as child": create_child_dir,
         "Dirs Delete folder(s)": delete_folders,
+        "Dirs Edit tooltip": edit_tooltip,
         "Dirs Toggle hidden state": toggle_hidden_state,
         "Dirs Import files": import_files,
         "tag_inserted": populate_tag_list,
@@ -206,7 +203,8 @@ def set_check_btn(new_mode: ag.appMode):
     for key, btn in checkable_btn.items():
         btn.setIcon(tug.get_icon(btn.objectName(), int(key is new_mode)))
 
-    checkable_btn[new_mode].setChecked(True)
+    if new_mode.value < ag.appMode.HISTORY_FILES.value:
+        checkable_btn[new_mode].setChecked(True)
     ag.set_mode(new_mode)
 
 def report_same_names():
@@ -377,9 +375,22 @@ def set_dir_model():
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
+    if ag.mode is ag.appMode.FILTER:
+        restore_selected_dirs()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
+
+def restore_selected_dirs():
+    branches = ag.get_setting("SELECTED_DIRS", [])
+    model = ag.dir_list.selectionModel()
+    model.clearSelection()
+    idx = QModelIndex()
+    for br in branches:
+        # logger.info(f'{br=}')
+        idx = expand_branch(branch=br)
+        model.select(idx, QItemSelectionModel.SelectionFlag.Select)
+    model.setCurrentIndex(idx, QItemSelectionModel.SelectionFlag.Current)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
@@ -405,8 +416,6 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
         save_file_id(prev_idx)
         show_folder_files()
         new_history_item()
-    else:
-        show_files([])
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
@@ -414,6 +423,7 @@ def dirlist_get_focus(e: QFocusEvent):
     ag.switch_first_mode()
 
 def save_file_id(dir_idx: QModelIndex):
+    """ save current file_id in dir (parentdir) table """
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
         file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
@@ -443,26 +453,6 @@ def dir_dree_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-def set_field_menu():
-    hdr = ag.file_list.header()
-
-    menu = QMenu(ag.app)
-    for i,field,tt in zip(range(len(fields)), fields, tool_tips):
-        act = QAction(field, ag.app, checkable=True)
-        if tt:
-            act.setToolTip(tt)
-        act.setChecked(int(not hdr.isSectionHidden(i)))
-        act.triggered.connect(lambda state, idx=i: toggle_show_column(state, index=idx))
-        menu.addAction(act)
-
-    menu.actions()[0].setEnabled(False)
-    menu.setToolTipsVisible(True)
-    ag.app.ui.field_menu.setMenu(menu)
-
-def toggle_show_column(state: bool, index: int):
-    ag.file_list.header().setSectionHidden(index, not state)
-    ag.signals_.toggle_column.emit()
-
 @pyqtSlot(ag.appMode)
 def app_mode_changed(prev_mode: int):
     prev = ag.appMode(prev_mode)
@@ -544,6 +534,9 @@ def show_folder_files():
         show_files([])
 
 def show_recent_files():
+    idx = expand_branch(ag.history.get_current())
+    if idx.isValid():
+        ag.dir_list.setCurrentIndex(idx)
     ag.app.ui.files_heading.setText(f'Recent files')
     files = get_recent_files()
 
@@ -603,12 +596,12 @@ def fill_file_model(files) -> fileModel:
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
 
-    if rows == 0:
+    if rows == 0 and ag.mode is not ag.appMode.FILTER_SETUP:
         null_file_list(model)
     return model
 
 def null_file_list(model: fileModel):
-    row = ["NO FILES HERE"]
+    row = ["NO FILES HERE",]
     for _,typ in enumerate(field_types[1:]):
         row.append(field_val(typ))
     model.append_row(row)
@@ -938,7 +931,13 @@ def create_folder(index: QModelIndex):
     folder_name = "New folder"
     dir_id = db_ut.insert_dir(folder_name, parent_id)
 
-    user_data = ag.DirData(parent_id, dir_id, False, False)
+    user_data = ag.DirData(
+        parent_id=parent_id,
+        id=dir_id,
+        is_link=False,
+        hidden=False,
+        tool_tip=folder_name
+    )
 
     index.internalPointer().setUserData(user_data)
 
@@ -985,6 +984,11 @@ def reload_dirs_changed(index: QModelIndex, last_id: int=0):
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)
             ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+
+def edit_tooltip():
+    cur_idx = ag.dir_list.currentIndex()
+    folderEditDelegate.set_tooltip_role()
+    ag.dir_list.edit(cur_idx)
 
 def toggle_hidden_state():
     selected = ag.dir_list.selectionModel().selectedIndexes()

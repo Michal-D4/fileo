@@ -5,85 +5,56 @@
 *     the key in qss (including "$") will be
 *     replaced by the string following "~"
 *
+* --------------------------------------------
+* 1 - Icons
+$activeIcon~#FFFFFF
+$branchColor~#888888
+$closeActive~#FFFFFF
+$greenIcon~#68BD44
+$redIcon~#FF0038
+$svgAlt~#6F5699
+$svgFill~#616161
+$svgFill2~#B3B3B3
+$toolIcon~#808080
+*
 $ico_app~app.ico
 *
-* 1. toolBar    5
-$toolBarBG~#2C2C2C
-$toolBarBorderColor~#2C2C2C
-$toolBarColor~#808080
-$toolBarActive~#FFFFFF
-$buttonCheckMark~#FFFFFF
-* 2. left_pane    9
-$btnCheckedBG~#B2D6FF
-$itemHoverBG~#99CCCC
-$itemSelectBG~#2261C3
-$itemSelectedColor~#FFFFFF
-$itemSelectNoActiveBG~#E4E6F1
-$leftPaneBG~#F3F3F3
-$leftPaneColor~#616161
-$leftPaneHeadBG~#E3E3E3
-$leftPaneHeadHoverBG~#C6C6C6
-$leftPaneHeadColor~#616161
-$icoLeftPane~#616161
-* 31. navi_header + topBar    6
-$topBarBG~#B3B3B3
-$topBarHoverBG~#C6C6C6
-$topBarColor~#616161
-$icoTopBar~#616161
-$CloseHoverBG~#DE1B2E
-$CloseHover~#FFFFFF
-* 32. file_list    9
-$filesBG~#FAFAFA
-$fileHoverBG~#99CCCC
-$filesColor~#616161
-$fileSelectBG~#2261C3
-$fileSelectedColor~#FFFFFF
-$fileSelectNoActiveBG~#E4E6F1
-$filesHeaderBG~#EAEAEA
-$filesColumnBorder~#E3E3E3
-$filesHeaderColor~#424242
-* 33. noteHolder    7
-$activeColor~#424242
-$passiveColor~#717171
-$activeMarkColor~#424242
-$notesBG~#FAFAFA
-$noteHeaderBG~#E3E3E3
-$messageColor~#FF0038
-$icoNoteColor~#616161
-* 4. status    6
-$icoGreenColor~#68BD44
-$icoRedColor~#FF0038
-$statusBG~#6F5699
-$statusBorder~$statusBG
-$statusTopBorder~$statusBG
-$statusHoverBG~#806AA4
-$statusLabelColor~#FFFFFF
-$EditFileColor~#FFCF32
-* 5. browser text    2
-$browserText~#424242
-$browserSelectedBG~#B2D6FF
-* 6. inner resize handlers    3
-$leftPaneSplitBG~#E3E3E3
-$mainPaneSplitBG~#E3E3E3
-$splitHoverBG~#3491F4
-* 7. borders, scroll bar, input BG    3
-$colorBorder~#A0A0A0
-$ScrollBarHandleBG~#888888
-$inputBG~#FFFFFF
-* 8. dialogue colors    10
-$dlgBorder~$colorBorder
-$dlgInnerBorder~$dlgBG
-$dlgBG~$leftPaneBG
-$dlgColor~$leftPaneColor
-$dlgAltBG~$leftPaneHeadBG
-$dlgAltColor~$leftPaneHeadColor
-$dlgHoverBG~#99CCCC
-$dlgInputBG~$inputBG
-$dlgCheckedBG~$btnCheckedBG
-$dlgIco~$icoLeftPane
-$dlgAltIco~$statusBG
-$dlgIcoStroke~$topBarBG
+$altTextColor~#424242
+$borderColor~#A0A0A0
+$closeHoverBG~#DE1B2E
+$fileFrameBG~#FAFAFA
+$headerBG~#E3E3E3
+$headerBG2~#EAEAEA
+$headerBG3~#FAFAFA
+$hoverBG~#99CCCC
 *
+$hoverBtnBG~#B2D6DD
+$hoverBG2~#C6C6C6      
+*
+$innerBorder~#E3E3E3
+$inputBG~#FFFFFF
+$leftPaneBG~#F3F3F3
+$notActiveItemBG~#E4E6F1
+$scrollHadle~#888888
+$selectedBG~#2261C3
+$selectorActive~#424242
+$selectorMark~#424242
+$splitHover~#3491F4
+$statusAltText~#FFCF32
+$statusBG~#6F5699
+$statusBorder~#6F5699
+$statusHoverBG~#806AA4
+$statusText~#FFFFFF
+$textColor2~#919191
+$linkText~#62C9B0
+$textColor~#616161
+$selectedText~#FFFFFF
+$toolBarBG~#2C2C2C
+$toolBorder~#2C2C2C
+$toolCheckMark~#FFFFFF
+$topBarBG~#B3B3B3
+$topFrameBG~#E3E3E3
+* ----------------------------------
 $shapeBorder1~1px solid
 $shapeBorder2~2px solid
 $bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:

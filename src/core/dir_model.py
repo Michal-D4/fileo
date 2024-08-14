@@ -63,13 +63,17 @@ class dirItem(object):
 
         return True
 
-    def setData(self, column, value):
-        if column < 0 or column >= len(self.itemData):
-            return False
+    def setData(self, column, value, role=Qt.ItemDataRole.EditRole):
+        if role == Qt.ItemDataRole.ToolTipRole:
+            self.userData.tool_tip = value
+            db_ut.update_tooltip(self.userData)
+            return True
+        if role == Qt.ItemDataRole.EditRole:
+            if column < 0 or column >= len(self.itemData):
+                return False
 
-        self.itemData[column] = value
-
-        return True
+            self.itemData[column] = value
+            return True
 
     def setUserData(self, user_data: ag.DirData):
         self.userData = user_data
@@ -99,10 +103,12 @@ class dirModel(QAbstractItemModel):
 
     def data(self, index, role: Qt.ItemDataRole):
         if (role == Qt.ItemDataRole.DisplayRole or
-            role == Qt.ItemDataRole.ToolTipRole or
             role == Qt.ItemDataRole.EditRole):
             item = self.getItem(index)
             return item.data(index.column())
+        elif role == Qt.ItemDataRole.ToolTipRole:
+            u_dat = self.getItem(index).user_data()
+            return u_dat.tool_tip
         elif role == Qt.ItemDataRole.UserRole:
             item = self.getItem(index)
             return item.user_data()
@@ -187,11 +193,12 @@ class dirModel(QAbstractItemModel):
         return parentItem.childCount()
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
-        if role != Qt.ItemDataRole.EditRole:
+        logger.info(f'{role=}, {value=}')
+        if role != Qt.ItemDataRole.EditRole and role != Qt.ItemDataRole.ToolTipRole:
             return False
 
         item = self.getItem(index)
-        result = item.setData(index.column(), value)
+        result = item.setData(index.column(), value, role)
 
         if result:
             self.dataChanged.emit(index, index)

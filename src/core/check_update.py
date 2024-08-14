@@ -37,8 +37,8 @@ def installer_update_replay(replay: QNetworkReply):
         filename = release['filename'].toString()
         if filename.count('.') <= 1:
             ag.show_message_box(
-                'Check for update',
-                f"Something went wrong, can't find app.version in the repository. "
+                'Fileo',
+                f"Something went wrong, can't find any app.version in the repository. "
                 'Please try again later.',
                 icon=QMessageBox.Icon.Critical
             )
@@ -49,19 +49,21 @@ def installer_update_replay(replay: QNetworkReply):
                 get_sourceforge(ver)
             else:
                 ag.show_message_box(
-                    'Check for update',
+                    'Fileo',
                     f'New version "{ver}" available.'
-                    'You can itstall it with "pip install md2fileo" command'
+                    'You can itstall it with "pip install md2fileo" command',
+                    btn=QMessageBox.StandardButton.Ok
                 )
         else:
             ag.show_message_box(
-                'Check for update',
-                f'No new version available.'
+                'Fileo',
+                f'There are currently no updates available.',
+                btn=QMessageBox.StandardButton.Ok
             )
 
 def get_sourceforge(ver: str):
     btn_clicked = ag.show_message_box(
-        'Check for update',
+        'Fileo',
         f'New version "{ver}" available.',
         custom_btns=(
             ('Go to download', QMessageBox.ButtonRole.YesRole),

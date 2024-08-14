@@ -63,6 +63,30 @@ files = [
 ]
 
 [[package]]
+name = "asyncore-wsgi"
+version = "0.0.11"
+description = "Asynchronous WSGI and WebSocket server based on asyncore module"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "asyncore-wsgi-0.0.11.tar.gz", hash = "sha256:5a8f999715ac4222c7a3d4cfa427535ac2dc9adf7e18d1c7e511924864133e16"},
+    {file = "asyncore_wsgi-0.0.11-py3-none-any.whl", hash = "sha256:16cc499992d23adf3ad27f5e9a226c3212e78490aab6ea92d9167f2f1acbd6f1"},
+]
+
+[[package]]
+name = "bottle"
+version = "0.12.25"
+description = "Fast and simple WSGI-framework for small web-applications."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "bottle-0.12.25-py3-none-any.whl", hash = "sha256:d6f15f9d422670b7c073d63bd8d287b135388da187a0f3e3c19293626ce034ea"},
+    {file = "bottle-0.12.25.tar.gz", hash = "sha256:e1a9c94970ae6d710b3fb4526294dfeb86f2cb4a81eff3a4b98dc40fb0e5e021"},
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -92,6 +116,34 @@ win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
 
 [package.extras]
 dev = ["Sphinx (>=4.1.1)", "black (>=19.10b0)", "colorama (>=0.3.4)", "docutils (==0.16)", "flake8 (>=3.7.7)", "isort (>=5.1.1)", "pytest (>=4.6.2)", "pytest-cov (>=2.7.1)", "sphinx-autobuild (>=0.7.1)", "sphinx-rtd-theme (>=0.4.3)", "tox (>=3.9.0)"]
+
+[[package]]
+name = "lorem"
+version = "0.1.1"
+description = "Generator for random text that looks like Latin."
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "lorem-0.1.1-py3-none-any.whl", hash = "sha256:c9c2914b5a772022417c398bd74b7bbd712e73ff029ba82720855e458f13ae42"},
+    {file = "lorem-0.1.1.tar.gz", hash = "sha256:785f4109a241fc2891e59705e85d065f6e6d3ed6ad91750a8cb54d4f3e59d934"},
+]
+
+[[package]]
+name = "markdown"
+version = "3.6"
+description = "Python implementation of John Gruber's Markdown."
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "Markdown-3.6-py3-none-any.whl", hash = "sha256:48f276f4d8cfb8ce6527c8f79e2ee29708508bf4d40aa410fbc3b4ee832c850f"},
+    {file = "Markdown-3.6.tar.gz", hash = "sha256:ed4f41f6daecbeeb96e576ce414c41d2d876daa9a16cb35fa8ed8c2ddfad0224"},
+]
+
+[package.extras]
+docs = ["mdx-gh-links (>=0.2)", "mkdocs (>=1.5)", "mkdocs-gen-files", "mkdocs-literate-nav", "mkdocs-nature (>=0.6)", "mkdocs-section-index", "mkdocstrings[python]"]
+testing = ["coverage", "pyyaml"]
 
 [[package]]
 name = "pypdf2"
@@ -171,6 +223,22 @@ files = [
 ]
 
 [[package]]
+name = "web-pdb"
+version = "1.6.2"
+description = "Web interface for Python's built-in PDB debugger"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "web-pdb-1.6.2.tar.gz", hash = "sha256:f077221439fe547cf94c0e092afe0afcb5b6c12e8f18e76840e5cf54a9137deb"},
+    {file = "web_pdb-1.6.2-py3-none-any.whl", hash = "sha256:93d7e307e0e41ea316c7f570f167a0a2e544f4a84163f0b5d55eaa7f92078af3"},
+]
+
+[package.dependencies]
+asyncore-wsgi = ">=0.0.11"
+bottle = ">=0.12.25"
+
+[[package]]
 name = "win32-setctime"
 version = "1.1.0"
 description = "A small Python utility to set file creation time on Windows"
@@ -188,4 +256,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "257a99bc95ac215ab2e18f3ab129e4b513794af8a5c6de3c6dc713a301a49670"
+content-hash = "00b1a923a76353c912f3c1c7e11ede6cbbc97dc28396f5482350c87ea2f8fa49"

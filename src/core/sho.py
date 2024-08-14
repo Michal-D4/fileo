@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
 
 from .. import tug
 from .compact_list import aBrowser
-from .filename_editor import fileEditorDelegate
+from .filename_editor import fileEditorDelegate, folderEditDelegate
 from ..ui.ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
 from ..widgets.filter_setup import FilterSetup
@@ -56,7 +56,6 @@ class shoWindow(QMainWindow):
         self.set_busy(False)
         ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
         ctrl_b.activated.connect(self.click_toggle_bar)
-
 
     def create_fold_container(self):
         fold_layout = QVBoxLayout(self.ui.left_pane)
@@ -105,6 +104,9 @@ class shoWindow(QMainWindow):
         state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
+            menu = self.ui.more.menu()
+            for i, ff in enumerate(ag.fold_states):
+                menu.actions()[i].setChecked(not ff.is_hidden)
             self.ui.left_pane.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
@@ -112,11 +114,11 @@ class shoWindow(QMainWindow):
         mode = ag.appMode(
             int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
-        if mode.value > ag.appMode.FILTER_SETUP.value:
+        if mode.value > ag.appMode.HISTORY_FILES.value:
             mode = ag.appMode.DIR
+        self.ui.app_mode.setText(mode.name)
         low_bk.set_check_btn(mode)
         self.toggle_filter_show()
-        # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
 
     def restore_note_height(self):
         hh = tug.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
@@ -159,7 +161,7 @@ class shoWindow(QMainWindow):
     def _create_button(self, icon_name: str, btn_name: str, tool_tip: str) -> QToolButton:
         btn = QToolButton()
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        btn.setStyleSheet("border:0px; margin:0px; padding:0px;")
+        btn.setStyleSheet("border:none; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
         btn.setIcon(tug.get_icon(icon_name))
         ag.buttons.append((btn, icon_name))
@@ -186,6 +188,7 @@ class shoWindow(QMainWindow):
         ag.dir_list.expanded.connect(self.branch_expanded)
         set_widget_to_frame(frames[0], ag.dir_list)
         ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
+        ag.dir_list.setItemDelegateForColumn(0, folderEditDelegate(self))
 
         ag.tag_list = aBrowser(read_only=False)
         ag.tag_list.setObjectName("tag_list")
@@ -215,15 +218,21 @@ class shoWindow(QMainWindow):
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
             ag.buttons.append((btn, icon_name))
+
         self.ui.btn_search.setIcon(tug.get_icon("search"))
         ag.buttons.append((self.ui.btn_search, "search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         self.ui.btn_search.setDisabled(True)
+
         self.ui.recent_files.setIcon(tug.get_icon("history"))
         ag.buttons.append((self.ui.recent_files, "history"))
         self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
+
         self.ui.field_menu.setIcon(tug.get_icon("more"))
         ag.buttons.append((self.ui.field_menu, "more"))
+
+        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
+        bk_ut.set_menu_more(self)
 
     def connect_slots(self):
         ag.app = bk_ut.self = self
@@ -262,10 +271,10 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
+        logger.info(f'{db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
-            # logger.info(f'{ag.mode=!r}')
             bk_ut.restore_dirs()
 
     @pyqtSlot(QMouseEvent)
@@ -394,6 +403,8 @@ class shoWindow(QMainWindow):
     def click_toggle_bar(self):
         visible = self.ui.left_pane.isVisible()
         self.ui.left_pane.setVisible(not visible)
+        self.ui.app_mode.setVisible(not visible)
+        self.ui.more.setVisible(not visible)
         self.ui.btnToggleBar.setIcon(
             tug.get_icon("btnToggleBar", int(visible))
         )

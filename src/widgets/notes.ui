@@ -42,7 +42,7 @@
        <number>6</number>
       </property>
       <property name="leftMargin">
-       <number>9</number>
+       <number>0</number>
       </property>
       <property name="topMargin">
        <number>0</number>
@@ -56,7 +56,7 @@
       <item>
        <widget class="QLineEdit" name="authorEdit">
         <property name="toolTip">
-         <string>Authors</string>
+         <string>File's authors</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -68,19 +68,10 @@
       </item>
       <item>
        <widget class="QLineEdit" name="tagEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="toolTip">
-         <string>List of tags assigned to a file</string>
+         <string>File's tags</string>
         </property>
         <property name="frame">
-         <bool>false</bool>
-        </property>
-        <property name="readOnly">
          <bool>false</bool>
         </property>
         <property name="placeholderText">

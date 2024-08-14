@@ -1,6 +1,13 @@
 # Change Log
 
-## 1.2.01 - 2024, May 05 
+## 1.3.01 - 2024, August 14
+
+* Revise template of color themes. Only one template is in use: "default.qss", and 3 themes: "Default", "Dark1" and "Dark2", that defined by .param files.
+* Specify color of HTML links in file notes.
+* ToolTip to folder is editable now.
+* Some other code changes and improvements.
+
+## 1.2.01 - 2024, May 05
 
 * Three color themes have been created for the application: “Default”, “Light” and “Dark”.
 * several other changes and improvements to the code

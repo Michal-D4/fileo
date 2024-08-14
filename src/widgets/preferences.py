@@ -3,10 +3,8 @@ from pathlib import Path
 
 from PyQt6.QtCore import QSize, Qt, QCoreApplication, QPoint
 from PyQt6.QtGui import QMouseEvent, QPixmap
-from PyQt6.QtWidgets import (QWidget, QFormLayout, QFrame,
-    QLineEdit, QSpinBox, QHBoxLayout,  QVBoxLayout,
-    QDialogButtonBox, QSizePolicy, QSpacerItem,
-    QCheckBox, QComboBox,
+from PyQt6.QtWidgets import (QWidget, QFormLayout,
+    QLineEdit, QCheckBox, QComboBox,
 )
 
 from .. import tug
@@ -20,7 +18,7 @@ class Preferences(QWidget):
         super().__init__(parent)
         self.ui = Ui_prefForm()
         self.ui.setupUi(self)
-        self.ui.ico.setPixmap(QPixmap(tug.qss_params['$ico_app']))
+        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
 
         self.start_pos = QPoint()
         self.cur_theme = ''
@@ -33,7 +31,6 @@ class Preferences(QWidget):
         form_layout.addRow('Path to DBs:', self.db_path)
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
-        form_layout.addRow('Log file path:', self.log_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
         form_layout.addRow('Check duplicates:', self.check_dup)
         if tug.config['instance_control']:
@@ -72,8 +69,7 @@ class Preferences(QWidget):
             "DEFAULT_DB_PATH": self.db_path.text(),
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
-            "DEFAULT_LOG_PATH": self.log_path.text(),
-            "FOLDER_HISTORY_DEPTH": self.folder_history_depth.value(),
+            "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
         }
         if tug.config['instance_control']:
@@ -83,7 +79,6 @@ class Preferences(QWidget):
         tug.create_dir(Path(self.db_path.text()))
         tug.create_dir(Path(self.export_path.text()))
         tug.create_dir(Path(self.report_path.text()))
-        tug.create_dir(Path(self.log_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
         super().close()
 
@@ -109,15 +104,10 @@ class Preferences(QWidget):
         self.report_path.setText(
             tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
         )
-        self.log_path = QLineEdit()
-        self.log_path.setText(
-            tug.get_app_setting('DEFAULT_LOG_PATH', str(pp / 'log'))
-        )
-        self.folder_history_depth = QSpinBox()
-        self.folder_history_depth.setMinimum(2)
-        self.folder_history_depth.setMaximum(50)
+        self.folder_history_depth = QLineEdit()
+        self.folder_history_depth.editingFinished.connect(self.history_depth_changed)
         val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
-        self.folder_history_depth.setValue(int(val))
+        self.folder_history_depth.setText(str(val))
         ag.history.set_limit(int(val))
         self.check_dup = QCheckBox()
         self.check_dup.setChecked(
@@ -129,12 +119,20 @@ class Preferences(QWidget):
                 int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
 
+    def history_depth_changed(self):
+        val = int(self.folder_history_depth.text())
+        if tug.config['history_min'] > val:
+            self.folder_history_depth.setText(str(tug.config['history_min']))
+        elif tug.config['history_max'] < val:
+            self.folder_history_depth.setText(str(tug.config['history_max']))
+
     def change_theme(self, idx: int):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
         self.set_theme(theme_key)
 
     def set_theme(self, theme_key: str):
         log_qss = tug.config.get("save_prepared_qss", False)
+        logger.info(f'{theme_key=}, {log_qss=}')
         styles = tug.prepare_styles(theme_key, to_save=log_qss)
         QCoreApplication.instance().setStyleSheet(styles)
         self.apply_dyn_qss()
@@ -145,13 +143,22 @@ class Preferences(QWidget):
         for fs in ag.fold_states:
             fs.wid.set_hovering(False)
 
+        if ag.file_data.cur_page.value == 0:  # Page.TAGS
+            ag.file_data.tagEdit.setStyleSheet(tug.get_dyn_qss("line_edit"))
+        else:
+            ag.file_data.tagEdit.setStyleSheet(tug.get_dyn_qss("line_edit_ro"))
+
+        ag.file_data.passive_style()
+        ag.file_data.cur_page_restyle()
+        ag.signals_.color_theme_changed.emit()
+
     def set_icons(self):
         def set_icons_from_list(buttons):
             for btn, *icons in buttons:
                 if len(icons) > 1:
                     btn.setIcon(tug.get_icon(icons[btn.isChecked()]))
                 else:
-                    btn.setIcon(tug.get_icon(icons[0], btn.isChecked()))
+                    btn.setIcon(tug.get_icon(icons[0]))
 
         set_icons_from_list(ag.buttons)
         set_icons_from_list(ag.note_buttons)

@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.2.01'
+    return '1.3.01'
 
 entry_point: Path = None
 app: 'shoWindow' = None
@@ -45,7 +45,6 @@ stop_thread = False
 
 @unique
 class appMode(Enum):    # better name is fileListMode
-    NIL = 0
     DIR = 1
     FILTER = 2
     FILTER_SETUP = 3
@@ -57,23 +56,23 @@ class appMode(Enum):    # better name is fileListMode
         return f'{self.name}:{self.value}'
 
 first_mode = appMode.DIR
-mode = appMode.NIL
+mode = appMode.DIR
 
 def set_mode(new_mode: appMode):
     global mode, first_mode
     if new_mode is mode:
         return
-    if mode.value < appMode.HISTORY_FILES.value:
+    if mode.value <= appMode.HISTORY_FILES.value:
         first_mode = mode
     mode = new_mode
 
-    app.container.ui.app_mode.setText(mode.name)
+    app.ui.app_mode.setText(mode.name)
 
 def switch_first_mode():
     global mode, first_mode
     if mode.value >= appMode.HISTORY_FILES.value:
         old_mode, mode = mode, first_mode
-        app.container.ui.app_mode.setText(mode.name)
+        app.ui.app_mode.setText(mode.name)
 
         signals_.app_mode_changed.emit(old_mode.value)
 
@@ -101,6 +100,7 @@ class DirData():
     is_link: bool
     hidden: bool
     file_id: int = 0
+    tool_tip: str = ''
 
     def __post_init__(self):
         self.is_link = bool(self.is_link)
@@ -110,7 +110,7 @@ class DirData():
         return (
             f'DirData(parent_id={self.parent_id}, id={self.id}, '
             f'is_link={bool(self.is_link)}, hidden={bool(self.hidden)}, '
-            f'file_id={self.file_id})'
+            f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
 
 @dataclass(slots=True)

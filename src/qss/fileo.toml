@@ -1,4 +1,5 @@
 instance_control = false
 logging = false
 save_prepared_qss = false
-test = false
+history_min = 2
+history_max = 50

@@ -143,6 +143,11 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         for lbl in self.page_selectors.values():
             lbl.setStyleSheet(ss)
 
+    def cur_page_restyle(self):
+        self.page_selectors[self.cur_page].setStyleSheet(
+            tug.get_dyn_qss('active_selector')
+        )
+
     def l_tags_press(self, e: QMouseEvent):
         self.tagEdit.setReadOnly(False)
         self.tagEdit.setStyleSheet(tug.get_dyn_qss("line_edit"))
@@ -257,14 +262,14 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def is_edit_message(self):
         @pyqtSlot()
-        def restore_selected_tags():
-            self.tagEdit.setText(selected_tags)
-            self.tagEdit.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
+        def restore_file_edited():
+            ag.app.ui.edited_file.setText(file_edited)
+            ag.app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
 
-        selected_tags = self.tagEdit.text()
-        self.tagEdit.setStyleSheet(tug.get_dyn_qss('edit_message'))
-        self.tagEdit.setText("Only one note editor can be opened at a time")
-        QTimer.singleShot(3000, restore_selected_tags)
+        file_edited = ag.app.ui.edited_file.text()
+        ag.app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message'))
+        ag.app.ui.edited_file.setText("Only one note editor can be opened at a time")
+        QTimer.singleShot(3000, restore_file_edited)
 
     def show_editor(self):
         self.notes.set_editing(True)
@@ -287,7 +292,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         return get_attributes() if self.notes.is_editing() else (False,)
 
     def set_edit_state(self, vals: tuple):
-        # logger.info(f'editing: {vals[0]}')
         if not vals[0]:
             self.cancel_note_editing()
             return

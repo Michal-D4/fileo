@@ -4,14 +4,14 @@ ico = "icons.toml"
 qss = "default.qss"
 param = "default.param"
 
-[Light_Theme]
-name = "Light Theme"
+[Dark_Theme_1]
+name = "Dark Theme 1"
 ico = ""
 qss = ""
-param = "light_theme.param"
+param = "dark1.param"
 
-[Dark_Theme]
-name = "Dark Theme"
+[Dark_Theme_2]
+name = "Dark Theme 2"
 ico = ""
 qss = ""
-param = "dark_theme.param"
+param = "dark2.param"

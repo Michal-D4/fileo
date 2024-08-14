@@ -1,59 +1,97 @@
+[app_ico]
+ico = """\
+<svg viewBox="0 0 640 640">\
+<path d="M250 319H64l137-49z" fill="#4755a9"/>\
+<path d="m250 319-49-49 49-137z" fill="#2D84D2"/>\
+<path d="M250 319V133l49 137z" fill="#4755a9"/>\
+<path d="m250 319 49-49 137 49z" fill="#2D84D2"/>\
+<path d="M250 319h186l-137 49z" fill="#4755a9"/>\
+<path d="m250 319 49 49-49 137z" fill="#2D84D2"/>\
+<path d="M250 319v186l-49-137z" fill="#4755a9"/>\
+<path d="m250 319-49 49-137-49z" fill="#2D84D2"/>\
+<path d="M462 177H349l83-30z" fill="#4755a9"/>\
+<path d="m462 177-30-30 30-83z" fill="#2D84D2"/>\
+<path d="M462 177V64l30 83z" fill="#4755a9"/>\
+<path d="m462 177 30-30 83 30z" fill="#2D84D2"/>\
+<path d="M462 177h113l-83 30z" fill="#4755a9"/>\
+<path d="m462 177 30 30-30 83z" fill="#2D84D2"/>\
+<path d="M462 177v113l-30-83z" fill="#4755a9"/>\
+<path d="m462 177-30 30-83-30z" fill="#2D84D2"/>\
+<path d="M462 462H349l83-30z" fill="#4755a9"/>\
+<path d="m462 462-30-30 30-83z" fill="#2D84D2"/>\
+<path d="M462 462V349l30 83z" fill="#4755a9"/>\
+<path d="m462 462 30-30 83 30z" fill="#2D84D2"/>\
+<path d="M462 462h113l-83 30z" fill="#4755a9"/>\
+<path d="m462 462 30 30-30 83z" fill="#2D84D2"/>\
+<path d="M462 462v113l-30-83z" fill="#4755a9"/>\
+<path d="m462 462-30 30-83-30z" fill="#2D84D2"/></svg>\
+"""
+
 [alphaF]
 ico = """\
 <svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
 font-family="Cascadia Code" |>F</text></svg>\
 """
-colors = ["fill=\"$icoGreenColor\""]
+colors = ["fill=\"$greenIcon\""]
+
 [alphaH]
 ico = """\
 <svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
 font-family="Cascadia Code" |>H</text></svg>\
 """
-colors = ["fill=\"$icoGreenColor\""]
+colors = ["fill=\"$greenIcon\""]
+
 [alphaL]
 ico = """\
 <svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
 font-family="Cascadia Code" |>L</text></svg>\
 """
-colors = ["fill=\"$icoGreenColor\""]
+colors = ["fill=\"$greenIcon\""]
+
 [arrow_forward]
 ico = """\
 <svg viewBox="0 -960 960 960" |><path d="m560-240 240-240-240-240-58 56 \
 142 142H158v80h486L502-300"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [arrow_back]
 ico = """\
 <svg viewBox="0 -960 960 960" |><path d="M400-240 160-480l240-240 56 58\
 -142 142h486v80H314l142 142"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [history]
 ico = """\
 <svg viewBox="0 0 24 24" | fill="none"><path d="M3.016 10H7m-3.984 0\
 V6m0 4 3.327-3.657A8 8 0 1 1 4.582 15M12 9v4l3 1.5" stroke-width="2" \
 stroke-linecap="round" stroke-linejoin="round"/></svg>\
 """
-colors = ["stroke=\"$icoTopBar\""]
+colors = ["stroke=\"$svgFill\""]
+
 [match_case]
 ico = """\
 <svg viewBox="0 0 24 24"><text x="2" y="18" font-size="18" \
 font-family="Segoe UI" |>Aa</text></svg>\
 """
-colors = ["fill=\"$dlgIco\""]
+colors = ["fill=\"$svgFill\""]
+
 [match_word]
 ico = """\
 <svg viewBox="0 0 24 24"><text x="2" y="18" | font-size="18" \
 font-family="Segoe UI">ab</text><path | d="M1 17v3h21v-3"/></svg>\
 """
-colors = ["fill=\"$dlgIco\"","stroke=\"$dlgIco\" fill=\"none\""]
+colors = ["fill=\"$svgFill\"","stroke=\"$svgFill\" fill=\"none\""]
+
 [search]
 ico = """\
 <svg viewBox="-5 -5 48 48" |><path d="M16 28A12 12 0 1 0 16 4\
 a12 12 0 0 0 0 24m12.64 -2.188 7.16 7.16a2 2 0 1 1 -2.83 2.826\
 l-7.16 -7.16a16 16 0 1 1 2.828 -2.828z"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\""]
+colors = ["fill=\"$svgFill\""]
+
 [menu]
 ico = """\
 <svg viewBox="0 0 64 64" |><rect width="48.279" height="6.035" \
@@ -62,7 +100,8 @@ height="6.035" x="8.112" y="28.708" ry="1.464"/><rect \
 width="48.279" height="6.035" x="8.112" y="15.225" \
 ry="1.464"/></svg>\
 """
-colors = ["fill=\"$toolBarColor\"", "active|fill=\"$toolBarActive\""]
+colors = ["fill=\"$toolIcon\"", "active|fill=\"$closeActive\""]
+
 [folders]
 ico = """\
 <svg viewBox="0 0 96 96" stroke-width="8" | fill="none"><path d="\
@@ -70,101 +109,120 @@ M36 16h12l8 8h20a8 8 0 0 1 8 8v28a8 8 0 0 1-8 8H36a8 8 0 0 1-8-8\
 V24a8 8 0 0 1 8-8"/><path d="M68 68v8a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8\
 V40a8 8 0 0 1 8-8h8"/></svg>\
 """
-colors = ["stroke=\"$toolBarColor\"", "active|stroke=\"$toolBarActive\""]
+colors = ["stroke=\"$toolIcon\"", "active|stroke=\"$activeIcon\""]
+
 [folders_active]
 ico_subst = "folders"
-colors = ["active|stroke=\"$toolBarActive\""]
+colors = ["active|stroke=\"$activeIcon\""]
+
 [ok]
 ico = """\
 <svg viewBox="0 0 384 384" |><path d=\
 "m325 65 32 32-222 222L27 211l32-32 76 76z"/></svg>\
 """
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [maximize]
 ico = """\
 <svg viewBox="0 0 48 48" |><path d="M10 10v28h28V10zm24 24H14V14h20z"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\""]
+colors = ["fill=\"$svgFill\""]
+
 [restore]
 ico = """\
 <svg viewBox="0 0 48 48" |><path d="M8 16v24h24V16zm20 20H12V20h16z"/>\
 <path d="M16 16h4V12h16v16h-4v4h8V8H16z"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\""]
+colors = ["fill=\"$svgFill\""]
+
 [minimize]
 ico = """\
 <svg viewBox="0 0 192 192" |><path d="M40 88v16h112V88Z"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\""]
+colors = ["fill=\"$svgFill\""]
+
 [close]
 ico = """\
 <svg viewBox="0 0 1920 1920" |><path d="M1360 560h-80L960 880 640 560h-80v80\
 l320 320-320 320v80h80l320-320 320 320h80v-80l-320-320 320-320Z"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\"", "active|fill=\"$CloseHover\""]
+colors = ["fill=\"$svgFill\"", "active|fill=\"$closeActive\""]
+
 [cancel2]
 ico = """\
 <svg viewBox="0 0 260 260"><path d="M230 30h-18l-82 82-82-82H30v18\
 l82 82-82 82v18h18l82-82 82 82h18v-18l-82-82 82-82Z" |/></svg>\
 """
-colors = ["style=\"fill:$icoNoteColor\""]
+colors = ["style=\"fill:$svgFill\""]
+
 [busy_on]
 ico = """<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" |/></svg>"""
-colors = ["fill=\"$icoRedColor\""]
+colors = ["fill=\"$redIcon\""]
+
 [busy_off]
 ico_subst = "busy_on"
-colors = ["fill=\"$icoGreenColor\""]
+colors = ["fill=\"$greenIcon\""]
+
 [show_hide_on]
 ico = """\
 <svg viewBox="0 0 32 32" |><path d="M4 4v24h24V12.187l-2 \
 2V26H6V6h19.813l2-2H4zm23.28 3.28L16 18.563l-4.28-4.28-1.44 \
 1.437 5 5 .72.686.72-.687 12-12-1.44-1.44z"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [show_hide_off]
 ico = """\
 <svg viewBox="0 0 32 32" |><path d="M4 4v24h24V12.187l-2 \
 2V26H6V6h19.813l2-2H4z"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [check_box_on]
 save_in_file = "check_box_on"
 ico_subst = "show_hide_on"
-colors = ["fill=\"$dlgIcoStroke\""]
+colors = ["fill=\"$svgFill\""]
+
 [check_box_off]
 save_in_file = "check_box_off"
 ico_subst = "show_hide_off"
-colors = ["fill=\"$dlgIcoStroke\""]
+colors = ["fill=\"$svgFill\""]
+
 [vline3]
 save_in_file = "vline3"
 ico = """\
 <svg viewBox="0 0 32 32" |><path d="M13 0v32"/></svg>\
 """
-colors = ["style=\"stroke:$treeBranchColor;stroke-width:2\""]
+colors = ["style=\"stroke:$branchColor;stroke-width:2\""]
+
 [angle_down2]
 save_in_file = "angle_down2"
 ico_subst = "angle_down"
-colors = ["width=\"12\" height=\"12\" fill=\"$dlgIcoStroke\""]
+colors = ["width=\"12\" height=\"12\" fill=\"$svgFill\""]
+
 [angle_down3]
 save_in_file = "angle_down"
 ico = """\
 <svg viewBox="0 0 32 32" |><path d="m2 10 11 10 11-10"/></svg>\
 """
-colors = ["style=\"fill:none;stroke:$treeBranchColor;stroke-width:5\""]
+colors = ["style=\"fill:none;stroke:$branchColor;stroke-width:5\""]
+
 [angle_right3]
 save_in_file = "angle_right"
 ico = """\
 <svg viewBox="0 0 32 32" |><path d="m8 2 14 14L8 30"/></svg>\
 """
-colors = ["style=\"fill:none;stroke:$treeBranchColor;stroke-width:5\""]
+colors = ["style=\"fill:none;stroke:$branchColor;stroke-width:5\""]
+
 [radio_btn]
 save_in_file = "radio_btn"
 ico = """\
-<svg viewBox="0 0 64 64" |><circle cx="32" cy="32" r="24"/>\
+<svg viewBox="0 0 64 64" |><circle cx="32" cy="32" r="26"/>\
 <circle cx="32" cy="32" r="14" |/></svg>\
 """
-colors = ["fill=\"$dlgIco\" stroke=\"$dlgIcoStroke\"",
-"fill=\"$dlgIco\"","active|","active|fill=\"$dlgAltIco\""]
+colors = ["fill=\"$svgFill2\"", "stroke=\"$svgFill\"",
+"active|","active|fill=\"$svgAlt\""]
+
 [filter_setup]
 ico = """\
 <svg viewBox="0 0 36 36" |><path d="M32.988 24.503a.59.59 0 0 0-.363-.574\
@@ -188,87 +246,104 @@ a3 3 0 0 1 .256.62l.06.215 1.056.312z" /><path d="M27.92 23.058a2.048 2.048 0 1 
 1.26 0 0 1-1.269 1.25z" /><path d="M33 6.25H3a1 1 0 0 0 0 2h30a1 1 0 0 0 0-2m-5 6\
 H8a1 1 0 0 0 0 2h20a1 1 0 0 0 0-2m-5 6H13a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2"/></svg>\
 """
-colors = ["fill=\"$toolBarColor\"", "active|fill=\"$toolBarActive\""]
+colors = ["fill=\"$toolIcon\"", "active|fill=\"$activeIcon\""]
+
 [filter_setup_active]
 ico_subst = "filter_setup"
-colors = ["fill=\"$toolBarActive\""]
+colors = ["fill=\"$activeIcon\""]
+
 [more]
 ico = """\
 <svg viewBox="0 0 48 48" |><circle cx="10" cy="24" r="5"/>\
 <circle cx="24" cy="24" r="5"/><circle cx="38" cy="24" r="5"/></svg>\
 """
-colors = ["fill=\"$icoTopBar\""]
+colors = ["fill=\"$svgFill\""]
+
 [refresh]
 ico = """\
 <svg viewBox="0 0 16 16" |><path d="M12.75 8a4.5 4.5 0 0 1-8.61 1.834\
 l-1.391.565A6.001 6.001 0 0 0 14.25 8 6 6 0 0 0 3.5 4.334V2.5H2v4l.75.75\
 h3.5v-1.5H4.352A4.5 4.5 0 0 1 12.75 8z"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [filter]
 ico = """\
 <svg viewBox="0 0 36 36" |><path d="M33 11H3a1 1 0 0 0 0 2h30a1 1 0 0 0 0-2Z"/>\
 <path d="M28 17H8a1 1 0 0 0 0 2h20a1 1 0 0 0 0-2Z"/><path d="M23 23H13\
 a1 1 0 0 0 0 2h10a1 1 0 0 0 0-2Z"/></svg>\
 """
-colors = ["fill=\"$toolBarColor\"", "active|fill=\"$toolBarActive\""]
+colors = ["fill=\"$toolIcon\"", "active|fill=\"$activeIcon\""]
+
 [filter_active]
 ico_subst = "filter"
-colors = ["fill=\"$toolBarActive\""]
+colors = ["fill=\"$activeIcon\""]
+
 [collapse_all]
 ico = """\
 <svg viewBox="0 0 24 24" |><path d="M4 2a2 2 0 0 0-2 2v10h2V4h10V2z\
 m4 4a2 2 0 0 0-2 2v10h2V8h10V6zm12 6v8h-8v-8zm0-2h-8a2 2 0 0 0-2 2v8\
 a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2m-1 7h-6v-2h6z"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [collapse_notes]
 ico_subst = "collapse_all"
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [plus]
 ico = """\
 <svg viewBox="0 0 16 16" |><path d="M14 7H9V2H7v5H2v2h5v5h2V9h5z"/></svg>\
 """
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [angle_up]
 ico = """\
 <svg viewBox="0 0 384 384" |><path d=\
 "M27 258 192 93l165 165-32 32-133-133L59 290Z"/></svg>\
 """
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [angle_left]
 ico = """\
 <svg viewBox="0 0 384 384" |><path d=\
 "M258 27 93 192l165 165 32-32-133-133L290 59Z"/></svg>\
 """
-colors = ["fill=\"$toolBarColor\"", "active|fill=\"$toolBarActive\""]
+colors = ["fill=\"$toolIcon\"", "active|fill=\"$activeIcon\""]
+
 [angle_right]
 ico = """\
 <svg viewBox="0 0 384 384" |><path d=\
 "m125 27 165 165-165 165-32-32 133-133L93 59Z"/></svg>\
 """
-colors = ["fill=\"$toolBarColor\"", "active|fill=\"$toolBarActive\""]
+colors = ["fill=\"$toolIcon\"", "active|fill=\"$activeIcon\""]
+
 [angle_down]
 ico = """\
 <svg viewBox="0 0 384 384" |><path d=\
 "m325 93 32 32-165 165L27 125l32-32 133 133Z"/></svg>\
 """
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [angle_down_3]
 ico_subst = "angle_down"
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [angle_right_2]
 ico_subst = "angle_right"
-colors = ["fill=\"$icoLeftPane\""]
+colors = ["fill=\"$svgFill\""]
+
 [angle_right_3]
 ico_subst = "angle_right"
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]
+
 [pencil]
 ico = """\
 <svg viewBox="0 0 24 24" fill="none"><path d="m18 10 3-3-4-4-3 3m4 4L8 20\
 H4v-4L14 6m4 4-4-4" | stroke-width="2" stroke-linejoin="round"/></svg>\
 """
-colors = ["stroke=\"$icoNoteColor\""]
+colors = ["stroke=\"$svgFill\""]
+
 [folder_open]
 ico = """\
 <svg viewBox="0 0 16 16" |><path d="M1.5 14h11l.48-.37 2.63-7-.48-.63H14\
@@ -276,4 +351,4 @@ V3.5l-.5-.5H7.71l-.86-.85L6.5 2h-5l-.5.5v11l.5.5zM2 3h4.29l.86.85.35.15H13\
 v2H8.5l-.35.15-.86.85H3.5l-.47.34-1 3.08L2 3zm10.13 10H2.19l1.67-5H7.5\
 l.35-.15.86-.85h5.79l-2.37 6z"/></svg>\
 """
-colors = ["fill=\"$icoNoteColor\""]
+colors = ["fill=\"$svgFill\""]

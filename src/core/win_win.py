@@ -73,7 +73,7 @@ def setup_ui(self):
     self.ui.topBar.mouseMoveEvent = move_window
     self.ui.status.mouseMoveEvent = move_window
     self.ui.toolBar.mouseMoveEvent = move_window
-    self.container.ui.navi_header.mouseMoveEvent = move_window
+    self.ui.left_top.mouseMoveEvent = move_window
 
     is_maximized = int(tug.get_app_setting("maximizedWindow", False))
     if is_maximized:

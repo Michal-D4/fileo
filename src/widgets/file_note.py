@@ -1,3 +1,4 @@
+import markdown
 from loguru import logger
 from datetime import datetime
 from pathlib import Path
@@ -58,6 +59,7 @@ class fileNote(QWidget):
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
+        ag.signals_.color_theme_changed.connect(self.set_browser_text)
 
     @pyqtSlot(QPoint)
     def context_menu(self, pos: QPoint):
@@ -141,7 +143,21 @@ class fileNote(QWidget):
         set_note_title()
 
     def set_browser_text(self):
-        self.ui.textBrowser.setMarkdown(self.text)
+        def code_block_ally(txt: str) -> str:
+            i = txt.find("\n```")
+            if i == -1:
+                return txt
+            j = txt.find("\n", i+1) + 1
+            k = txt.find("\n```", j)
+            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[k+4:])))
+
+        if not self.text:
+            return
+        txt = code_block_ally(self.text)
+        txt = markdown.markdown(txt)
+        self.ui.textBrowser.setHtml(' '.join(
+            (tug.get_dyn_qss("link_style"), txt)
+        ))
         self.set_height_by_text()
         self.updateGeometry()
 

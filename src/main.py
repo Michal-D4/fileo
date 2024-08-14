@@ -14,15 +14,15 @@ from . import tug
 from .core import app_globals as ag
 from .core.sho import shoWindow
 
-lock_file = None
 
-def run_instance(db_name: str='') -> bool:
+def run_instance(lock: list, db_name: str='') -> bool:
     if tug.config.get('instance_control', False):
         ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
+        logger.info(f'{ag.single_instance=}')
         if ag.single_instance:
-            global lock_file
-            lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
-            if not lock_file.tryLock():
+            if not lock:
+                lock.append(QLockFile(QDir.tempPath() + '/fileo.lock'))
+            if not lock[0].tryLock():
                 return False
 
     ag.db.conn = None
@@ -37,8 +37,7 @@ def start_app(app: QApplication):
 
     @pyqtSlot(QWidget, QWidget)
     def tab_pressed():
-        old = app.focusWidget()
-        if old is ag.dir_list:
+        if app.focusWidget() is ag.dir_list:
             ag.file_list.setFocus()
         else:
             ag.dir_list.setFocus()
@@ -93,9 +92,10 @@ def main(entry_point: str, db_name: str):
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
     logger.info(f'{entry_point=}, {db_name=}')
 
-    if run_instance(db_name):
+    lock = []
+    if run_instance(lock, db_name):
         set_entry_point(entry_point)
         logger.info(f'>>> {entry_point=}, {ag.entry_point=}')
         start_app(app)
-        if lock_file:
-            lock_file.unlock()
+        if lock:
+            lock[0].unlock()

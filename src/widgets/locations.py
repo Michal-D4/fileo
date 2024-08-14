@@ -123,7 +123,6 @@ class Locations(QTextBrowser):
                     return bb
             return ((0,), 0)
 
-        logger.info(f'{self.branch=}')
         file_id = self.branch[1]
         path = db_ut.get_file_path(file_id)
         res = ag.show_message_box(
@@ -153,7 +152,6 @@ class Locations(QTextBrowser):
         return sel_text
 
     def set_data(self, file_id: int, curr_branch: list):
-        # logger.info(f'{file_id=}, {curr_branch=}')
         self.set_file_id(file_id)
         self.show_branches(curr_branch)
 
@@ -208,7 +206,6 @@ class Locations(QTextBrowser):
                     self.branches.append(
                         [*ss, (qq.id, link_hide_suffix(qq)), qq.parent_id]
                     )
-                    logger.info(f'{self.branches[-1]=}')
             curr += 1
 
     def show_branches(self, curr_branch: list) -> str:

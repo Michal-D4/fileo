@@ -9,6 +9,7 @@ class AppSignals(QObject):
     filter_setup_closed = pyqtSignal(name="filter_setup_closed")
 
     collapseSignal = pyqtSignal(QObject, bool)
+    hideSignal = pyqtSignal(bool, int)
 
     start_disk_scanning = pyqtSignal(str, list, name="start_disk_scanning")
 
@@ -20,6 +21,6 @@ class AppSignals(QObject):
 
     start_edit_note = pyqtSignal(QWidget)
 
-    toggle_column = pyqtSignal()
-
     refresh_note_list = pyqtSignal()
+
+    color_theme_changed = pyqtSignal()

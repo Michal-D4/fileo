@@ -12,10 +12,11 @@ class tagBrowser(aBrowser):
         super().__init__(parent)
         self.file_id = 0
         self.editor = editor
+        ag.signals_.color_theme_changed.connect(self.show_in_bpowser)
 
     def show_in_bpowser(self):
         self.browser.clear()
-        css = tug.get_dyn_qss('text_browser')
+        css = tug.get_dyn_qss('browser_style')
         self.browser.setText(''.join((css, self.html_selected())))
 
     def html_selected(self):

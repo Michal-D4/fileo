@@ -51,6 +51,7 @@ TABLES = (
     'is_link integer not null default 0, '
     'hide integer not null default 0, '
     'file_id integer not null default 0, '
+    'tool_tip text, '
     'PRIMARY KEY(parent, id)); '
     ),
     (
@@ -124,10 +125,11 @@ setting_names = (     # DB settings only
     "SEARCH_FILE",
     "NOTE_EDIT_STATE",
     "FILTER_FILE_ROW",
+    "SELECTED_DIRS",
 )
 
 APP_ID = 1718185071
-USER_VER = 13
+USER_VER = 15
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -144,7 +146,7 @@ def tune_new_version() -> bool:
         if v[0] != USER_VER:
             _ = convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
-        logger.info(err)
+        logger.exception(f'{err.args}', exc_info=True)
         return False
     return True
 
@@ -152,7 +154,21 @@ def convert_to_new_version(conn, old_v) -> int:
     if old_v == 0:
         create_tables(conn)
         return USER_VER
+    if old_v < 15:
+        update_to_v15(conn)
+
     initialize_settings(conn)
+
+def update_to_v15(conn: apsw.Connection):
+    sql1 = "alter table parentdir ADD COLUMN tool_tip text"
+    sql2 = """ \
+        UPDATE parentdir SET tool_tip = \
+        (SELECT d.name FROM dirs d WHERE d.id = parentdir.id) \
+    """
+    conn.cursor().execute('pragma journal_mode=WAL')
+    conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
+    conn.cursor().execute(sql1)
+    conn.cursor().execute(sql2)
 
 def create_db(db_name: str) -> apsw.Connection:
     return apsw.Connection(db_name)

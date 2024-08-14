@@ -2,7 +2,7 @@ from loguru import logger
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
-    QTimer, QAbstractTableModel, Qt,
+    QTimer, Qt,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
@@ -19,7 +19,13 @@ if TYPE_CHECKING:
     from .sho import shoWindow
 
 self: 'shoWindow' = None
-sum_width = min_width = 0
+min_width = 220
+
+tool_tips = (
+    ",Last opening date,rating of file,number of file openings,"
+    "Last modified date,Number of pages(in book),Size of file,"
+    "Publication date(book),Date of last note,File creation date"
+).split(',')
 
 def save_bk_settings():
     if not ag.db.conn:
@@ -43,7 +49,8 @@ def save_bk_settings():
             "FILTER_FILE_ROW": (
                 ag.file_list.currentIndex().row()
                 if ag.mode is ag.appMode.FILTER else 0
-            )
+            ),
+            "SELECTED_DIRS" : selected_dirs(),
         }
         ag.save_settings(**settings)
         dir_idx = ag.dir_list.currentIndex()
@@ -52,6 +59,13 @@ def save_bk_settings():
         ag.filter_dlg.save_filter_settings()
     except:
         pass
+
+def selected_dirs() -> list:
+    idxs = ag.dir_list.selectionModel().selectedIndexes()
+    branches = []
+    for idx in idxs:
+        branches.append(low_bk.define_branch(idx))
+    return branches
 
 @pyqtSlot()
 def search_files():
@@ -68,6 +82,21 @@ def toggle_collapse(collapse: bool):
     else:
         idx = low_bk.restore_branch_from_temp()
         ag.dir_list.setCurrentIndex(idx)
+
+def set_menu_more(self):
+    self.ui.more.setIcon(tug.get_icon("more"))
+    ag.buttons.append((self.ui.more, "more"))
+    menu = QMenu(self)
+    for i,item in enumerate(tug.qss_params['$FoldTitles'].split(',')):
+        act = QAction(item, self, checkable=True)
+        act.setChecked(True)
+        act.triggered.connect(
+            # lambda state, it = i: self.set_hidden(state, seq=it)
+            lambda state, it = i: ag.signals_.hideSignal.emit(state, it)
+        )
+        menu.addAction(act)
+
+    self.ui.more.setMenu(menu)
 
 def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize_0
@@ -180,32 +209,42 @@ def current_file_changed(curr: QModelIndex, prev: QModelIndex):
         self.ui.current_filename.setText(low_bk.file_name(curr))
         low_bk.file_notes_show(curr)
 
+def resize_section_0():
+    hdr = ag.file_list.header()
+    ww = ag.file_list.width()
+    sz = ww-6 if ag.file_list.verticalScrollBar().isVisible() else ww
+    sz0 = sum((hdr.sectionSize(i) for i in range(1, hdr.count())))
+    hdr.resizeSection(0, max(sz - sz0, min_width))
+
 def file_list_resize_0(e: QResizeEvent):
-    global sum_width, min_width
     def file_list_resize(e: QResizeEvent):
-        sz = e.size().width()
-        resize_section_0(sz)
+        resize_section_0()
         super(QTreeView, ag.file_list).resizeEvent(e)
-
-    def resize_section_0(sz: int):
-        hdr.resizeSection(
-            0, max(sz - sum_width, min_width)
-        )
-
-    def change_sum_width():
-        sum_width = sum((
-            hdr.sectionSize(i) for i in range(1, hdr.count())
-            if not hdr.isSectionHidden(i)
-        ))
-        sz = ag.file_list.contentsRect().width()
-        resize_section_0(sz)
 
     if ag.db.conn:
         restore_dirs()
 
-    hdr = ag.file_list.header()
     ag.file_list.resizeEvent = file_list_resize
-    ag.signals_.toggle_column.connect(change_sum_width)
+
+def set_field_menu():
+    hdr = ag.file_list.header()
+
+    menu = QMenu(ag.app)
+    for i,field,tt in zip(range(len(low_bk.fields)), low_bk.fields, tool_tips):
+        act = QAction(field, ag.app, checkable=True)
+        if tt:
+            act.setToolTip(tt)
+        act.setChecked(int(not hdr.isSectionHidden(i)))
+        act.triggered.connect(lambda state, idx=i: toggle_show_column(state, index=idx))
+        menu.addAction(act)
+
+    menu.actions()[0].setEnabled(False)
+    menu.setToolTipsVisible(True)
+    ag.app.ui.field_menu.setMenu(menu)
+
+def toggle_show_column(state: bool, index: int):
+    ag.file_list.header().setSectionHidden(index, not state)
+    resize_section_0()
 
 def restore_dirs():
     low_bk.set_dir_model()
@@ -217,34 +256,24 @@ def restore_dirs():
         idx = ag.file_list.model().index(row, 0)
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
-    else:     # ag.appMode.DIR or ag.appMode.FILTER_SETUP
+    elif  ag.mode is ag.appMode.DIR:
         history_dir_files()
+    elif  ag.mode is ag.appMode.HISTORY_FILES:
+        low_bk.show_recent_files()
+    else:   #  ag.appMode.FILTER_SETUP
+        low_bk.show_files([])
 
-    model = ag.file_list.model()
-    header_restore(model)
-    low_bk.set_field_menu()
+    header_restore()
+    set_field_menu()
 
-def header_restore(model: QAbstractTableModel):
-    global sum_width, min_width
+def header_restore():
     hdr: QHeaderView = ag.file_list.header()
     try:
         state = ag.get_setting("FILE_LIST_HEADER")
         if state:
             hdr.restoreState(state)
     except Exception as e:
-        logger.info(f'{type(e)}; {e.args}')
-
-    cnt = hdr.count()
-    if cnt:
-        sum_width = sum((
-            hdr.sectionSize(i) for i in range(1, cnt)
-            if not hdr.isSectionHidden(i)
-        ))
-        min_width = int(
-            max(hdr.sectionSize(i) for i in range(1, cnt)) * 1.5
-        )
-    else:
-        sum_width = min_width = 0
+        logger.info(f'{type(e)}; {e.args}', exc_info=True)
 
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
@@ -263,17 +292,15 @@ def header_menu(pos: QPoint):
             QPoint(pos.x(), pos.y() + hdr.height()))
         )
         if action:
-            low_bk.toggle_show_column(False, idx)
+            toggle_show_column(False, idx)
             menu = ag.app.ui.field_menu.menu()
             menu.actions()[idx].setChecked(False)
 
 @pyqtSlot(int, int, int)
 def resized_column(localIdx: int, oldSize: int, newSize: int):
-    global sum_width, min_width
     if localIdx == 0:
         return
-    sum_width += (newSize - oldSize)
-    min_width = max(min_width, int(newSize * 1.5))
+    resize_section_0()
 
 def populate_all():
     if not ag.db.conn:
@@ -300,6 +327,7 @@ def restore_history():
         if idx.isValid():
             udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
             hist[2] = [udat.id,]
+            ag.dir_list.setCurrentIndex(idx)
 
     low_bk.hist_folder = bool(hist[2])
     ag.history.set_history(*hist)
@@ -331,6 +359,8 @@ def dir_menu(pos):
         menu.addAction("Delete folder(s)\tDel")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
+        menu.addSeparator()
+        menu.addAction("Edit tooltip")
         menu.addSeparator()
         menu.addAction("Import files")
         menu.addSeparator()

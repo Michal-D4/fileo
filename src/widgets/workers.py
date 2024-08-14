@@ -37,7 +37,7 @@ def update0_files():
         if f_hash:
             db_ut.update_file_data(f_id, pp.stat(), f_hash)
         else:
-            db_ut.delete_not_exest_file(f_id)
+            db_ut.delete_not_exist_file(f_id)
 
 def update_touched_files():
     last_scan = ag.get_setting('LAST_SCAN_OPENED', -62135596800)
@@ -54,7 +54,7 @@ def update_touched_files():
             if f_hash != hash0:
                 db_ut.update_file_data(f_id, pp.stat(), f_hash)
         else:
-            db_ut.delete_not_exest_file(f_id)
+            db_ut.delete_not_exist_file(f_id)
 
 def update_pdf_files():
     files = db_ut.get_pdf_files()
@@ -65,7 +65,7 @@ def update_pdf_files():
         try:
             pdf_file_update(f_id, pp)
         except FileNotFoundError as e:
-            db_ut.delete_not_exest_file(f_id)
+            db_ut.delete_not_exist_file(f_id)
 
 def pdf_file_update(id: int, file: str):
     with (open(file, "rb")) as pdf_file:

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>327</height>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QFrame" name="frame_pref">
+    <widget class="QFrame" name="dlg_frame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -39,7 +39,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QFrame" name="pref_ttl">
+       <widget class="QFrame" name="ttl_frame">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>

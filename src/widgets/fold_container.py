@@ -157,7 +157,6 @@ class FoldContainer(QWidget):
 
         self._connect_signal()
         self._setup_event_filter()
-        self.set_menu_more()
 
     def set_qss_fold(self, qss: list):
         self.widgets[0].wid.set_decorator_qss(qss)
@@ -171,20 +170,7 @@ class FoldContainer(QWidget):
 
     def _connect_signal(self):
         ag.signals_.collapseSignal.connect(self._toggle_collapsed)
-
-    def set_menu_more(self):
-        self.ui.more.setIcon(tug.get_icon("more"))
-        ag.buttons.append((self.ui.more, "more"))
-        menu = QMenu(self)
-        for i,item in enumerate(tug.qss_params['$FoldTitles'].split(',')):
-            act = QAction(item, self, checkable=True)
-            act.setChecked(True)
-            act.triggered.connect(
-                lambda state, it = i: self.set_hidden(state, seq=it)
-            )
-            menu.addAction(act)
-
-        self.ui.more.setMenu(menu)
+        ag.signals_.hideSignal.connect(self.set_hidden)
 
     def _shown(self) -> int:
         """
@@ -238,7 +224,6 @@ class FoldContainer(QWidget):
         self.process_collapse(seq, to_collapse)
 
     def process_collapse(self, seq: int, to_collapse: bool):
-        # breakpoint()
         self.widgets[seq].is_collapsed = to_collapse
 
         if to_collapse:
@@ -299,11 +284,11 @@ class FoldContainer(QWidget):
         """
         restore state of container:
         - number of first visible widget
-        - heigh of container
-        - state of each widget in container:
-          - if it is collapsed
-          - if it is hidden
-          - its height
+        - height of container
+        - for each widget in container:
+          - is_collapsed: bool
+          - is_hidden: bool
+          - height: int
         """
         if state[0] is None:
             return
@@ -312,14 +297,13 @@ class FoldContainer(QWidget):
         self.height_ = int(state[1])
         st1 = state[2:]
 
-        menu = self.ui.more.menu()
         for i, ff in enumerate(self.widgets):
             ff.height = st1[i][2]
             if st1[i][1]:
                 ff.is_collapsed = True
+                ff.wid.ui.toFold.setChecked(True)
                 ff.wid.toggle_collapse()
             if st1[i][0]:
-                menu.actions()[i].setChecked(False)
                 ff.is_hidden = True
 
         _not_collapsed = self.shown_not_collapsed()
@@ -334,8 +318,8 @@ class FoldContainer(QWidget):
         - height - height of container, it also set in the resize event,
           but this value need in the restore_state method which
           is called before resize event
-        - states of each widget in container, if it is collapsed,
-          hidden and its height
+        - states of each widget in container:
+          is_hidden, is_collapsed, and height
         """
         state = [self.width(), self.first_visible, self.height_]
 
@@ -386,7 +370,7 @@ class FoldContainer(QWidget):
         change all widgets' height
         according the change of container height
         """
-        hh = a0.size().height() - self.ui.navi_header.height()
+        hh = a0.size().height()
 
         if self.shown_not_collapsed() == 0:
             self.height_ = hh

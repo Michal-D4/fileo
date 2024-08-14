@@ -25,8 +25,9 @@ class AboutDialog(QWidget, Ui_aboutForm):
             Qt.TextInteractionFlag.LinksAccessibleByMouse
         )
         link = 'https://github.com/Michal-D4/fileo'
+        style = tug.get_dyn_qss('link_style')
         self.git_repo.setText(
-            f"GitHub repository: <a href='{link}'>{link}</a>"
+            f"{style}GitHub repository: <a href='{link}'>{link}</a>"
         )
 
         f11 = QShortcut(QKeySequence(Qt.Key.Key_F11), self)

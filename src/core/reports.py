@@ -51,7 +51,6 @@ class sameFileNames():
             for name, ext, path, size, file_id, count in files:
                 pp = Path(path) / '.'.join((name, ext))
                 self.report[name].append((pp, size, file_id, count))
-                logger.info(f'{name=}, {self.report[name][-1]}')
 
         files = db_ut.same_file_names_report()
         create_dict(files)
