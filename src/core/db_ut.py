@@ -7,8 +7,9 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list: # type: ignore
-    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, p.tool_tip, '
-               'd.name from dirs d join parentdir p on p.id = d.id '
+    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
+               'COALESCE(p.tool_tip, d.name), d.name '
+               'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
                'and p.hide = 0')
     sql = sql2[0] if ag.app.show_hidden.isChecked() else ' '.join(sql2)
@@ -799,11 +800,24 @@ def get_export_data(fileid: int) -> dict:
     return res
 #endregion
 
-def update_dir_name(name: str, id: int):
-    sql = 'update dirs set name = ? where id = ?'
-    logger.info(f'{name=}, {id=}')
+def update_tooltip(data: ag.DirData):
+    sql1 = 'select name from dirs where id = ?'
+    sql2 = 'update parentdir set tool_tip = ? where parent = ? and id = ?'
     with ag.db.conn as conn:
-        conn.cursor().execute(sql, (name, id))
+        curs = conn.cursor()
+        dir_name = curs.execute(sql1, (data.id,)).fetchone()
+        tip = None if dir_name[0] == data.tool_tip else data.tool_tip
+        curs.execute(
+            sql2, (tip, data.parent_id, data.id)
+        )
+
+def update_dir_name(name: str, data: ag.DirData):
+    sql1 = 'update dirs set name = ? where id = ?'
+    sql2 = 'update parentdir set tool_tip = null where parent = ? and id = ?'
+    with ag.db.conn as conn:
+        conn.cursor().execute(sql1, (name, data.id))
+        if name == data.tool_tip:
+            conn.cursor().execute(sql2, (data.parent_id, data.id))
 
 def update_file_id(d_data: ag.DirData):
     sql = 'update parentdir set file_id = ? where parent = ? and id = ?'
@@ -822,14 +836,6 @@ def insert_dir(dir_name: str, parent: int) -> int:
         id = conn.last_insert_rowid()
         curs.execute(sql3, (parent, id, dir_name))
     return id
-
-def update_tooltip(data: ag.DirData):
-    sql = 'update parentdir set tool_tip = ? where parent = ? and id = ?'
-    logger.info(f'{data=}')
-    with ag.db.conn as conn:
-        conn.cursor().execute(
-            sql, (data.tool_tip, data.parent_id, data.id)
-        )
 
 def copy_existent(file_id: int, parent_dir: int) -> int:
     """

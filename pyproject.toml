@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "md2fileo"
-version = "1.3.01"
+version = "1.3.02"
 description = "Yet another file organizer"
 repository = "https://github.com/Michal-D4/fileo"
 authors = ["mihal.d44 <mihal.d44@gmail.com>"]

@@ -89,7 +89,7 @@ if cfg_path.exists():
     cfg_path: Path = cfg_path.parent
 else:
     fileo_toml = resources.read_text(qss, "fileo.toml")
-    cfg_path: Path = Path(qss.__path__)
+    cfg_path = resources.files(qss)
 
 config = tomllib.loads(fileo_toml)
 

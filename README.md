@@ -128,7 +128,7 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 ![fileo-comments](https://github.com/Michal-D4/fileo/raw/main/img/file-notes.jpg)
 
 1. "+"  plus button - add new note and open it in the editor
-8.  the button to open the note in the editor
+8.  the button to collapse all notes
 3. start editing of the note
 4. "x" button - delete the note
 5. external (http) reference, can be open in the system web browser
@@ -137,12 +137,12 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 
 ![edit-comment](https://github.com/Michal-D4/fileo/raw/main/img/edit-comment.jpg)
 
-1. the save changes button, save changes and close editor
+1. the button to save changes, save changes and close editor
 2. the button to discard changes
 
 > pressing any of these buttons closes the editor
 
-Note is a markdown text. You can insert web links here, but the links to files in the application are not implemented (and not planned yet)
+Note is a markdown text. You can insert here web links and links to file(s) registered in the application (in the current DB).
 
 ### Tag selector
 

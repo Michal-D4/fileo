@@ -73,6 +73,7 @@ class dirItem(object):
                 return False
 
             self.itemData[column] = value
+            db_ut.update_dir_name(value, self.userData)
             return True
 
     def setUserData(self, user_data: ag.DirData):
@@ -86,17 +87,6 @@ class dirModel(QAbstractItemModel):
         hdr = headers if headers else ('',)
         self.rootItem = dirItem(
             data=hdr, user_data=ag.DirData(0, 0, False, False))
-
-    def data_changed(self, idx1: QModelIndex, idx2: QModelIndex):
-        """
-        only one item is edited and so only one index is used
-        """
-        item: dirItem = self.getItem(idx1)
-        if item.userData:
-            name = item.data(idx1.column())
-            id = item.user_data().id
-
-            db_ut.update_dir_name(name, id)
 
     def columnCount(self, parent=QModelIndex()):
         return self.rootItem.columnCount()
@@ -198,12 +188,7 @@ class dirModel(QAbstractItemModel):
             return False
 
         item = self.getItem(index)
-        result = item.setData(index.column(), value, role)
-
-        if result:
-            self.dataChanged.emit(index, index)
-
-        return result
+        return item.setData(index.column(), value, role)
 
     def set_model_data(self):
         """
@@ -232,8 +217,6 @@ class dirModel(QAbstractItemModel):
             # sort by dir name case insensitive
             children[key].sort(key=lambda item: item.itemData[0].upper())
             parents[key].children = children[key]
-
-        self.dataChanged.connect(self.data_changed)
 
     def restore_index(self, path):
         parent = QModelIndex()

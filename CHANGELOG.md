@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.02 - 2024, August 21
+
+* Fix issue find when install in the Linux.
+* ToolTip to folder is saved only if it differs from the folder name.
+* App icon in the about dialog.
+
 ## 1.3.01 - 2024, August 14
 
 * Revise template of color themes. Only one template is in use: "default.qss", and 3 themes: "Default", "Dark1" and "Dark2", that defined by .param files.

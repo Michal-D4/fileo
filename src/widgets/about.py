@@ -16,7 +16,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
         self.setupUi(self)
         self.start_pos = QPoint()
 
-        self.ico.setPixmap(QPixmap(tug.qss_params['$ico_app']))
+        self.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
         self.set_title()
         self.app_info.setText(f'Fileo v.{ag.app_version()} - yet another file keeper')
 

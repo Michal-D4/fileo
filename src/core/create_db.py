@@ -129,7 +129,7 @@ setting_names = (     # DB settings only
 )
 
 APP_ID = 1718185071
-USER_VER = 15
+USER_VER = 16
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -156,6 +156,8 @@ def convert_to_new_version(conn, old_v) -> int:
         return USER_VER
     if old_v < 15:
         update_to_v15(conn)
+    elif old_v == 15:
+        update_to_v16(conn)
 
     initialize_settings(conn)
 
@@ -169,6 +171,16 @@ def update_to_v15(conn: apsw.Connection):
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
     conn.cursor().execute(sql1)
     conn.cursor().execute(sql2)
+
+def update_to_v16(conn: apsw.Connection):
+    sql = """\
+    update parentdir set tool_tip = null \
+    from dirs d where parentdir.id = d.id \
+    and parentdir.tool_tip = d.name;\
+    """
+    conn.cursor().execute('pragma journal_mode=WAL')
+    conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
+    conn.cursor().execute(sql)
 
 def create_db(db_name: str) -> apsw.Connection:
     return apsw.Connection(db_name)
