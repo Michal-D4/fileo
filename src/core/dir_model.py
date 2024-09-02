@@ -8,9 +8,9 @@ from . import db_ut, app_globals as ag
 from .. import tug
 
 class dirItem(object):
-    def __init__(self, data, user_data: ag.DirData=None, parent=None):
+    def __init__(self, data: str, user_data: ag.DirData=None, parent=None):
         self.parentItem: dirItem = parent
-        self.itemData = list(data)
+        self.itemData = data
         self.children = []
 
         self.userData: ag.DirData = user_data
@@ -27,10 +27,10 @@ class dirItem(object):
         return 0
 
     def columnCount(self):
-        return len(self.itemData)
+        return 1
 
-    def data(self, column):
-        return self.itemData[column]
+    def data(self):
+        return self.itemData
 
     def user_data(self):
         return self.userData
@@ -63,16 +63,13 @@ class dirItem(object):
 
         return True
 
-    def setData(self, column, value, role=Qt.ItemDataRole.EditRole):
+    def setData(self, value, role=Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.ToolTipRole:
             self.userData.tool_tip = value
             db_ut.update_tooltip(self.userData)
             return True
         if role == Qt.ItemDataRole.EditRole:
-            if column < 0 or column >= len(self.itemData):
-                return False
-
-            self.itemData[column] = value
+            self.itemData = value
             db_ut.update_dir_name(value, self.userData)
             return True
 
@@ -95,7 +92,7 @@ class dirModel(QAbstractItemModel):
         if (role == Qt.ItemDataRole.DisplayRole or
             role == Qt.ItemDataRole.EditRole):
             item = self.getItem(index)
-            return item.data(index.column())
+            return item.data()
         elif role == Qt.ItemDataRole.ToolTipRole:
             u_dat = self.getItem(index).user_data()
             return u_dat.tool_tip
@@ -129,13 +126,6 @@ class dirModel(QAbstractItemModel):
                 return item
 
         return self.rootItem
-
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
-        if (orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole):
-            return self.rootItem.data(section)
-
-        return None
 
     def index(self, row, column, parent=QModelIndex()):
         if parent.isValid() and parent.column() != 0:
@@ -188,7 +178,7 @@ class dirModel(QAbstractItemModel):
             return False
 
         item = self.getItem(index)
-        return item.setData(index.column(), value, role)
+        return item.setData(value, role)
 
     def set_model_data(self):
         """
@@ -210,7 +200,7 @@ class dirModel(QAbstractItemModel):
 
         for row in dirs:
             u_dat = row[-1]    # ag.DirData
-            it = dirItem(data=(row[1],), user_data=u_dat)
+            it = dirItem(data=row[1], user_data=u_dat)
             enroll_item(row[0], u_dat.id, it)
 
         for key in children:

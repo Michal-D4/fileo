@@ -342,7 +342,7 @@ def get_dir_names_path(index: QModelIndex) -> list:
     while item:
         if not item.parent():
             break
-        name = item.data(Qt.ItemDataRole.DisplayRole)
+        name = item.data()
         branch.append(name)
         item = item.parent()
     branch.reverse()
@@ -904,11 +904,7 @@ def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
     model = ag.dir_list.model()
     if not model.insertRow(row, parent):
         return QModelIndex()
-
-    index = model.index(row, 0, parent)
-    model.setData(index, "New folder", Qt.ItemDataRole.EditRole)
-
-    return index
+    return model.index(row, 0, parent)
 
 def create_dir():
     cur_idx = ag.dir_list.currentIndex()
@@ -927,7 +923,6 @@ def create_folder(index: QModelIndex):
     """
     parent = index.parent()
     parent_id = parent.data(Qt.ItemDataRole.UserRole).id if parent.isValid() else 0
-
     folder_name = "New folder"
     dir_id = db_ut.insert_dir(folder_name, parent_id)
 
@@ -938,8 +933,9 @@ def create_folder(index: QModelIndex):
         hidden=False,
         tool_tip=folder_name
     )
-
-    index.internalPointer().setUserData(user_data)
+    item: dirItem = index.internalPointer()
+    item.setUserData(user_data)
+    item.setData("New folder", Qt.ItemDataRole.EditRole)
 
 def delete_folders():
     cur_idx = ag.dir_list.currentIndex()

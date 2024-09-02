@@ -9,7 +9,7 @@ from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )
 from . import app_globals as ag, low_bk, load_files, db_ut
-from .dir_model import dirItem, dirModel
+from .dir_model import dirModel
 
 if sys.platform.startswith("win"):
     from . import win_menu as menu
@@ -121,7 +121,6 @@ def dir_mime_data(indexes) -> QMimeData:
 
     data_stream.writeInt(len(indexes))
     for idx in indexes:
-        it: dirItem = idx.internalPointer()
         path = get_index_path(idx)
         data_stream.writeQString(','.join((str(x) for x in path)))
 

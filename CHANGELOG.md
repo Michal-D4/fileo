@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.03 - 2024, 02 September
+* fix issue with folder creation
+* fix issue with folder name editing
+* Some code changes and improvements.
+
 ## 1.3.02 - 2024, August 21
 
 * Fix issue find when install in the Linux.
