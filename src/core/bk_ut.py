@@ -191,7 +191,6 @@ def show_main_menu():
     menu.addAction('Check for update')
     menu.addSeparator()
     menu.addAction('About')
-    sz = menu.sizeHint()
     pos = self.ui.btnSetup.pos()
     action = menu.exec(ag.app.mapToGlobal(
         pos + QPoint(53, 26)
