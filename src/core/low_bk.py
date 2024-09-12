@@ -79,8 +79,8 @@ def set_user_actions_handler():
         "SaveEditState": save_note_edit_state,
         "show file": single_file,
         "file reveal": reveal_in_explorer,
-        "Files Clear file history": clear_file_history,
-        "Files Remove selected from history": remove_selected_from_history,
+        "Files Clear file history": clear_recent_files,
+        "Files Remove selected from history": remove_files_from_recent,
         "show_recent_files": show_recent_files,
       }
 
@@ -102,13 +102,13 @@ def set_user_actions_handler():
 
     return execute_action
 
-def clear_file_history():
-    ag.file_history.clear()
+def clear_recent_files():
+    ag.recent_files.clear()
     ag.switch_first_mode()
 
-def remove_selected_from_history():
+def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
-        ag.file_history.remove(idx.data(Qt.ItemDataRole.UserRole).id)
+        ag.recent_files.remove(idx.data(Qt.ItemDataRole.UserRole).id)
     show_recent_files()
 
 def save_db_list():
@@ -203,7 +203,7 @@ def set_check_btn(new_mode: ag.appMode):
     for key, btn in checkable_btn.items():
         btn.setIcon(tug.get_icon(btn.objectName(), int(key is new_mode)))
 
-    if new_mode.value < ag.appMode.HISTORY_FILES.value:
+    if new_mode.value < ag.appMode.RECENT_FILES.value:
         checkable_btn[new_mode].setChecked(True)
     ag.set_mode(new_mode)
 
@@ -545,8 +545,8 @@ def show_recent_files():
 
 def get_recent_files() -> list:
     ''' in LIFO order '''
-    ag.set_mode(ag.appMode.HISTORY_FILES)
-    return (db_ut.get_file(id_) for id_ in ag.file_history[::-1])
+    ag.set_mode(ag.appMode.RECENT_FILES)
+    return (db_ut.get_file(id_) for id_ in ag.recent_files[::-1])
 
 def show_files(files, file_id: int = 0):
     """
@@ -555,7 +555,7 @@ def show_files(files, file_id: int = 0):
     :@param file_id - if 0 no file was selected
     """
     ag.file_list.setSortingEnabled(
-        ag.mode is not ag.appMode.HISTORY_FILES
+        ag.mode is not ag.appMode.RECENT_FILES
     )
     model = fill_file_model(files)
     set_file_model(model)
@@ -652,7 +652,7 @@ def open_folder():
     if idx.isValid():
         path = full_file_name(idx)
         tug.reveal_file(str(Path(path)))
-        ag.add_history_file(idx.data(Qt.ItemDataRole.UserRole).id)
+        ag.add_file_to_recent(idx.data(Qt.ItemDataRole.UserRole).id)
 
 def reveal_in_explorer(file_id: int|str):
     path = db_ut.get_file_path(file_id)
@@ -693,7 +693,7 @@ def open_file_by_model_index(index: QModelIndex):
         update_open_date(index)
     else:
         open_manualy(index)
-    ag.add_history_file(index.data(Qt.ItemDataRole.UserRole).id)
+    ag.add_file_to_recent(index.data(Qt.ItemDataRole.UserRole).id)
 
 def open_with_url(path: str) -> bool:
     # logger.info(f'{path=}')

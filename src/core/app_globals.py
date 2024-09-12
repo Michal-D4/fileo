@@ -39,7 +39,7 @@ fold_states: 'list[FoldState]' = None
 buttons = []
 note_buttons = []
 history: 'History' = None
-file_history = []
+recent_files = []
 single_instance = False
 stop_thread = False
 
@@ -48,7 +48,7 @@ class appMode(Enum):    # better name is fileListMode
     DIR = 1
     FILTER = 2
     FILTER_SETUP = 3
-    HISTORY_FILES = 4
+    RECENT_FILES = 4
     FOUND_FILES = 5
     FILE_BY_REF = 6
 
@@ -62,7 +62,7 @@ def set_mode(new_mode: appMode):
     global mode, first_mode
     if new_mode is mode:
         return
-    if mode.value <= appMode.HISTORY_FILES.value:
+    if mode.value <= appMode.RECENT_FILES.value:
         first_mode = mode
     mode = new_mode
 
@@ -70,7 +70,7 @@ def set_mode(new_mode: appMode):
 
 def switch_first_mode():
     global mode, first_mode
-    if mode.value >= appMode.HISTORY_FILES.value:
+    if mode.value >= appMode.RECENT_FILES.value:
         old_mode, mode = mode, first_mode
         app.ui.app_mode.setText(mode.name)
 
@@ -151,19 +151,19 @@ def get_setting(key: str, default=None):
 
     return vv if vv else default
 
-def add_history_file(id_: int):
+def add_file_to_recent(id_: int):
     """
     id_ - file id, valid value > 0
     """
-    if id_ < 1 or file_history and id_ == file_history[-1]:
+    if id_ < 1 or recent_files and id_ == recent_files[-1]:
         return
     try:
-        i = file_history.index(id_)
-        file_history.pop(i)
+        i = recent_files.index(id_)
+        recent_files.pop(i)
     except ValueError:
         pass
 
-    file_history.append(id_)
+    recent_files.append(id_)
 
 def show_message_box(
         title: str, msg: str,

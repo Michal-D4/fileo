@@ -116,7 +116,7 @@ class notesContainer(QScrollArea):
             ts = db_ut.insert_note(note_file_id, txt)
 
         file_id = note.get_file_id()
-        ag.add_history_file(file_id)
+        ag.add_file_to_recent(file_id)
 
         if self.file_id == file_id:
             self.update_date_in_file_list(ts)

@@ -32,7 +32,7 @@ def save_bk_settings():
         return
     mode = (
         ag.mode.value
-        if ag.mode.value <= ag.appMode.HISTORY_FILES.value
+        if ag.mode.value <= ag.appMode.RECENT_FILES.value
         else ag.first_mode.value
     )
     try:
@@ -43,7 +43,7 @@ def save_bk_settings():
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "DIR_HISTORY": ag.history.get_history(),
-            "FILE_HISTORY": ag.file_history,
+            "FILE_HISTORY": ag.recent_files,
             "APP_MODE": mode,
             "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
             "FILTER_FILE_ROW": (
@@ -257,7 +257,7 @@ def restore_dirs():
         ag.file_list.scrollTo(idx)
     elif  ag.mode is ag.appMode.DIR:
         history_dir_files()
-    elif  ag.mode is ag.appMode.HISTORY_FILES:
+    elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
     else:   #  ag.appMode.FILTER_SETUP
         low_bk.show_files([])
@@ -319,7 +319,7 @@ def populate_all():
     )
 
 def restore_history():
-    ag.file_history = ag.get_setting('FILE_HISTORY', [])
+    ag.recent_files = ag.get_setting('FILE_HISTORY', [])
     hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
     if not hist[2] and ag.dir_list.model().rowCount():
         idx = ag.dir_list.model().index(0, 0, QModelIndex())
@@ -388,7 +388,7 @@ def file_menu(pos):
         menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
-        if ag.mode is ag.appMode.HISTORY_FILES:
+        if ag.mode is ag.appMode.RECENT_FILES:
             menu.addAction("Clear file history")
             menu.addAction("Remove selected from history")
         else:
