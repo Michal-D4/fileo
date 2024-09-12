@@ -10,21 +10,21 @@ The graphical interface is shown in the image below.
 
 ## The GUI elements:
 
-1. application mode, it determinates how files in the list (7) is selected.
+1. application mode, it determinates how files in the list (8) is selected.
 2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane.
-3. Describes how the list of files (7) was created.
-4. buttons related to the file list (7):
+3. Describes how the list of files (8) was created.
+4. buttons related to the file list (8):
    * ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files
    * ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,
-   * ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the fields that will be visible in the file list
-6. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folders; collapse all branches - expand the last branch if all branches were collapsed.
-7. left toolbar, it contains the following buttons from top to bottom:
+   * ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the columns that will be visible in the file list
+5. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folders; collapse all branches - expand the last branch if all branches were collapsed.
+6. left toolbar, it contains the following buttons from top to bottom:
    1. menu button
    2. switch to "DIR" mode, the file list displays files from the current folder
    3. switch to the "FILTER" mode, the file list displays files according to the filter settings
    4. open filter settings dialog, switch to "FILTER_SETUP" mode
    5. hide/show left pane
-8. the folder tree window
+7. the folder tree window
 8. the file list window
 9. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders)
 10. current database name, click on it to enter list of available databases
@@ -33,7 +33,15 @@ The graphical interface is shown in the image below.
 13. the name of the file whose note is open in the editor, this is not displaying if no note is edited, click here to go to this file and the folder containing this file
 14. number of files in the file list
 
-The application works in three main modes: DIR, FILTER and FILTER_SETUP. In DIR mode, files are selected by the current directory in the "Folders" widget.
+The application works in three main modes: DIR, FILTER and FILTER_SETUP.
+* In DIR mode, files are selected by the current directory in the "Folders" widget.
+* In FILTER mode, files are selected according to the parameters choosen in the FILTER_SETUP dialog.
+* In FILTER_SETUP mode. The filter setup dialog is openning, the file list is changing only by clicking the "Apply" or "Done" button.
+
+There are three additional application modes: RECENT_FILES, FOUND_FILES and FILE_BY_REF.
+* RECENT_FILES - list of files you've recently done something with
+* FOUND_FILES - list of files you found using the search dialog
+* FILE_BY_REF - the file list window contains a file referenced from the note of some file. The transition to this mode occurs after clicking on the link.
 
 In FILTER mode, the list of files depends on the filter options set in FILTER_SETUP mode. The filter may depend on the selected folders, selected tags, and selected authors in the boxes in the left pane. In FILTER_SETUP mode, the list of files does not change when changing the selected folders, tags, authors. But in FILTER mode, any changes are immediately displayed in the list of files.
 
@@ -98,7 +106,7 @@ There are two method to add files:
    ![import-files](https://github.com/Michal-D4/fileo/raw/main/img/import-files.jpg)
 
    to the folder "New folder" in this case.
-   
+
    > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase references.
 
 File duplicates
@@ -164,7 +172,7 @@ Note is a markdown text. You can insert here web links and links to file(s) regi
 
 ### Locations
 
-The file may be located in different folders. In fact, these are links to the same file[^1] in different folders. The file location is represented as a branch of folders from the root folder to the folder in which the link to the file is saved. 
+The file may be located in different folders. In fact, these are links to the same file[^1] in different folders. The file location is represented as a branch of folders from the root folder to the folder in which the link to the file is saved.
 
 ![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
@@ -190,7 +198,7 @@ The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidde
 <img src="https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg" alt="Folders"  />
 
 1. The current folder (fill).
-2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "fill" are hidden; "folder2"[^2] is link to "folder2" above "to have 2 folders". 
+2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "fill" are hidden; "folder2"[^2] is link to "folder2" above "to have 2 folders".
    **Note.** The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
 3. The current file "angle_down_20221002213631.svg".
 
