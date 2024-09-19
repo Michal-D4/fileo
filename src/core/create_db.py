@@ -121,7 +121,7 @@ setting_names = (     # DB settings only
     "LAST_SCAN_OPENED",
     "SHOW_HIDDEN",
     "DIR_HISTORY",
-    "FILE_HISTORY",
+    "RECENT_FILES",
     "SEARCH_FILE",
     "NOTE_EDIT_STATE",
     "FILTER_FILE_ROW",

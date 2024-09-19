@@ -178,7 +178,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def switch_page(self, new_page: Page):
         if new_page is self.cur_page:
             return
-        ag.add_history_file(self.file_id)
+        ag.add_file_to_recent(self.file_id)
         # logger.info(f'{self.cur_page.name=}, {new_page.name=}')
 
         self.page_selectors[self.cur_page].setStyleSheet(

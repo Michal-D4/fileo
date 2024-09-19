@@ -168,7 +168,7 @@ class fileModel(QAbstractTableModel):
                 value = value.toSecsSinceEpoch()
         db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
-        ag.add_history_file(self.user_data[index.row()].id)
+        ag.add_file_to_recent(self.user_data[index.row()].id)
         return True
 
     def get_row(self, row):

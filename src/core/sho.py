@@ -114,7 +114,7 @@ class shoWindow(QMainWindow):
         mode = ag.appMode(
             int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
-        if mode.value > ag.appMode.HISTORY_FILES.value:
+        if mode.value > ag.appMode.RECENT_FILES.value:
             mode = ag.appMode.DIR
         self.ui.app_mode.setText(mode.name)
         low_bk.set_check_btn(mode)
