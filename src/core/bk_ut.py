@@ -43,7 +43,7 @@ def save_bk_settings():
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "DIR_HISTORY": ag.history.get_history(),
-            "FILE_HISTORY": ag.recent_files,
+            "RECENT_FILES": ag.recent_files,
             "APP_MODE": mode,
             "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
             "FILTER_FILE_ROW": (
@@ -319,7 +319,7 @@ def populate_all():
     )
 
 def restore_history():
-    ag.recent_files = ag.get_setting('FILE_HISTORY', [])
+    ag.recent_files = ag.get_setting('RECENT_FILES', [])
     hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
     if not hist[2] and ag.dir_list.model().rowCount():
         idx = ag.dir_list.model().index(0, 0, QModelIndex())
