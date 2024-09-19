@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.04 - 2024, 19 September
+* the readme file corrected
+* Some code changes and improvements.
+
 ## 1.3.03 - 2024, 02 September
 * fix issue with folder creation
 * fix issue with folder name editing
