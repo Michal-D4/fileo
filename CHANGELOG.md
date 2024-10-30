@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.05 - 2024, 30 October
+* fix note height issue when changing color theme
+
 ## 1.3.04 - 2024, 19 September
 * the readme file corrected
 * Some code changes and improvements.
