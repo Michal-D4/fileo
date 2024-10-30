@@ -59,7 +59,6 @@ class fileNote(QWidget):
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
-        ag.signals_.color_theme_changed.connect(self.set_browser_text)
 
     @pyqtSlot(QPoint)
     def context_menu(self, pos: QPoint):

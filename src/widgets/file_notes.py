@@ -23,6 +23,7 @@ class notesContainer(QScrollArea):
 
         ag.signals_.delete_note.connect(self.remove_item)
         ag.signals_.refresh_note_list.connect(self.set_notes_data)
+        ag.signals_.color_theme_changed.connect(self.theme_changed)
 
     def set_ui(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -85,7 +86,11 @@ class notesContainer(QScrollArea):
             note = fileNote(*row[1:], self.file_id)
             note.set_text(row[0])
             self.add_item(note)
+        self.collapse_since(1)
         self.setUpdatesEnabled(True)
+
+    def theme_changed(self):
+        self.collapse_since(1)
 
     def clear_layout(self):
         for i in reversed(range(self.scroll_layout.count())):
@@ -159,7 +164,10 @@ class notesContainer(QScrollArea):
             db_ut.delete_note(file_id, note_id)
 
     def collapse_all(self):
-        for i in reversed(range(self.scroll_layout.count())):
+        self.collapse_since()
+
+    def collapse_since(self, start: int = 0):
+        for i in reversed(range(start, self.scroll_layout.count())):
             item = self.scroll_layout.itemAt(i)
             if item.widget():
                 item.widget().check_collapse_button()
