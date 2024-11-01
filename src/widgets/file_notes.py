@@ -85,12 +85,17 @@ class notesContainer(QScrollArea):
         for row in data:
             note = fileNote(*row[1:], self.file_id)
             note.set_text(row[0])
-            self.add_item(note)
+            self.add_to_top(note)
         self.collapse_since(1)
         self.setUpdatesEnabled(True)
 
     def theme_changed(self):
-        self.collapse_since(1)
+        for i in reversed(range(self.scroll_layout.count())):
+            item = self.scroll_layout.itemAt(i)
+            if item.widget():
+                note: fileNote = item.widget()
+                if not note.ui.collapse.isChecked():
+                    note.set_browser_text()
 
     def clear_layout(self):
         for i in reversed(range(self.scroll_layout.count())):
@@ -98,7 +103,7 @@ class notesContainer(QScrollArea):
             if item.widget():
                 item.widget().deleteLater()
 
-    def add_item(self, item: fileNote):
+    def add_to_top(self, item: fileNote):
         item.setSizePolicy(
             QSizePolicy.Policy.Preferred,
             QSizePolicy.Policy.MinimumExpanding
@@ -170,4 +175,5 @@ class notesContainer(QScrollArea):
         for i in reversed(range(start, self.scroll_layout.count())):
             item = self.scroll_layout.itemAt(i)
             if item.widget():
-                item.widget().check_collapse_button()
+                note: fileNote = item.widget()
+                note.ensure_collapsed()

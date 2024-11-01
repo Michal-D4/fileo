@@ -196,7 +196,7 @@ class fileNote(QWidget):
         self.set_collapse_icon()
 
     @pyqtSlot()
-    def check_collapse_button(self):
+    def ensure_collapsed(self):
         if self.ui.collapse.isChecked():
             return
         self.ui.collapse.setChecked(True)
