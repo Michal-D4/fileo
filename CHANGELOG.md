@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.3.06 - 2024, 01 November
+## 1.3.07 - 2024, 01 November
 * fix note color and collapse issue when changing color theme
 
 ## 1.3.05 - 2024, 30 October

@@ -157,7 +157,6 @@ class fileNote(QWidget):
         self.ui.textBrowser.setHtml(' '.join(
             (tug.get_dyn_qss("link_style"), txt)
         ))
-        self.set_height_by_text()
         self.updateGeometry()
 
     def set_height_by_text(self):
@@ -227,4 +226,5 @@ class fileNote(QWidget):
     def resizeEvent(self, a0: QResizeEvent) -> None:
         if not self.ui.collapse.isChecked():
             self.set_browser_text()
+            self.set_height_by_text()
         return super().resizeEvent(a0)
