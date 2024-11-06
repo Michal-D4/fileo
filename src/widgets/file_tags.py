@@ -35,6 +35,10 @@ class tagBrowser(aBrowser):
         if self.add_tags(old, new):
             self.update_tag_list()
             ag.signals_.user_signal.emit("tag_inserted")
+        self.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
+        self.editor.setText(', '.join(self.get_selected()))
 
     def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
