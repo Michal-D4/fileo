@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.07'
+    return '1.3.08'
 
 entry_point: Path = None
 app: 'shoWindow' = None

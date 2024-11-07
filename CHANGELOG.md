@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.08 - 2024, 07 November
+* fix some tag/author selector and editor issues
+
 ## 1.3.07 - 2024, 01 November
 * fix note color and collapse issue when changing color theme
 

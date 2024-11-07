@@ -33,8 +33,12 @@ class tagBrowser(aBrowser):
     def tag_list_changed(self, old: list[str], new: list[str]):
         self.remove_tags(old, new)
         if self.add_tags(old, new):
-            self.update_tag_list()
+            self.set_list(db_ut.get_tags())
             ag.signals_.user_signal.emit("tag_inserted")
+        self.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
+        self.editor.setText(', '.join(self.get_selected()))
 
     def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
@@ -54,7 +58,15 @@ class tagBrowser(aBrowser):
 
     @pyqtSlot()
     def update_tag_list(self):
+        """
+        some tags have been removed
+        or some tag has been renamed
+        """
         self.set_list(db_ut.get_tags())
+        self.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
+        self.set_selected_text()
 
     @pyqtSlot()
     def finish_edit_tag(self):

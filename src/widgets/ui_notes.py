@@ -123,9 +123,9 @@ class Ui_FileNotes(object):
         _translate = QtCore.QCoreApplication.translate
         FileNotes.setWindowTitle(_translate("FileNotes", "Form"))
         self.authorEdit.setToolTip(_translate("FileNotes", "File\'s authors"))
-        self.authorEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of authors separated by commas or select from the \"Tag Selector\""))
+        self.authorEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of authors separated by commas or select from the \"Author selector\""))
         self.tagEdit.setToolTip(_translate("FileNotes", "File\'s tags"))
-        self.tagEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of tags separated by commas or select from the \"Tag Selector\""))
+        self.tagEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of tags separated by commas or select from the \"Tag selector\""))
         self.expand.setToolTip(_translate("FileNotes", "Maximize panel"))
         self.expand.setText(_translate("FileNotes", "..."))
         self.l_tags.setText(_translate("FileNotes", "Tag selector"))

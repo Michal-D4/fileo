@@ -39,6 +39,9 @@ class authorBrowser(QWidget):
 
     def refresh_data(self):
         self.set_authors()
+        self.br.set_selection(
+            (int(s[0]) for s in db_ut.get_file_author_id(self.file_id))
+        )
         self.set_selected_text()
 
     def set_authors(self):

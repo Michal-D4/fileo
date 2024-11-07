@@ -35,8 +35,7 @@ class editTag(QWidget):
 
     @pyqtSlot()
     def finish_edit(self):
-        txt = self.editor.text()
-        self.parent().edit_item.emit(txt)
+        self.parent().edit_item.emit(self.editor.text())
         self.parent().browser.setFocus()
         self.close()
 
@@ -159,7 +158,6 @@ class aBrowser(QWidget):
 
     def set_list(self, items: list):
         self.tags.clear()
-        self.sel_tags.clear()
         for key, val in items:
             self.tags[key] = val
         self.show_in_bpowser()
@@ -178,7 +176,6 @@ class aBrowser(QWidget):
 
     def set_selection(self, sel_ids):
         _sels = list(sel_ids)
-        # logger.info(f'{self.objectName()}:{_sels=}')
         self.sel_tags = [key for key, val in self.tags.items() if val in _sels]
         # logger.info(f'{self.objectName()}:{self.sel_tags=}')
         self.show_in_bpowser()
@@ -226,8 +223,7 @@ class aBrowser(QWidget):
             if tref in self.sel_tags:
                 self.sel_tags.remove(tref)
                 self._to_edit = self.sel_tags[-1] if len(
-                    self.sel_tags
-                ) > 0 else ''
+                    self.sel_tags) > 0 else ''
             else:
                 self.sel_tags.append(tref)
                 self._to_edit = tref
