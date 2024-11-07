@@ -62,7 +62,7 @@
          <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string>Enter a list of authors separated by commas or select from the &quot;Tag Selector&quot;</string>
+         <string>Enter a list of authors separated by commas or select from the &quot;Author selector&quot;</string>
         </property>
        </widget>
       </item>
@@ -75,7 +75,7 @@
          <bool>false</bool>
         </property>
         <property name="placeholderText">
-         <string>Enter a list of tags separated by commas or select from the &quot;Tag Selector&quot;</string>
+         <string>Enter a list of tags separated by commas or select from the &quot;Tag selector&quot;</string>
         </property>
        </widget>
       </item>
