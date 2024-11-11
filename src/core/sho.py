@@ -388,9 +388,13 @@ class shoWindow(QMainWindow):
         if not ag.db.conn:
             return
         if self.ui.btnFilterSetup.isChecked():
-            ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
+            pos_: QPoint = tug.get_app_setting("filterDialogPosition",
+                QPoint(self.width() - ag.filter_dlg.width() - 10, 32))
+            ag.filter_dlg.move(pos_)
             ag.filter_dlg.show()
         elif ag.filter_dlg:
+            if ag.filter_dlg.isVisible():
+                tug.save_app_setting(filterDialogPosition = ag.filter_dlg.pos())
             ag.filter_dlg.hide()
 
     def init_filter_setup(self):
@@ -411,9 +415,6 @@ class shoWindow(QMainWindow):
 
     def resizeEvent(self, e: QResizeEvent) -> None:
         update_grips(self)
-
-        if ag.filter_dlg and ag.filter_dlg.isVisible():
-            ag.filter_dlg.move(self.width() - ag.filter_dlg.width() - 10, 32)
         super().resizeEvent(e)
 
     def closeEvent(self, event: QCloseEvent) -> None:

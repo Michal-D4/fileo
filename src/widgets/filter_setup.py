@@ -1,7 +1,8 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtWidgets import QWidget, QLineEdit
+from PyQt6.QtCore import Qt, QDate, QPoint
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QWidget
 
 from ..core import app_globals as ag, db_ut
 from .ui_set_filter import Ui_filterSetup
@@ -18,6 +19,8 @@ class FilterSetup(QWidget):
         super().__init__(parent)
 
         self.single_folder = False
+        self.start_pos = QPoint()
+
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
         self.ui.after_date.setCalendarPopup(True)
@@ -41,6 +44,17 @@ class FilterSetup(QWidget):
         self.ui.rating_sel.clicked.connect(self.rating_clicked)
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
+
+        self.mouseMoveEvent = self.move_self
+
+    def move_self(self, e: QMouseEvent):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            pos_ = e.globalPosition().toPoint()
+            dist = pos_ - self.start_pos
+            if dist.manhattanLength() < 50:
+                self.move(self.pos() + dist)
+                e.accept()
+            self.start_pos = pos_
 
     def toggle_tag_check(self, state: int):
         self.ui.all_btn.setEnabled(state)
