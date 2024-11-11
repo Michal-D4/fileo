@@ -146,9 +146,10 @@ class FilterSetup(QWidget):
             return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.single_folder = (len(idxs) == 1)
+        dirs = []
         for idx in idxs:
-            db_ut.save_to_temp('dir', idx.data(Qt.ItemDataRole.UserRole).id)
-        db_ut.temp_files_dir()
+            dirs.append((idx.data(Qt.ItemDataRole.UserRole).id,))
+        db_ut.temp_files_dir(dirs, self.ui.subDirs.isChecked())
 
     def store_tag_ids(self):
         id_list = ag.tag_list.get_selected_ids()
@@ -213,6 +214,7 @@ class FilterSetup(QWidget):
     def save_filter_settings(self):
         settings = {
             "DIR_CHECK": self.ui.selected_dir.isChecked(),
+            "SUB_DIR_CHECK": self.ui.subDirs.isChecked(),
             "TAG_CHECK": self.ui.selected_tag.isChecked(),
             "IS_ALL": self.ui.all_btn.isChecked(),
             "EXT_CHECK": self.ui.selected_ext.isChecked(),
@@ -233,6 +235,7 @@ class FilterSetup(QWidget):
 
     def restore_filter_settings(self):
         self.ui.selected_dir.setChecked(ag.get_setting("DIR_CHECK", False))
+        self.ui.subDirs.setChecked(ag.get_setting("SUB_DIR_CHECK", False))
         self.ui.selected_tag.setChecked(ag.get_setting("TAG_CHECK", False))
         is_all = ag.get_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)

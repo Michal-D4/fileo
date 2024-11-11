@@ -103,6 +103,7 @@ setting_names = (     # DB settings only
     "FILE_LIST_HEADER",
     "TAG_SEL_LIST",
     "DIR_CHECK",
+    "SUB_DIR_CHECK",
     "TAG_CHECK",
     "IS_ALL",
     "EXT_CHECK",
@@ -129,7 +130,7 @@ setting_names = (     # DB settings only
 )
 
 APP_ID = 1718185071
-USER_VER = 16
+USER_VER = 17
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:

@@ -485,9 +485,7 @@ def filter_files(param: dict) -> apsw.Cursor:
     def filter_sqls(key: str, field: str='') -> str:
         return {
             'dir_sql': "select distinct val from aux where key = 'files_dir'",
-            'tag_sql':(
-                "select val from aux where key = 'file_tag'"
-            ),
+            'tag_sql': "select val from aux where key = 'file_tag'",
             'ext_sql': (
                 "select id from files where extid in "
                 "(select val from aux where key = 'ext')"
@@ -674,12 +672,30 @@ def get_dir_id_for_file(file_id: int) -> int:
     res = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
     return res[0] if res else 0
 
-def temp_files_dir():
-    sql = (
+def temp_files_dir(dirs: list, all_dirs: bool):
+    sql0 = "insert into aux values ('dir', ?)"
+    sql1 = (
+        "with x(id) as (select id from parentdir where parent = ? "
+        "union select t.id from x inner join parentdir t "
+        "on t.parent = x.id) select * from x"
+    )
+    sql2 = (
         "insert into aux(key, val) select 'files_dir', file from "
         "filedir where dir in (select val from aux where key = 'dir')"
     )
-    ag.db.conn.cursor().execute(sql)
+    curs = ag.db.conn.cursor()
+    if all_dirs:
+        dir_ = set(dirs)
+        for dd in dirs:
+            scur = curs.execute(sql1, dd)
+            for s in scur:
+                dir_.add(s)
+        curs.executemany(sql0, dir_)
+    else:
+        curs.executemany(sql0, dirs)
+    dcur = curs.execute("select val from aux where key = 'dir'")
+    curs.execute(sql2)
+
 
 def clear_temp():
     sql = "delete from aux where key not like 'save%'"
