@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.09 - 2024, 11 November
+* new option in the filter - "all subfolders"
+
 ## 1.3.08 - 2024, 07 November
 * fix some tag/author selector and editor issues
 

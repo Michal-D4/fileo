@@ -1,7 +1,8 @@
 from loguru import logger
 
-from PyQt6.QtCore import Qt, QDate
-from PyQt6.QtWidgets import QWidget, QLineEdit
+from PyQt6.QtCore import Qt, QDate, QPoint
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QWidget
 
 from ..core import app_globals as ag, db_ut
 from .ui_set_filter import Ui_filterSetup
@@ -18,6 +19,8 @@ class FilterSetup(QWidget):
         super().__init__(parent)
 
         self.single_folder = False
+        self.start_pos = QPoint()
+
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
         self.ui.after_date.setCalendarPopup(True)
@@ -41,6 +44,17 @@ class FilterSetup(QWidget):
         self.ui.rating_sel.clicked.connect(self.rating_clicked)
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
+
+        self.mouseMoveEvent = self.move_self
+
+    def move_self(self, e: QMouseEvent):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            pos_ = e.globalPosition().toPoint()
+            dist = pos_ - self.start_pos
+            if dist.manhattanLength() < 50:
+                self.move(self.pos() + dist)
+                e.accept()
+            self.start_pos = pos_
 
     def toggle_tag_check(self, state: int):
         self.ui.all_btn.setEnabled(state)
@@ -132,9 +146,10 @@ class FilterSetup(QWidget):
             return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.single_folder = (len(idxs) == 1)
+        dirs = []
         for idx in idxs:
-            db_ut.save_to_temp('dir', idx.data(Qt.ItemDataRole.UserRole).id)
-        db_ut.temp_files_dir()
+            dirs.append((idx.data(Qt.ItemDataRole.UserRole).id,))
+        db_ut.temp_files_dir(dirs, self.ui.subDirs.isChecked())
 
     def store_tag_ids(self):
         id_list = ag.tag_list.get_selected_ids()
@@ -199,6 +214,7 @@ class FilterSetup(QWidget):
     def save_filter_settings(self):
         settings = {
             "DIR_CHECK": self.ui.selected_dir.isChecked(),
+            "SUB_DIR_CHECK": self.ui.subDirs.isChecked(),
             "TAG_CHECK": self.ui.selected_tag.isChecked(),
             "IS_ALL": self.ui.all_btn.isChecked(),
             "EXT_CHECK": self.ui.selected_ext.isChecked(),
@@ -219,6 +235,7 @@ class FilterSetup(QWidget):
 
     def restore_filter_settings(self):
         self.ui.selected_dir.setChecked(ag.get_setting("DIR_CHECK", False))
+        self.ui.subDirs.setChecked(ag.get_setting("SUB_DIR_CHECK", False))
         self.ui.selected_tag.setChecked(ag.get_setting("TAG_CHECK", False))
         is_all = ag.get_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)

@@ -290,24 +290,6 @@ def show_about():
     dlg.show()
 
 #region Common
-def save_tmp_settings(**kwargs):
-    cursor: apsw.Cursor = ag.db.conn.cursor()
-    sql0 = "delete from aux where key = :key"
-    sql1 = "insert into aux values (:key, :value);"
-
-    for key, val in kwargs.items():
-        cursor.execute(sql0, {"key": key})
-        cursor.execute(sql1, {"key": key, "value": pickle.dumps(val)})
-
-def get_tmp_setting(key: str, default=None):
-    cursor: apsw.Cursor = ag.db.conn.cursor()
-    sql = "select val from aux where key = :key;"
-
-    val = cursor.execute(sql, {"key": key}).fetchone()
-    vv = pickle.loads(val[0]) if val else None
-
-    return vv if vv else default
-
 def save_branch_in_temp(index: QModelIndex):
     branch = define_branch(index)
     db_ut.save_branch_in_temp_table(pickle.dumps(branch))
