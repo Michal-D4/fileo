@@ -1,7 +1,9 @@
 from loguru import logger
 import apsw
 from collections import deque, abc
-from pathlib import PurePath
+from pathlib import PurePath, Path
+
+from PyQt6.QtWidgets import QMessageBox
 
 from . import app_globals as ag, create_db
 
@@ -1077,8 +1079,16 @@ def get_files_tag(tag: int) -> set[int]:
 def create_connection(path: str) -> bool:
     if not path:
         return False
+    try:
+        conn: apsw.Connection = apsw.Connection(path)
+    except apsw.CantOpenError as e:
+        ag.show_message_box(
+            'Error open DB',
+            f'{e.args}, DB file: {path}',
+            icon=QMessageBox.Icon.Critical
+        )
+        return False
 
-    conn: apsw.Connection = apsw.Connection(path)
     ag.db.path = path
     ag.db.conn = conn
     ag.signals_.user_signal.emit('Enable_buttons')

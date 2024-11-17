@@ -60,9 +60,6 @@ def start_app(app: QApplication):
     try:
         set_style()
     except Exception as e:
-        # message for developers
-        # logger.info(f"KeyError: {e.args}; >>> check you qss parameters file for the theme {theme_key}")
-        # traceback
         logger.exception(f"styleSheet Error?: {e.args};", exc_info=True)
         return
 
