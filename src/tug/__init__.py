@@ -135,12 +135,6 @@ def prepare_styles(theme_key: str, to_save: bool = False) -> str:
     icons_txt = styles = params = ''
     dyn_qss.clear()
 
-    def default_theme():
-        nonlocal icons_txt, styles, params
-        styles = resources.read_text(qss, "default.qss")
-        params = resources.read_text(qss, "default.param")
-        icons_txt = resources.read_text(qss, "icons.toml")
-
     def read_theme():
         def read_params():
             nonlocal params
@@ -180,10 +174,6 @@ def prepare_styles(theme_key: str, to_save: bool = False) -> str:
 
         nonlocal icons_txt, styles, params
         logger.info(f'{theme_key=}')
-        if theme_key == "Default_Theme":
-            default_theme()
-            return
-
         theme = themes.get(theme_key, {})
 
         read_qss()
