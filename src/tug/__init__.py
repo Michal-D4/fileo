@@ -36,7 +36,9 @@ else:
 APP_NAME = "fileo"
 MAKER = 'miha'
 
+frozen = False
 open_db = None  # keep OpenDB instance, need !!!
+cfg_path = Path()
 config = {}
 settings = None
 qss_params = {}
@@ -44,7 +46,8 @@ dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
 themes = {}
 
-#region  function_used_in___init___py
+temp_dir = tempfile.TemporaryDirectory()
+
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
     used to restore settings on application level
@@ -76,31 +79,33 @@ def set_logger():
     # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")
     logger.info(f'cfg_path={cfg_path.as_posix()}')
-#endregion
 
-if sys.platform.startswith("win"):
-    cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
-elif sys.platform.startswith("linux"):
-    cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+def get_config():
+    global cfg_path, config, frozen
+    if frozen:
+        if sys.platform.startswith("win"):
+            cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
+        elif sys.platform.startswith("linux"):
+            cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+        if not cfg_path.is_file():
+            frozen = False
 
-if cfg_path.exists():
-    with open(cfg_path, "r") as ft:
-        fileo_toml = ft.read()
-    cfg_path: Path = cfg_path.parent
-else:
-    fileo_toml = resources.read_text(qss, "fileo.toml")
-    cfg_path = resources.files(qss)
+    if frozen:
+        with open(cfg_path, "r") as ft:
+            fileo_toml = ft.read()
+        cfg_path = cfg_path.parent
+    else:
+        fileo_toml = resources.read_text(qss, "fileo.toml")
+        cfg_path = resources.files(qss)
 
-config = tomllib.loads(fileo_toml)
+    config = tomllib.loads(fileo_toml)
 
-set_logger()
-
-theme_toml_file = cfg_path / "themes.toml"
-if theme_toml_file.exists():
-    with open(theme_toml_file, "rb") as f:
-        themes = tomllib.load(f)
-
-temp_dir = tempfile.TemporaryDirectory()
+def get_theme_list():
+    global themes
+    theme_toml_file = cfg_path / "themes.toml"
+    if theme_toml_file.exists():
+        with open(theme_toml_file, "rb") as f:
+            themes = tomllib.load(f)
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -134,6 +139,8 @@ def prepare_styles(theme_key: str, to_save: bool = False) -> str:
     global qss_params
     icons_txt = styles = params = ''
     dyn_qss.clear()
+
+    get_theme_list()
 
     def read_theme():
         def read_params():
