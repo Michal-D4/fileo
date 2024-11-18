@@ -79,12 +79,15 @@ def start_app(app: QApplication):
 def set_entry_point(entry_point: str):
     tmp = Path(entry_point).resolve()
     if getattr(sys, "frozen", False):
+        tug.frozen = True
         ag.entry_point = tmp
     else:
         ag.entry_point = tmp.name
 
 def main(entry_point: str, db_name: str):
     app = QApplication([])
+    tug.get_config()
+    tug.set_logger()
 
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
     logger.info(f'{entry_point=}, {db_name=}')
