@@ -15,3 +15,21 @@ name = "Dark Theme 2"
 ico = ""
 qss = ""
 param = "dark2.param"
+
+[Default_Theme_Big]
+name = "Default Theme-Big"
+ico = ""
+qss = ""
+param = "default-12.param"
+
+[Dark_Theme_1_Big]
+name = "Dark Theme 1-Big"
+ico = ""
+qss = ""
+param = "dark1-12.param"
+
+[Dark_Theme_2_Big]
+name = "Dark Theme 2-Big"
+ico = ""
+qss = ""
+param = "dark2-12.param"

@@ -1,0 +1,65 @@
+* syntax of param file:
+* if line:
+*   start with '* '    comment line
+*   $key~value         a pair of key-value;
+*     the key in qss (including "$") will be
+*     replaced by the string following "~"
+*
+* --------------------------------------------
+* 1 - Icons
+$activeIcon~#FFFFFF
+$branchColor~#888888
+$closeActive~#FFFFFF
+$greenIcon~#68BD44
+$redIcon~#FF0038
+$svgAlt~#6F5699
+$svgFill~#616161
+$svgFill2~#B3B3B3
+$toolIcon~#808080
+*
+$ico_app~app.ico
+*
+$altTextColor~#424242
+$borderColor~#A0A0A0
+$closeHoverBG~#DE1B2E
+$fileFrameBG~#FAFAFA
+$headerBG~#E3E3E3
+$headerBG2~#EAEAEA
+$headerBG3~#FAFAFA
+$hoverBG~#99CCCC
+*
+$hoverBtnBG~#B2D6DD
+$hoverBG2~#C6C6C6
+*
+$innerBorder~#E3E3E3
+$inputBG~#FFFFFF
+$leftPaneBG~#F3F3F3
+$notActiveItemBG~#E4E6F1
+$scrollHadle~#888888
+$selectedBG~#2261C3
+$selectorActive~#424242
+$selectorMark~#424242
+$splitHover~#3491F4
+$statusAltText~#FFCF32
+$statusBG~#6F5699
+$statusBorder~#6F5699
+$statusHoverBG~#806AA4
+$statusText~#FFFFFF
+$textColor2~#919191
+$linkText~#62C9B0
+$textColor~#616161
+$selectedText~#FFFFFF
+$toolBarBG~#2C2C2C
+$toolBorder~#2C2C2C
+$toolCheckMark~#FFFFFF
+$topBarBG~#B3B3B3
+$topFrameBG~#E3E3E3
+* ----------------------------------
+$shapeBorder1~1px solid
+$shapeBorder2~2px solid
+$bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:
+$fontFamily~Segoe UI
+$SemiboldFamily~Segoe UI Semibold
+$normalSize~12pt
+$bigSize~14pt
+$FoldTitles~Folders,Tags,File Extensions,Authors

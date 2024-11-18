@@ -1,0 +1,56 @@
+$activeIcon~#FFFFFF
+$branchColor~#888888
+$closeActive~#FFFFFF
+$greenIcon~#68BD44
+$redIcon~#FF0038
+$svgAlt~#2B79D7
+$svgFill~#A0A0A0
+$svgFill2~#A0A0A0
+$toolIcon~#808080
+*
+$ico_app~app.ico
+*
+$altTextColor~#B0B0B0
+$borderColor~#2B2B2B
+$closeHoverBG~#DE061A
+$fileFrameBG~#1F1F1F
+$headerBG~#38373D
+$headerBG2~#38373D
+$headerBG3~#3B3B3B
+$hoverBG~#2A2D2E
+*
+$hoverBtnBG~#3B444B
+$hoverBG2~#3B444B
+*
+$innerBorder~#3B444B
+$inputBG~#3B3B3B
+$leftPaneBG~#181818
+$notActiveItemBG~#38373D
+$scrollHadle~#888888
+$selectedBG~#12395F
+$selectorActive~#FFFFFF
+$selectorMark~#2B79D7
+$splitHover~#2B79D7
+$statusAltText~#FFFFFF
+$statusBG~#181818
+$statusBorder~#2B79D7
+$statusHoverBG~#3F3F3F
+$statusText~#A0A0A0
+$textColor2~#919191
+$linkText~#2B79D7
+$textColor~#A0A0A0
+$selectedText~#FFFFFF
+$toolBarBG~#181818
+$toolBorder~#2B2B2B
+$toolCheckMark~#2B79D7
+$topBarBG~#181818
+$topFrameBG~#181818
+* ----------------------------------
+$shapeBorder1~1px solid
+$shapeBorder2~2px solid
+$bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:
+$fontFamily~Segoe UI
+$SemiboldFamily~Segoe UI Semibold
+$normalSize~12pt
+$bigSize~14pt
+$FoldTitles~Folders,Tags,File Extensions,Authors
