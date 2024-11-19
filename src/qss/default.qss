@@ -470,6 +470,7 @@ QFrame#form_info QLabel {
 }
 /* ---- openDB ---- */
 QTableWidget {
+   color: $textColor;
    show-decoration-selected: 1;
    background-color: $leftPaneBG;
 }
