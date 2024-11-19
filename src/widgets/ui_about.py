@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_aboutForm(object):
     def setupUi(self, aboutForm):
         aboutForm.setObjectName("aboutForm")
-        aboutForm.resize(402, 174)
+        aboutForm.resize(483, 174)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(aboutForm)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.dlg_frame = QtWidgets.QFrame(parent=aboutForm)

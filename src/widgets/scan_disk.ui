@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>451</width>
-    <height>207</height>
+    <height>228</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -125,6 +125,9 @@
       <item>
        <widget class="QFrame" name="ext_frame">
         <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>9</number>
+         </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,1">
            <item>
