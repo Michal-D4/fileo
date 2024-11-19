@@ -1,7 +1,7 @@
 QStackedWidget QWidget {
    background-color: $fileFrameBG;
 }
-QLabel, QTreeView, QTableWidget {
+QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
    outline: 0;
