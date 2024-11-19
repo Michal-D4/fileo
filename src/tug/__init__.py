@@ -133,6 +133,7 @@ def save_app_setting(**kwargs):
 def prepare_styles(theme_key: str, to_save: bool = False) -> str:
     global qss_params
     icons_txt = styles = params = ''
+    files = {'qss': "default.qss", 'ico': "icons.toml", 'params': "default.param"}
     dyn_qss.clear()
 
     get_theme_list()
@@ -143,48 +144,22 @@ def prepare_styles(theme_key: str, to_save: bool = False) -> str:
         return styles
 
     def read_theme():
-        def read_params():
-            nonlocal params
-            _param = theme.get('param', '') or "default.param"
-            par_file = cfg_path / _param
-            if par_file.exists():
-                with open(par_file, "r") as ft:
-                    params = ft.read()
-            else:
-                params = resources.read_text(qss, _param)
+        nonlocal icons_txt, styles, params
 
-        def read_qss():
-            nonlocal styles
-            _qss = theme.get('qss', '')
-            if not _qss:
-                styles = resources.read_text(qss, "default.qss")
-            else:
-                qss_file = cfg_path / _qss
-                if qss_file.exists():
-                    with open(cfg_path / _qss, "r") as ft:
-                        styles = ft.read()
-                else:
-                    styles = resources.read_text(qss, _qss)
-
-        def read_ico():
-            nonlocal icons_txt
-            _ico = theme.get('ico', '')
-            if not _ico:
-                icons_txt = resources.read_text(qss, "icons.toml")
-            else:
-                ico_file = cfg_path / _ico
-                if ico_file.exists():
-                    with open(ico_file, "r") as ft:
-                        icons_txt = ft.read()
-                else:
-                    icons_txt = resources.read_text(qss, _ico)
+        def read_file(key: str) -> str:
+            name = theme.get(key, '') or files[key]
+            res_file = cfg_path / name
+            if res_file.exists():
+                with open(res_file, "r") as ft:
+                    return ft.read()
+            return resources.read_text(qss, name)
 
         logger.info(f'{theme_key=}')
         theme = themes.get(theme_key, {})
 
-        read_qss()
-        read_params()
-        read_ico()
+        styles = read_file('qss')
+        params = read_file('param')
+        icons_txt = read_file('ico')
 
     def parse_params(params):
         global qss_params
