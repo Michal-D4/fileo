@@ -1,7 +1,7 @@
 QStackedWidget QWidget {
    background-color: $fileFrameBG;
 }
-QLabel, QTreeView, QTableWidget {
+QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
    outline: 0;
@@ -92,10 +92,7 @@ QFrame#status QLabel:hover {
 QFrame#status QLabel#edited_file {
    color: $statusAltText;
 }
-#listDB {
-   border: none;
-}
-QFrame#ttl_frame{
+QFrame#ttl_frame {
    background-color: $headerBG;
    border-bottom: $shapeBorder2 $innerBorder;
 }
@@ -473,6 +470,7 @@ QFrame#form_info QLabel {
 }
 /* ---- openDB ---- */
 QTableWidget {
+   color: $textColor;
    show-decoration-selected: 1;
    background-color: $leftPaneBG;
 }
@@ -497,8 +495,6 @@ QFrame#dup_frame QLabel {
 /* below are special qss which are used for dynamic style switching in code */
 ##decorator~#decorator {background-color: $innerBorder;}
 ##decorator~#decorator:hover {background-color: $splitHover;}
-##use-date~border: none; font-family: $fontFamily; font-size: $normalSize;
-##the-name~border: none; font-family: $fontFamily; font-size: $bigSize;
 ##browser_style~<style type="text/css"> :link{ color: $altTextColor; text-decoration: none;} .s {background-color: $selectedBG; color: $selectedText;}</style>
 ##link_style~<style type="text/css"> :link{color: $linkText; text-decoration: underline;}</style>
 ##active_selector~$bottomBorder 1px solid $selectorMark; color: $selectorActive

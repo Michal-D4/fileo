@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>346</width>
-    <height>229</height>
+    <height>245</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -97,6 +97,12 @@
       </item>
       <item>
        <widget class="QFrame" name="dup_frame">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>177</height>
+         </size>
+        </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
         </property>
@@ -128,6 +134,9 @@
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
            </property>
            <property name="margin">
             <number>0</number>

@@ -36,7 +36,9 @@ else:
 APP_NAME = "fileo"
 MAKER = 'miha'
 
+frozen = False
 open_db = None  # keep OpenDB instance, need !!!
+cfg_path = Path()
 config = {}
 settings = None
 qss_params = {}
@@ -44,7 +46,8 @@ dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
 themes = {}
 
-#region  function_used_in___init___py
+temp_dir = tempfile.TemporaryDirectory()
+
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
     used to restore settings on application level
@@ -76,31 +79,33 @@ def set_logger():
     # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")
     logger.info(f'cfg_path={cfg_path.as_posix()}')
-#endregion
 
-if sys.platform.startswith("win"):
-    cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
-elif sys.platform.startswith("linux"):
-    cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+def get_config():
+    global cfg_path, config, frozen
+    if frozen:
+        if sys.platform.startswith("win"):
+            cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
+        elif sys.platform.startswith("linux"):
+            cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+        if not cfg_path.is_file():
+            frozen = False
 
-if cfg_path.exists():
-    with open(cfg_path, "r") as ft:
-        fileo_toml = ft.read()
-    cfg_path: Path = cfg_path.parent
-else:
-    fileo_toml = resources.read_text(qss, "fileo.toml")
-    cfg_path = resources.files(qss)
+    if frozen:
+        with open(cfg_path, "r") as ft:
+            fileo_toml = ft.read()
+        cfg_path = cfg_path.parent
+    else:
+        fileo_toml = resources.read_text(qss, "fileo.toml")
+        cfg_path = resources.files(qss)
 
-config = tomllib.loads(fileo_toml)
+    config = tomllib.loads(fileo_toml)
 
-set_logger()
-
-theme_toml_file = cfg_path / "themes.toml"
-if theme_toml_file.exists():
-    with open(theme_toml_file, "rb") as f:
-        themes = tomllib.load(f)
-
-temp_dir = tempfile.TemporaryDirectory()
+def get_theme_list():
+    global themes
+    theme_toml_file = cfg_path / "themes.toml"
+    if theme_toml_file.exists():
+        with open(theme_toml_file, "rb") as f:
+            themes = tomllib.load(f)
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -125,70 +130,36 @@ def save_app_setting(**kwargs):
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
 
-def translate_qss(styles: str) -> str:
-    for key, val in qss_params.items():
-        styles = styles.replace(key, val)
-    return styles
-
 def prepare_styles(theme_key: str, to_save: bool = False) -> str:
     global qss_params
     icons_txt = styles = params = ''
+    files = {'qss': "default.qss", 'ico': "icons.toml", 'params': "default.param"}
     dyn_qss.clear()
 
-    def default_theme():
-        nonlocal icons_txt, styles, params
-        styles = resources.read_text(qss, "default.qss")
-        params = resources.read_text(qss, "default.param")
-        icons_txt = resources.read_text(qss, "icons.toml")
+    get_theme_list()
+
+    def translate_qss(styles: str) -> str:
+        for key, val in qss_params.items():
+            styles = styles.replace(key, val)
+        return styles
 
     def read_theme():
-        def read_params():
-            nonlocal params
-            _param = theme.get('param', '') or "default.param"
-            par_file = cfg_path / _param
-            if par_file.exists():
-                with open(par_file, "r") as ft:
-                    params = ft.read()
-            else:
-                params = resources.read_text(qss, _param)
-
-        def read_qss():
-            nonlocal styles
-            _qss = theme.get('qss', '')
-            if not _qss:
-                styles = resources.read_text(qss, "default.qss")
-            else:
-                qss_file = cfg_path / _qss
-                if qss_file.exists():
-                    with open(cfg_path / _qss, "r") as ft:
-                        styles = ft.read()
-                else:
-                    styles = resources.read_text(qss, _qss)
-
-        def read_ico():
-            nonlocal icons_txt
-            _ico = theme.get('ico', '')
-            if not _ico:
-                icons_txt = resources.read_text(qss, "icons.toml")
-            else:
-                ico_file = cfg_path / _ico
-                if ico_file.exists():
-                    with open(ico_file, "r") as ft:
-                        icons_txt = ft.read()
-                else:
-                    icons_txt = resources.read_text(qss, _ico)
-
         nonlocal icons_txt, styles, params
-        logger.info(f'{theme_key=}')
-        if theme_key == "Default_Theme":
-            default_theme()
-            return
 
+        def read_file(key: str) -> str:
+            name = theme.get(key, '') or files[key]
+            res_file = cfg_path / name
+            if res_file.exists():
+                with open(res_file, "r") as ft:
+                    return ft.read()
+            return resources.read_text(qss, name)
+
+        logger.info(f'{theme_key=}')
         theme = themes.get(theme_key, {})
 
-        read_qss()
-        read_params()
-        read_ico()
+        styles = read_file('qss')
+        params = read_file('param')
+        icons_txt = read_file('ico')
 
     def parse_params(params):
         global qss_params
@@ -248,10 +219,6 @@ def prepare_styles(theme_key: str, to_save: bool = False) -> str:
     params = [(key, val) for key, val in qss_params.items()]
     params.sort(key=lambda x: x[0], reverse=True)
     qss_params = {key:value for key,value in params}
-
-    tr_icons = translate_qss(icons_txt)
-    icons_res = tomllib.loads(tr_icons)
-
 
     tr_styles = translate_qss(styles)
     start_dyn = extract_dyn_qss()

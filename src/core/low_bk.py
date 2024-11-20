@@ -23,7 +23,7 @@ from ..widgets.scan_disk_for_files import diskScanner
 from .. import tug
 from .filename_editor import folderEditDelegate
 
-MAX_WIDTH_DB_DIALOG = 300
+MAX_WIDTH_DB_DIALOG = 340
 
 hist_folder: bool = True
 fields = (
