@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_scanDisk(object):
     def setupUi(self, scanDisk):
         scanDisk.setObjectName("scanDisk")
-        scanDisk.resize(451, 207)
+        scanDisk.resize(451, 228)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -74,6 +74,7 @@ class Ui_scanDisk(object):
         self.ext_frame = QtWidgets.QFrame(parent=self.dlg_frame)
         self.ext_frame.setObjectName("ext_frame")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.ext_frame)
+        self.verticalLayout.setSpacing(9)
         self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")

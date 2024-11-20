@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_DlgDup(object):
     def setupUi(self, DlgDup):
         DlgDup.setObjectName("DlgDup")
-        DlgDup.resize(346, 229)
+        DlgDup.resize(346, 245)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(DlgDup)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.dlg_frame = QtWidgets.QFrame(parent=DlgDup)
@@ -51,6 +51,7 @@ class Ui_DlgDup(object):
         self.horizontalLayout.setStretch(1, 1)
         self.verticalLayout_3.addWidget(self.ttl_frame)
         self.dup_frame = QtWidgets.QFrame(parent=self.dlg_frame)
+        self.dup_frame.setMinimumSize(QtCore.QSize(0, 177))
         self.dup_frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.dup_frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.dup_frame.setObjectName("dup_frame")
@@ -62,6 +63,7 @@ class Ui_DlgDup(object):
         font.setPointSize(10)
         self.txt2.setFont(font)
         self.txt2.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.txt2.setWordWrap(True)
         self.txt2.setObjectName("txt2")
         self.verticalLayout_2.addWidget(self.txt2)
         self.dup_btns = QtWidgets.QFrame(parent=self.dup_frame)

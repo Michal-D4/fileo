@@ -35,7 +35,9 @@ class editTag(QWidget):
 
     @pyqtSlot()
     def finish_edit(self):
-        self.parent().edit_item.emit(self.editor.text())
+        txt = self.editor.text().strip()
+        if txt:
+            self.parent().edit_item.emit(txt)
         self.parent().browser.setFocus()
         self.close()
 
