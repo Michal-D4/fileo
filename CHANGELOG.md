@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.10 - 2024, 20 November
+* themes with big font
+* Some code changes and improvements
+
 ## 1.3.09 - 2024, 11 November
 * new option in the filter - "all subfolders"
 
