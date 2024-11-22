@@ -2,6 +2,7 @@ import markdown
 from loguru import logger
 from datetime import datetime
 from pathlib import Path
+import re
 
 from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
@@ -143,17 +144,26 @@ class fileNote(QWidget):
 
     def set_browser_text(self):
         def code_block_ally(txt: str) -> str:
-            i = txt.find("\n```")
-            if i == -1:
+            t = re.search(r'\n *```', txt)
+            if not t:
                 return txt
-            j = txt.find("\n", i+1) + 1
-            k = txt.find("\n```", j)
-            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[k+4:])))
+            j = t.span()[1]
+            i = j - 3
+            j = txt.find('\n', j) + 1
+            t = re.search(r'\n *```', txt[j:])
+            if not t:
+                return txt
+            l = t.span()[1] + j
+            k = l - 3
+            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[l:])))
 
         if not self.text:
             return
-        txt = code_block_ally(self.text)
-        txt = markdown.markdown(txt)
+        prep = f'\n{self.text}'
+        prep = prep.replace('<', '&#60')
+        prep = prep.replace('>', '&#62')
+        txt = code_block_ally(prep)
+        txt = markdown.markdown(txt[1:])
         self.ui.textBrowser.setHtml(' '.join(
             (tug.get_dyn_qss("link_style"), txt)
         ))
