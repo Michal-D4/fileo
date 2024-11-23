@@ -139,7 +139,10 @@ class fileNote(QWidget):
                 return
             self.ui.note_title.setText(txt[:20])
 
-        self.text = note
+        prep = f'\n{note}'
+        prep = prep.replace('<', '&#60')
+        prep = prep.replace('>', '&#62')
+        self.text = prep
         set_note_title()
 
     def set_browser_text(self):
@@ -159,15 +162,12 @@ class fileNote(QWidget):
 
         if not self.text:
             return
-        prep = f'\n{self.text}'
-        prep = prep.replace('<', '&#60')
-        prep = prep.replace('>', '&#62')
-        txt = code_block_ally(prep)
+
+        txt = code_block_ally(self.text)
         txt = markdown.markdown(txt[1:])
         self.ui.textBrowser.setHtml(' '.join(
             (tug.get_dyn_qss("link_style"), txt)
         ))
-        self.updateGeometry()
 
     def set_height_by_text(self):
         self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
@@ -191,9 +191,9 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def toggle_collapse(self):
-        self.collapse_item()
+        self.view_note()
 
-    def collapse_item(self):
+    def view_note(self):
         if self.ui.collapse.isChecked():
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.note_header.height()
@@ -201,6 +201,8 @@ class fileNote(QWidget):
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
+            self.set_browser_text()
+            self.set_height_by_text()
             self.ui.textBrowser.show()
         self.set_collapse_icon()
 
@@ -209,7 +211,7 @@ class fileNote(QWidget):
         if self.ui.collapse.isChecked():
             return
         self.ui.collapse.setChecked(True)
-        self.collapse_item()
+        self.view_note()
 
     def set_collapse_icon(self):
         self.ui.collapse.setIcon(
@@ -232,9 +234,3 @@ class fileNote(QWidget):
             ag.signals_.user_signal.emit(f'show file\\{href.fileName()}')
         elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
-
-    def resizeEvent(self, a0: QResizeEvent) -> None:
-        if not self.ui.collapse.isChecked():
-            self.set_browser_text()
-            self.set_height_by_text()
-        return super().resizeEvent(a0)
