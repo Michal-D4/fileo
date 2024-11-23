@@ -86,7 +86,7 @@ class notesContainer(QScrollArea):
             note = fileNote(*row[1:], self.file_id)
             note.set_text(row[0])
             self.add_to_top(note)
-        self.collapse_since(1)
+        self.collapse(False)
         self.setUpdatesEnabled(True)
 
     def theme_changed(self):
@@ -168,12 +168,14 @@ class notesContainer(QScrollArea):
             note.deleteLater()
             db_ut.delete_note(file_id, note_id)
 
-    def collapse_all(self):
-        self.collapse_since()
-
-    def collapse_since(self, start: int = 0):
-        for i in reversed(range(start, self.scroll_layout.count())):
+    def collapse(self, all: bool = True):
+        for i in reversed(range(not all, self.scroll_layout.count())):
             item = self.scroll_layout.itemAt(i)
             if item.widget():
                 note: fileNote = item.widget()
                 note.ensure_collapsed()
+        if not all:   # first note is not collapsed
+            item = self.scroll_layout.itemAt(0)
+            if item.widget():
+                note: fileNote = item.widget()
+                note.view_note()

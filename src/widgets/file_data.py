@@ -75,7 +75,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ctrl_n.activated.connect(self.short_new_note)
 
         self.collapse_notes.setIcon(tug.get_icon("collapse_notes"))
-        self.collapse_notes.clicked.connect(self.notes.collapse_all)
+        self.collapse_notes.clicked.connect(self.notes.collapse)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.save_note)

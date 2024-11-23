@@ -2,6 +2,7 @@ import markdown
 from loguru import logger
 from datetime import datetime
 from pathlib import Path
+import re
 
 from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
 from PyQt6.QtGui import QDesktopServices, QResizeEvent
@@ -138,26 +139,35 @@ class fileNote(QWidget):
                 return
             self.ui.note_title.setText(txt[:20])
 
-        self.text = note
+        prep = f'\n{note}'
+        prep = prep.replace('<', '&#60')
+        prep = prep.replace('>', '&#62')
+        self.text = prep
         set_note_title()
 
     def set_browser_text(self):
         def code_block_ally(txt: str) -> str:
-            i = txt.find("\n```")
-            if i == -1:
+            t = re.search(r'\n *```', txt)
+            if not t:
                 return txt
-            j = txt.find("\n", i+1) + 1
-            k = txt.find("\n```", j)
-            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[k+4:])))
+            j = t.span()[1]
+            i = j - 3
+            j = txt.find('\n', j) + 1
+            t = re.search(r'\n *```', txt[j:])
+            if not t:
+                return txt
+            l = t.span()[1] + j
+            k = l - 3
+            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[l:])))
 
         if not self.text:
             return
+
         txt = code_block_ally(self.text)
-        txt = markdown.markdown(txt)
+        txt = markdown.markdown(txt[1:])
         self.ui.textBrowser.setHtml(' '.join(
             (tug.get_dyn_qss("link_style"), txt)
         ))
-        self.updateGeometry()
 
     def set_height_by_text(self):
         self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
@@ -181,9 +191,9 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def toggle_collapse(self):
-        self.collapse_item()
+        self.view_note()
 
-    def collapse_item(self):
+    def view_note(self):
         if self.ui.collapse.isChecked():
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.note_header.height()
@@ -191,6 +201,8 @@ class fileNote(QWidget):
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
+            self.set_browser_text()
+            self.set_height_by_text()
             self.ui.textBrowser.show()
         self.set_collapse_icon()
 
@@ -199,7 +211,7 @@ class fileNote(QWidget):
         if self.ui.collapse.isChecked():
             return
         self.ui.collapse.setChecked(True)
-        self.collapse_item()
+        self.view_note()
 
     def set_collapse_icon(self):
         self.ui.collapse.setIcon(
@@ -222,9 +234,3 @@ class fileNote(QWidget):
             ag.signals_.user_signal.emit(f'show file\\{href.fileName()}')
         elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
-
-    def resizeEvent(self, a0: QResizeEvent) -> None:
-        if not self.ui.collapse.isChecked():
-            self.set_browser_text()
-            self.set_height_by_text()
-        return super().resizeEvent(a0)
