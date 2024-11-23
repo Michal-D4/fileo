@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.11 - 2024, 23 November
+* fix codeblock show issue
+
 ## 1.3.10 - 2024, 20 November
 * themes with big font
 * Some code changes and improvements
