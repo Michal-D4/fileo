@@ -22,7 +22,6 @@ class OpenDB(QWidget, Ui_openDB):
 
         self.setupUi(self)
         self.msg = ''
-        self.curr_db = ''
 
         self.restore_db_list()
         self.listDB.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -51,16 +50,16 @@ class OpenDB(QWidget, Ui_openDB):
                 item = self.listDB.item(item.row(), 0)
             db_name = str(item.data(Qt.ItemDataRole.DisplayRole))
             menu = self.db_list_menu(db_name)
-            db_path = item.data(Qt.ItemDataRole.UserRole)
+            db_path, used = item.data(Qt.ItemDataRole.UserRole)
             action = menu.exec(self.listDB.mapToGlobal(pos))
             if action:
                 menu_item_text = action.text()
-                if menu_item_text.endswith('window'):
+                if not used and menu_item_text.endswith('window'):
                     self.open_in_new_window(db_path)
-                elif menu_item_text.startswith('Delete'):
+                elif not used and menu_item_text.startswith('Delete'):
                     self.remove_row(item.row())
                 elif menu_item_text.startswith('Open'):
-                    self.open_db(db_path)
+                    self.open_db(db_path, used)
                 elif menu_item_text.startswith('Reveal'):
                     tug.reveal_file(db_path)
 
@@ -82,19 +81,17 @@ class OpenDB(QWidget, Ui_openDB):
         db_list = tug.get_app_setting("DB_List", [])
 
         row = 0
-        for path, last_use in db_list:
-            if not path:
-                continue
-            pp = Path(path)
-            self.set_item0(path, row)
-            self.listDB.setItem(row, 1, QTableWidgetItem(f'{last_use!s}'))
+        for path, used, last_dt in db_list:
+            self.set_cell_0(path, used, row)
+            dt = 'Now' if used else last_dt
+            self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
             row += 1
 
-    def set_item0(self, db_path: str, row: int=0):
+    def set_cell_0(self, db_path: str, used: bool, row: int=0):
         self.listDB.insertRow(row)
         item0 = QTableWidgetItem()
         item0.setData(Qt.ItemDataRole.DisplayRole, Path(db_path).name)
-        item0.setData(Qt.ItemDataRole.UserRole, db_path)
+        item0.setData(Qt.ItemDataRole.UserRole, (db_path, used))
         self.listDB.setItem(row, 0, item0)
 
     def remove_row(self, row: int):
@@ -109,7 +106,7 @@ class OpenDB(QWidget, Ui_openDB):
 
     def open_if_ok(self, db_path: str):
         if self.verify_db_file(db_path):
-            self.set_item0(db_path)
+            self.set_cell_0(db_path, True)
             self.open_db(db_path)
             return
         ag.show_message_box(
@@ -119,9 +116,9 @@ class OpenDB(QWidget, Ui_openDB):
         )
 
     def open_if_here(self, db_path: str) -> bool:
-        for item in self.get_item_list():
+        for item,used,_ in self.get_item_list():
             if item == db_path:
-                self.open_db(db_path)
+                self.open_db(db_path, used)
                 return True
         return False
 
@@ -171,37 +168,37 @@ class OpenDB(QWidget, Ui_openDB):
     @pyqtSlot(QTableWidgetItem)
     def item_click(self, item: QTableWidgetItem):
         it = self.listDB.item(item.row(), 0)
-        db_path = str(it.data(Qt.ItemDataRole.UserRole))
-        self.open_db(db_path)
+        db_path, used = it.data(Qt.ItemDataRole.UserRole)
+        self.open_db(db_path, used)
 
-    def open_db(self, db_path: str):
-        self.curr_db = ag.db.path
-        ag.signals_.get_db_name.emit(db_path)
-        self.close()
+    def open_db(self, db_path: str, used: bool=False):
+        if used: return
+        self.save_db_list(ag.db.path, db_path)
+        ag.signals_.open_db_signal.emit(db_path)
 
     def open_in_new_window(self, db_path: str):
+        self.save_db_list('', db_path)
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
-        self.close()
 
     def get_item_list(self) -> list:
-        items = []
+        rows = {}
         for i in range(self.listDB.rowCount()):
             path = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
-            if path == self.curr_db:
-                dt = datetime.now()
-                last_use = str(dt.replace(microsecond=0))
-            else:
-                item1 = self.listDB.item(i, 1)
-                dt = datetime.now()
-                last_use = (
-                    item1.data(Qt.ItemDataRole.DisplayRole) if
-                    item1 else str(dt.replace(microsecond=0))
-                )
-            items.append((path, last_use))
-        return sorted(items, key=lambda x: x[1], reverse=True)
+            item1 = self.listDB.item(i, 1)
+            if item1:
+                dt = item1.data(Qt.ItemDataRole.DisplayRole)
+            rows[path[0]] = (path[1], dt)
+        return sorted([(a,*b) for a,b in rows.items()], key=lambda x: x[2], reverse=True)
 
-    def close(self) -> bool:
-        tug.save_app_setting(DB_List=self.get_item_list())
+    def save_db_list(self, db_close:str='', db_open: str=''):
+        now = str(datetime.now().replace(microsecond=0))
+        db_list = self.get_item_list()
+        for i,item in enumerate(db_list):
+            if item[0] == db_close:
+                db_list[i] = (item[0], False, now)
+            elif item[0] == db_open:
+                db_list[i] = (item[0], True, now)
+
+        tug.save_app_setting(DB_List=db_list)
         tug.open_db = None
-        db_list = tug.get_app_setting("DB_List", [])
-        return super().close()
+        self.close()

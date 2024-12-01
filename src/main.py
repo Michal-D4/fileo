@@ -27,7 +27,7 @@ def run_instance(lock: list, db_name: str='') -> bool:
 
     ag.db.conn = None
     ag.db.path = db_name if db_name != '-' else ''
-    ag.db.restore = bool(db_name)
+    ag.db.first_instance = bool(db_name)
 
     return True
 
@@ -86,15 +86,15 @@ def set_entry_point(entry_point: str):
 
 def main(entry_point: str, db_name: str):
     app = QApplication([])
+    set_entry_point(entry_point)
     tug.get_config()
     tug.set_logger()
 
-    logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
+    logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {tug.frozen=}')
     logger.info(f'{entry_point=}, {db_name=}')
 
     lock = []
     if run_instance(lock, db_name):
-        set_entry_point(entry_point)
         logger.info(f'>>> {entry_point=}, {ag.entry_point=}')
         start_app(app)
         if lock:

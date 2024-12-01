@@ -46,8 +46,6 @@ dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
 themes = {}
 
-temp_dir = tempfile.TemporaryDirectory()
-
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
     used to restore settings on application level
@@ -302,6 +300,8 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
         'selected':  QIcon.Mode.Selected,
     }
     svgs = {}
+    temp_dir = tempfile.TemporaryDirectory()
+
 
     def get_pixmaps(svg_key: str) -> list|None:
         def get_svg() -> str:

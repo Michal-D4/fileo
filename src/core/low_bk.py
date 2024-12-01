@@ -112,11 +112,8 @@ def remove_files_from_recent():
     show_recent_files()
 
 def save_db_list():
-    if tug.open_db:
-        tug.open_db.close()
-    else:
-        db_open = OpenDB(ag.app)
-        db_open.close()
+    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
+    db_open.save_db_list(ag.db.path)
 
 def show_db_list():
     """
@@ -136,10 +133,12 @@ def show_db_list():
     tug.open_db.listDB.setFocus()
 
 def create_open_db():
-    if tug.open_db:
-        tug.open_db.close()
-    db_open = OpenDB(ag.app)
+    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
     db_open.add_db()
+
+def init_db(db_path: str):
+    db_open = OpenDB(ag.app)
+    db_open.open_db(db_path)
 
 def scan_disk():
     """
