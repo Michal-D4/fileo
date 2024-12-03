@@ -87,7 +87,7 @@ def set_logger():
 
     log_path = get_log_path() / 'fileo.log'
     logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
-    # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
+    logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")
     logger.info(f'cfg_path={cfg_path.as_posix()}')
 
@@ -102,10 +102,10 @@ def set_config():
             cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
 
         if cfg_path.is_file():
-        with open(cfg_path, "r") as ft:
+            with open(cfg_path, "r") as ft:
                 toml_data = ft.read()
-        cfg_path = cfg_path.parent
-    else:
+            cfg_path = cfg_path.parent
+        else:
             toml_data = resource_config()
 
         return toml_data
@@ -131,6 +131,7 @@ def get_theme_list():
     if theme_toml_file.exists():
         with open(theme_toml_file, "rb") as f:
             themes = tomllib.load(f)
+            # logger.info(f'{themes=}')
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -140,6 +141,7 @@ def save_to_file(filename: str, msg: str):
     pp = Path('~/fileo/report').expanduser()
     path = get_app_setting('DEFAULT_REPORT_PATH', str(pp))
     path = Path(path) / filename
+    # logger.info(path)
     path.write_text(msg)
 
 def save_app_setting(**kwargs):

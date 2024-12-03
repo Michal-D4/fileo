@@ -90,6 +90,7 @@ class shoWindow(QMainWindow):
             fromVer1312()
 
     def restore_settings(self):
+        logger.info(f'<<<  {ag.db.path=}')
         self.tune_version()
         ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
 

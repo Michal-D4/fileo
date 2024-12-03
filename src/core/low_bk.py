@@ -1035,5 +1035,5 @@ def file_notes_show(file_idx: QModelIndex):
         define_branch(ag.dir_list.currentIndex())
         if ag.mode is ag.appMode.DIR else []
     )
-    # logger.info(f'{file_id=}, {branch=}')
+    logger.info(f'{file_id=}, {branch=}')
     ag.file_data.set_data(file_id, branch)

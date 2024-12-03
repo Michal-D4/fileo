@@ -177,6 +177,7 @@ class OpenDB(QWidget, Ui_openDB):
         ag.signals_.open_db_signal.emit(db_path)
 
     def open_in_new_window(self, db_path: str):
+        logger.info(f'<<<  {db_path=}')
         self.save_db_list('', db_path)
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
 
@@ -184,12 +185,12 @@ class OpenDB(QWidget, Ui_openDB):
         rows = {}
         for i in range(self.listDB.rowCount()):
             path, used = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
-                item1 = self.listDB.item(i, 1)
+            item1 = self.listDB.item(i, 1)
 
             dt = (
                 item1.data(Qt.ItemDataRole.DisplayRole) if item1
                 else str(datetime.now().replace(microsecond=0))
-                )
+            )
             rows[path] = (used, dt)
         return sorted([(a,*b) for a,b in rows.items()], key=lambda x: x[2], reverse=True)
 
