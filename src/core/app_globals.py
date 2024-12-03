@@ -24,9 +24,8 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.11'
+    return '1.3.12'
 
-entry_point: Path = None
 app: 'shoWindow' = None
 dir_list: QTreeView = None
 tag_list: 'aBrowser' = None
@@ -80,10 +79,10 @@ def switch_first_mode():
 class DB():
     path: str = ''
     conn: apsw.Connection = None
-    restore: bool = True
+    first_instance: bool = True
 
     def __repr__(self):
-        return f'(path: {self.path}, conn: {self.conn}, restore: {self.restore})'
+        return f'(path: {self.path}, conn: {self.conn}, first instance: {self.first_instance})'
 
 db = DB()
 

@@ -1094,6 +1094,8 @@ def create_connection(path: str) -> bool:
     ag.signals_.user_signal.emit('Enable_buttons')
 
     if not create_db.tune_new_version():
+        ag.db.path = ''
+        ag.db.conn = None
         return False
 
     cursor = conn.cursor()

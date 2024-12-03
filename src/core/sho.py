@@ -64,7 +64,33 @@ class shoWindow(QMainWindow):
         self.container = FoldContainer(self.ui.left_pane)
         fold_layout.addWidget(self.container)
 
+    def tune_version(self):
+        def toVer1312():
+            if saved_v <= 1311:
+                db_list = tug.get_app_setting("DB_List", [])
+                db_list = [(a, False, b) for a,b in db_list]
+                tug.save_app_setting(DB_List=db_list)
+
+        def fromVer1312():
+            if saved_v > 1311:
+                db_list = tug.get_app_setting("DB_List", [])
+                db_list = [(a, b) for a,_,b in db_list]
+                tug.save_app_setting(DB_List=db_list)
+
+        saved_v = tug.get_app_setting("AppVersion", "0")
+        cur_v = ag.app_version()
+        if saved_v == cur_v:
+            return
+        tug.save_app_setting(AppVersion=cur_v)
+        saved_v = int(saved_v.replace('.',''))
+        cur_v = int(cur_v.replace('.',''))
+        if cur_v > 1311:
+            toVer1312()
+        else:
+            fromVer1312()
+
     def restore_settings(self):
+        self.tune_version()
         ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
 
         self.restore_geometry()
@@ -78,8 +104,8 @@ class shoWindow(QMainWindow):
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
-        if ag.db.restore:     # start app with restoring DB connection - first app instance
-            self.connect_db(
+        if ag.db.first_instance:
+            low_bk.init_db(
                 ag.db.path or str(tug.get_app_setting("DB_NAME", ""))
             )
 
@@ -92,7 +118,6 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
-        # logger.info(f'{path}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
@@ -130,7 +155,7 @@ class shoWindow(QMainWindow):
 
         if isinstance(geometry, QRect):
             self.setGeometry(geometry)
-            if not ag.db.restore:
+            if not ag.db.first_instance:
                 self.move(self.x() + 50, self.y() + 30)
 
         setup_ui(self)
@@ -253,7 +278,7 @@ class shoWindow(QMainWindow):
         self.ui.hSplit.mouseMoveEvent = self.hsplit_move_event
         self.ui.hSplit.leaveEvent = self.leave_event
 
-        ag.signals_.get_db_name.connect(self.get_db_name)
+        ag.signals_.open_db_signal.connect(self.switch_db)
         ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
 
     def show_db_list(self, e: QMouseEvent):
@@ -267,7 +292,7 @@ class shoWindow(QMainWindow):
         low_bk.filtered_files()
 
     @pyqtSlot(str)
-    def get_db_name(self, db_name: str):
+    def switch_db(self, db_name: str):
         if db_name == ag.db.path:
             return
 
@@ -418,15 +443,15 @@ class shoWindow(QMainWindow):
         super().resizeEvent(e)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if ag.db.conn:
-            low_bk.save_db_list()
         settings = {
             "maximizedWindow": int(self.window_maximized),
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
-        if ag.db.path:
+
+        if ag.db.conn:
+            low_bk.save_db_list()
             settings["DB_NAME"] = ag.db.path
 
         tug.save_app_setting(**settings)

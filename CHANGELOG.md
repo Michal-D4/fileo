@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.12 - 2024, 01 December
+* prevent reopening of the database
+
 ## 1.3.11 - 2024, 23 November
 * fix codeblock show issue
 

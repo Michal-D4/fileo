@@ -63,7 +63,7 @@ def set_user_actions_handler():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
-        "MainMenu New window": new_window,
+        "MainMenu New window": tug.new_window,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu Select DB from list": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
@@ -112,11 +112,8 @@ def remove_files_from_recent():
     show_recent_files()
 
 def save_db_list():
-    if tug.open_db:
-        tug.open_db.close()
-    else:
-        db_open = OpenDB(ag.app)
-        db_open.close()
+    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
+    db_open.save_db_list(ag.db.path)
 
 def show_db_list():
     """
@@ -136,10 +133,12 @@ def show_db_list():
     tug.open_db.listDB.setFocus()
 
 def create_open_db():
-    if tug.open_db:
-        tug.open_db.close()
-    db_open = OpenDB(ag.app)
+    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
     db_open.add_db()
+
+def init_db(db_path: str):
+    db_open = OpenDB(ag.app)
+    db_open.open_db(db_path)
 
 def scan_disk():
     """
@@ -158,19 +157,6 @@ def save_note_edit_state():
     ag.save_settings(
         NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
-
-def new_window(db_name: str=''):
-    import subprocess
-    import sys
-    # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
-    if getattr(sys, "frozen", False):
-        # logger.info(f'1) {db_name=}, {ag.entry_point}')
-        subprocess.Popen([str(ag.entry_point), db_name, ])
-    else:
-        # logger.info(f'2) {db_name=}, {ag.entry_point}')
-        subprocess.Popen(
-            [sys.executable, str(ag.entry_point), db_name, ], # sys.executable - python interpreter
-        )
 
 def goto_edited_file(param: str):
     file_id, branch = param.split('-')

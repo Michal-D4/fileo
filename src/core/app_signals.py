@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget
 
 class AppSignals(QObject):
 
-    get_db_name = pyqtSignal(str, name="get_db_name")
+    open_db_signal = pyqtSignal(str, name="open_db_signal")
 
     filter_setup_closed = pyqtSignal(name="filter_setup_closed")
 
