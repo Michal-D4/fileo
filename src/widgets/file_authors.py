@@ -1,4 +1,3 @@
-
 from loguru import logger
 
 from PyQt6.QtCore import QSize, pyqtSlot

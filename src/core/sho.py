@@ -296,6 +296,7 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
+        logger.info(f'{db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
@@ -450,9 +451,7 @@ class shoWindow(QMainWindow):
         }
 
         if ag.db.conn:
-            logger.info('<<<')
             low_bk.save_db_list()
-            logger.info('>>>')
             settings["DB_NAME"] = ag.db.path
 
         tug.save_app_setting(**settings)

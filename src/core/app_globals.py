@@ -24,9 +24,8 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.12'
+    return '1.3.13'
 
-entry_point: Path = None
 app: 'shoWindow' = None
 dir_list: QTreeView = None
 tag_list: 'aBrowser' = None

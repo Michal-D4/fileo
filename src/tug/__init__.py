@@ -36,7 +36,7 @@ else:
 APP_NAME = "fileo"
 MAKER = 'miha'
 
-frozen = False
+entry_point: str = None
 open_db = None  # keep OpenDB instance, need !!!
 cfg_path = Path()
 config = {}
@@ -45,6 +45,19 @@ qss_params = {}
 dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
 themes = {}
+
+temp_dir = tempfile.TemporaryDirectory()
+
+def new_window(db_name: str=''):
+    # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
+    if getattr(sys, "frozen", False):
+        # logger.info(f'frozen: {db_name=}, {entry_point}')
+        subprocess.Popen([entry_point, db_name, ])
+    else:
+        # logger.info(f'not frozen: {db_name=}, {entry_point}')
+        subprocess.Popen(
+            [sys.executable, entry_point, db_name, ],  # sys.executable - python interpreter
+        )
 
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
@@ -78,25 +91,39 @@ def set_logger():
     logger.info(f"START =================> {log_path.as_posix()}")
     logger.info(f'cfg_path={cfg_path.as_posix()}')
 
-def get_config():
-    global cfg_path, config, frozen
-    if frozen:
+def set_config():
+    global config
+
+    def frozen_config() -> str:
+        global cfg_path
         if sys.platform.startswith("win"):
             cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
         elif sys.platform.startswith("linux"):
             cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
-        if not cfg_path.is_file():
-            frozen = False
 
-    if frozen:
-        with open(cfg_path, "r") as ft:
-            fileo_toml = ft.read()
-        cfg_path = cfg_path.parent
-    else:
-        fileo_toml = resources.read_text(qss, "fileo.toml")
+        if cfg_path.is_file():
+            with open(cfg_path, "r") as ft:
+                toml_data = ft.read()
+            cfg_path = cfg_path.parent
+        else:
+            toml_data = resource_config()
+
+        return toml_data
+
+    def resource_config() -> str:
+        global cfg_path
         cfg_path = resources.files(qss)
+        return resources.read_text(qss, "fileo.toml")
 
+    fileo_toml = frozen_config() if getattr(sys, "frozen", False) else resource_config()
     config = tomllib.loads(fileo_toml)
+
+set_config()
+
+def set_entry_point(entry: str):
+    global entry_point
+    entry_point = entry if getattr(sys, "frozen", False) else Path(entry).name
+    logger.info(f'{entry_point=}, {entry=}')
 
 def get_theme_list():
     global themes
@@ -104,6 +131,7 @@ def get_theme_list():
     if theme_toml_file.exists():
         with open(theme_toml_file, "rb") as f:
             themes = tomllib.load(f)
+            # logger.info(f'{themes=}')
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -113,6 +141,7 @@ def save_to_file(filename: str, msg: str):
     pp = Path('~/fileo/report').expanduser()
     path = get_app_setting('DEFAULT_REPORT_PATH', str(pp))
     path = Path(path) / filename
+    # logger.info(path)
     path.write_text(msg)
 
 def save_app_setting(**kwargs):
@@ -300,8 +329,6 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
         'selected':  QIcon.Mode.Selected,
     }
     svgs = {}
-    temp_dir = tempfile.TemporaryDirectory()
-
 
     def get_pixmaps(svg_key: str) -> list|None:
         def get_svg() -> str:
@@ -363,7 +390,6 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
             else:
                 file_ = Path(temp_dir.name) / f'{file_name}_{icon_mode}.svg'
             qss_params[f'${file_.stem}'] = file_.as_posix()
-            # logger.info(f'{file_.stem=}: {file_.as_posix()}')
 
             file_.write_text(svg)
 

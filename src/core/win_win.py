@@ -1,5 +1,4 @@
 from loguru import logger
-import sys
 
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon

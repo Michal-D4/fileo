@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.13 - 2024, 04 December
+* repair call of file switching handler; issue with QT currentChanged QTreeView event; currentRowChanged selectionModel signal is used instead.
+
 ## 1.3.12 - 2024, 01 December
 * prevent reopening of the database
 

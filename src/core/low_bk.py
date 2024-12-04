@@ -63,7 +63,7 @@ def set_user_actions_handler():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
-        "MainMenu New window": new_window,
+        "MainMenu New window": tug.new_window,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu Select DB from list": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
@@ -157,19 +157,6 @@ def save_note_edit_state():
     ag.save_settings(
         NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
-
-def new_window(db_name: str=''):
-    import subprocess
-    import sys
-    # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
-    if getattr(sys, "frozen", False):
-        # logger.info(f'1) {db_name=}, {ag.entry_point}')
-        subprocess.Popen([str(ag.entry_point), db_name, ])
-    else:
-        # logger.info(f'2) {db_name=}, {ag.entry_point}')
-        subprocess.Popen(
-            [sys.executable, str(ag.entry_point), db_name, ], # sys.executable - python interpreter
-        )
 
 def goto_edited_file(param: str):
     file_id, branch = param.split('-')
@@ -540,6 +527,7 @@ def show_files(files, file_id: int = 0):
     )
     model = fill_file_model(files)
     set_file_model(model)
+    ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
 
     set_current_file(file_id)
 
@@ -551,7 +539,7 @@ def single_file(file_id: str):
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
         )
     ag.set_mode(ag.appMode.FILE_BY_REF)
-    ag.app.ui.files_heading.setText('note referenced file')
+    ag.app.ui.files_heading.setText('single_file')
 
     show_files([db_ut.get_file(file_id)])
     ag.file_list.setFocus()
@@ -615,6 +603,15 @@ def set_file_model(model: fileModel):
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
     model.setHeaderData(0, Qt.Orientation.Horizontal, fields)
     ag.file_list.setModel(proxy_model)
+
+@pyqtSlot(QModelIndex, QModelIndex)
+def current_file_changed(curr: QModelIndex, prev: QModelIndex):
+    logger.info(f'{curr.isValid()=}')
+    if curr.isValid():
+        ag.file_list.scrollTo(curr)
+        ag.app.ui.current_filename.setText(file_name(curr))
+        logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.column()=}')
+        file_notes_show(curr)
 
 def copy_file_name():
     files = []
@@ -1048,5 +1045,5 @@ def file_notes_show(file_idx: QModelIndex):
         define_branch(ag.dir_list.currentIndex())
         if ag.mode is ag.appMode.DIR else []
     )
-    # logger.info(f'{file_id=}, {branch=}')
+    logger.info(f'{file_id=}, {branch=}')
     ag.file_data.set_data(file_id, branch)

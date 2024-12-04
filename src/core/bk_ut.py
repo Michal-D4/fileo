@@ -101,7 +101,6 @@ def set_menu_more(self):
 def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize_0
     low_bk.dir_dree_view_setup()
-    ag.file_list.currentChanged = current_file_changed
 
     ag.dir_list.customContextMenuRequested.connect(dir_menu)
     ag.file_list.customContextMenuRequested.connect(file_menu)
@@ -200,13 +199,6 @@ def show_main_menu():
             check_duplicates(auto=False)
             return
         ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
-
-@pyqtSlot(QModelIndex, QModelIndex)
-def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    if curr.isValid():
-        ag.file_list.scrollTo(curr)
-        self.ui.current_filename.setText(low_bk.file_name(curr))
-        low_bk.file_notes_show(curr)
 
 def resize_section_0():
     hdr = ag.file_list.header()

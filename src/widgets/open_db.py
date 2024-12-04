@@ -116,7 +116,7 @@ class OpenDB(QWidget, Ui_openDB):
         )
 
     def open_if_here(self, db_path: str) -> bool:
-        for item,used,_ in self.get_item_list():
+        for item, used, _ in self.get_item_list():
             if item == db_path:
                 self.open_db(db_path, used)
                 return True
@@ -183,11 +183,14 @@ class OpenDB(QWidget, Ui_openDB):
     def get_item_list(self) -> list:
         rows = {}
         for i in range(self.listDB.rowCount()):
-            path = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
+            path, used = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
             item1 = self.listDB.item(i, 1)
-            if item1:
-                dt = item1.data(Qt.ItemDataRole.DisplayRole)
-            rows[path[0]] = (path[1], dt)
+
+            dt = (
+                item1.data(Qt.ItemDataRole.DisplayRole) if item1
+                else str(datetime.now().replace(microsecond=0))
+            )
+            rows[path] = (used, dt)
         return sorted([(a,*b) for a,b in rows.items()], key=lambda x: x[2], reverse=True)
 
     def save_db_list(self, db_close:str='', db_open: str=''):
@@ -201,4 +204,5 @@ class OpenDB(QWidget, Ui_openDB):
 
         tug.save_app_setting(DB_List=db_list)
         tug.open_db = None
+
         self.close()
