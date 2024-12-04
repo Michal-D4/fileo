@@ -177,7 +177,6 @@ class OpenDB(QWidget, Ui_openDB):
         ag.signals_.open_db_signal.emit(db_path)
 
     def open_in_new_window(self, db_path: str):
-        logger.info(f'<<<  {db_path=}')
         self.save_db_list('', db_path)
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
 

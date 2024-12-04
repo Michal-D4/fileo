@@ -1096,7 +1096,6 @@ def create_connection(path: str) -> bool:
     if not create_db.tune_new_version():
         ag.db.path = ''
         ag.db.conn = None
-        logger.info(f'{ag.db.path=}')
         return False
 
     cursor = conn.cursor()

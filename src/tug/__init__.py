@@ -87,7 +87,7 @@ def set_logger():
 
     log_path = get_log_path() / 'fileo.log'
     logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
-    logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
+    # logger.add(sys.stderr,  format='"{file.path}", line {line}, {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")
     logger.info(f'cfg_path={cfg_path.as_posix()}')
 
