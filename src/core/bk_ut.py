@@ -109,7 +109,7 @@ def bk_setup(main: 'shoWindow'):
         populate_all()
 
         QTimer.singleShot(10 * 1000, show_lost_files)
-        if bool(tug.get_app_setting("CHECK_DUPLICATES", 0)):
+        if int(tug.get_app_setting("CHECK_DUPLICATES", 0)):
             QTimer.singleShot(5 * 1000, check_duplicates)
         QTimer.singleShot(5 * 60 * 1000, run_update0_files)
         QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
