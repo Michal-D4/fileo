@@ -527,6 +527,7 @@ def show_files(files, file_id: int = 0):
     )
     model = fill_file_model(files)
     set_file_model(model)
+    ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
 
     set_current_file(file_id)
 
@@ -538,7 +539,7 @@ def single_file(file_id: str):
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
         )
     ag.set_mode(ag.appMode.FILE_BY_REF)
-    ag.app.ui.files_heading.setText('note referenced file')
+    ag.app.ui.files_heading.setText('single_file')
 
     show_files([db_ut.get_file(file_id)])
     ag.file_list.setFocus()
@@ -602,6 +603,15 @@ def set_file_model(model: fileModel):
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
     model.setHeaderData(0, Qt.Orientation.Horizontal, fields)
     ag.file_list.setModel(proxy_model)
+
+@pyqtSlot(QModelIndex, QModelIndex)
+def current_file_changed(curr: QModelIndex, prev: QModelIndex):
+    logger.info(f'{curr.isValid()=}')
+    if curr.isValid():
+        ag.file_list.scrollTo(curr)
+        ag.app.ui.current_filename.setText(file_name(curr))
+        logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.column()=}')
+        file_notes_show(curr)
 
 def copy_file_name():
     files = []
