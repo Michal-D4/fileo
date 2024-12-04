@@ -362,16 +362,13 @@ def restore_selected_dirs():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-    """
-    currentRowChanged signal in dirTree
-    :@return: None
-    """
-    def set_folder_path_label(idx: QModelIndex):
-        if idx.isValid():
-            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(idx)))
+
+    def set_folder_path_label():
+        if curr_idx.isValid():
+            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
 
     ag.app.collapse_btn.setChecked(False)
-    set_folder_path_label(curr_idx)
+    set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         def new_history_item():
