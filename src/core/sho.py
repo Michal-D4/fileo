@@ -296,11 +296,12 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
-        logger.info(f'{db_name=}')
+        logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
             bk_ut.restore_dirs()
+            # bk_ut.single_shot()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
