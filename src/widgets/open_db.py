@@ -48,9 +48,9 @@ class OpenDB(QWidget, Ui_openDB):
         if item:
             if item.column() > 0:
                 item = self.listDB.item(item.row(), 0)
-            db_name = str(item.data(Qt.ItemDataRole.DisplayRole))
-            menu = self.db_list_menu(db_name)
-            db_path, used = item.data(Qt.ItemDataRole.UserRole)
+            db_path, used, _ = item.data(Qt.ItemDataRole.UserRole)
+            db_name = Path(db_path).name
+            menu = self.db_list_menu(db_name, used)
             action = menu.exec(self.listDB.mapToGlobal(pos))
             if action:
                 menu_item_text = action.text()
@@ -62,8 +62,10 @@ class OpenDB(QWidget, Ui_openDB):
                     self.open_db(db_path, used)
                 elif menu_item_text.startswith('Reveal'):
                     tug.reveal_file(db_path)
+                elif menu_item_text.startswith('Free'):
+                    self.mark_not_used(item.row())
 
-    def db_list_menu(self, db_name: str) -> QMenu:
+    def db_list_menu(self, db_name: str, used: bool) -> QMenu:
         menu = QMenu(self)
         menu.addAction(f'Open DB "{db_name}"')
         menu.addSeparator()
@@ -73,6 +75,9 @@ class OpenDB(QWidget, Ui_openDB):
         menu.addAction(f'Reveal "{db_name}" in explorer')
         menu.addSeparator()
         menu.addAction(f'Delete DB "{db_name}" from list')
+        if used and not ag.db.path.endswith(db_name):
+            menu.addSeparator()
+            menu.addAction(f'Free DB "{db_name}"')
         return menu
 
     def restore_db_list(self):
@@ -82,16 +87,16 @@ class OpenDB(QWidget, Ui_openDB):
 
         row = 0
         for path, used, last_dt in db_list:
-            self.set_cell_0(path, used, row)
+            self.set_cell_0(path, used, last_dt, row)
             dt = 'Now' if used else last_dt
             self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
             row += 1
 
-    def set_cell_0(self, db_path: str, used: bool, row: int=0):
+    def set_cell_0(self, path: str, used: bool, dt: str, row: int=0):
         self.listDB.insertRow(row)
         item0 = QTableWidgetItem()
-        item0.setData(Qt.ItemDataRole.DisplayRole, Path(db_path).name)
-        item0.setData(Qt.ItemDataRole.UserRole, (db_path, used))
+        item0.setData(Qt.ItemDataRole.DisplayRole, Path(path).name)
+        item0.setData(Qt.ItemDataRole.UserRole, (path, used, dt))
         self.listDB.setItem(row, 0, item0)
 
     def remove_row(self, row: int):
@@ -106,7 +111,8 @@ class OpenDB(QWidget, Ui_openDB):
 
     def open_if_ok(self, db_path: str):
         if self.verify_db_file(db_path):
-            self.set_cell_0(db_path, True)
+            now = str(datetime.now().replace(microsecond=0))
+            self.set_cell_0(db_path, True, now)
             self.open_db(db_path)
             return
         ag.show_message_box(
@@ -168,7 +174,7 @@ class OpenDB(QWidget, Ui_openDB):
     @pyqtSlot(QTableWidgetItem)
     def item_click(self, item: QTableWidgetItem):
         it = self.listDB.item(item.row(), 0)
-        db_path, used = it.data(Qt.ItemDataRole.UserRole)
+        db_path, used, _ = it.data(Qt.ItemDataRole.UserRole)
         self.open_db(db_path, used)
 
     def open_db(self, db_path: str, used: bool=False):
@@ -183,15 +189,23 @@ class OpenDB(QWidget, Ui_openDB):
     def get_item_list(self) -> list:
         rows = {}
         for i in range(self.listDB.rowCount()):
-            path, used = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
-            item1 = self.listDB.item(i, 1)
-
-            dt = (
-                item1.data(Qt.ItemDataRole.DisplayRole) if item1
-                else str(datetime.now().replace(microsecond=0))
-            )
+            path, used, dt = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
             rows[path] = (used, dt)
         return sorted([(a,*b) for a,b in rows.items()], key=lambda x: x[2], reverse=True)
+
+    def mark_not_used(self, row: int):
+        item = self.listDB.item(row, 0)
+        path, used, dt = item.data(Qt.ItemDataRole.UserRole)
+        name = Path(path).name
+        res = ag.show_message_box(
+            f'Mark DB {name} as currently unused',
+            f'Are you sure that DB {name} is not used in other instance of {ag.app_name()}',
+            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            icon=QMessageBox.Icon.Question
+        )
+        if res == QMessageBox.StandardButton.Ok:
+            item.setData(Qt.ItemDataRole.UserRole, (path, False, dt))
+            self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
 
     def save_db_list(self, db_close:str='', db_open: str=''):
         now = str(datetime.now().replace(microsecond=0))
@@ -203,6 +217,8 @@ class OpenDB(QWidget, Ui_openDB):
                 db_list[i] = (item[0], True, now)
 
         tug.save_app_setting(DB_List=db_list)
-        tug.open_db = None
-
         self.close()
+
+    def close(self):
+        tug.open_db = None
+        super().close()

@@ -49,12 +49,12 @@ themes = {}
 temp_dir = tempfile.TemporaryDirectory()
 
 def new_window(db_name: str=''):
-    # logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
+    logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
-        # logger.info(f'frozen: {db_name=}, {entry_point}')
+        logger.info(f'frozen: {db_name=}, {entry_point}')
         subprocess.Popen([entry_point, db_name, ])
     else:
-        # logger.info(f'not frozen: {db_name=}, {entry_point}')
+        logger.info(f'not frozen: {db_name=}, {entry_point}')
         subprocess.Popen(
             [sys.executable, entry_point, db_name, ],  # sys.executable - python interpreter
         )

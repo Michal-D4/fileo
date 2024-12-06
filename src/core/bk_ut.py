@@ -98,6 +98,14 @@ def set_menu_more(self):
 
     self.ui.more.setMenu(menu)
 
+def single_shot():
+    if int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
+        QTimer.singleShot(10 * 1000, check_duplicates)
+    QTimer.singleShot(20 * 1000, show_lost_files)
+    QTimer.singleShot(5 * 60 * 1000, run_update0_files)
+    QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
+    QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
+
 def bk_setup(main: 'shoWindow'):
     ag.file_list.resizeEvent = file_list_resize_0
     low_bk.dir_dree_view_setup()
@@ -107,13 +115,7 @@ def bk_setup(main: 'shoWindow'):
 
     if ag.db.conn:
         populate_all()
-
-        QTimer.singleShot(10 * 1000, show_lost_files)
-        if bool(tug.get_app_setting("CHECK_DUPLICATES", 0)):
-            QTimer.singleShot(5 * 1000, check_duplicates)
-        QTimer.singleShot(5 * 60 * 1000, run_update0_files)
-        QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
-        QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
+        single_shot()
 
     dd.set_drag_drop_handlers()
 

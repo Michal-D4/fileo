@@ -1,10 +1,15 @@
 # Change Log
 
+## 1.3.14 - 2024, 06 December
+* repair opening new window from DB list
+* update tag and author lists when drag-drop or import files
+* Some other code changes and improvements
+
 ## 1.3.13 - 2024, 04 December
 * repair call of file switching handler; issue with QT currentChanged QTreeView event; currentRowChanged selectionModel signal is used instead.
 
 ## 1.3.12 - 2024, 01 December
-* prevent reopening of the database
+* prevent reopening same DB in the new instance of application
 
 ## 1.3.11 - 2024, 23 November
 * fix codeblock show issue

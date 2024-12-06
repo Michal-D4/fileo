@@ -91,7 +91,7 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self):
         self.tune_version()
-        ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
+        ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
 
         self.restore_geometry()
         self.restore_container()
@@ -104,10 +104,10 @@ class shoWindow(QMainWindow):
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
 
-        if ag.db.first_instance:
-            low_bk.init_db(
-                ag.db.path or str(tug.get_app_setting("DB_NAME", ""))
-            )
+        low_bk.init_db(
+            tug.get_app_setting("DB_NAME", "")
+            if ag.db.first_instance else ag.db.path
+        )
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -266,7 +266,7 @@ class shoWindow(QMainWindow):
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
         self.ui.btnSetup.clicked.connect(bk_ut.show_main_menu)
 
-        self.ui.db_name.mousePressEvent = self.show_db_list
+        self.ui.db_name.mousePressEvent = self.db_list_show
 
         self.ui.vSplit.enterEvent = self.vsplit_enter_event
         self.ui.vSplit.mousePressEvent = self.vsplit_press_event
@@ -281,7 +281,7 @@ class shoWindow(QMainWindow):
         ag.signals_.open_db_signal.connect(self.switch_db)
         ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
 
-    def show_db_list(self, e: QMouseEvent):
+    def db_list_show(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
             ag.signals_.user_signal.emit("MainMenu Select DB from list")
 
@@ -296,11 +296,12 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
-        logger.info(f'{db_name=}')
+        logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             bk_ut.populate_all()
             bk_ut.restore_dirs()
+            # bk_ut.single_shot()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):

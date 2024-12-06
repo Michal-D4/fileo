@@ -15,7 +15,7 @@ from .core import app_globals as ag
 from .core.sho import shoWindow
 
 
-def run_instance(lock: list, db_name: str='') -> bool:
+def run_instance(lock: list, db_name: str) -> bool:
     if tug.config.get('instance_control', False):
         ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
         logger.info(f'{ag.single_instance=}')
@@ -26,8 +26,9 @@ def run_instance(lock: list, db_name: str='') -> bool:
                 return False
 
     ag.db.conn = None
-    ag.db.path = db_name if db_name != '-' else ''
-    ag.db.first_instance = bool(db_name)
+    ag.db.first_instance = (db_name == '-')
+    ag.db.path = '' if ag.db.first_instance else db_name
+    logger.info(f'{db_name=}, {ag.db.path=}, {ag.db.first_instance=}')
 
     return True
 
@@ -81,7 +82,7 @@ def main(entry_point: str, db_name: str):
     tug.set_logger()
     tug.set_entry_point(entry_point)
 
-    logger.info(f'{ag.app_name()=}, {ag.app_version()=}')
+    logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {db_name=}')
 
     lock = []
     if run_instance(lock, db_name):

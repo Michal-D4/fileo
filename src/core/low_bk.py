@@ -36,7 +36,7 @@ field_types = (
 )
 
 
-def set_user_actions_handler():
+def set_user_action_handlers():
     """
     run methods for user_action_signal
     :@param action: string to select handle method
@@ -138,6 +138,7 @@ def create_open_db():
 
 def init_db(db_path: str):
     db_open = OpenDB(ag.app)
+    ag.db.path = ''
     db_open.open_db(db_path)
 
 def scan_disk():
@@ -362,16 +363,13 @@ def restore_selected_dirs():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-    """
-    currentRowChanged signal in dirTree
-    :@return: None
-    """
-    def set_folder_path_label(idx: QModelIndex):
-        if idx.isValid():
-            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(idx)))
+
+    def set_folder_path_label():
+        if curr_idx.isValid():
+            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
 
     ag.app.collapse_btn.setChecked(False)
-    set_folder_path_label(curr_idx)
+    set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
         def new_history_item():
@@ -762,7 +760,7 @@ def export_files():
     pp = Path('~/fileo/export').expanduser()
     path = tug.get_app_setting('DEFAULT_EXPORT_PATH', str(pp))
     file_name, ok = QFileDialog.getSaveFileName(parent=ag.app,
-        caption='Open file to save list of exported files',
+        caption='Save list of exported files',
         directory=str((Path(path) / 'untitled')),
         filter='File list (*.file_list *.json *.txt)'
     )
@@ -785,7 +783,7 @@ def import_files():
     pp = Path('~/fileo/export').expanduser()
     path = tug.get_app_setting('DEFAULT_EXPORT_PATH', str(pp))
     file_name, ok = QFileDialog.getOpenFileName(ag.app,
-        caption="Open file to import list of files",
+        caption="Open file",
         directory=path,
         filter="File list (*.file_list *.json *.txt)")
     if ok:
@@ -828,6 +826,8 @@ def load_file(fl: dict) -> int:
     db_ut.insert_tags(file_id, fl['tags'])
     db_ut.insert_filenotes(file_id, fl['notes'])
     db_ut.insert_authors(file_id, fl['authors'])
+    ag.tag_list.list_changed.emit()
+    ag.author_list.list_changed.emit()
     return existent
 #endregion
 
