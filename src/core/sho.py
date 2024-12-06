@@ -91,7 +91,7 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self):
         self.tune_version()
-        ag.signals_.user_signal.connect(low_bk.set_user_actions_handler())
+        ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
 
         self.restore_geometry()
         self.restore_container()
