@@ -52,11 +52,12 @@ def new_window(db_name: str=''):
     logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
         logger.info(f'frozen: {db_name=}, {entry_point}')
-        subprocess.Popen([entry_point, db_name, ])
+        subprocess.Popen([entry_point, db_name, 'False', ])
     else:
         logger.info(f'not frozen: {db_name=}, {entry_point}')
         subprocess.Popen(
-            [sys.executable, entry_point, db_name, ],  # sys.executable - python interpreter
+
+            [sys.executable, entry_point, db_name, 'False', ],  # sys.executable - python interpreter
         )
 
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
@@ -119,11 +120,6 @@ def set_config():
     config = tomllib.loads(fileo_toml)
 
 set_config()
-
-def set_entry_point(entry: str):
-    global entry_point
-    entry_point = entry if getattr(sys, "frozen", False) else Path(entry).name
-    logger.info(f'{entry_point=}, {entry=}')
 
 def get_theme_list():
     global themes

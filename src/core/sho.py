@@ -34,8 +34,9 @@ def set_widget_to_frame(frame: QFrame, widget: QWidget):
 
 
 class shoWindow(QMainWindow):
-    def __init__(self, parent = None) -> None:
+    def __init__(self, db_name: str, first_instanse: bool, parent = None) -> None:
         super().__init__(parent)
+        self.first_instance = first_instanse
 
         self.ui = Ui_Sho()
 
@@ -50,7 +51,7 @@ class shoWindow(QMainWindow):
         self.set_extra_buttons()
 
         self.setup_global_widgets()
-        self.restore_settings()
+        self.restore_settings(db_name)
         self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
@@ -89,7 +90,7 @@ class shoWindow(QMainWindow):
         else:
             fromVer1312()
 
-    def restore_settings(self):
+    def restore_settings(self, db_name: str):
         self.tune_version()
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
 
@@ -106,7 +107,7 @@ class shoWindow(QMainWindow):
 
         low_bk.init_db(
             tug.get_app_setting("DB_NAME", "")
-            if ag.db.first_instance else ag.db.path
+            if self.first_instance else db_name
         )
 
     def set_busy(self, val: bool):
@@ -152,10 +153,9 @@ class shoWindow(QMainWindow):
 
     def restore_geometry(self):
         geometry = tug.get_app_setting("MainWindowGeometry")
-
         if isinstance(geometry, QRect):
             self.setGeometry(geometry)
-            if not ag.db.first_instance:
+            if not self.first_instance:
                 self.move(self.x() + 50, self.y() + 30)
 
         setup_ui(self)

@@ -137,9 +137,9 @@ def create_open_db():
     db_open.add_db()
 
 def init_db(db_path: str):
-    db_open = OpenDB(ag.app)
-    ag.db.path = ''
-    db_open.open_db(db_path)
+    if db_path:
+        db_open = OpenDB(ag.app)
+        db_open.open_db(db_path)
 
 def scan_disk():
     """

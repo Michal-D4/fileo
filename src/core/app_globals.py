@@ -79,10 +79,9 @@ def switch_first_mode():
 class DB():
     path: str = ''
     conn: apsw.Connection = None
-    first_instance: bool = True
 
     def __repr__(self):
-        return f'(path: {self.path}, conn: {self.conn}, first instance: {self.first_instance})'
+        return f'(path: {self.path}, conn: {self.conn})'
 
 db = DB()
 
