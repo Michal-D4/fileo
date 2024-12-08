@@ -63,7 +63,7 @@ def set_user_action_handlers():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "filter_changed": filter_changed,
-        "MainMenu New window": tug.new_window,
+        "MainMenu New window": new_window,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu Select DB from list": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
@@ -101,6 +101,10 @@ def set_user_action_handlers():
             )
 
     return execute_action
+
+def new_window(db_name: str=''):
+    tug.save_app_setting(MainWindowGeometry=ag.app.normalGeometry())
+    tug.new_window(db_name)
 
 def clear_recent_files():
     ag.recent_files.clear()

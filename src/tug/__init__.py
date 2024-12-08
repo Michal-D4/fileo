@@ -48,7 +48,7 @@ themes = {}
 
 temp_dir = tempfile.TemporaryDirectory()
 
-def new_window(db_name: str=''):
+def new_window(db_name: str):
     logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
         logger.info(f'frozen: {db_name=}, {entry_point}')

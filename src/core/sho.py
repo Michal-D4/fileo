@@ -156,7 +156,7 @@ class shoWindow(QMainWindow):
         if isinstance(geometry, QRect):
             self.setGeometry(geometry)
             if not self.first_instance:
-                self.move(self.x() + 50, self.y() + 30)
+                self.move(self.x() + 30, self.y() + 30)
 
         setup_ui(self)
 
