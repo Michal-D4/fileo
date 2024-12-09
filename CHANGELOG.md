@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.15 - 2024, 08 December
+* To create a new instance of the application, the "first_instance" parameter is explicitly defined.
+* When creating a new instance, the window is positioned relative to the current one.
+
 ## 1.3.14 - 2024, 06 December
 * repair opening new window from DB list
 * update tag and author lists when drag-drop or import files
