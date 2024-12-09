@@ -15,7 +15,7 @@ from .core import app_globals as ag
 from .core.sho import shoWindow
 
 
-def run_instance(lock: list, db_name: str) -> bool:
+def run_instance(lock: list) -> bool:
     if tug.config.get('instance_control', False):
         ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
         logger.info(f'{ag.single_instance=}')
@@ -25,15 +25,10 @@ def run_instance(lock: list, db_name: str) -> bool:
             if not lock[0].tryLock():
                 return False
 
-    ag.db.conn = None
-    ag.db.first_instance = (db_name == '-')
-    ag.db.path = '' if ag.db.first_instance else db_name
-    logger.info(f'{db_name=}, {ag.db.path=}, {ag.db.first_instance=}')
-
     return True
 
 # @logger.catch           # to have traceback
-def start_app(app: QApplication):
+def start_app(app: QApplication, db_name: str, first_instanse: bool):
     from .core.win_win import set_app_icon
 
     @pyqtSlot(QWidget, QWidget)
@@ -64,7 +59,7 @@ def start_app(app: QApplication):
         logger.exception(f"styleSheet Error?: {e.args};", exc_info=True)
         return
 
-    main_window = shoWindow()
+    main_window = shoWindow(db_name, first_instanse)
 
     main_window.show()
 
@@ -77,15 +72,15 @@ def start_app(app: QApplication):
 
     sys.exit(app.exec())
 
-def main(entry_point: str, db_name: str):
+def main(entry_point: str, db_name: str, first_instanse: bool=True):
     app = QApplication([])
+    tug.entry_point = entry_point
     tug.set_logger()
-    tug.set_entry_point(entry_point)
 
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {db_name=}')
 
     lock = []
-    if run_instance(lock, db_name):
-        start_app(app)
+    if run_instance(lock):
+        start_app(app, db_name, first_instanse)
         if lock:
             lock[0].unlock()
