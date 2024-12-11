@@ -518,11 +518,11 @@ def get_recent_files() -> list:
     ag.set_mode(ag.appMode.RECENT_FILES)
     return (db_ut.get_file(id_) for id_ in ag.recent_files[::-1])
 
-def show_files(files, file_id: int = 0):
+def show_files(files, cur_file: int = 0):
     """
     populate file's model
-    :@param files
-    :@param file_id - if 0 no file was selected
+    :@param files - list of file
+    :@param cur_file - set current file, 0 is on first line
     """
     ag.file_list.setSortingEnabled(
         ag.mode is not ag.appMode.RECENT_FILES
@@ -531,7 +531,7 @@ def show_files(files, file_id: int = 0):
     set_file_model(model)
     ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
 
-    set_current_file(file_id)
+    set_current_file(cur_file)
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:

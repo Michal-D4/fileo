@@ -8,7 +8,7 @@ from . import db_ut, app_globals as ag
 from .. import tug
 
 class dirItem(object):
-    def __init__(self, data: str, user_data: ag.DirData=None, parent=None):
+    def __init__(self, data: str, user_data: ag.DirData, parent=None):
         self.parentItem: dirItem = parent
         self.itemData = data
         self.children = []
@@ -78,15 +78,14 @@ class dirItem(object):
 
 
 class dirModel(QAbstractItemModel):
-    def __init__(self, headers=None, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        hdr = headers if headers else ('',)
         self.rootItem = dirItem(
-            data=hdr, user_data=ag.DirData(0, 0, False, False))
+            data='', user_data=ag.DirData(0, 0, False, False))
 
-    def columnCount(self, parent=QModelIndex()):
-        return self.rootItem.columnCount()
+    def columnCount(self, parent=None):
+        return 1
 
     def data(self, index, role: Qt.ItemDataRole):
         if (role == Qt.ItemDataRole.DisplayRole or
@@ -127,7 +126,7 @@ class dirModel(QAbstractItemModel):
 
         return self.rootItem
 
-    def index(self, row, column, parent=QModelIndex()):
+    def index(self, row, column, parent: QModelIndex):
         if parent.isValid() and parent.column() != 0:
             return QModelIndex()
 
@@ -138,11 +137,10 @@ class dirModel(QAbstractItemModel):
 
         return QModelIndex()
 
-    def insertRows(self, position, rows, parent=QModelIndex()):
+    def insertRows(self, position, rows, parent: QModelIndex):
         parentItem = self.getItem(parent)
         self.beginInsertRows(parent, position, position + rows - 1)
-        success = parentItem.insertChildren(position, rows,
-                self.rootItem.columnCount())
+        success = parentItem.insertChildren(position, rows, 1)
         self.endInsertRows()
 
         return success
@@ -158,7 +156,7 @@ class dirModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
 
-    def removeRows(self, position, rows, parent=QModelIndex()):
+    def removeRows(self, position, rows, parent: QModelIndex):
         parentItem = self.getItem(parent)
 
         self.beginRemoveRows(parent, position, position + rows - 1)
@@ -167,12 +165,12 @@ class dirModel(QAbstractItemModel):
 
         return success
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent: QModelIndex):
         parentItem = self.getItem(parent)
 
         return parentItem.childCount()
 
-    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+    def setData(self, index, value, role: Qt.ItemDataRole):
         logger.info(f'{role=}, {value=}')
         if role != Qt.ItemDataRole.EditRole and role != Qt.ItemDataRole.ToolTipRole:
             return False

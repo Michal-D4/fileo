@@ -423,7 +423,7 @@ def finish_loading(has_new_ext: bool):
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
-def check_duplicates(auto=True):
+def check_duplicates(auto: bool):
     rep = workers.report_duplicates()
     if rep:
         dup_dlg = dup.dlgDup(rep, ag.app)

@@ -153,7 +153,7 @@ def save_app_setting(**kwargs):
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
 
-def prepare_styles(theme_key: str, to_save: bool = False) -> str:
+def prepare_styles(theme_key: str, to_save: bool) -> str:
     global qss_params
     icons_txt = styles = params = ''
     files = {'qss': "default.qss", 'ico': "icons.toml", 'params': "default.param"}

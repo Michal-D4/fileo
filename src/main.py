@@ -72,7 +72,7 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
 
     sys.exit(app.exec())
 
-def main(entry_point: str, db_name: str, first_instanse: bool=True):
+def main(entry_point: str, db_name: str, first_instanse: bool):
     app = QApplication([])
     tug.entry_point = entry_point
     tug.set_logger()

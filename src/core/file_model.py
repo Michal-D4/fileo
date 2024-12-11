@@ -58,19 +58,19 @@ class fileProxyModel(QSortFilterProxyModel):
 
 
 class fileModel(QAbstractTableModel):
-    def __init__(self, parent=None, *args):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.header = ()
         self.rows = []
         self.user_data: list[ag.FileData] = []
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
         return len(self.rows)
 
     def columnCount(self, parent=None):
         return len(self.header)
 
-    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role: Qt.ItemDataRole):
         if index.isValid():
             col = index.column()
             line = self.rows[index.row()]
@@ -127,7 +127,7 @@ class fileModel(QAbstractTableModel):
             value = value.split(' ')
         self.header = value
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role: Qt.ItemDataRole):
         if role != Qt.ItemDataRole.EditRole:
             return False
 
