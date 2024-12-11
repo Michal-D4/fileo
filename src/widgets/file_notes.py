@@ -45,6 +45,7 @@ class notesContainer(QScrollArea):
         self.scroll_layout.setObjectName('scroll_layout')
         self.scrollWidget.setLayout(self.scroll_layout)
         self.setWidget(self.scrollWidget)
+        self.scroll_layout.addStretch(1)
         self.setStyleSheet("border: none;")
 
     def go_menu(self, e: QMouseEvent):
@@ -87,7 +88,6 @@ class notesContainer(QScrollArea):
 
         self.setUpdatesEnabled(False)
         self.clear_layout()
-        self.scroll_layout.addStretch(1)
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
             note = fileNote(*row[1:], self.file_id)
@@ -95,6 +95,7 @@ class notesContainer(QScrollArea):
             add_to_top(note)
         self.collapse(False)
         self.setUpdatesEnabled(True)
+        self.show()
 
     def theme_changed(self):
         for i in reversed(range(self.scroll_layout.count())):
