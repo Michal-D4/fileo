@@ -39,11 +39,12 @@ class notesContainer(QScrollArea):
         self.setObjectName("container")
         self.scrollWidget = QWidget()
         self.scrollWidget.setObjectName("scrollWidget")
-        self.setWidget(self.scrollWidget)
         self.scroll_layout = QVBoxLayout(self.scrollWidget)
         self.scroll_layout.setContentsMargins(0,0,0,0)
         self.scroll_layout.setSpacing(2)
         self.scroll_layout.setObjectName('scroll_layout')
+        self.scrollWidget.setLayout(self.scroll_layout)
+        self.setWidget(self.scrollWidget)
         self.setStyleSheet("border: none;")
 
     def go_menu(self, e: QMouseEvent):
@@ -77,7 +78,13 @@ class notesContainer(QScrollArea):
         self.set_notes_data()
 
     def set_notes_data(self):
-        ag.note_buttons.clear()
+        def add_to_top(item: fileNote):
+            item.setSizePolicy(
+                QSizePolicy.Policy.Preferred,
+                QSizePolicy.Policy.MinimumExpanding
+            )
+            self.scroll_layout.insertWidget(0, item)
+
         self.setUpdatesEnabled(False)
         self.clear_layout()
         self.scroll_layout.addStretch(1)
@@ -85,7 +92,7 @@ class notesContainer(QScrollArea):
         for row in data:
             note = fileNote(*row[1:], self.file_id)
             note.set_text(row[0])
-            self.add_to_top(note)
+            add_to_top(note)
         self.collapse(False)
         self.setUpdatesEnabled(True)
 
@@ -102,13 +109,6 @@ class notesContainer(QScrollArea):
             item = self.scroll_layout.takeAt(i)
             if item.widget():
                 item.widget().deleteLater()
-
-    def add_to_top(self, item: fileNote):
-        item.setSizePolicy(
-            QSizePolicy.Policy.Preferred,
-            QSizePolicy.Policy.MinimumExpanding
-        )
-        self.scroll_layout.insertWidget(0, item)
 
     def finish_editing(self):
         self.update_note()
@@ -169,11 +169,15 @@ class notesContainer(QScrollArea):
             db_ut.delete_note(file_id, note_id)
 
     def collapse(self, all: bool = True):
+        if self.scroll_layout.count() <= 1:
+            return
+
         for i in reversed(range(not all, self.scroll_layout.count())):
             item = self.scroll_layout.itemAt(i)
             if item.widget():
                 note: fileNote = item.widget()
                 note.ensure_collapsed()
+
         if not all:   # first note is not collapsed
             item = self.scroll_layout.itemAt(0)
             if item.widget():
