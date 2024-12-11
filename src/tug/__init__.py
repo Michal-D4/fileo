@@ -103,13 +103,10 @@ def set_config():
             cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
 
         if cfg_path.is_file():
-            with open(cfg_path, "r") as ft:
-                toml_data = ft.read()
             cfg_path = cfg_path.parent
-        else:
-            toml_data = resource_config()
-
-        return toml_data
+            with open(cfg_path, "r") as ft:
+                return ft.read()
+        return resource_config()
 
     def resource_config() -> str:
         global cfg_path
