@@ -57,6 +57,7 @@ class shoWindow(QMainWindow):
         self.set_busy(False)
         ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
         ctrl_b.activated.connect(self.click_toggle_bar)
+        bk_ut.set_files_resize_event()
 
     def create_fold_container(self):
         fold_layout = QVBoxLayout(self.ui.left_pane)
@@ -301,7 +302,6 @@ class shoWindow(QMainWindow):
         if self.connect_db(db_name):
             bk_ut.populate_all()
             bk_ut.restore_dirs()
-            # bk_ut.single_shot()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):

@@ -107,7 +107,6 @@ def single_shot():
     QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
 def bk_setup(main: 'shoWindow'):
-    ag.file_list.resizeEvent = file_list_resize_0
     low_bk.dir_dree_view_setup()
 
     ag.dir_list.customContextMenuRequested.connect(dir_menu)
@@ -209,13 +208,10 @@ def resize_section_0():
     sz0 = sum((hdr.sectionSize(i) for i in range(1, hdr.count())))
     hdr.resizeSection(0, max(sz - sz0, min_width))
 
-def file_list_resize_0(e: QResizeEvent):
+def set_files_resize_event():
     def file_list_resize(e: QResizeEvent):
         resize_section_0()
         super(QTreeView, ag.file_list).resizeEvent(e)
-
-    if ag.db.conn:
-        restore_dirs()
 
     ag.file_list.resizeEvent = file_list_resize
 
