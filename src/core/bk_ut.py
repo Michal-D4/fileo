@@ -249,7 +249,7 @@ def restore_dirs():
         history_dir_files()
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
-    else:   #  ag.appMode.FILTER_SETUP
+    else:
         low_bk.show_files([])
 
     header_restore()
@@ -310,15 +310,13 @@ def populate_all():
 
 def restore_history():
     ag.recent_files = ag.get_setting('RECENT_FILES', [])
-    hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
-    if not hist[2] and ag.dir_list.model().rowCount():
+    hist = ag.get_setting('DIR_HISTORY', [[], ''])
+
+    if not hist[1] and ag.dir_list.model().rowCount():
         idx = ag.dir_list.model().index(0, 0, QModelIndex())
         if idx.isValid():
-            udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-            hist[2] = [udat.id,]
             ag.dir_list.setCurrentIndex(idx)
 
-    low_bk.hist_folder = bool(hist[2])
     ag.history.set_history(*hist)
 
 def history_dir_files():

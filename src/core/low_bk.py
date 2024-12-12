@@ -25,7 +25,6 @@ from .filename_editor import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 340
 
-hist_folder: bool = True
 fields = (
     'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
     'Pages', 'Size', 'Published', 'Date of last note', 'Created',
@@ -242,9 +241,9 @@ def rename_file():
     ag.file_list.edit(idx)
 
 def enable_next_prev(param: str):
-    not_empty = param.split(',')
-    ag.app.btn_next.setDisabled(not_empty[0] == 'no')
-    ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
+    nex_, prev = param.split(',')
+    ag.app.btn_next.setDisabled(nex_ == 'no')
+    ag.app.btn_prev.setDisabled(prev == 'no')
 
 def find_files_by_name(param: str):
     def split3():
@@ -348,8 +347,7 @@ def set_dir_model():
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    if ag.mode is ag.appMode.FILTER:
-        restore_selected_dirs()
+    restore_selected_dirs()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
@@ -367,25 +365,22 @@ def restore_selected_dirs():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-
     def set_folder_path_label():
         if curr_idx.isValid():
             ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
+
+    def add_history_item():
+        ag.history.add_item(
+            define_branch(ag.dir_list.currentIndex())
+        )
 
     ag.app.collapse_btn.setChecked(False)
     set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        def new_history_item():
-            global hist_folder
-            if hist_folder:
-                hist_folder = False
-            else:       # new history item
-                add_history_item()
-
         save_file_id(prev_idx)
         show_folder_files()
-        new_history_item()
+        add_history_item()
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
@@ -396,10 +391,10 @@ def save_file_id(dir_idx: QModelIndex):
     """ save current file_id in dir (parentdir) table """
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
-        file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
-        u_dat = update_file_id_in_dir_model(file_id, dir_idx)
-
-        db_ut.update_file_id(u_dat)
+        if file_idx.isValid():
+            file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
+            u_dat = update_file_id_in_dir_model(file_id, dir_idx)
+            db_ut.update_file_id(u_dat)
 
 def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         model = ag.dir_list.model()
@@ -407,11 +402,6 @@ def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         u_data: ag.DirData = dir_item.userData
         u_data.file_id = file_id
         return u_data
-
-def add_history_item():
-    ag.history.add_item(
-        define_branch(ag.dir_list.currentIndex())
-    )
 
 def dir_dree_view_setup():
     ag.dir_list.header().hide()
@@ -465,10 +455,8 @@ def to_next_folder():
     go_to_history_folder(branch)
 
 def go_to_history_folder(branch: list):
-    global hist_folder
     if not branch:
         return
-    hist_folder = True
     _history_folder(branch)
 
 def _history_folder(branch: list):
@@ -608,11 +596,10 @@ def set_file_model(model: fileModel):
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    logger.info(f'{curr.isValid()=}')
     if curr.isValid():
         ag.file_list.scrollTo(curr)
         ag.app.ui.current_filename.setText(file_name(curr))
-        logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.column()=}')
+        # logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.row()=}')
         file_notes_show(curr)
 
 def copy_file_name():

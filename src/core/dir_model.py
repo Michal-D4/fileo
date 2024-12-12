@@ -165,7 +165,7 @@ class dirModel(QAbstractItemModel):
 
         return success
 
-    def rowCount(self, parent: QModelIndex):
+    def rowCount(self, parent=QModelIndex()):
         parentItem = self.getItem(parent)
 
         return parentItem.childCount()

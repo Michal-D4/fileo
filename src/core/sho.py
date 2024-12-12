@@ -67,6 +67,14 @@ class shoWindow(QMainWindow):
         fold_layout.addWidget(self.container)
 
     def tune_version(self):
+        def toVer1316():
+            if saved_v <= 1315:
+                ag.save_settings(DIR_HISTORY=[[], ''])
+
+        def fromVer1316():
+            if saved_v > 1315:
+                ag.save_settings(DIR_HISTORY=[[], [], []])
+
         def toVer1312():
             if saved_v <= 1311:
                 db_list = tug.get_app_setting("DB_List", [])
@@ -86,13 +94,18 @@ class shoWindow(QMainWindow):
         tug.save_app_setting(AppVersion=cur_v)
         saved_v = int(saved_v.replace('.',''))
         cur_v = int(cur_v.replace('.',''))
+
         if cur_v > 1311:
             toVer1312()
         else:
             fromVer1312()
 
+        if cur_v > 1315:
+            toVer1316()
+        else:
+            fromVer1316()
+
     def restore_settings(self, db_name: str):
-        self.tune_version()
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
 
         self.restore_geometry()
@@ -300,6 +313,7 @@ class shoWindow(QMainWindow):
         logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
+            self.tune_version()
             bk_ut.populate_all()
             bk_ut.restore_dirs()
 
