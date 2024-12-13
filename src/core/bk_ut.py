@@ -106,8 +106,8 @@ def single_shot():
     QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
     QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
-def bk_setup(main: 'shoWindow'):
-    low_bk.dir_dree_view_setup()
+def bk_setup():
+    low_bk.dir_view_setup()
 
     ag.dir_list.customContextMenuRequested.connect(dir_menu)
     ag.file_list.customContextMenuRequested.connect(file_menu)

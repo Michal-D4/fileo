@@ -402,7 +402,7 @@ def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         u_data.file_id = file_id
         return u_data
 
-def dir_dree_view_setup():
+def dir_view_setup():
     ag.dir_list.header().hide()
     icon_size = 12
     indent = 12

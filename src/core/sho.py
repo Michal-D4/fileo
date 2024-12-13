@@ -52,7 +52,7 @@ class shoWindow(QMainWindow):
 
         self.setup_global_widgets()
         self.restore_settings(db_name)
-        bk_ut.bk_setup(self)
+        bk_ut.bk_setup()
         self.set_busy(False)
         ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
         ctrl_b.activated.connect(self.click_toggle_bar)
@@ -88,6 +88,7 @@ class shoWindow(QMainWindow):
 
         saved_v = tug.get_app_setting("AppVersion", "0")
         cur_v = ag.app_version()
+        # logger.info(f'{saved_v=}, {cur_v=}')
         if saved_v == cur_v:
             return
         tug.save_app_setting(AppVersion=cur_v)
