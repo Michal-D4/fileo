@@ -247,7 +247,7 @@ def restore_dirs():
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
     elif  ag.mode is ag.appMode.DIR:
-        history_dir_files()
+        low_bk.show_folder_files()
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
     else:
@@ -314,13 +314,6 @@ def restore_history():
     hist = ag.get_setting('DIR_HISTORY', [[], ''])
 
     ag.history.set_history(*hist)
-
-def history_dir_files():
-    idx = low_bk.expand_branch(ag.history.get_current())
-    if idx.isValid():
-        ag.dir_list.setCurrentIndex(idx)
-    else:
-        low_bk.show_folder_files()
 
 @pyqtSlot()
 def refresh_dir_list():
