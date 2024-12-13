@@ -237,6 +237,7 @@ def toggle_show_column(state: bool, index: int):
 
 def restore_dirs():
     low_bk.set_dir_model()
+    low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
     restore_history()
     if ag.mode is ag.appMode.FILTER:
@@ -311,11 +312,6 @@ def populate_all():
 def restore_history():
     ag.recent_files = ag.get_setting('RECENT_FILES', [])
     hist = ag.get_setting('DIR_HISTORY', [[], ''])
-
-    if not hist[1] and ag.dir_list.model().rowCount():
-        idx = ag.dir_list.model().index(0, 0, QModelIndex())
-        if idx.isValid():
-            ag.dir_list.setCurrentIndex(idx)
 
     ag.history.set_history(*hist)
 

@@ -347,7 +347,6 @@ def set_dir_model():
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    restore_selected_dirs()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
