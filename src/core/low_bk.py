@@ -61,7 +61,7 @@ def set_user_action_handlers():
         "Files Reveal in explorer": open_folder,
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
-        "filter_changed": filter_changed,
+        "filter_changed": filtered_files,
         "MainMenu New window": new_window,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu Select DB from list": show_db_list,
@@ -471,10 +471,6 @@ def filtered_files():
     ag.app.ui.files_heading.setText('filtered files')
     files = ag.filter_dlg.get_file_list()
     show_files(files)
-
-def filter_changed():
-    ag.set_mode(ag.appMode.FILTER)
-    filtered_files()
 
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
