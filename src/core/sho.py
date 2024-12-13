@@ -52,7 +52,6 @@ class shoWindow(QMainWindow):
 
         self.setup_global_widgets()
         self.restore_settings(db_name)
-        self.restore_mode()
         bk_ut.bk_setup(self)
         self.set_busy(False)
         ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
@@ -314,6 +313,7 @@ class shoWindow(QMainWindow):
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             self.tune_version()
+            self.restore_mode()
             bk_ut.populate_all()
             bk_ut.restore_dirs()
 
@@ -464,6 +464,8 @@ class shoWindow(QMainWindow):
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
+        if ag.filter_dlg.isVisible():
+            settings['filterDialogPosition'] = ag.filter_dlg.pos()
 
         if ag.db.conn:
             low_bk.save_db_list()

@@ -250,7 +250,7 @@ def restore_dirs():
         low_bk.show_folder_files()
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
-    else:
+    else:       # ag.appMode.FILTER_SETUP
         low_bk.show_files([])
 
     header_restore()
