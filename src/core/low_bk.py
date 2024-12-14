@@ -107,7 +107,7 @@ def new_window(db_name: str=''):
 
 def clear_recent_files():
     ag.recent_files.clear()
-    ag.switch_first_mode()
+    ag.switch_to_prev_mode()
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
@@ -384,7 +384,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
         return
-    ag.switch_first_mode()
+    ag.switch_to_prev_mode()
 
 def save_file_id(dir_idx: QModelIndex):
     """ save current file_id in dir (parentdir) table """
@@ -412,7 +412,7 @@ def dir_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-@pyqtSlot(ag.appMode)
+@pyqtSlot(int)
 def app_mode_changed(prev_mode: int):
     prev = ag.appMode(prev_mode)
 

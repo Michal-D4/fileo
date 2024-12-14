@@ -421,7 +421,7 @@ class shoWindow(QMainWindow):
 
     def click_checkable_button(self, bt_key: ag.appMode):
         low_bk.set_check_btn(bt_key)
-        ag.signals_.app_mode_changed.emit(ag.first_mode.value)
+        ag.signals_.app_mode_changed.emit(ag.prev_mode.value)
 
         self.toggle_filter_show()
 

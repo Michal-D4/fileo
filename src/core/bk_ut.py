@@ -33,7 +33,7 @@ def save_bk_settings():
     mode = (
         ag.mode.value
         if ag.mode.value <= ag.appMode.RECENT_FILES.value
-        else ag.first_mode.value
+        else ag.prev_mode.value
     )
     try:
         settings = {
