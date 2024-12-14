@@ -98,13 +98,13 @@ def set_config():
     def frozen_config() -> str:
         global cfg_path
         if sys.platform.startswith("win"):
-            cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
+            _path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
         elif sys.platform.startswith("linux"):
-            cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+            _path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
 
-        if cfg_path.is_file():
-            cfg_path = cfg_path.parent
-            with open(cfg_path, "r") as ft:
+        if _path.is_file():
+            cfg_path = _path.parent
+            with open(_path, "r") as ft:
                 return ft.read()
         return resource_config()
 
