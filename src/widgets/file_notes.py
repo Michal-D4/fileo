@@ -106,7 +106,7 @@ class notesContainer(QScrollArea):
                     note.set_browser_text()
 
     def clear_layout(self):
-        for i in reversed(range(self.scroll_layout.count())):
+        for i in reversed(range(self.scroll_layout.count()-1)):
             item = self.scroll_layout.takeAt(i)
             if item.widget():
                 item.widget().deleteLater()
@@ -173,7 +173,7 @@ class notesContainer(QScrollArea):
         if self.scroll_layout.count() <= 1:
             return
 
-        for i in reversed(range(not all, self.scroll_layout.count())):
+        for i in reversed(range(not all, self.scroll_layout.count()-1)):
             item = self.scroll_layout.itemAt(i)
             if item.widget():
                 note: fileNote = item.widget()
