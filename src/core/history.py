@@ -1,85 +1,109 @@
 from loguru import logger
+from datetime import datetime
 
 from . import app_globals as ag, db_ut
 
 
 class History(object):
     def __init__(self, limit: int = 20):
-        self.curr = []
         self.limit: int = limit
-        self.next_ = []
-        self.prev = []
+        self.hist = {}
+        self.curr: str = ''
+        self.is_hist = False
 
-    def set_history(self, next_: list, prev: list, curr: list):
-        """
-        used to restore history on startup
-        """
-        self.next_ = next_
-        self.prev = prev
+    def set_history(self, hist: list, curr: str):
+        self.hist = dict(zip(*hist))
         self.curr = curr
+
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\{self.has_next()},{self.has_prev()}'
         )
 
     def set_limit(self, limit: int):
         self.limit: int = limit
-        if len(self.next_) > limit:
-            self.next_ = self.next_[len(self.next_)-limit:]
-        if len(self.prev) > limit:
-            self.prev = self.prev[len(self.prev)-limit:]
+        if len(self.hist) > limit:
+            self.trim_to_limit()
+
+    def trim_to_limit(self):
+        kk = list(self.hist.keys())
+        kk.sort(reverse=True)
+        for i in range(len(self.hist) - self.limit):
+            self.hist.pop(kk[i])
 
     def get_current(self):
-        return self.curr
+        if not self.hist or not self.curr:
+            return []
+        return [int(i) for i in self.hist[self.curr].split(',')]
 
     def next_dir(self) -> list:
-        if len(self.prev) >= self.limit:
-            self.prev = self.prev[len(self.prev)-self.limit+1:]
-        self.prev.append(self.curr)
+        kk: list = list(self.hist.keys())
+        kk.sort()
 
-        self.curr = self.next_.pop()
+        i = kk.index(self.curr)
+        if i < len(self.hist)-1:
+            self.curr = kk[i+1]
+
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\{self.has_next()},yes'
         )
-        return self.curr
+        self.is_hist = True
+        return self.get_current()
 
     def prev_dir(self) -> list:
-        if len(self.next_) >= self.limit:
-            self.next_ = self.next_[len(self.next_)-self.limit+1:]
-        self.next_.append(self.curr)
+        kk: list = list(self.hist.keys())
+        kk.sort()
 
-        self.curr = self.prev.pop()
+        i = kk.index(self.curr)
+        if i > 0:
+            self.curr = kk[i-1]
+
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\yes,{self.has_prev()}'
         )
-        return self.curr
+        self.is_hist = True
+        return self.get_current()
 
     def has_next(self) -> str:
-        return 'yes' if self.next_ else 'no'
+        if len(self.hist) == 0:
+            return 'no'
+        return 'yes' if max(self.hist.keys()) > self.curr else 'no'
 
     def has_prev(self) -> str:
-        return 'yes' if self.prev else 'no'
+        if len(self.hist) == 0:
+            return 'no'
+        return 'yes' if min(self.hist.keys()) < self.curr else 'no'
 
-    def add_item(self, new):
-        if not self.curr:
-            self.curr = new
+    def add_item(self, new: list):
+        def del_if_exists():
+            vv = list(self.hist.values())
+            if val in vv:
+                for k, v in self.hist.items():
+                    if v == val:
+                        self.hist.pop(k)
+                        break
+            else:
+                if len(self.hist) == self.limit:  # if limit exceeded
+                    self.hist.pop(min(list(self.hist.keys())))
+
+        key = str(datetime.now().replace(microsecond=0))
+        val = ','.join((str(x) for x in new))
+
+        if self.is_hist:
+            self.is_hist = False
             return
 
-        if self.prev[-2:] == [self.curr, new]:
-            # to avoid duplicated pairs in history
-            self.curr = self.prev.pop(-1)
-        else:
-            if len(self.prev) >= self.limit:
-                self.prev = self.prev[len(self.prev) - self.limit + 1:]
-            self.prev.append(self.curr)
-            self.curr = new
-        self.next_.clear()
+        if not self.curr:
+            self.curr = key
+            self.hist[key] = val
+            return
+
+        del_if_exists()
+        self.hist[key] = val
+        self.curr = key
 
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\no,{self.has_prev()}'
         )
 
     def get_history(self) -> list:
-        """
-        used to save histiry on close
-        """
-        return [self.next_, self.prev, self.curr]
+        return [(list(self.hist.keys()), list(self.hist.values())), self.curr]

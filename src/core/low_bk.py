@@ -25,7 +25,6 @@ from .filename_editor import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 340
 
-hist_folder: bool = True
 fields = (
     'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
     'Pages', 'Size', 'Published', 'Date of last note', 'Created',
@@ -62,7 +61,7 @@ def set_user_action_handlers():
         "Files Reveal in explorer": open_folder,
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
-        "filter_changed": filter_changed,
+        "filter_changed": filtered_files,
         "MainMenu New window": new_window,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu Select DB from list": show_db_list,
@@ -108,7 +107,7 @@ def new_window(db_name: str=''):
 
 def clear_recent_files():
     ag.recent_files.clear()
-    ag.switch_first_mode()
+    ag.switch_to_prev_mode()
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
@@ -242,9 +241,9 @@ def rename_file():
     ag.file_list.edit(idx)
 
 def enable_next_prev(param: str):
-    not_empty = param.split(',')
-    ag.app.btn_next.setDisabled(not_empty[0] == 'no')
-    ag.app.btn_prev.setDisabled(not_empty[1] == 'no')
+    nex_, prev = param.split(',')
+    ag.app.btn_next.setDisabled(nex_ == 'no')
+    ag.app.btn_prev.setDisabled(prev == 'no')
 
 def find_files_by_name(param: str):
     def split3():
@@ -348,8 +347,6 @@ def set_dir_model():
     model.set_model_data()
     ag.dir_list.setModel(model)
     ag.dir_list.setFocus()
-    if ag.mode is ag.appMode.FILTER:
-        restore_selected_dirs()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
@@ -367,39 +364,36 @@ def restore_selected_dirs():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-
     def set_folder_path_label():
         if curr_idx.isValid():
             ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
+
+    def add_history_item():
+        ag.history.add_item(
+            define_branch(ag.dir_list.currentIndex())
+        )
 
     ag.app.collapse_btn.setChecked(False)
     set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        def new_history_item():
-            global hist_folder
-            if hist_folder:
-                hist_folder = False
-            else:       # new history item
-                add_history_item()
-
         save_file_id(prev_idx)
         show_folder_files()
-        new_history_item()
+        add_history_item()
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
         return
-    ag.switch_first_mode()
+    ag.switch_to_prev_mode()
 
 def save_file_id(dir_idx: QModelIndex):
     """ save current file_id in dir (parentdir) table """
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
-        file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
-        u_dat = update_file_id_in_dir_model(file_id, dir_idx)
-
-        db_ut.update_file_id(u_dat)
+        if file_idx.isValid():
+            file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
+            u_dat = update_file_id_in_dir_model(file_id, dir_idx)
+            db_ut.update_file_id(u_dat)
 
 def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         model = ag.dir_list.model()
@@ -408,12 +402,7 @@ def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         u_data.file_id = file_id
         return u_data
 
-def add_history_item():
-    ag.history.add_item(
-        define_branch(ag.dir_list.currentIndex())
-    )
-
-def dir_dree_view_setup():
+def dir_view_setup():
     ag.dir_list.header().hide()
     icon_size = 12
     indent = 12
@@ -423,7 +412,7 @@ def dir_dree_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-@pyqtSlot(ag.appMode)
+@pyqtSlot(int)
 def app_mode_changed(prev_mode: int):
     prev = ag.appMode(prev_mode)
 
@@ -465,10 +454,8 @@ def to_next_folder():
     go_to_history_folder(branch)
 
 def go_to_history_folder(branch: list):
-    global hist_folder
     if not branch:
         return
-    hist_folder = True
     _history_folder(branch)
 
 def _history_folder(branch: list):
@@ -484,10 +471,6 @@ def filtered_files():
     ag.app.ui.files_heading.setText('filtered files')
     files = ag.filter_dlg.get_file_list()
     show_files(files)
-
-def filter_changed():
-    ag.set_mode(ag.appMode.FILTER)
-    filtered_files()
 
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
@@ -518,11 +501,11 @@ def get_recent_files() -> list:
     ag.set_mode(ag.appMode.RECENT_FILES)
     return (db_ut.get_file(id_) for id_ in ag.recent_files[::-1])
 
-def show_files(files, file_id: int = 0):
+def show_files(files, cur_file: int = 0):
     """
     populate file's model
-    :@param files
-    :@param file_id - if 0 no file was selected
+    :@param files - list of file
+    :@param cur_file - set current file, 0 is on first line
     """
     ag.file_list.setSortingEnabled(
         ag.mode is not ag.appMode.RECENT_FILES
@@ -531,7 +514,7 @@ def show_files(files, file_id: int = 0):
     set_file_model(model)
     ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
 
-    set_current_file(file_id)
+    set_current_file(cur_file)
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
@@ -608,11 +591,10 @@ def set_file_model(model: fileModel):
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
-    logger.info(f'{curr.isValid()=}')
     if curr.isValid():
         ag.file_list.scrollTo(curr)
         ag.app.ui.current_filename.setText(file_name(curr))
-        logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.column()=}')
+        # logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.row()=}')
         file_notes_show(curr)
 
 def copy_file_name():

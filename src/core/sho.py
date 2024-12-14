@@ -52,11 +52,11 @@ class shoWindow(QMainWindow):
 
         self.setup_global_widgets()
         self.restore_settings(db_name)
-        self.restore_mode()
-        bk_ut.bk_setup(self)
+        bk_ut.bk_setup()
         self.set_busy(False)
         ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
         ctrl_b.activated.connect(self.click_toggle_bar)
+        bk_ut.set_files_resize_event()
 
     def create_fold_container(self):
         fold_layout = QVBoxLayout(self.ui.left_pane)
@@ -66,6 +66,14 @@ class shoWindow(QMainWindow):
         fold_layout.addWidget(self.container)
 
     def tune_version(self):
+        def toVer1316():
+            if saved_v <= 1315:
+                ag.save_settings(DIR_HISTORY=[[], ''])
+
+        def fromVer1316():
+            if saved_v > 1315:
+                ag.save_settings(DIR_HISTORY=[[], [], []])
+
         def toVer1312():
             if saved_v <= 1311:
                 db_list = tug.get_app_setting("DB_List", [])
@@ -80,18 +88,24 @@ class shoWindow(QMainWindow):
 
         saved_v = tug.get_app_setting("AppVersion", "0")
         cur_v = ag.app_version()
+        # logger.info(f'{saved_v=}, {cur_v=}')
         if saved_v == cur_v:
             return
         tug.save_app_setting(AppVersion=cur_v)
         saved_v = int(saved_v.replace('.',''))
         cur_v = int(cur_v.replace('.',''))
+
         if cur_v > 1311:
             toVer1312()
         else:
             fromVer1312()
 
+        if cur_v > 1315:
+            toVer1316()
+        else:
+            fromVer1316()
+
     def restore_settings(self, db_name: str):
-        self.tune_version()
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
 
         self.restore_geometry()
@@ -299,9 +313,10 @@ class shoWindow(QMainWindow):
         logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
+            self.tune_version()
+            self.restore_mode()
             bk_ut.populate_all()
             bk_ut.restore_dirs()
-            # bk_ut.single_shot()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
@@ -406,7 +421,7 @@ class shoWindow(QMainWindow):
 
     def click_checkable_button(self, bt_key: ag.appMode):
         low_bk.set_check_btn(bt_key)
-        ag.signals_.app_mode_changed.emit(ag.first_mode.value)
+        ag.signals_.app_mode_changed.emit(ag.prev_mode.value)
 
         self.toggle_filter_show()
 
@@ -450,6 +465,8 @@ class shoWindow(QMainWindow):
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
         }
+        if ag.filter_dlg.isVisible():
+            settings['filterDialogPosition'] = ag.filter_dlg.pos()
 
         if ag.db.conn:
             low_bk.save_db_list()

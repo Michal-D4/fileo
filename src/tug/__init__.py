@@ -98,18 +98,15 @@ def set_config():
     def frozen_config() -> str:
         global cfg_path
         if sys.platform.startswith("win"):
-            cfg_path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
+            _path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
         elif sys.platform.startswith("linux"):
-            cfg_path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
+            _path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
 
-        if cfg_path.is_file():
-            with open(cfg_path, "r") as ft:
-                toml_data = ft.read()
-            cfg_path = cfg_path.parent
-        else:
-            toml_data = resource_config()
-
-        return toml_data
+        if _path.is_file():
+            cfg_path = _path.parent
+            with open(_path, "r") as ft:
+                return ft.read()
+        return resource_config()
 
     def resource_config() -> str:
         global cfg_path
@@ -153,7 +150,7 @@ def save_app_setting(**kwargs):
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
 
-def prepare_styles(theme_key: str, to_save: bool = False) -> str:
+def prepare_styles(theme_key: str, to_save: bool) -> str:
     global qss_params
     icons_txt = styles = params = ''
     files = {'qss': "default.qss", 'ico': "icons.toml", 'params': "default.param"}

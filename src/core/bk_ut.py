@@ -33,7 +33,7 @@ def save_bk_settings():
     mode = (
         ag.mode.value
         if ag.mode.value <= ag.appMode.RECENT_FILES.value
-        else ag.first_mode.value
+        else ag.prev_mode.value
     )
     try:
         settings = {
@@ -106,9 +106,8 @@ def single_shot():
     QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
     QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
-def bk_setup(main: 'shoWindow'):
-    ag.file_list.resizeEvent = file_list_resize_0
-    low_bk.dir_dree_view_setup()
+def bk_setup():
+    low_bk.dir_view_setup()
 
     ag.dir_list.customContextMenuRequested.connect(dir_menu)
     ag.file_list.customContextMenuRequested.connect(file_menu)
@@ -209,13 +208,10 @@ def resize_section_0():
     sz0 = sum((hdr.sectionSize(i) for i in range(1, hdr.count())))
     hdr.resizeSection(0, max(sz - sz0, min_width))
 
-def file_list_resize_0(e: QResizeEvent):
+def set_files_resize_event():
     def file_list_resize(e: QResizeEvent):
         resize_section_0()
         super(QTreeView, ag.file_list).resizeEvent(e)
-
-    if ag.db.conn:
-        restore_dirs()
 
     ag.file_list.resizeEvent = file_list_resize
 
@@ -241,6 +237,7 @@ def toggle_show_column(state: bool, index: int):
 
 def restore_dirs():
     low_bk.set_dir_model()
+    low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
     restore_history()
     if ag.mode is ag.appMode.FILTER:
@@ -250,10 +247,10 @@ def restore_dirs():
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
     elif  ag.mode is ag.appMode.DIR:
-        history_dir_files()
+        low_bk.show_folder_files()
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
-    else:   #  ag.appMode.FILTER_SETUP
+    else:       # ag.appMode.FILTER_SETUP
         low_bk.show_files([])
 
     header_restore()
@@ -314,23 +311,9 @@ def populate_all():
 
 def restore_history():
     ag.recent_files = ag.get_setting('RECENT_FILES', [])
-    hist = ag.get_setting('DIR_HISTORY', [[], [], []])  # next_, prev, curr
-    if not hist[2] and ag.dir_list.model().rowCount():
-        idx = ag.dir_list.model().index(0, 0, QModelIndex())
-        if idx.isValid():
-            udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-            hist[2] = [udat.id,]
-            ag.dir_list.setCurrentIndex(idx)
+    hist = ag.get_setting('DIR_HISTORY', [[], ''])
 
-    low_bk.hist_folder = bool(hist[2])
     ag.history.set_history(*hist)
-
-def history_dir_files():
-    idx = low_bk.expand_branch(ag.history.get_current())
-    if idx.isValid():
-        ag.dir_list.setCurrentIndex(idx)
-    else:
-        low_bk.show_folder_files()
 
 @pyqtSlot()
 def refresh_dir_list():
@@ -423,7 +406,7 @@ def finish_loading(has_new_ext: bool):
     low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
-def check_duplicates(auto=True):
+def check_duplicates(auto: bool):
     rep = workers.report_duplicates()
     if rep:
         dup_dlg = dup.dlgDup(rep, ag.app)
