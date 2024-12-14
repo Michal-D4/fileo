@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.17 - 2024, 14 December
+* fix issue with reading configuration when the application is in a frozen state.
+
 ## 1.3.16 - 2024, 14 December
 * remake folder history, folder can appear in history only once
 * fix some issues with showing notes
