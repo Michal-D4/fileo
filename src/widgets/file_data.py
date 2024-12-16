@@ -309,6 +309,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.tag_selector.set_file_id(file_id)
         self.author_selector.set_file_id(file_id)
         self.file_info.set_file_id(file_id)
+        ag.note_buttons.clear()
         self.notes.set_file_id(file_id)
 
         self.locator.set_data(file_id, branch)

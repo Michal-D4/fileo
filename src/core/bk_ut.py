@@ -246,11 +246,9 @@ def restore_dirs():
         idx = ag.file_list.model().index(row, 0)
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
-    elif  ag.mode is ag.appMode.DIR:
-        low_bk.show_folder_files()
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
-    else:       # ag.appMode.FILTER_SETUP
+    elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
 
     header_restore()
