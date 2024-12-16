@@ -310,6 +310,8 @@ def populate_all():
 def restore_history():
     ag.recent_files = ag.get_setting('RECENT_FILES', [])
     hist = ag.get_setting('DIR_HISTORY', [[], ''])
+    if len(hist) == 3:
+        hist = [[], '']
 
     ag.history.set_history(*hist)
 

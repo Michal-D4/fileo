@@ -67,6 +67,7 @@ class shoWindow(QMainWindow):
 
     def tune_version(self):
         def toVer1316():
+            """ changed DIR_HISTORY format """
             if saved_v <= 1315:
                 ag.save_settings(DIR_HISTORY=[[], ''])
 
@@ -75,6 +76,7 @@ class shoWindow(QMainWindow):
                 ag.save_settings(DIR_HISTORY=[[], [], []])
 
         def toVer1312():
+            """ changed DB_List format """
             if saved_v <= 1311:
                 db_list = tug.get_app_setting("DB_List", [])
                 db_list = [(a, False, b) for a,b in db_list]
@@ -92,8 +94,8 @@ class shoWindow(QMainWindow):
         if saved_v == cur_v:
             return
         tug.save_app_setting(AppVersion=cur_v)
-        saved_v = int(saved_v.replace('.',''))
-        cur_v = int(cur_v.replace('.',''))
+        saved_v = int(saved_v.replace('.', ''))
+        cur_v = int(cur_v.replace('.', ''))
 
         if cur_v > 1311:
             toVer1312()
