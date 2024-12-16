@@ -137,7 +137,8 @@ class fileNote(QWidget):
                     break
             else:
                 return
-            self.ui.note_title.setText(txt[:20])
+            wth = tug.config['note_title_width']
+            self.ui.note_title.setText(txt[:wth])
 
         prep = f'\n{note}'
         prep = prep.replace('<', '&#60')
