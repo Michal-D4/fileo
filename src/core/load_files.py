@@ -3,7 +3,7 @@ import apsw
 from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
-from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from . import app_globals as ag
 
@@ -46,7 +46,7 @@ class loadFiles(QObject):
         sql = 'select * from paths'
         cursor = self.conn.cursor().execute(sql)
         for row in cursor:
-            if Path(row[-1]).is_dir():  # skip not dirs
+            if Path(row[-1]).is_dir():  # changes in os file system may happened, and registered dir removed
                 self.paths[row[-1]] = PathDir(row[0], 0)
 
     def set_files_iterator(self, files):
@@ -89,6 +89,7 @@ class loadFiles(QObject):
         )
         return self.conn.last_insert_rowid()
 
+    @pyqtSlot()
     def load_data(self):
         """
         Load data in data base

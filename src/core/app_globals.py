@@ -41,6 +41,7 @@ history: 'History' = None
 recent_files = []
 single_instance = False
 stop_thread = False
+start_thread = None
 
 @unique
 class appMode(Enum):

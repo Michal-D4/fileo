@@ -2,7 +2,7 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
     QResizeEvent, QKeySequence, QShortcut,
 )
@@ -37,6 +37,7 @@ class shoWindow(QMainWindow):
     def __init__(self, db_name: str, first_instanse: bool, parent = None) -> None:
         super().__init__(parent)
         self.first_instance = first_instanse
+        self.loader: QObject = None
 
         self.ui = Ui_Sho()
 

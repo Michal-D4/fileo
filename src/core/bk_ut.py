@@ -1,7 +1,7 @@
 from loguru import logger
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import (QModelIndex, pyqtSlot, QPoint, QThread,
+from PyQt6.QtCore import (pyqtSlot, QPoint, QThread,
     QTimer, Qt,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
@@ -382,17 +382,24 @@ def file_loading(root_path: str, ext: list[str]):
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if self.is_busy or not ag.db.conn:
+    if not ag.db.conn:
         return
+
+    self.loader = load_files.loadFiles()
+    self.loader.set_files_iterator(load_files.yield_files(root_path, ext))
+    if self.is_busy:
+        ag.start_thread = 'load_files'
+    else:
+        start_load_files()
+
+def start_load_files():
     self.thread = QThread(self)
 
-    self.worker = load_files.loadFiles()
-    self.worker.set_files_iterator(load_files.yield_files(root_path, ext))
-    self.worker.moveToThread(self.thread)
+    self.loader.moveToThread(self.thread)
 
-    self.thread.started.connect(self.worker.load_data)
-    self.worker.finished.connect(finish_loading)
-    self.worker.finished.connect(self.worker.deleteLater)
+    self.thread.started.connect(self.loader.load_data)
+    self.loader.finished.connect(finish_loading)
+    self.loader.finished.connect(self.loader.deleteLater)
 
     self.thread.start()
     self.set_busy(True)
@@ -466,3 +473,6 @@ def run_worker(func):
 def finish_worker():
     self.thread.quit()
     self.set_busy(False)
+    if ag.start_thread == 'load_files':
+        ag.start_thread = None
+        start_load_files()
