@@ -2,7 +2,7 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
     QResizeEvent, QKeySequence, QShortcut,
 )
@@ -37,6 +37,7 @@ class shoWindow(QMainWindow):
     def __init__(self, db_name: str, first_instanse: bool, parent = None) -> None:
         super().__init__(parent)
         self.first_instance = first_instanse
+        self.loader: QObject = None
 
         self.ui = Ui_Sho()
 
@@ -67,6 +68,7 @@ class shoWindow(QMainWindow):
 
     def tune_version(self):
         def toVer1316():
+            """ changed DIR_HISTORY format """
             if saved_v <= 1315:
                 ag.save_settings(DIR_HISTORY=[[], ''])
 
@@ -75,6 +77,7 @@ class shoWindow(QMainWindow):
                 ag.save_settings(DIR_HISTORY=[[], [], []])
 
         def toVer1312():
+            """ changed DB_List format """
             if saved_v <= 1311:
                 db_list = tug.get_app_setting("DB_List", [])
                 db_list = [(a, False, b) for a,b in db_list]
@@ -92,8 +95,8 @@ class shoWindow(QMainWindow):
         if saved_v == cur_v:
             return
         tug.save_app_setting(AppVersion=cur_v)
-        saved_v = int(saved_v.replace('.',''))
-        cur_v = int(cur_v.replace('.',''))
+        saved_v = int(saved_v.replace('.', ''))
+        cur_v = int(cur_v.replace('.', ''))
 
         if cur_v > 1311:
             toVer1312()

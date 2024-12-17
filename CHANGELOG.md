@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.18 - 2024, 17 December
+* fix color theme switching issue
+* fix issue with folder history format
+* Some other code changes and improvements
+
 ## 1.3.17 - 2024, 14 December
 * fix issue with reading configuration when the application is in a frozen state.
 

@@ -24,7 +24,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.17'
+    return '1.3.18'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -41,6 +41,7 @@ history: 'History' = None
 recent_files = []
 single_instance = False
 stop_thread = False
+start_thread = None
 
 @unique
 class appMode(Enum):
