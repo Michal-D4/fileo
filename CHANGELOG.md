@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.19 - 2024, 17 December
+* fix html code usage in notes
+* fix first note height issue
+* Some other code changes and improvements
+
 ## 1.3.18 - 2024, 17 December
 * fix color theme switching issue
 * fix issue with folder history format
