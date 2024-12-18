@@ -141,8 +141,8 @@ class fileNote(QWidget):
             self.ui.note_title.setText(txt[:wth])
 
         prep = f'\n{note}'
-        prep = prep.replace('<', '&#60')
-        prep = prep.replace('>', '&#62')
+        prep = prep.replace('<<', '&#60')
+        prep = prep.replace('>>', '&#62')
         self.text = prep
         set_note_title()
 
