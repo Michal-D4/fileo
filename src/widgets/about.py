@@ -56,15 +56,20 @@ class AboutDialog(QWidget, Ui_aboutForm):
 
     def get_py_db_versions(self):
         import platform
+        import sys
+
         py_ver = platform.python_version()
         if ag.db.conn:
             db_ver = ag.db.conn.execute('PRAGMA user_version').fetchone()[0]
         else:
             db_ver = ''
-        self.set_title((py_ver, db_ver))
+
+        mode = 'frozen' if getattr(sys, 'frozen', False) else 'not frozen'
+
+        self.set_title((py_ver, db_ver, mode))
 
     def set_title(self, ver: tuple=None):
         if ver:
-            self.ttl_label.setText(f'About Fileo, Python {ver[0]}, DB user v.{ver[1]}')
+            self.ttl_label.setText(f'About Fileo, Python {ver[0]}, DB user v.{ver[1]}, {ver[2]}')
         else:
             self.ttl_label.setText('About Fileo')
