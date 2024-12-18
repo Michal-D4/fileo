@@ -64,7 +64,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
         else:
             db_ver = ''
 
-        mode = 'frozen' if getattr(sys, 'frozen', False) else 'not frozen'
+        mode = 'frozen' if getattr(sys, 'frozen', False) else 'packaged'
 
         self.set_title((py_ver, db_ver, mode))
 
