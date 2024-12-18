@@ -78,7 +78,6 @@ class notesContainer(QScrollArea):
         self.file_id = file_id
         ag.note_buttons.clear()
         self.set_notes_data()
-        self.show_first_note()
 
     def set_notes_data(self):
         def add_to_top(item: fileNote):
@@ -96,6 +95,7 @@ class notesContainer(QScrollArea):
             note.set_text(row[0])
             add_to_top(note)
         self.collapse()
+        self.show_first_note()
         self.setUpdatesEnabled(True)
         self.show()
 
