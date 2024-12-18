@@ -12,7 +12,6 @@ from ..core import app_globals as ag, db_ut
 from .ui_file_note import Ui_fileNote
 from .. import tug
 
-MIN_HEIGHT = 50
 TIME_FORMAT = "%Y-%m-%d %H:%M"
 
 
@@ -35,7 +34,7 @@ class fileNote(QWidget):
         self.created = datetime.fromtimestamp(created)
         self.text = ''
 
-        self.visible_height = MIN_HEIGHT
+        self.visible_height = 0
         self.expanded_height = 0
 
         self.ui = Ui_fileNote()
@@ -60,6 +59,7 @@ class fileNote(QWidget):
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
+        self.resizeEvent = self.note_resize
 
     @pyqtSlot(QPoint)
     def context_menu(self, pos: QPoint):
@@ -171,6 +171,8 @@ class fileNote(QWidget):
         ))
 
     def set_height_by_text(self):
+        if self.ui.collapse.isChecked():
+            return
         self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
         size = self.ui.textBrowser.document().size().toSize()
         self.visible_height = size.height() + self.ui.note_header.height()
@@ -203,7 +205,6 @@ class fileNote(QWidget):
             self.visible_height = self.expanded_height
             self.expanded_height = 0
             self.set_browser_text()
-            self.set_height_by_text()
             self.ui.textBrowser.show()
         self.set_collapse_icon()
 
@@ -235,3 +236,6 @@ class fileNote(QWidget):
             ag.signals_.user_signal.emit(f'show file\\{href.fileName()}')
         elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
+
+    def note_resize(self, e: QResizeEvent):
+        self.set_height_by_text()
