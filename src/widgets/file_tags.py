@@ -1,6 +1,6 @@
 from loguru import logger
 
-from PyQt6.QtCore import pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtWidgets import QLineEdit
 
 from ..core.compact_list import aBrowser
@@ -47,13 +47,22 @@ class tagBrowser(aBrowser):
             db_ut.delete_tag_file(id, self.file_id)
 
     def add_tags(self, old, new) -> bool:
+        def tag_to_selected_files(tag_id: int, file_id: int):
+            selected_files: list = ag.file_list.selectionModel().selectedRows(0)
+            if not selected_files:
+                db_ut.insert_tag_file(tag_id, file_id)
+                return
+            for idx in selected_files:
+                fileid = idx.data(Qt.ItemDataRole.UserRole).id
+                db_ut.insert_tag_file(tag_id, fileid)
+
         inserted = False
         diff = set(new) - set(old)
         for d in diff:
             if not (id := self.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
                 inserted = True
-            db_ut.insert_tag_file(id, self.file_id)
+            tag_to_selected_files(id, self.file_id)
         return inserted
 
     @pyqtSlot()

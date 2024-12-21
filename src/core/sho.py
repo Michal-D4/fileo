@@ -67,15 +67,6 @@ class shoWindow(QMainWindow):
         fold_layout.addWidget(self.container)
 
     def tune_version(self):
-        def toVer1316():
-            """ changed DIR_HISTORY format """
-            if saved_v <= 1315:
-                ag.save_settings(DIR_HISTORY=[[], ''])
-
-        def fromVer1316():
-            if saved_v > 1315:
-                ag.save_settings(DIR_HISTORY=[[], [], []])
-
         def toVer1312():
             """ changed DB_List format """
             if saved_v <= 1311:
@@ -102,11 +93,6 @@ class shoWindow(QMainWindow):
             toVer1312()
         else:
             fromVer1312()
-
-        if cur_v > 1315:
-            toVer1316()
-        else:
-            fromVer1316()
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
