@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.20 - 2024, 21 December
+* set tags for all selected files at once, remove only for the current file, as before
+* warning that files may not be immediately visible if you drag them into a folder from Explorer while the app is in Filter mode
+* Some other code changes and improvements
+
 ## 1.3.19 - 2024, 17 December
 * fix html code usage in notes
 * fix first note height issue
