@@ -129,6 +129,7 @@ class Ui_FileNotes(object):
         self.authorEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of authors separated by commas or select from the \"Author selector\""))
         self.tagEdit.setToolTip(_translate("FileNotes", "File\'s tags"))
         self.tagEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of tags separated by commas or select from the \"Tag selector\""))
+        self.srch_in_notes.setToolTip(_translate("FileNotes", "search files by notes context"))
         self.srch_in_notes.setText(_translate("FileNotes", "..."))
         self.expand.setToolTip(_translate("FileNotes", "Maximize panel"))
         self.expand.setText(_translate("FileNotes", "..."))

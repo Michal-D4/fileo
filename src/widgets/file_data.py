@@ -68,6 +68,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.expand.setIcon(tug.get_icon("up"))
         self.expand.clicked.connect(self.toggle_collapse)
 
+        self.srch_in_notes.setIcon(tug.get_icon("search"))
+        self.srch_in_notes.clicked.connect(self.srch_notes)
+
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
         ctrl_n = QShortcut(QKeySequence("Ctrl+n"), self)
@@ -88,6 +91,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.edit_btns.hide()
         ag.buttons.append((self.expand, "up", "down3"))
+        ag.buttons.append((self.srch_in_notes, "search"))
         ag.buttons.append((self.plus, "plus"))
         ag.buttons.append((self.collapse_notes, "collapse_notes"))
         ag.buttons.append((self.save, "ok"))
@@ -217,6 +221,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
             ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
             ag.file_list.show()
+
+    def srch_notes(self):
+        pass
 
     def short_cancel_editing(self):
         if not self.notes.is_editing():

@@ -81,6 +81,9 @@
       </item>
       <item>
        <widget class="QToolButton" name="srch_in_notes">
+        <property name="toolTip">
+         <string>search files by notes context</string>
+        </property>
         <property name="text">
          <string>...</string>
         </property>
