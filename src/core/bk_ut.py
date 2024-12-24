@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd,
 )
-from ..widgets import workers, find_files, dup
+from ..widgets import search_files as sf, workers, dup
 from .. import tug
 
 if TYPE_CHECKING:
@@ -57,7 +57,7 @@ def save_bk_settings():
 
         low_bk.save_file_id(dir_idx)
         ag.filter_dlg.save_filter_settings()
-    except:
+    except Exception:
         pass
 
 def selected_dirs() -> list:
@@ -69,7 +69,7 @@ def selected_dirs() -> list:
 
 @pyqtSlot()
 def search_files():
-    ff = find_files.findFile(ag.app)
+    ff = sf.srchFiles(ag.app)
     ff.move(ag.app.width() - ff.width() - 40, 40)
     ff.show()
     ff.srch_pattern.setFocus()
@@ -142,14 +142,14 @@ def bk_setup():
 def short_create_folder():
     if ag.app.focusWidget() is not ag.dir_list:
         return
-    ag.signals_.user_signal.emit(f"Dirs Create folder")
+    ag.signals_.user_signal.emit("Dirs Create folder")
 
 @pyqtSlot()
 def short_create_child():
     if ag.app.focusWidget() is not ag.dir_list:
         return
     if ag.dir_list.currentIndex().isValid():
-        ag.signals_.user_signal.emit(f"Dirs Create folder as child")
+        ag.signals_.user_signal.emit("Dirs Create folder as child")
 
 @pyqtSlot()
 def short_delete_folder():
@@ -162,7 +162,7 @@ def short_delete_folder():
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             icon=QMessageBox.Icon.Question
         ) == QMessageBox.StandardButton.Ok:
-            ag.signals_.user_signal.emit(f"Dirs Delete folder(s)")
+            ag.signals_.user_signal.emit("Dirs Delete folder(s)")
 
 @pyqtSlot()
 def show_main_menu():

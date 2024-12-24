@@ -1,5 +1,4 @@
 import markdown
-from loguru import logger
 from datetime import datetime
 from pathlib import Path
 import re
@@ -157,9 +156,9 @@ class fileNote(QWidget):
             t = re.search(r'\n *```', txt[j:])
             if not t:
                 return txt
-            l = t.span()[1] + j
-            k = l - 3
-            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[l:])))
+            q = t.span()[1] + j
+            k = q - 3
+            return ''.join((txt[:i], "<pre><code>", txt[j:k], "</code></pre>", code_block_ally(txt[q:])))
 
         if not self.text:
             return

@@ -1,9 +1,7 @@
-from loguru import logger
 import apsw
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtWidgets import QTreeView, QMessageBox
@@ -145,7 +143,7 @@ def get_setting(key: str, default=None):
     try:
         val = cursor.execute(sql, {"key": key}).fetchone()[0]
         vv = pickle.loads(val) if val else None
-    except:
+    except Exception:
         vv = None
 
     return vv if vv else default
@@ -186,5 +184,5 @@ def show_message_box(
     return dlg.exec()
 
 # only this instance of AppSignals should be used anywhere in the application
-from .app_signals import AppSignals
+from .app_signals import AppSignals  # noqa: E402
 signals_ = AppSignals()
