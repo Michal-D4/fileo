@@ -1,11 +1,9 @@
 from functools import reduce
 from operator import add
 
-from loguru import logger
-
 from PyQt6.QtCore import QObject, QPoint, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QAction, QMouseEvent, QResizeEvent
-from PyQt6.QtWidgets import QMenu, QWidget
+from PyQt6.QtGui import QMouseEvent, QResizeEvent
+from PyQt6.QtWidgets import QWidget
 
 from ..core import app_globals as ag
 from .foldable import Foldable

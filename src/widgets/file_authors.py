@@ -1,6 +1,4 @@
-from loguru import logger
-
-from PyQt6.QtCore import QSize, pyqtSlot
+from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import (QWidget,
     QVBoxLayout, QFrame, QLineEdit,
 )

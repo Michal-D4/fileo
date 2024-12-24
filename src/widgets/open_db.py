@@ -178,7 +178,8 @@ class OpenDB(QWidget, Ui_openDB):
         self.open_db(db_path, used)
 
     def open_db(self, db_path: str, used: bool=False):
-        if used: return
+        if used:
+            return
         self.save_db_list(ag.db.path, db_path)
         logger.info(f'open_db_signal.emit {db_path}')
         ag.signals_.open_db_signal.emit(db_path)

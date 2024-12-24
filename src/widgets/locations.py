@@ -32,9 +32,9 @@ class Locations(QTextBrowser):
             "go to this location": (False, self.go_file, None),
             "Reveal in explorer": (False, self.reveal_file, None),
             "delete file from this location": (False, self.delete_file, None),
-            "delimiter": (True, None, None),
+            "delimiter1": (True, None, None),
             "Remove duplicate file": (False, self.remove_duplicate, None),
-            "delimiter": (True, None, None),
+            "delimiter2": (True, None, None),
             "Select All": (True, self.selectAll, QKeySequence.StandardKey.SelectAll),
         }
 
@@ -127,7 +127,7 @@ class Locations(QTextBrowser):
         path = db_ut.get_file_path(file_id)
         res = ag.show_message_box(
             'Removing duplicate file',
-            f'A file will be deleted to the trash. Please confirm',
+            'A file will be deleted to the trash. Please confirm',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             icon=QMessageBox.Icon.Question
         )

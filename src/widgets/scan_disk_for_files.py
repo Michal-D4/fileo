@@ -1,4 +1,3 @@
-from loguru import logger
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSlot, QPoint

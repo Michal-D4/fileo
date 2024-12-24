@@ -1,4 +1,3 @@
-from loguru import logger
 import apsw
 from datetime import datetime
 from dataclasses import dataclass
@@ -104,7 +103,7 @@ class loadFiles(QObject):
                 break
 
             file = Path(line)
-            id = self.insert_file(file)
+            self.insert_file(file)
         self.conn.close()
         self.finished.emit(self.ext_inserted)
 

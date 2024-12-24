@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon
 from PyQt6.QtWidgets import QApplication

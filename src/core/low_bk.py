@@ -1,5 +1,4 @@
 from loguru import logger
-import apsw
 import json
 from pathlib import Path
 import pickle
@@ -8,9 +7,9 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
     QIODeviceBase, QItemSelectionModel
 )
-from PyQt6.QtGui import QDesktopServices, QAction, QFocusEvent
+from PyQt6.QtGui import QDesktopServices, QFocusEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QMenu,
+    QFileDialog, QMessageBox,
 )
 
 from . import (db_ut, app_globals as ag, reports as rep, check_update as upd,
@@ -228,7 +227,7 @@ def save_same_names_report(rep: list):
 
     open_with_url(str(path))
 
-def enable_buttons():
+def enable_buttons():   # when create connection to DB
     ag.app.ui.btn_search.setEnabled(True)
     ag.app.refresh_tree.setEnabled(True)
     ag.app.show_hidden.setEnabled(True)
@@ -490,7 +489,7 @@ def show_recent_files():
     idx = expand_branch(ag.history.get_current())
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
-    ag.app.ui.files_heading.setText(f'Recent files')
+    ag.app.ui.files_heading.setText('Recent files')
     files = get_recent_files()
 
     show_files(files)
@@ -677,7 +676,7 @@ def delete_files():
 
     res = ag.show_message_box(
         'delete file from DB',
-        f'Selected files will be deleted. Please confirm',
+        'Selected files will be deleted. Please confirm',
         btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
         icon=QMessageBox.Icon.Question
     )
@@ -759,7 +758,6 @@ def export_files():
 def _export_files(out: QTextStream):
     for idx in ag.file_list.selectionModel().selectedRows(0):
         try:
-            id = idx.data(Qt.ItemDataRole.UserRole).id
             file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
         except TypeError:
             continue

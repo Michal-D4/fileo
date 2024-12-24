@@ -1,7 +1,6 @@
-from loguru import logger
 import apsw
 from collections import deque, abc
-from pathlib import PurePath, Path
+from pathlib import PurePath
 
 from PyQt6.QtWidgets import QMessageBox
 
@@ -190,7 +189,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
     nn = name if case else name.casefold()
 
     def exist_nonascii_name() -> bool:
-        sql = f'select filename from files'
+        sql = 'select filename from files'
         with ag.db.conn as conn:
             for line in conn.cursor().execute(sql):
                 ll = line[0] if case else line[0].casefold()
@@ -695,7 +694,7 @@ def temp_files_dir(dirs: list, all_dirs: bool):
         curs.executemany(sql0, dir_)
     else:
         curs.executemany(sql0, dirs)
-    dcur = curs.execute("select val from aux where key = 'dir'")
+
     curs.execute(sql2)
 
 
@@ -847,7 +846,7 @@ def update_file_id(d_data: ag.DirData):
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = f'insert into parentdir values (?, ?, 0, 0, 0, ?);'
+    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0, ?);'
     with ag.db.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
@@ -1091,12 +1090,13 @@ def create_connection(path: str) -> bool:
 
     ag.db.path = path
     ag.db.conn = conn
-    ag.signals_.user_signal.emit('Enable_buttons')
 
     if not create_db.tune_new_version():
         ag.db.path = ''
         ag.db.conn = None
         return False
+
+    ag.signals_.user_signal.emit('Enable_buttons')
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

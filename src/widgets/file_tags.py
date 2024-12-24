@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtWidgets import QLineEdit
 

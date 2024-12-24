@@ -22,7 +22,7 @@ class dirItem(object):
         return len(self.children)
 
     def childNumber(self):
-        if self.parentItem != None:
+        if self.parentItem is not None:
             return self.parentItem.children.index(self)
         return 0
 

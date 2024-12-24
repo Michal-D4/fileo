@@ -30,7 +30,7 @@ elif sys.platform.startswith("linux"):
         subprocess.run(cmd)
 else:
     def reveal_file(path: str):
-        raise NotImplemented(f"doesn't support {sys.platform} system")
+        raise NotImplementedError(f"doesn't support {sys.platform} system")
 
 
 APP_NAME = "fileo"
@@ -69,7 +69,7 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
         settings = QSettings(MAKER, APP_NAME)
     try:
         to_set = settings.value(key, default)
-    except (TypeError, SystemError) as e:
+    except (TypeError, SystemError):
         to_set = default
     return to_set
 
