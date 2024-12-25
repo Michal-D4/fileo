@@ -245,17 +245,8 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def find_files_by_name(param: str):
-    def split3():
-        """
-        split by commas but into 3 parts
-        all pats are merged into one except the 2 last
-        """
-        pp = param.split(',')
-        return ','.join(pp[:-2]), *pp[-2:]
-
-    pp = split3()
-    srch_line, *_ = ag.get_setting('SEARCH_FILE', ('',0,0))
-    ag.app.ui.files_heading.setText(f'Found files "{srch_line}"')
+    pp = param.split(',')
+    ag.app.ui.files_heading.setText(f'Found files "{pp[0]}"')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     ag.set_mode(ag.appMode.FOUND_FILES)
 
