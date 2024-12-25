@@ -82,7 +82,7 @@
       <item>
        <widget class="QToolButton" name="srch_in_notes">
         <property name="toolTip">
-         <string>search files by notes context</string>
+         <string>search files by notes context, Ctrl+Shift+F</string>
         </property>
         <property name="text">
          <string>...</string>

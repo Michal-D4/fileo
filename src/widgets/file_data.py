@@ -1,6 +1,6 @@
 from enum import Enum, unique
 
-from PyQt6.QtCore import QTimer, pyqtSlot
+from PyQt6.QtCore import QTimer, pyqtSlot, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -14,6 +14,7 @@ from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 from .note_editor import noteEditor
+from .srch_in_notes import srchInNotes
 from .. import tug
 
 @unique
@@ -70,6 +71,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.srch_in_notes.setIcon(tug.get_icon("search"))
         self.srch_in_notes.clicked.connect(self.srch_notes)
+        ctrl_shift_f = QShortcut(QKeySequence("Ctrl+Shift+f"), ag.app)
+        ctrl_shift_f.activated.connect(self.srch_notes)
 
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
@@ -223,7 +226,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.file_list.show()
 
     def srch_notes(self):
-        pass
+        sn = srchInNotes(self)
+        sn.move(self.srch_in_notes.pos() - QPoint(sn.width(), -10))
+        sn.show()
+        sn.srch_pattern.setFocus()
 
     def short_cancel_editing(self):
         if not self.notes.is_editing():

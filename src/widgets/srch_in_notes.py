@@ -5,21 +5,18 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QMessageBox,
 )
 
-from ..core  import app_globals as ag, db_ut
+from ..core  import app_globals as ag
 from .. import tug
 
 
 class srchInNotes(QWidget):
-    """
-    Dialog to search for a file in the database by its name,
-    there may be multiple files
-    """
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.file_id = 0
 
         self.setup_ui()
-        self.srch_pattern.editingFinished.connect(self.search_files)
+        self.srch_pattern.returnPressed.connect(self.search_files)
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.close)
@@ -35,7 +32,7 @@ class srchInNotes(QWidget):
         self.rex.setCheckable(True)
         self.rex.setIcon(tug.get_icon('regex'))
         self.rex.setToolTip('Regular expression')
-        self.rex.checkStateSet = self.regex_state_changed
+        self.rex.clicked.connect(self.regex_state_changed)
 
         self.case = QToolButton()
         self.case.setAutoRaise(True)
@@ -55,6 +52,7 @@ class srchInNotes(QWidget):
         self.rex.setChecked(rex)
         self.case.setChecked(case)
         self.word.setChecked(word)
+        self.word.setEnabled(not rex)
 
         self.srchFrame = QFrame()
         self.srchFrame.setObjectName('srchFrame')
@@ -74,9 +72,8 @@ class srchInNotes(QWidget):
         si_policy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setSizePolicy(si_policy)
 
-    def regex_state_changed(self):
-        # self.case.setEnabled(not self.rex.isChecked())
-        self.word.setEnabled(not self.rex.isChecked())
+    def regex_state_changed(self, state: bool):
+        self.word.setEnabled(not state)
 
     def search_files(self):
         # close if found, otherwise show message and leave open
@@ -93,7 +90,7 @@ class srchInNotes(QWidget):
         ag.signals_.user_signal.emit(
             f'srch_files_by_note\\{txt},{int(rex)},{int(case)},{int(word)}'
         )
-        ag.save_settings(SEARCH_BY_NOTE=(rex, txt, case, word))
+        ag.save_settings(SEARCH_BY_NOTE=(txt, rex, case, word))
         self.close()
 
     def search_err_msg(self, msg):

@@ -127,10 +127,11 @@ setting_names = (     # DB settings only
     "NOTE_EDIT_STATE",
     "FILTER_FILE_ROW",
     "SELECTED_DIRS",
+    "SEARCH_BY_NOTE",
 )
 
 APP_ID = 1718185071
-USER_VER = 17
+USER_VER = 18
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:

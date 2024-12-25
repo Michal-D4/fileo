@@ -70,6 +70,7 @@ def set_user_action_handlers():
         "MainMenu Preferences": set_preferences,
         "MainMenu Check for update": upd.check4update,
         "find_files_by_name": find_files_by_name,
+        "srch_files_by_note": srch_files_by_note,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
         "file-note: Go to file": goto_edited_file,
@@ -243,6 +244,11 @@ def enable_next_prev(param: str):
     nex_, prev = param.split(',')
     ag.app.btn_next.setDisabled(nex_ == 'no')
     ag.app.btn_prev.setDisabled(prev == 'no')
+
+def srch_files_by_note(param: str):
+    pp = param.split(',')
+    logger.info(f'{pp=}')
+    ag.app.ui.files_heading.setText(f'Found files, text in notes "{pp[0]}"')
 
 def find_files_by_name(param: str):
     pp = param.split(',')

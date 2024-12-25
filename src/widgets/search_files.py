@@ -19,7 +19,7 @@ class srchFiles(QWidget):
         self.file_id = 0
 
         self.setup_ui()
-        self.srch_pattern.editingFinished.connect(self.search_files)
+        self.srch_pattern.returnPressed.connect(self.search_files)
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.close)
