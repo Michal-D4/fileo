@@ -199,11 +199,8 @@ def create_tables(conn: apsw.Connection):
 def initialize_settings(conn):
     sql0 = 'select key from settings'
     sql1 = 'delete from settings where key = ?'
-    sql2 = (
-        'insert into settings (key) select (:key) '
-        'where not exists (select key from settings '
-        'where key = :key)'
-    )
+    sql2 = 'insert or ignore into settings (key) values (:key)'
+
     cursor = conn.cursor()
     for key in conn.cursor().execute(sql0):
         if key not in setting_names:
