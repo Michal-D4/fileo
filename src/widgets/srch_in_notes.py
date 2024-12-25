@@ -30,6 +30,13 @@ class srchInNotes(QWidget):
         self.srch_pattern.setPlaceholderText('Input file name or its part.')
         self.srch_pattern.setToolTip('Enter - start search; Esc - cancel.')
 
+        self.rex = QToolButton()
+        self.rex.setAutoRaise(True)
+        self.rex.setCheckable(True)
+        self.rex.setIcon(tug.get_icon('regex'))
+        self.rex.setToolTip('Regular expression')
+        self.rex.checkStateSet = self.regex_state_changed
+
         self.case = QToolButton()
         self.case.setAutoRaise(True)
         self.case.setCheckable(True)
@@ -42,9 +49,10 @@ class srchInNotes(QWidget):
         self.word.setIcon(tug.get_icon('match_word'))
         self.word.setToolTip('Exact match')
 
-        name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
+        name, rex, case, word = ag.get_setting('SEARCH_BY_NOTE', ('',0,0,0))
         self.srch_pattern.setText(name)
         self.srch_pattern.selectAll()
+        self.rex.setChecked(rex)
         self.case.setChecked(case)
         self.word.setChecked(word)
 
@@ -54,6 +62,7 @@ class srchInNotes(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.srch_pattern)
+        layout.addWidget(self.rex)
         layout.addWidget(self.case)
         layout.addWidget(self.word)
         self.srchFrame.setLayout(layout)
@@ -65,25 +74,27 @@ class srchInNotes(QWidget):
         si_policy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.setSizePolicy(si_policy)
 
+    def regex_state_changed(self):
+        # self.case.setEnabled(not self.rex.isChecked())
+        self.word.setEnabled(not self.rex.isChecked())
+
     def search_files(self):
         # close if found, otherwise show message and leave open
-        name, case, word = (
+        txt, rex, case, word = (
             self.srch_pattern.text(),
+            self.rex.isChecked(),
             self.case.isChecked(),
             self.word.isChecked()
         )
-        if not name:
-            self.search_err_msg('Please enter file name')
+        if not txt:
+            self.search_err_msg('Please enter text to search')
             return
 
-        if db_ut.exists_file_with_name(name, case, word):
-            ag.signals_.user_signal.emit(
-                f'find_files_by_name\\{name},{int(case)},{int(word)}'
-            )
-            ag.save_settings(SEARCH_FILE=(name, case, word))
-            self.close()
-        else:
-            self.search_err_msg(f'File "{name}" not found')
+        ag.signals_.user_signal.emit(
+            f'srch_files_by_note\\{txt},{int(rex)},{int(case)},{int(word)}'
+        )
+        ag.save_settings(SEARCH_BY_NOTE=(rex, txt, case, word))
+        self.close()
 
     def search_err_msg(self, msg):
         dlg = QMessageBox(ag.app)

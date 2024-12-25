@@ -84,6 +84,13 @@ font-family="Segoe UI">ab</text><path | d="M1 17v3h21v-3"/></svg>\
 """
 colors = ["fill=\"$svgFill\"","stroke=\"$svgFill\" fill=\"none\""]
 
+[regex]
+ico = """\
+<svg viewBox="0 0 24 24"><text x="2" y="18" font-size="18" \
+font-family="Segoe UI" |>re</text></svg>\
+"""
+colors = ["fill=\"$svgFill\""]
+
 [search]
 ico = """\
 <svg viewBox="-5 -5 48 48" |><path d="M16 28A12 12 0 1 0 16 4\

@@ -273,6 +273,7 @@ def collect_all_icons(icons_res: dict) -> dict:
         'search': ('search',),
         'match_case': ('match_case',),
         'match_word': ('match_word',),
+        'regex': ('regex',),
         'ok': ('ok',),
         'busy': ('busy_off', 'busy_on',),
         'show_hide': ('show_hide_off', 'show_hide_on',),
