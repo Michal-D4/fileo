@@ -236,8 +236,6 @@ def get_file_by_note() -> apsw.Cursor:
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
-        'join filedir fd on fd.file = f.id '
-        'join parentdir p on fd.dir = p.id '      # to avoid duplication
         'where f.id in (select val from aux where key="files_by_note");'
     )
     return ag.db.conn.cursor().execute(sql)

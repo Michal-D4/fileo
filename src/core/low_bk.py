@@ -570,15 +570,7 @@ def fill_file_model(files) -> fileModel:
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
 
-    if rows == 0 and ag.mode is not ag.appMode.FILTER_SETUP:
-        null_file_list(model)
     return model
-
-def null_file_list(model: fileModel):
-    row = ["NO FILES HERE",]
-    for _,typ in enumerate(field_types[1:]):
-        row.append(field_val(typ))
-    model.append_row(row)
 
 def set_current_file(file_id: int):
     model: fileProxyModel = ag.file_list.model()
