@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.21 - 2024, 26 December
+* implemented context search in notes; result is a list of files with requested text in their notes
+* Some other code changes and improvements
+
 ## 1.3.20 - 2024, 21 December
 * set tags for all selected files at once, remove only for the current file, as before
 * warning that files may not be immediately visible if you drag them into a folder from Explorer while the app is in Filter mode
