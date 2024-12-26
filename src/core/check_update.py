@@ -1,4 +1,3 @@
-from loguru import logger
 import sys
 
 from PyQt6.QtCore import pyqtSlot, QUrl, QJsonDocument
@@ -38,7 +37,7 @@ def installer_update_replay(replay: QNetworkReply):
         if filename.count('.') <= 1:
             ag.show_message_box(
                 'Fileo',
-                f"Something went wrong, can't find any app.version in the repository. "
+                "Something went wrong, can't find any app.version in the repository. "
                 'Please try again later.',
                 icon=QMessageBox.Icon.Critical
             )
@@ -57,7 +56,7 @@ def installer_update_replay(replay: QNetworkReply):
         else:
             ag.show_message_box(
                 'Fileo',
-                f'There are currently no updates available.',
+                'There are currently no updates available.',
                 btn=QMessageBox.StandardButton.Ok
             )
 

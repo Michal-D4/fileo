@@ -14,13 +14,10 @@
 # https://doc.qt.io/qtforpython/licenses.html
 #
 # ///////////////////////////////////////////////////////////////
-from loguru import logger
 
 from PyQt6.QtCore import QRect, QSize, Qt, QPoint
 from PyQt6.QtGui import QCursor, QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizeGrip, QWidget
-
-from ..core import app_globals as ag
 
 GT = 10        # Grip Thickness
 G2 = GT*2

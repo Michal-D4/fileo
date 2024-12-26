@@ -1,7 +1,6 @@
-from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import QTimer, pyqtSlot
+from PyQt6.QtCore import QTimer, pyqtSlot, QPoint
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -15,6 +14,7 @@ from .file_note import fileNote
 from .file_tags import tagBrowser
 from .locations import Locations
 from .note_editor import noteEditor
+from .srch_in_notes import srchInNotes
 from .. import tug
 
 @unique
@@ -69,6 +69,11 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.expand.setIcon(tug.get_icon("up"))
         self.expand.clicked.connect(self.toggle_collapse)
 
+        self.srch_in_notes.setIcon(tug.get_icon("search"))
+        self.srch_in_notes.clicked.connect(self.srch_notes)
+        ctrl_shift_f = QShortcut(QKeySequence("Ctrl+Shift+f"), ag.app)
+        ctrl_shift_f.activated.connect(self.srch_notes)
+
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
         ctrl_n = QShortcut(QKeySequence("Ctrl+n"), self)
@@ -89,6 +94,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.edit_btns.hide()
         ag.buttons.append((self.expand, "up", "down3"))
+        ag.buttons.append((self.srch_in_notes, "search"))
         ag.buttons.append((self.plus, "plus"))
         ag.buttons.append((self.collapse_notes, "collapse_notes"))
         ag.buttons.append((self.save, "ok"))
@@ -218,6 +224,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
             ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
             ag.file_list.show()
+
+    def srch_notes(self):
+        sn = srchInNotes(self)
+        sn.move(self.srch_in_notes.pos() - QPoint(sn.width(), -10))
+        sn.show()
+        sn.srch_pattern.setFocus()
 
     def short_cancel_editing(self):
         if not self.notes.is_editing():

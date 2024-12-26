@@ -1,6 +1,5 @@
 from datetime import datetime
 import hashlib
-from loguru import logger
 from pathlib import Path
 import PyPDF2
 
@@ -24,7 +23,7 @@ def sha256sum(filename: Path) -> str:
             while n := f.readinto(mv):
                 h.update(mv[:n])
         return h.hexdigest()
-    except (FileNotFoundError, PermissionError) as ex:
+    except (FileNotFoundError, PermissionError):
         return ''
 
 def update0_files():
@@ -64,7 +63,7 @@ def update_pdf_files():
         pp = Path(path) / file
         try:
             pdf_file_update(f_id, pp)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             db_ut.delete_not_exist_file(f_id)
 
 def pdf_file_update(id: int, file: str):

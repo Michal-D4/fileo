@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
     QLineEdit, QVBoxLayout, QScrollArea, QFrame,

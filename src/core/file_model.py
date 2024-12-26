@@ -1,4 +1,3 @@
-from loguru import logger
 from pathlib import Path
 
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
@@ -132,7 +131,6 @@ class fileModel(QAbstractTableModel):
             return False
 
         def _rename_file(new_name: str) -> bool:
-            row_ = index.row()
             path = Path(db_ut.get_file_path(file_id))
             try:
                 new_path = path.rename(path.parent / new_name)

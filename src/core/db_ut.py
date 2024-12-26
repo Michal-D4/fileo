@@ -1,7 +1,6 @@
-from loguru import logger
 import apsw
 from collections import deque, abc
-from pathlib import PurePath, Path
+from pathlib import PurePath
 
 from PyQt6.QtWidgets import QMessageBox
 
@@ -174,7 +173,7 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
         return get_nonascii_names()
 
     # search string contains only ASCII symbols
-    filename = 'filename' if case else 'lower(filename)'
+    filename = 'f.filename' if case else 'lower(f.filename)'
     cond = f'where {filename} glob ?'
 
     if not exact:
@@ -190,7 +189,7 @@ def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
     nn = name if case else name.casefold()
 
     def exist_nonascii_name() -> bool:
-        sql = f'select filename from files'
+        sql = 'select filename from files'
         with ag.db.conn as conn:
             for line in conn.cursor().execute(sql):
                 ll = line[0] if case else line[0].casefold()
@@ -228,6 +227,18 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
         'where fd.dir = :id and p.parent = :pid;'
     )
     return ag.db.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
+
+def get_file_by_note() -> apsw.Cursor:
+    sql = (
+        'with x(fileid, last_note_date) as (select fileid, max(modified) '
+        'from filenotes group by fileid) '
+        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
+        'f.id, f.extid, f.path from files f '
+        'left join x on x.fileid = f.id '
+        'where f.id in (select val from aux where key="by_note");'
+    )
+    return ag.db.conn.cursor().execute(sql)
 
 def get_file(file_id: int) -> abc.Iterable:
     sql = (
@@ -674,7 +685,7 @@ def get_dir_id_for_file(file_id: int) -> int:
     res = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
     return res[0] if res else 0
 
-def temp_files_dir(dirs: list, all_dirs: bool):
+def temp_files_dir(dirs: list, sub_dirs: bool):
     sql0 = "insert into aux values ('dir', ?)"
     sql1 = (
         "with x(id) as (select id from parentdir where parent = ? "
@@ -686,7 +697,7 @@ def temp_files_dir(dirs: list, all_dirs: bool):
         "filedir where dir in (select val from aux where key = 'dir')"
     )
     curs = ag.db.conn.cursor()
-    if all_dirs:
+    if sub_dirs:
         dir_ = set(dirs)
         for dd in dirs:
             scur = curs.execute(sql1, dd)
@@ -695,24 +706,24 @@ def temp_files_dir(dirs: list, all_dirs: bool):
         curs.executemany(sql0, dir_)
     else:
         curs.executemany(sql0, dirs)
-    dcur = curs.execute("select val from aux where key = 'dir'")
+
     curs.execute(sql2)
 
 
 def clear_temp():
-    sql = "delete from aux where key not like 'save%'"
+    sql = "delete from aux where key != 'TREE_PATH'"
     ag.db.conn.cursor().execute(sql)
 
 def save_to_temp(key: str, val):
     ag.db.conn.cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
-def save_branch_in_temp_table(path):
+def save_branch_in_aux(path):
     sql = 'update aux set val = :path where key = :key'
     key = 'TREE_PATH'
     ag.db.conn.cursor().execute(sql, {'path': path, 'key': key})
 
-def get_branch_from_temp_table() -> str:
+def get_branch_from_aux() -> str:
     sql = 'select val from aux where key = ?'
     key = 'TREE_PATH'
     res = ag.db.conn.cursor().execute(sql, (key,)).fetchone()
@@ -847,7 +858,7 @@ def update_file_id(d_data: ag.DirData):
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = f'insert into parentdir values (?, ?, 0, 0, 0, ?);'
+    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0, ?);'
     with ag.db.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
@@ -963,6 +974,10 @@ def get_note(file: int, note: int) -> str:
     sql = 'select filenote from filenotes where fileid = ? and id = ?;'
     note_text = ag.db.conn.cursor().execute(sql, (file, note)).fetchone()
     return '' if (note_text is None) else note_text[0]
+
+def get_all_notes() -> apsw.Cursor:
+    sql = 'select fileid, id, filenote from filenotes;'
+    return ag.db.conn.cursor().execute(sql)
 
 def insert_note(fileid: int, note: str) -> int:
     sql1 = 'select max(id) from filenotes where fileid=?;'
@@ -1091,12 +1106,13 @@ def create_connection(path: str) -> bool:
 
     ag.db.path = path
     ag.db.conn = conn
-    ag.signals_.user_signal.emit('Enable_buttons')
 
     if not create_db.tune_new_version():
         ag.db.path = ''
         ag.db.conn = None
         return False
+
+    ag.signals_.user_signal.emit('Enable_buttons')
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

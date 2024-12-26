@@ -7,7 +7,7 @@ from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
     QResizeEvent, QKeySequence, QShortcut,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
-    QVBoxLayout, QTreeView, QVBoxLayout, QFrame, QWidget,
+    QVBoxLayout, QTreeView, QFrame, QWidget,
 )
 
 from .. import tug

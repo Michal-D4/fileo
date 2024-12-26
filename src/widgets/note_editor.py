@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl
 from PyQt6.QtGui import QFocusEvent, QDropEvent, QDragEnterEvent, QTextCursor
 from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout

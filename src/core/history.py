@@ -1,7 +1,6 @@
-from loguru import logger
 from datetime import datetime
 
-from . import app_globals as ag, db_ut
+from . import app_globals as ag
 
 
 class History(object):

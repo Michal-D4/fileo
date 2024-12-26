@@ -1,4 +1,3 @@
-from loguru import logger
 from collections import defaultdict
 from pathlib import Path
 

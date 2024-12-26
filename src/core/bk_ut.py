@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd,
 )
-from ..widgets import workers, find_files, dup
+from ..widgets import search_files as sf, workers, dup
 from .. import tug
 
 if TYPE_CHECKING:
@@ -57,19 +57,23 @@ def save_bk_settings():
 
         low_bk.save_file_id(dir_idx)
         ag.filter_dlg.save_filter_settings()
-    except:
+    except Exception:
         pass
 
 def selected_dirs() -> list:
-    idxs = ag.dir_list.selectionModel().selectedIndexes()
+    idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
+    curr = ag.dir_list.currentIndex()
     for idx in idxs:
+        if idx is curr:
+            continue
         branches.append(low_bk.define_branch(idx))
+    branches.append(low_bk.define_branch(curr))
     return branches
 
 @pyqtSlot()
 def search_files():
-    ff = find_files.findFile(ag.app)
+    ff = sf.srchFiles(ag.app)
     ff.move(ag.app.width() - ff.width() - 40, 40)
     ff.show()
     ff.srch_pattern.setFocus()
@@ -77,10 +81,10 @@ def search_files():
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
     if collapse:
-        low_bk.save_branch_in_temp(ag.dir_list.currentIndex())
+        low_bk.save_branch(ag.dir_list.currentIndex())
         ag.dir_list.collapseAll()
     else:
-        idx = low_bk.restore_branch_from_temp()
+        idx = low_bk.restore_branch()
         ag.dir_list.setCurrentIndex(idx)
 
 def set_menu_more(self):
@@ -113,7 +117,6 @@ def bk_setup():
     ag.file_list.customContextMenuRequested.connect(file_menu)
 
     if ag.db.conn:
-        populate_all()
         single_shot()
 
     dd.set_drag_drop_handlers()
@@ -142,14 +145,14 @@ def bk_setup():
 def short_create_folder():
     if ag.app.focusWidget() is not ag.dir_list:
         return
-    ag.signals_.user_signal.emit(f"Dirs Create folder")
+    ag.signals_.user_signal.emit("Dirs Create folder")
 
 @pyqtSlot()
 def short_create_child():
     if ag.app.focusWidget() is not ag.dir_list:
         return
     if ag.dir_list.currentIndex().isValid():
-        ag.signals_.user_signal.emit(f"Dirs Create folder as child")
+        ag.signals_.user_signal.emit("Dirs Create folder as child")
 
 @pyqtSlot()
 def short_delete_folder():
@@ -162,7 +165,7 @@ def short_delete_folder():
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             icon=QMessageBox.Icon.Question
         ) == QMessageBox.StandardButton.Ok:
-            ag.signals_.user_signal.emit(f"Dirs Delete folder(s)")
+            ag.signals_.user_signal.emit("Dirs Delete folder(s)")
 
 @pyqtSlot()
 def show_main_menu():
@@ -236,6 +239,7 @@ def toggle_show_column(state: bool, index: int):
     resize_section_0()
 
 def restore_dirs():
+    header_restore()
     low_bk.set_dir_model()
     low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
@@ -251,9 +255,6 @@ def restore_dirs():
     elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
 
-    header_restore()
-    set_field_menu()
-
 def header_restore():
     hdr: QHeaderView = ag.file_list.header()
     try:
@@ -266,6 +267,7 @@ def header_restore():
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
+    set_field_menu()
     hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     hdr.customContextMenuRequested.connect(header_menu)
 

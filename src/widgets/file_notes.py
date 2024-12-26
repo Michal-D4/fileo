@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,

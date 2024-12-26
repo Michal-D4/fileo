@@ -2,7 +2,7 @@ from loguru import logger
 from pathlib import Path
 
 from PyQt6.QtCore import QSize, Qt, QCoreApplication, QPoint
-from PyQt6.QtGui import QMouseEvent, QPixmap
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QFormLayout,
     QLineEdit, QCheckBox, QComboBox,
 )

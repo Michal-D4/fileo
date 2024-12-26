@@ -1,5 +1,3 @@
-from loguru import logger
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QLineEdit,
@@ -11,7 +9,7 @@ from ..core  import app_globals as ag, db_ut
 from .. import tug
 
 
-class findFile(QWidget):
+class srchFiles(QWidget):
     """
     Dialog to search for a file in the database by its name,
     there may be multiple files
@@ -21,7 +19,7 @@ class findFile(QWidget):
         self.file_id = 0
 
         self.setup_ui()
-        self.srch_pattern.editingFinished.connect(self.search_files)
+        self.srch_pattern.returnPressed.connect(self.search_files)
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.close)
@@ -89,7 +87,7 @@ class findFile(QWidget):
 
     def search_err_msg(self, msg):
         dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle(f'File not found"')
+        dlg.setWindowTitle('File not found')
         dlg.setText(msg)
         dlg.setStandardButtons(QMessageBox.StandardButton.Close)
         dlg.setIcon(QMessageBox.Icon.Warning)

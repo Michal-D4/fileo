@@ -1,7 +1,5 @@
 from typing import List
 
-from loguru import logger
-
 from PyQt6.QtWidgets import QWidget
 
 from ..core import app_globals as ag

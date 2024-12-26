@@ -1,4 +1,3 @@
-from loguru import logger
 import apsw
 from datetime import datetime
 from dataclasses import dataclass
@@ -104,7 +103,7 @@ class loadFiles(QObject):
                 break
 
             file = Path(line)
-            id = self.insert_file(file)
+            self.insert_file(file)
         self.conn.close()
         self.finished.emit(self.ext_inserted)
 
@@ -113,7 +112,7 @@ class loadFiles(QObject):
         self.load_id = self._insert_dir(load_dir)
         self.add_parent_dir(0, self.load_id)
 
-    def insert_file(self, full_file_name: Path) -> int:
+    def insert_file(self, full_file_name: Path):
         """
         Insert file into files table
         :param full_file_name:
@@ -122,9 +121,9 @@ class loadFiles(QObject):
         path_id = self.get_path_id(full_file_name.parent.as_posix())
 
         if self.find_file(path_id, full_file_name.name):
-            return 0
+            return
 
-        return self._insert_file(path_id, full_file_name)
+        self._insert_file(path_id, full_file_name)
 
     def _insert_file(self, path_id: int, file_name: Path):
         INSERT_FILE = ('insert into files (filename, extid, path) '
@@ -140,7 +139,6 @@ class loadFiles(QObject):
         id = self.conn.last_insert_rowid()
 
         self.set_file_dir_link(id, dir_id)
-        return id
 
     def set_file_dir_link(self, id: int, dir_id: int):
         INSERT_FILEDIR = 'insert into filedir values (:file, :dir);'

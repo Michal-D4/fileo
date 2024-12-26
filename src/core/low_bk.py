@@ -1,16 +1,16 @@
 from loguru import logger
-import apsw
 import json
 from pathlib import Path
 import pickle
+import re
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
     QIODeviceBase, QItemSelectionModel
 )
-from PyQt6.QtGui import QDesktopServices, QAction, QFocusEvent
+from PyQt6.QtGui import QDesktopServices, QFocusEvent
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QMenu,
+    QFileDialog, QMessageBox,
 )
 
 from . import (db_ut, app_globals as ag, reports as rep, check_update as upd,
@@ -71,6 +71,7 @@ def set_user_action_handlers():
         "MainMenu Preferences": set_preferences,
         "MainMenu Check for update": upd.check4update,
         "find_files_by_name": find_files_by_name,
+        "srch_files_by_note": srch_files_by_note,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
         "file-note: Go to file": goto_edited_file,
@@ -228,7 +229,7 @@ def save_same_names_report(rep: list):
 
     open_with_url(str(path))
 
-def enable_buttons():
+def enable_buttons():   # when create connection to DB
     ag.app.ui.btn_search.setEnabled(True)
     ag.app.refresh_tree.setEnabled(True)
     ag.app.show_hidden.setEnabled(True)
@@ -245,18 +246,38 @@ def enable_next_prev(param: str):
     ag.app.btn_next.setDisabled(nex_ == 'no')
     ag.app.btn_prev.setDisabled(prev == 'no')
 
-def find_files_by_name(param: str):
-    def split3():
-        """
-        split by commas but into 3 parts
-        all pats are merged into one except the 2 last
-        """
-        pp = param.split(',')
-        return ','.join(pp[:-2]), *pp[-2:]
+def srch_files_by_note(param: str):
+    def srch_prepare():
+        if is_re:
+            prep = re.compile(expr) if case else re.compile(expr, re.IGNORECASE)
+            return lambda x: prep.search(x)
+        return lambda x: expr in x
 
-    pp = split3()
-    srch_line, *_ = ag.get_setting('SEARCH_FILE', ('',0,0))
-    ag.app.ui.files_heading.setText(f'Found files "{srch_line}"')
+    logger.info(f'{param=}')
+    expr, is_re, case, word = param.split(',')
+    srch_exp = srch_prepare()
+    last_id = 0
+    db_ut.clear_temp()
+    for fid, _, note in db_ut.get_all_notes():
+        if fid == last_id:
+            continue
+        if srch_exp(note):
+            db_ut.save_to_temp('by_note', fid)
+            last_id = fid
+
+    show_files(db_ut.get_file_by_note())
+    model = ag.file_list.model()
+    if model.rowCount():
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{expr}"')
+    else:
+        ag.show_message_box('Search in notes',
+            f'Text "{srch_exp}" not found in notes!',
+            icon=QMessageBox.Icon.Warning)
+
+
+def find_files_by_name(param: str):
+    pp = param.split(',')
+    ag.app.ui.files_heading.setText(f'Found files "{pp[0]}"')
     files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
     ag.set_mode(ag.appMode.FOUND_FILES)
 
@@ -280,12 +301,12 @@ def show_about():
     dlg.show()
 
 #region Common
-def save_branch_in_temp(index: QModelIndex):
+def save_branch(index: QModelIndex):
     branch = define_branch(index)
-    db_ut.save_branch_in_temp_table(pickle.dumps(branch))
+    db_ut.save_branch_in_aux(pickle.dumps(branch))
 
-def restore_branch_from_temp() -> QModelIndex:
-    val = db_ut.get_branch_from_temp_table()
+def restore_branch() -> QModelIndex:
+    val = db_ut.get_branch_from_aux()
     return expand_branch(pickle.loads(val) if val else [])
 
 def define_branch(index: QModelIndex) -> list:
@@ -299,9 +320,9 @@ def define_branch(index: QModelIndex) -> list:
     while 1:
         u_dat = item.user_data()
         branch.append(u_dat.id)
-        item = item.parent()
         if u_dat.parent_id == 0:
             break
+        item = item.parent()
     branch.reverse()
     return branch
 
@@ -465,9 +486,6 @@ def _history_folder(branch: list):
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
 def filtered_files():
-    """
-    create a list of files by filter
-    """
     ag.app.ui.files_heading.setText('filtered files')
     files = ag.filter_dlg.get_file_list()
     show_files(files)
@@ -490,7 +508,7 @@ def show_recent_files():
     idx = expand_branch(ag.history.get_current())
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
-    ag.app.ui.files_heading.setText(f'Recent files')
+    ag.app.ui.files_heading.setText('Recent files')
     files = get_recent_files()
 
     show_files(files)
@@ -549,16 +567,11 @@ def fill_file_model(files) -> fileModel:
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
+    if rows == 0:
+        file_notes_show(QModelIndex())
+        ag.dir_list.setFocus()
 
-    if rows == 0 and ag.mode is not ag.appMode.FILTER_SETUP:
-        null_file_list(model)
     return model
-
-def null_file_list(model: fileModel):
-    row = ["NO FILES HERE",]
-    for _,typ in enumerate(field_types[1:]):
-        row.append(field_val(typ))
-    model.append_row(row)
 
 def set_current_file(file_id: int):
     model: fileProxyModel = ag.file_list.model()
@@ -677,7 +690,7 @@ def delete_files():
 
     res = ag.show_message_box(
         'delete file from DB',
-        f'Selected files will be deleted. Please confirm',
+        'Selected files will be deleted. Please confirm',
         btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
         icon=QMessageBox.Icon.Question
     )
@@ -759,7 +772,6 @@ def export_files():
 def _export_files(out: QTextStream):
     for idx in ag.file_list.selectionModel().selectedRows(0):
         try:
-            id = idx.data(Qt.ItemDataRole.UserRole).id
             file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
         except TypeError:
             continue

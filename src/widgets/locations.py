@@ -27,22 +27,24 @@ class Locations(QTextBrowser):
         self.setTabChangesFocus(False)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
-        _menu_dscr = { # key is menu items text, (the_must, method, shortcut)
-            "Copy": (True, self.copy, QKeySequence.StandardKey.Copy),
-            "go to this location": (False, self.go_file, None),
-            "Reveal in explorer": (False, self.reveal_file, None),
-            "delete file from this location": (False, self.delete_file, None),
-            "delimiter": (True, None, None),
-            "Remove duplicate file": (False, self.remove_duplicate, None),
-            "delimiter": (True, None, None),
-            "Select All": (True, self.selectAll, QKeySequence.StandardKey.SelectAll),
+        _keys = ["Copy", "go to this location", "Reveal in explorer",
+                      "delete file from this location", "delimiter",
+                      "Remove duplicate file", "delimiter", "Select All"]
+        _menu = { # key is menu items text, (the_must, method, shortcut)
+            _keys[0]: (True, self.copy, QKeySequence.StandardKey.Copy),
+            _keys[1]: (False, self.go_file, None),
+            _keys[2]: (False, self.reveal_file, None),
+            _keys[3]: (False, self.delete_file, None),
+            _keys[4]: (True, None, None),
+            _keys[5]: (False, self.remove_duplicate, None),
+            _keys[7]: (True, self.selectAll, QKeySequence.StandardKey.SelectAll),
         }
 
         def create_menu() -> QMenu:
             menu = QMenu(self)
             actions = []
-            for key, dscr in _menu_dscr.items():
-                must, meth, short = dscr
+            for key in _keys:
+                must, meth, short = _menu[key]
                 if must or line:
                     if key == "Remove duplicate file":
                         if self.has_dups:
@@ -61,7 +63,7 @@ class Locations(QTextBrowser):
             action = menu.exec(self.mapToGlobal(self.cur_pos))
             if action:
                 self.setUpdatesEnabled(False)
-                _menu_dscr[action.text()][1]()
+                _menu[action.text()][1]()
                 if self.is_all_selected:
                     self.selectAll()
                 self.setUpdatesEnabled(True)
@@ -127,7 +129,7 @@ class Locations(QTextBrowser):
         path = db_ut.get_file_path(file_id)
         res = ag.show_message_box(
             'Removing duplicate file',
-            f'A file will be deleted to the trash. Please confirm',
+            'A file will be deleted to the trash. Please confirm',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
             icon=QMessageBox.Icon.Question
         )
