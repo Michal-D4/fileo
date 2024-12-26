@@ -2,6 +2,7 @@ from loguru import logger
 import json
 from pathlib import Path
 import pickle
+import re
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
@@ -246,9 +247,32 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def srch_files_by_note(param: str):
-    pp = param.split(',')
-    logger.info(f'{pp=}')
-    ag.app.ui.files_heading.setText(f'Found files, text in notes "{pp[0]}"')
+    def srch_prepare():
+        if is_re:
+            prep = re.compile(expr) if case else re.compile(expr, re.IGNORECASE)
+            return lambda x: prep.search(x)
+        return lambda x: expr in x
+
+    logger.info(f'{param=}')
+    expr, is_re, case, word = param.split(',')
+    srch_exp = srch_prepare()
+    last_id = 0
+    for fid, _, note in db_ut.get_all_notes():
+        if fid == last_id:
+            continue
+        if srch_exp(note):
+            db_ut.save_to_temp('files_by_note', fid)
+            last_id = fid
+
+    show_files(db_ut.get_file_by_note())
+    model = ag.file_list.model()
+    if model.rowCount():
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{expr}"')
+    else:
+        ag.show_message_box('Search in notes',
+            f'Text "{srch_exp}" not found in notes!',
+            icon=QMessageBox.Icon.Warning)
+
 
 def find_files_by_name(param: str):
     pp = param.split(',')

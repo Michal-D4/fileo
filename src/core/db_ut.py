@@ -228,6 +228,20 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
+def get_file_by_note() -> apsw.Cursor:
+    sql = (
+        'with x(fileid, last_note_date) as (select fileid, max(modified) '
+        'from filenotes group by fileid) '
+        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
+        'f.id, f.extid, f.path from files f '
+        'left join x on x.fileid = f.id '
+        'join filedir fd on fd.file = f.id '
+        'join parentdir p on fd.dir = p.id '      # to avoid duplication
+        'where f.id in (select val from aux where key="files_by_note");'
+    )
+    return ag.db.conn.cursor().execute(sql)
+
 def get_file(file_id: int) -> abc.Iterable:
     sql = (
         'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
@@ -962,6 +976,10 @@ def get_note(file: int, note: int) -> str:
     sql = 'select filenote from filenotes where fileid = ? and id = ?;'
     note_text = ag.db.conn.cursor().execute(sql, (file, note)).fetchone()
     return '' if (note_text is None) else note_text[0]
+
+def get_all_notes() -> apsw.Cursor:
+    sql = 'select fileid, id, filenote from filenotes;'
+    return ag.db.conn.cursor().execute(sql)
 
 def insert_note(fileid: int, note: str) -> int:
     sql1 = 'select max(id) from filenotes where fileid=?;'
