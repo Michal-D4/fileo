@@ -570,6 +570,9 @@ def fill_file_model(files) -> fileModel:
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
+    if rows == 0:
+        file_notes_show(QModelIndex())
+        ag.dir_list.setFocus()
 
     return model
 
