@@ -236,7 +236,7 @@ def get_file_by_note() -> apsw.Cursor:
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
-        'where f.id in (select val from aux where key="files_by_note");'
+        'where f.id in (select val from aux where key="by_note");'
     )
     return ag.db.conn.cursor().execute(sql)
 
@@ -685,7 +685,7 @@ def get_dir_id_for_file(file_id: int) -> int:
     res = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
     return res[0] if res else 0
 
-def temp_files_dir(dirs: list, all_dirs: bool):
+def temp_files_dir(dirs: list, sub_dirs: bool):
     sql0 = "insert into aux values ('dir', ?)"
     sql1 = (
         "with x(id) as (select id from parentdir where parent = ? "
@@ -697,7 +697,7 @@ def temp_files_dir(dirs: list, all_dirs: bool):
         "filedir where dir in (select val from aux where key = 'dir')"
     )
     curs = ag.db.conn.cursor()
-    if all_dirs:
+    if sub_dirs:
         dir_ = set(dirs)
         for dd in dirs:
             scur = curs.execute(sql1, dd)
@@ -711,7 +711,7 @@ def temp_files_dir(dirs: list, all_dirs: bool):
 
 
 def clear_temp():
-    sql = "delete from aux where key not like 'save%'"
+    sql = "delete from aux where key != 'TREE_PATH'"
     ag.db.conn.cursor().execute(sql)
 
 def save_to_temp(key: str, val):

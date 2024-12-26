@@ -257,11 +257,12 @@ def srch_files_by_note(param: str):
     expr, is_re, case, word = param.split(',')
     srch_exp = srch_prepare()
     last_id = 0
+    db_ut.clear_temp()
     for fid, _, note in db_ut.get_all_notes():
         if fid == last_id:
             continue
         if srch_exp(note):
-            db_ut.save_to_temp('files_by_note', fid)
+            db_ut.save_to_temp('by_note', fid)
             last_id = fid
 
     show_files(db_ut.get_file_by_note())
