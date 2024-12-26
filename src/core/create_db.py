@@ -4,12 +4,12 @@ from loguru import logger
 from . import app_globals as ag
 
 TABLES = (
-    (
+    (                # settings
     'CREATE TABLE IF NOT EXISTS settings ('
     'key text NOT NULL, '
     'value blob); '
     ),
-    (
+    (                # files
     'CREATE TABLE IF NOT EXISTS files ('
     'id integer PRIMARY KEY NOT NULL, '
     'extid integer NOT NULL, '
@@ -26,17 +26,17 @@ TABLES = (
     'published date not null default -62135596800, '
     'FOREIGN KEY (extid) REFERENCES extensions (id)); '
     ),
-    (
+    (                # dirs
     'CREATE TABLE IF NOT EXISTS dirs ('
     'id integer PRIMARY KEY NOT NULL, '
     'name text); '
     ),
-    (
+    (                # paths
     'CREATE TABLE IF NOT EXISTS paths ('
     'id integer PRIMARY KEY NOT NULL, '
     'path text); '
     ),
-    (
+    (                # filedir
     'CREATE TABLE IF NOT EXISTS filedir ('
     'file integer NOT NULL, '
     'dir integer NOT NULL, '
@@ -44,7 +44,7 @@ TABLES = (
     'FOREIGN KEY (dir) REFERENCES dirs (id) on delete cascade, '
     'FOREIGN KEY (file) REFERENCES files (id) on delete cascade); '
     ),
-    (
+    (                # parentdir
     'CREATE TABLE IF NOT EXISTS parentdir ('
     'parent integer NOT NULL, '
     'id integer NOT NULL, '
@@ -54,12 +54,12 @@ TABLES = (
     'tool_tip text, '
     'PRIMARY KEY(parent, id)); '
     ),
-    (
+    (                # tags
     'CREATE TABLE IF NOT EXISTS tags ('
     'id integer PRIMARY KEY NOT NULL, '
     'tag text NOT NULL); '
     ),
-    (
+    (                # filetag
     'CREATE TABLE IF NOT EXISTS filetag ('
     'fileid integer NOT NULL, '
     'tagid integer NOT NULL, '
@@ -67,12 +67,12 @@ TABLES = (
     'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade, '
     'FOREIGN KEY (tagid) REFERENCES tags (id) on delete cascade); '
     ),
-    (
+    (                # authors
     'CREATE TABLE IF NOT EXISTS authors ('
     'id integer PRIMARY KEY NOT NULL, '
     'author text NOT NULL); '
     ),
-    (
+    (                # fileauthor
     'CREATE TABLE IF NOT EXISTS fileauthor ('
     'fileid integer NOT NULL, '
     'aid integer NOT NULL, '
@@ -80,7 +80,7 @@ TABLES = (
     'FOREIGN KEY (aid) REFERENCES authors (id) on delete cascade, '
     'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
     ),
-    (
+    (                # filenotes
     'CREATE TABLE IF NOT EXISTS filenotes ('
     'fileid integer NOT NULL, '
     'id integer NOT NULL, '
@@ -90,7 +90,7 @@ TABLES = (
     'PRIMARY KEY(fileid, id), '
     'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
     ),
-    (
+    (                # extensions
     'CREATE TABLE IF NOT EXISTS extensions ('
     'id integer PRIMARY KEY NOT NULL, '
     'extension text); '

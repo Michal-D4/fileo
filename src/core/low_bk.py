@@ -276,12 +276,12 @@ def show_about():
     dlg.show()
 
 #region Common
-def save_branch_in_temp(index: QModelIndex):
+def save_branch(index: QModelIndex):
     branch = define_branch(index)
-    db_ut.save_branch_in_temp_table(pickle.dumps(branch))
+    db_ut.save_branch_in_aux(pickle.dumps(branch))
 
-def restore_branch_from_temp() -> QModelIndex:
-    val = db_ut.get_branch_from_temp_table()
+def restore_branch() -> QModelIndex:
+    val = db_ut.get_branch_from_aux()
     return expand_branch(pickle.loads(val) if val else [])
 
 def define_branch(index: QModelIndex) -> list:

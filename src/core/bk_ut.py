@@ -77,10 +77,10 @@ def search_files():
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
     if collapse:
-        low_bk.save_branch_in_temp(ag.dir_list.currentIndex())
+        low_bk.save_branch(ag.dir_list.currentIndex())
         ag.dir_list.collapseAll()
     else:
-        idx = low_bk.restore_branch_from_temp()
+        idx = low_bk.restore_branch()
         ag.dir_list.setCurrentIndex(idx)
 
 def set_menu_more(self):

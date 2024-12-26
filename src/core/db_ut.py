@@ -173,7 +173,7 @@ def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
         return get_nonascii_names()
 
     # search string contains only ASCII symbols
-    filename = 'filename' if case else 'lower(filename)'
+    filename = 'f.filename' if case else 'lower(f.filename)'
     cond = f'where {filename} glob ?'
 
     if not exact:
@@ -706,12 +706,12 @@ def save_to_temp(key: str, val):
     ag.db.conn.cursor().execute(
         "insert into aux values (?, ?)", (key, val))
 
-def save_branch_in_temp_table(path):
+def save_branch_in_aux(path):
     sql = 'update aux set val = :path where key = :key'
     key = 'TREE_PATH'
     ag.db.conn.cursor().execute(sql, {'path': path, 'key': key})
 
-def get_branch_from_temp_table() -> str:
+def get_branch_from_aux() -> str:
     sql = 'select val from aux where key = ?'
     key = 'TREE_PATH'
     res = ag.db.conn.cursor().execute(sql, (key,)).fetchone()
