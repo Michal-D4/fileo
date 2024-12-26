@@ -61,10 +61,14 @@ def save_bk_settings():
         pass
 
 def selected_dirs() -> list:
-    idxs = ag.dir_list.selectionModel().selectedIndexes()
+    idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
+    curr = ag.dir_list.currentIndex()
     for idx in idxs:
+        if idx is curr:
+            continue
         branches.append(low_bk.define_branch(idx))
+    branches.append(low_bk.define_branch(curr))
     return branches
 
 @pyqtSlot()
@@ -113,7 +117,6 @@ def bk_setup():
     ag.file_list.customContextMenuRequested.connect(file_menu)
 
     if ag.db.conn:
-        populate_all()
         single_shot()
 
     dd.set_drag_drop_handlers()
@@ -236,6 +239,7 @@ def toggle_show_column(state: bool, index: int):
     resize_section_0()
 
 def restore_dirs():
+    header_restore()
     low_bk.set_dir_model()
     low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
@@ -251,9 +255,6 @@ def restore_dirs():
     elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
 
-    header_restore()
-    set_field_menu()
-
 def header_restore():
     hdr: QHeaderView = ag.file_list.header()
     try:
@@ -266,6 +267,7 @@ def header_restore():
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
+    set_field_menu()
     hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     hdr.customContextMenuRequested.connect(header_menu)
 

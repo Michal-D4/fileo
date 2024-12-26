@@ -320,9 +320,9 @@ def define_branch(index: QModelIndex) -> list:
     while 1:
         u_dat = item.user_data()
         branch.append(u_dat.id)
-        item = item.parent()
         if u_dat.parent_id == 0:
             break
+        item = item.parent()
     branch.reverse()
     return branch
 
@@ -486,9 +486,6 @@ def _history_folder(branch: list):
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
 def filtered_files():
-    """
-    create a list of files by filter
-    """
     ag.app.ui.files_heading.setText('filtered files')
     files = ag.filter_dlg.get_file_list()
     show_files(files)
