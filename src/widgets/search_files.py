@@ -40,7 +40,7 @@ class srchFiles(QWidget):
         self.word.setAutoRaise(True)
         self.word.setCheckable(True)
         self.word.setIcon(tug.get_icon('match_word'))
-        self.word.setToolTip('Exact match')
+        self.word.setToolTip('Match Whole Word')
 
         name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
         self.srch_pattern.setText(name)

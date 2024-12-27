@@ -251,10 +251,15 @@ def srch_files_by_note(param: str):
         if is_re:
             prep = re.compile(expr) if case else re.compile(expr, re.IGNORECASE)
             return lambda x: prep.search(x)
-        return lambda x: expr in x
+        if word:
+            p = fr'\b{expr}\b'
+            prep = re.compile(p) if case else re.compile(p, re.IGNORECASE)
+            return lambda x: prep.search(x)
+        ex = expr if case else expr.lower()
+        return lambda x: ex in x if case else ex in x.lower()
 
-    logger.info(f'{param=}')
-    expr, is_re, case, word = param.split(',')
+    expr, *pp = param.split(',')
+    is_re, case, word = (int(x) for x in pp)
     srch_exp = srch_prepare()
     last_id = 0
     db_ut.clear_temp()
@@ -271,7 +276,7 @@ def srch_files_by_note(param: str):
         ag.app.ui.files_heading.setText(f'Found files, text in notes "{expr}"')
     else:
         ag.show_message_box('Search in notes',
-            f'Text "{srch_exp}" not found in notes!',
+            f'Text "{expr}" not found in notes!',
             icon=QMessageBox.Icon.Warning)
 
 
