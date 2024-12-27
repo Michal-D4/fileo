@@ -247,47 +247,56 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def srch_files_by_note(param: str):
+    srch, *pp = param.split(',')
+    row_cnt = srch_files_common((srch, *(int(x) for x in pp)), db_ut.get_all_notes())
+    if row_cnt:
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{srch}"')
+        ag.set_mode(ag.appMode.FOUND_FILES)
+        ag.file_list.setFocus()
+    else:
+        ag.show_message_box('Search in notes',
+            f'Text "{srch}" not found in notes!',
+            icon=QMessageBox.Icon.Warning)
+
+def srch_files_common(param: list, search_in):
+    srch, is_re, case, word = param
     def srch_prepare():
         if is_re:
-            prep = re.compile(expr) if case else re.compile(expr, re.IGNORECASE)
+            prep = re.compile(srch) if case else re.compile(srch, re.IGNORECASE)
             return lambda x: prep.search(x)
         if word:
-            p = fr'\b{expr}\b'
+            p = fr'\b{srch}\b'
             prep = re.compile(p) if case else re.compile(p, re.IGNORECASE)
             return lambda x: prep.search(x)
-        ex = expr if case else expr.lower()
+        ex = srch if case else srch.lower()
         return lambda x: ex in x if case else ex in x.lower()
 
-    expr, *pp = param.split(',')
-    is_re, case, word = (int(x) for x in pp)
     srch_exp = srch_prepare()
     last_id = 0
+
     db_ut.clear_temp()
-    for fid, _, note in db_ut.get_all_notes():
+    for fid, srch_in in search_in:
         if fid == last_id:
             continue
-        if srch_exp(note):
-            db_ut.save_to_temp('by_note', fid)
+        if srch_exp(srch_in):
+            db_ut.save_to_temp('file_srch', fid)
             last_id = fid
 
     show_files(db_ut.get_file_by_note())
     model = ag.file_list.model()
-    if model.rowCount():
-        ag.app.ui.files_heading.setText(f'Found files, text in notes "{expr}"')
-    else:
-        ag.show_message_box('Search in notes',
-            f'Text "{expr}" not found in notes!',
-            icon=QMessageBox.Icon.Warning)
-
+    return model.rowCount()
 
 def find_files_by_name(param: str):
-    pp = param.split(',')
-    ag.app.ui.files_heading.setText(f'Found files "{pp[0]}"')
-    files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
-    ag.set_mode(ag.appMode.FOUND_FILES)
-
-    show_files(files)
-    ag.file_list.setFocus()
+    srch, p, q = param.split(',')
+    row_cnt = srch_files_common((srch, 0, int(p), int(q)), db_ut.get_file_names())
+    if row_cnt:
+        ag.app.ui.files_heading.setText(f'Found files "{srch}"')
+        ag.set_mode(ag.appMode.FOUND_FILES)
+        ag.file_list.setFocus()
+    else:
+        ag.show_message_box('Search files',
+            f'File "{srch}" not found!',
+            icon=QMessageBox.Icon.Warning)
 
 def set_preferences():
     pref = preferences.Preferences(ag.app)
