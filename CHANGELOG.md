@@ -1,7 +1,10 @@
 # Change Log
 
+## 1.3.22 - 2024, 28 December
+* fix some file search issues
+
 ## 1.3.21 - 2024, 26 December
-* implemented context search in notes; result is a list of files with requested text in their notes
+* file search by text in notes
 * Some other code changes and improvements
 
 ## 1.3.20 - 2024, 21 December

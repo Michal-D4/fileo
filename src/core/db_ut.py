@@ -1,3 +1,4 @@
+# from loguru import logger
 import apsw
 from collections import deque, abc
 from pathlib import PurePath
@@ -141,78 +142,8 @@ def get_file_name(id: int|str) -> str:
     res = ag.db.conn.cursor().execute(sql, (id,)).fetchone()
     return res[0] if res else ''
 
-def get_files_by_name(name: str, case: bool, exact: bool) -> apsw.Cursor:
-    """
-    case - if True case sensitive
-    exact - if True look for an exact match
-    """
-    sql = (
-        'with x(fileid, last_note_date) as (select fileid, max(modified) '
-        'from filenotes group by fileid) '
-        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
-        'f.id, f.extid, f.path from files f '
-        'left join x on x.fileid = f.id'
-    )
-    nn = name if case else name.casefold()
-
-    def get_nonascii_names() -> list:
-        res = []
-        with ag.db.conn as conn:
-            for line in conn.cursor().execute(sql):
-                ll = line[0] if case else line[0].casefold()
-                if exact:
-                    if ll == nn:
-                        res.append(line)
-                else:
-                    if nn in ll:
-                        res.append(line)
-        return res
-
-    if not name.isascii():
-        return get_nonascii_names()
-
-    # search string contains only ASCII symbols
-    filename = 'f.filename' if case else 'lower(f.filename)'
-    cond = f'where {filename} glob ?'
-
-    if not exact:
-        nn = f'*{nn}*'
-    with ag.db.conn as conn:
-        return conn.execute(' '.join((sql, cond)), (nn,))
-
-def exists_file_with_name(name: str, case: bool, exact: bool) -> bool:
-    """
-    case - if True case sensitive
-    exact - if True look for an exact match
-    """
-    nn = name if case else name.casefold()
-
-    def exist_nonascii_name() -> bool:
-        sql = 'select filename from files'
-        with ag.db.conn as conn:
-            for line in conn.cursor().execute(sql):
-                ll = line[0] if case else line[0].casefold()
-                if exact:
-                    if ll == nn:
-                        return True
-                else:
-                    if nn in ll:
-                        return True
-        return False
-
-    if not name.isascii():
-        return exist_nonascii_name()
-
-    # search string contains only ASCII symbols
-    filename = 'filename' if case else 'lower(filename)'
-
-    sql = f'select count(*) from files where {filename} glob ?'
-    if not exact:
-        nn = f'*{nn}*'
-    with ag.db.conn as conn:
-        res = conn.execute(sql, (nn,)).fetchone()
-        return res[0] > 0
+def get_file_names() -> apsw.Cursor:
+    return ag.db.conn.cursor().execute('select id, filename from files;')
 
 def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     sql = (
@@ -228,7 +159,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
-def get_file_by_note() -> apsw.Cursor:
+def get_found_files() -> apsw.Cursor:
     sql = (
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '
@@ -236,7 +167,7 @@ def get_file_by_note() -> apsw.Cursor:
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
-        'where f.id in (select val from aux where key="by_note");'
+        'where f.id in (select val from aux where key="file_srch");'
     )
     return ag.db.conn.cursor().execute(sql)
 
@@ -976,7 +907,7 @@ def get_note(file: int, note: int) -> str:
     return '' if (note_text is None) else note_text[0]
 
 def get_all_notes() -> apsw.Cursor:
-    sql = 'select fileid, id, filenote from filenotes;'
+    sql = 'select fileid, filenote from filenotes;'
     return ag.db.conn.cursor().execute(sql)
 
 def insert_note(fileid: int, note: str) -> int:

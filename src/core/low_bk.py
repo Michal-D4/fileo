@@ -247,42 +247,54 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def srch_files_by_note(param: str):
-    def srch_prepare():
-        if is_re:
-            prep = re.compile(expr) if case else re.compile(expr, re.IGNORECASE)
-            return lambda x: prep.search(x)
-        return lambda x: expr in x
-
-    logger.info(f'{param=}')
-    expr, is_re, case, word = param.split(',')
-    srch_exp = srch_prepare()
-    last_id = 0
-    db_ut.clear_temp()
-    for fid, _, note in db_ut.get_all_notes():
-        if fid == last_id:
-            continue
-        if srch_exp(note):
-            db_ut.save_to_temp('by_note', fid)
-            last_id = fid
-
-    show_files(db_ut.get_file_by_note())
-    model = ag.file_list.model()
-    if model.rowCount():
-        ag.app.ui.files_heading.setText(f'Found files, text in notes "{expr}"')
+    srch, _ = param.split(',')
+    row_cnt = srch_files_common(param, db_ut.get_all_notes())
+    if row_cnt:
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{srch}"')
+        ag.set_mode(ag.appMode.FOUND_FILES)
+        ag.file_list.setFocus()
     else:
         ag.show_message_box('Search in notes',
-            f'Text "{srch_exp}" not found in notes!',
+            f'Text "{srch}" not found in notes!',
             icon=QMessageBox.Icon.Warning)
 
+def srch_files_common(param: str, search_in) -> int:
+    srch, key = param.split(',')
+    def srch_prepare():
+        p = fr'\b{srch}\b' if key[2] == '1' else srch    # match whole word
+        rex = re.compile(p) if key[1] == '1' else re.compile(p, re.IGNORECASE)
+        q = srch.lower()
+        return {
+            '000': lambda x: q in x.lower(),  # ignore case
+            '010': lambda x: srch in x,       # case sensitive
+        }.get(key, lambda x: rex.search(x))
+
+    srch_exp = srch_prepare()
+    last_id = 0
+
+    db_ut.clear_temp()
+    for fid, srch_in in search_in:
+        if fid == last_id:
+            continue
+        if srch_exp(srch_in):
+            db_ut.save_to_temp('file_srch', fid)
+            last_id = fid
+
+    show_files(db_ut.get_found_files())
+    model = ag.file_list.model()
+    return model.rowCount()
 
 def find_files_by_name(param: str):
-    pp = param.split(',')
-    ag.app.ui.files_heading.setText(f'Found files "{pp[0]}"')
-    files = db_ut.get_files_by_name(pp[0], int(pp[1]), int(pp[2]))
-    ag.set_mode(ag.appMode.FOUND_FILES)
-
-    show_files(files)
-    ag.file_list.setFocus()
+    srch, _ = param.split(',')
+    row_cnt = srch_files_common(param, db_ut.get_file_names())
+    if row_cnt:
+        ag.app.ui.files_heading.setText(f'Found files "{srch}"')
+        ag.set_mode(ag.appMode.FOUND_FILES)
+        ag.file_list.setFocus()
+    else:
+        ag.show_message_box('Search files',
+            f'File "{srch}" not found!',
+            icon=QMessageBox.Icon.Warning)
 
 def set_preferences():
     pref = preferences.Preferences(ag.app)

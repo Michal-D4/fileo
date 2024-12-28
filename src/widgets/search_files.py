@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QMessageBox,
 )
 
-from ..core  import app_globals as ag, db_ut
+from ..core  import app_globals as ag
 from .. import tug
 
 
@@ -40,7 +40,7 @@ class srchFiles(QWidget):
         self.word.setAutoRaise(True)
         self.word.setCheckable(True)
         self.word.setIcon(tug.get_icon('match_word'))
-        self.word.setToolTip('Exact match')
+        self.word.setToolTip('Match Whole Word')
 
         name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
         self.srch_pattern.setText(name)
@@ -76,14 +76,11 @@ class srchFiles(QWidget):
             self.search_err_msg('Please enter file name')
             return
 
-        if db_ut.exists_file_with_name(name, case, word):
-            ag.signals_.user_signal.emit(
-                f'find_files_by_name\\{name},{int(case)},{int(word)}'
-            )
-            ag.save_settings(SEARCH_FILE=(name, case, word))
-            self.close()
-        else:
-            self.search_err_msg(f'File "{name}" not found')
+        ag.save_settings(SEARCH_FILE=(name, case, word))
+        ag.signals_.user_signal.emit(
+            f'find_files_by_name\\{name},0{int(case)}{int(word)}'
+        )
+        self.close()
 
     def search_err_msg(self, msg):
         dlg = QMessageBox(ag.app)
