@@ -247,8 +247,8 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def srch_files_by_note(param: str):
-    srch, *pp = param.split(',')
-    row_cnt = srch_files_common((srch, *(int(x) for x in pp)), db_ut.get_all_notes())
+    srch, _ = param.split(',')
+    row_cnt = srch_files_common(param, db_ut.get_all_notes())
     if row_cnt:
         ag.app.ui.files_heading.setText(f'Found files, text in notes "{srch}"')
         ag.set_mode(ag.appMode.FOUND_FILES)
@@ -258,18 +258,16 @@ def srch_files_by_note(param: str):
             f'Text "{srch}" not found in notes!',
             icon=QMessageBox.Icon.Warning)
 
-def srch_files_common(param: list, search_in):
-    srch, is_re, case, word = param
+def srch_files_common(param: str, search_in) -> int:
+    srch, key = param.split(',')
     def srch_prepare():
-        if is_re:
-            prep = re.compile(srch) if case else re.compile(srch, re.IGNORECASE)
-            return lambda x: prep.search(x)
-        if word:
-            p = fr'\b{srch}\b'
-            prep = re.compile(p) if case else re.compile(p, re.IGNORECASE)
-            return lambda x: prep.search(x)
-        ex = srch if case else srch.lower()
-        return lambda x: ex in x if case else ex in x.lower()
+        p = fr'\b{srch}\b' if key[2] == '1' else srch    # match whole word
+        rex = re.compile(p) if key[1] == '1' else re.compile(p, re.IGNORECASE)
+        q = srch.lower()
+        return {
+            '000': lambda x: q in x.lower(),  # ignore case
+            '010': lambda x: srch in x,       # case sensitive
+        }.get(key, lambda x: rex.search(x))
 
     srch_exp = srch_prepare()
     last_id = 0
@@ -282,13 +280,13 @@ def srch_files_common(param: list, search_in):
             db_ut.save_to_temp('file_srch', fid)
             last_id = fid
 
-    show_files(db_ut.get_file_by_note())
+    show_files(db_ut.get_found_files())
     model = ag.file_list.model()
     return model.rowCount()
 
 def find_files_by_name(param: str):
-    srch, p, q = param.split(',')
-    row_cnt = srch_files_common((srch, 0, int(p), int(q)), db_ut.get_file_names())
+    srch, _ = param.split(',')
+    row_cnt = srch_files_common(param, db_ut.get_file_names())
     if row_cnt:
         ag.app.ui.files_heading.setText(f'Found files "{srch}"')
         ag.set_mode(ag.appMode.FOUND_FILES)

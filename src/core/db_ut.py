@@ -159,7 +159,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, {'id': dir_id, 'pid': parent})
 
-def get_file_by_note() -> apsw.Cursor:
+def get_found_files() -> apsw.Cursor:
     sql = (
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '

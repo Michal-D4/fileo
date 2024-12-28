@@ -78,7 +78,7 @@ class srchFiles(QWidget):
 
         ag.save_settings(SEARCH_FILE=(name, case, word))
         ag.signals_.user_signal.emit(
-            f'find_files_by_name\\{name},{int(case)},{int(word)}'
+            f'find_files_by_name\\{name},0{int(case)}{int(word)}'
         )
         self.close()
 

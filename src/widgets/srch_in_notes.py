@@ -77,19 +77,19 @@ class srchInNotes(QWidget):
 
     def search_files(self):
         # close if found, otherwise show message and leave open
-        txt, rex, case, word = (
-            self.srch_pattern.text(),
-            self.rex.isChecked(),
-            self.case.isChecked(),
-            self.word.isChecked()
-        )
+        txt = self.srch_pattern.text()
+
         if not txt:
             self.search_err_msg('Please enter text to search')
             return
 
+        rex = self.rex.isChecked()
+        case = self.case.isChecked()
+        word = 0 if rex else int(self.word.isChecked())
+
         ag.save_settings(SEARCH_BY_NOTE=(txt, rex, case, word))
         ag.signals_.user_signal.emit(
-            f'srch_files_by_note\\{txt},{int(rex)},{int(case)},{int(word)}'
+            f'srch_files_by_note\\{txt},{int(rex)}{int(case)}{int(word)}'
         )
         self.close()
 
