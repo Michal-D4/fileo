@@ -152,9 +152,9 @@ def add_file_to_recent(id_: int):
     """
     id_ - file id, valid value > 0
     """
-    if id_ < 1 or recent_files and id_ == recent_files[-1]:
+    if id_ < 1:
         return
-    try:
+    try:    # remove if id_ already in recent_files
         i = recent_files.index(id_)
         recent_files.pop(i)
     except ValueError:
