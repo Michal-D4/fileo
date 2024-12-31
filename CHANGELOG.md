@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.23 - 2024, 31 December
+* fix file list header issue
+* Some other code changes
+
 ## 1.3.22 - 2024, 28 December
 * fix some file search issues
 

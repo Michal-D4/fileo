@@ -28,6 +28,7 @@ elif sys.platform.startswith("linux"):
             f'array:string:file:////{path}', 'string:',
         ]
         subprocess.run(cmd)
+
 else:
     def reveal_file(path: str):
         raise NotImplementedError(f"doesn't support {sys.platform} system")

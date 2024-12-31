@@ -239,7 +239,6 @@ def toggle_show_column(state: bool, index: int):
     resize_section_0()
 
 def restore_dirs():
-    header_restore()
     low_bk.set_dir_model()
     low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
@@ -254,6 +253,7 @@ def restore_dirs():
         low_bk.show_recent_files()
     elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
+    header_restore()
 
 def header_restore():
     hdr: QHeaderView = ag.file_list.header()
