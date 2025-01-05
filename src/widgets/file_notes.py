@@ -1,3 +1,5 @@
+# from loguru import logger
+
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
@@ -74,7 +76,6 @@ class notesContainer(QScrollArea):
 
     def set_file_id(self, file_id: int):
         self.file_id = file_id
-        ag.note_buttons.clear()
         self.set_notes_data()
 
     def set_notes_data(self):
@@ -86,6 +87,7 @@ class notesContainer(QScrollArea):
             self.scroll_layout.insertWidget(0, item)
 
         self.setUpdatesEnabled(False)
+        ag.note_buttons.clear()
         self.clear_layout()
         data = db_ut.get_file_notes(self.file_id)
         for row in data:

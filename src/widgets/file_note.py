@@ -1,3 +1,4 @@
+# from loguru import logger
 import markdown
 from datetime import datetime
 from pathlib import Path
@@ -52,9 +53,10 @@ class fileNote(QWidget):
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
         self.set_collapse_icon()
-        ag.note_buttons.append((self.ui.edit, "toEdit"))
-        ag.note_buttons.append((self.ui.remove, "cancel2"))
-        ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
+        if self.id:
+            ag.note_buttons.append((self.ui.edit, "toEdit"))
+            ag.note_buttons.append((self.ui.remove, "cancel2"))
+            ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
