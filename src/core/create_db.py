@@ -203,7 +203,7 @@ order by f.hash
 '''
     id_upd ='''
 update filenotes set fileid = :minid where fileid
-in (select id from files where hash = :hash0;
+in (select id from files where hash = :hash0);
 '''
     min_id_sql = 'select min(id) from files where hash = ?'
     curs = conn.cursor().execute(hash_sql)

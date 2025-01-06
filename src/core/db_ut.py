@@ -877,6 +877,15 @@ def get_file_hash(file_id: int) -> str:
     hash_ = ag.db.conn.cursor().execute(hash_sql, (file_id,)).fetchone()
     return hash_[0] if hash_ else ''
 
+def get_file_id_to_notes(file_id: int) -> int:
+    sql = 'select min(id) from files where hash = ?'
+    hash_ = get_file_hash(file_id)
+
+    if hash_:
+        f_id = ag.db.conn.cursor().execute(sql, (hash_,)).fetchone()
+        return int(f_id[0])
+    return file_id
+
 def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
     sql_hash = (
         "select filenote, fileid, id, modified, created from filenotes "
@@ -891,10 +900,10 @@ def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
         return []
     hash_ = get_file_hash(file_id)
 
-    if hash_:  # hash may not have been calculated yet
+    if hash_:
         sql = ' '.join((sql_hash, 'desc')) if desc else sql_hash
         par = hash_
-    else:
+    else:       # hash not calculated yet
         sql = ' '.join((sql_id, 'desc')) if desc else sql_id
         par = file_id
 

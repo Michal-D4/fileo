@@ -150,7 +150,7 @@ class OpenDB(QWidget, Ui_openDB):
             if file_.is_file():
                 if create_db.check_app_schema(file_name):
                     return True
-                if file_.stat().st_size == 0:               # empty file
+                if file_.stat().st_size == 0:                 # empty file
                     create_db.create_tables(
                         create_db.create_db(file_name)
                     )

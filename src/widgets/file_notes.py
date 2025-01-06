@@ -91,7 +91,7 @@ class notesContainer(QScrollArea):
         self.clear_layout()
         data = db_ut.get_file_notes(self.file_id)
         for row in data:
-            note = fileNote(*row[1:], self.file_id)
+            note = fileNote(*row[1:])
             note.set_text(row[0])
             add_to_top(note)
         self.collapse()
@@ -126,16 +126,15 @@ class notesContainer(QScrollArea):
 
     def update_note(self):
         note: fileNote = self.editor.get_note()
-        note_file_id = note.get_note_file_id()
+        file_id = note.get_file_id()
         note_id = note.get_note_id()
         txt = self.editor.get_text()
 
         if note_id:
-            ts = db_ut.update_note(note_file_id, note_id, txt)
+            ts = db_ut.update_note(file_id, note_id, txt)
         else:
-            ts = db_ut.insert_note(note_file_id, txt)
+            ts = db_ut.insert_note(file_id, txt)
 
-        file_id = note.get_file_id()
         ag.add_file_to_recent(file_id)
 
         if self.file_id == file_id:

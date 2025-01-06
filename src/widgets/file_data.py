@@ -295,9 +295,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             note: fileNote = self.editor.get_note()
             return (
                 True,
-                note.get_note_file_id(),
-                note.get_note_id(),
                 note.get_file_id(),
+                note.get_note_id(),
                 self.editor.get_branch(),
                 self.editor.get_text(),
             )
@@ -307,11 +306,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if not vals[0]:
             self.cancel_note_editing()
             return
-        note = fileNote(vals[1], vals[2])
-        note.set_file_id(vals[3])
+        note = fileNote(vals[1], vals[2])   # file_id, note_id
         self.editor.set_note(note)
-        self.editor.set_branch(vals[4])
-        self.editor.set_text(vals[5])
+        self.editor.set_branch(vals[3])
+        self.editor.set_text(vals[4])
         self.show_editor()
 
     def set_data(self, file_id: int, branch: list):

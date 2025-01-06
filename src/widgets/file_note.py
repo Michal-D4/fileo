@@ -18,17 +18,15 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 class fileNote(QWidget):
 
     def __init__(self,
-                 note_file_id: int = 0,  # file_id from filenotes table, find by hash
+                 file_id: int = 0,
                  note_id: int=0,
                  modified: int=0,
                  created: int=0,
-                 file_id: int=0,         # current file_id in file_list
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
-        self.file_id = file_id if file_id else note_file_id
+        self.file_id = file_id
         self.id = note_id
-        self.note_file_id = note_file_id
 
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -181,14 +179,8 @@ class fileNote(QWidget):
     def get_note_id(self) -> int:
         return self.id
 
-    def set_file_id(self, file_id: int):
-        self.file_id = file_id
-
     def get_file_id(self) -> int:
         return self.file_id
-
-    def get_note_file_id(self) -> int:
-        return self.note_file_id
 
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
