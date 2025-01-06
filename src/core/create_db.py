@@ -131,7 +131,7 @@ setting_names = (     # DB settings only
 )
 
 APP_ID = 1718185071
-USER_VER = 18
+USER_VER = 19
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -147,20 +147,25 @@ def tune_new_version() -> bool:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
         logger.info(f'{v=}')
         if v[0] != USER_VER:
-            _ = convert_to_new_version(conn, v[0])
+            convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
         logger.exception(f'{err.args}', exc_info=True)
         return False
     return True
 
-def convert_to_new_version(conn, old_v) -> int:
+def convert_to_new_version(conn, old_v):
     if old_v == 0:
         create_tables(conn)
         return USER_VER
+
     if old_v < 15:
         update_to_v15(conn)
     elif old_v == 15:
         update_to_v16(conn)
+
+    if old_v < 19:
+        if not update_to_v19(conn):
+            return
 
     initialize_settings(conn)
 
@@ -184,6 +189,41 @@ def update_to_v16(conn: apsw.Connection):
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
     conn.cursor().execute(sql)
+
+def update_to_v19(conn: apsw.Connection) -> bool:
+    """
+    in case of duplicate files,
+    link all notes to only one of the duplicate files
+    with the minimum file id
+    """
+    hash_sql = '''
+select f.hash from files f
+join filenotes fn on fn.fileid=f.id
+order by f.hash
+'''
+    id_upd ='''
+update filenotes set fileid = :minid where fileid
+in (select id from files where hash = :hash0;
+'''
+    min_id_sql = 'select min(id) from files where hash = ?'
+    curs = conn.cursor().execute(hash_sql)
+    hash0 = ''
+    updated = False
+    for hash1, *_ in curs:
+        logger.info(f'{hash1=}, {hash0=}, {updated=}')
+        if not hash1:
+            return False
+        if updated and hash1 == hash0:
+            continue
+        if not updated and hash1 == hash0:
+            min_id = conn.cursor().execute(min_id_sql, (hash0,)).fetchone()
+            conn.cursor().execute(id_upd, {'minid': min_id[0], 'hash0': hash0})
+            updated = True
+            continue
+        hash0 = hash1
+        updated = False
+
+    return True
 
 def create_db(db_name: str) -> apsw.Connection:
     return apsw.Connection(db_name)
