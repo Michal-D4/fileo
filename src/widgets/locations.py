@@ -11,10 +11,6 @@ from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox
 from ..core import app_globals as ag, db_ut, low_bk
 
 
-def link_hide_suffix(dd: ag.DirData):
-    tt = f'{"L" if dd.is_link else ""}{"H" if dd.hidden else ""}'
-    return f'({tt})' if tt else ''   # add () around "L", "H", "LH"; or "" without ()
-
 class Locations(QTextBrowser):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
@@ -173,22 +169,21 @@ class Locations(QTextBrowser):
         self.branches.clear()
         for dd in dirs:
             self.branches.append(
-                [(dd.id, link_hide_suffix(dd), dd.file_id), dd.parent_id]
+                [(dd.id, dd.file_id), dd.parent_id]
             )
 
     def get_file_dirs(self) -> list:
         dir_ids = db_ut.get_file_dir_ids(self.file_id)
         dirs = []
         for dir_id, file_id in dir_ids:
-            parents = db_ut.dir_parents(dir_id)
-            for pp in parents:
+            for pp in db_ut.dir_parents(dir_id):
                 dirs.append(ag.DirData(*pp, file_id))
         return dirs
 
     def build_branches(self):
         def add_dir_parent() -> list:
             ss = tt[:-1]
-            tt[-1] = (qq.id, link_hide_suffix(qq))
+            tt[-1] = (qq.id, )
             tt.append(qq.parent_id)
             return ss
 
@@ -210,7 +205,7 @@ class Locations(QTextBrowser):
                         first = False
                         continue
                     self.branches.append(
-                        [*ss, (qq.id, link_hide_suffix(qq)), qq.parent_id]
+                        [*ss, (qq.id, ), qq.parent_id]
                     )
             curr += 1
 
@@ -265,10 +260,10 @@ class Locations(QTextBrowser):
         tt.reverse()
         ww = []
         vv = []
-        for folder, suffix, *_ in tt:
+        for folder, *_ in tt:
             # logger.info(f'{folder=}, {suffix=}')
             name = db_ut.get_dir_name(folder)
-            ww.append(f'{name}{suffix}')
+            ww.append(name)
             vv.append(folder)
         # logger.info(f'{">".join(ww)}, {(vv, tt[-1][-1])}')
         return ' > '.join(ww), (vv, tt[-1][-1])
