@@ -297,7 +297,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
                 True,
                 note.get_file_id(),
                 note.get_note_id(),
-                self.editor.get_branch(),
                 self.editor.get_text(),
             )
         return get_attributes() if self.notes.is_editing() else (False,)
@@ -308,11 +307,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             return
         note = fileNote(vals[1], vals[2])   # file_id, note_id
         self.editor.set_note(note)
-        self.editor.set_branch(vals[3])
-        self.editor.set_text(vals[4])
+        self.editor.set_text(vals[3])
         self.show_editor()
 
-    def set_data(self, file_id: int, branch: list):
+    def set_data(self, file_id: int):
         # logger.info(f'{file_id=}')
         self.file_id = file_id
 
@@ -320,10 +318,4 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.author_selector.set_file_id(file_id)
         self.file_info.set_file_id(file_id)
         self.notes.set_file_id(file_id)
-
-        self.locator.set_data(file_id, branch)
-        # locator calculates all branches the file belongs to
-        if not branch:
-            branch = self.locator.get_branch(file_id)
-        if not self.notes.is_editing():
-            self.editor.set_branch(branch)
+        self.locator.set_data(file_id)

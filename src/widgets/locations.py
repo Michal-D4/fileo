@@ -8,7 +8,7 @@ from PyQt6.QtGui import (QMouseEvent, QTextCursor, QAction,
 )
 from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox
 
-from ..core import app_globals as ag, db_ut
+from ..core import app_globals as ag, db_ut, low_bk
 
 
 def link_hide_suffix(dd: ag.DirData):
@@ -153,8 +153,12 @@ class Locations(QTextBrowser):
         self.setTextCursor(txt_cursor)
         return sel_text
 
-    def set_data(self, file_id: int, curr_branch: list):
+    def set_data(self, file_id: int):
         self.set_file_id(file_id)
+        if ag.mode is ag.appMode.DIR:
+            curr_branch = low_bk.define_branch(ag.dir_list.currentIndex())
+        else:
+            curr_branch = []
         self.show_branches(curr_branch)
 
     def set_file_id(self, file_id: int):

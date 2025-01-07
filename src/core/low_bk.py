@@ -163,8 +163,7 @@ def save_note_edit_state():
         NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
 
-def file_branch(file_id: int) -> list:
-    dir_id = db_ut.get_dir_id_for_file(file_id)
+def get_branch(dir_id: int) -> list:
     branch = [dir_id]
     while dir_id:
         dir_id = db_ut.dir_min_parent(dir_id)
@@ -174,9 +173,10 @@ def file_branch(file_id: int) -> list:
 def goto_file_in_branch(param: str):
     file_id, *branch = param.split('-')
     if not branch:
-        brnch = file_branch(file_id)
+        dir_id = db_ut.get_dir_id_for_file(file_id)
+        brnch = get_branch(dir_id)
     else:
-        brnch = (int(it) for it in branch.split(','))
+        brnch = (int(it) for it in branch[0].split(','))
     idx = expand_branch(brnch)
 
     if idx.isValid():
@@ -748,8 +748,7 @@ def remove_files():
 def remove_file_from_location(param: str):
     file_id, dir_id = param.split(',')
     db_ut.delete_file_dir_link(file_id, dir_id)
-    # need branch instead of empty list []
-    ag.file_data.set_data(int(file_id), [])
+    ag.file_data.set_data(int(file_id))
 
 def get_dir_id(file: int) -> int:
     """
@@ -1058,9 +1057,5 @@ def file_notes_show(file_idx: QModelIndex):
         file_idx.data(Qt.ItemDataRole.UserRole).id
         if file_idx.isValid() else 0
     )
-    branch = (
-        define_branch(ag.dir_list.currentIndex())
-        if ag.mode is ag.appMode.DIR else []
-    )
-    logger.info(f'{file_id=}, {branch=}')
-    ag.file_data.set_data(file_id, branch)
+    logger.info(f'{file_id=}')
+    ag.file_data.set_data(file_id)

@@ -15,7 +15,6 @@ class noteEditor(QWidget):
         self.layout.addWidget(self.note_editor)
 
         self.note: fileNote = None
-        self.branch = None
 
         self.note_editor.setAcceptDrops(False)
         self.setAcceptDrops(True)
@@ -79,17 +78,11 @@ class noteEditor(QWidget):
             )
         )
 
-    def set_branch(self, branch):
-        self.branch = branch
-
     def get_file_id(self) -> int:
         return self.note.get_file_id() if self.note else 0
 
     def get_note_id(self) -> int:
         return self.note.get_note_id() if self.note else 0
-
-    def get_branch(self) -> str:
-        return self.branch
 
     def set_text(self, text: str):
         self.note_editor.setPlainText(text)
