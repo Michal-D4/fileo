@@ -120,7 +120,7 @@ class Locations(QTextBrowser):
 
     def remove_duplicate(self):
         def get_other_branch():
-            for key, bb in self.names.items():
+            for bb in self.names.values():
                 if bb[1] != file_id:
                     return bb
             return ((0,), 0)
@@ -134,7 +134,7 @@ class Locations(QTextBrowser):
             icon=QMessageBox.Icon.Question
         )
         if res == QMessageBox.StandardButton.Ok:
-            other_branch, other_id = get_other_branch()
+            other_branch, other_fileid = get_other_branch()
             pp = Path(path)
             logger.info(f'{file_id=}, {str(pp)}')
             try:
@@ -142,9 +142,9 @@ class Locations(QTextBrowser):
             except FileNotFoundError:
                 pass
             finally:   # delete from DB independent on os.remove result
-                logger.info(f'{other_id=}, {other_branch}')
+                logger.info(f'{other_fileid=}, {other_branch}')
                 db_ut.delete_file(file_id)
-                ag.file_data.set_data(other_id, other_branch)
+                ag.file_data.set_data(other_fileid, other_branch)
 
     def select_line_under_mouse(self) -> QTextCursor:
         txt_cursor = self.cursorForPosition(self.cur_pos)

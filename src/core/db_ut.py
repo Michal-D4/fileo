@@ -640,7 +640,6 @@ def temp_files_dir(dirs: list, sub_dirs: bool):
 
     curs.execute(sql2)
 
-
 def clear_temp():
     sql = "delete from aux where key != 'TREE_PATH'"
     ag.db.conn.cursor().execute(sql)
@@ -819,6 +818,12 @@ def dir_parents(dir_id: int) -> apsw.Cursor:
     sql = 'select parent, id, is_link, hide from parentdir where id = ?'
     return ag.db.conn.cursor().execute(sql, (dir_id,))
 
+def dir_min_parent(dir_id: int) -> int:
+    sql = 'select parent from parentdir where id = ?'
+    parent = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()
+    logger.info(f'{parent=}, {dir_id=}')
+    return parent[0]
+
 def dir_children(id: int) -> apsw.Cursor:
     sql = 'select * from parentdir where parent = ?'
     with ag.db.conn as conn:
@@ -883,7 +888,7 @@ def get_file_id_to_notes(file_id: int) -> int:
 
     if hash_:
         f_id = ag.db.conn.cursor().execute(sql, (hash_,)).fetchone()
-        return int(f_id[0])
+        return f_id[0]
     return file_id
 
 def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:

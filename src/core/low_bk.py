@@ -74,7 +74,7 @@ def set_user_action_handlers():
         "srch_files_by_note": srch_files_by_note,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
-        "file-note: Go to file": goto_edited_file,
+        "file-note: Go to file": goto_file_in_branch,
         "remove_file_from_location": remove_file_from_location,
         "SaveEditState": save_note_edit_state,
         "show file": single_file,
@@ -163,14 +163,21 @@ def save_note_edit_state():
         NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
 
-def goto_edited_file(param: str):
-    file_id, branch = param.split('-')
+def file_branch(file_id: int) -> list:
+    dir_id = db_ut.get_dir_id_for_file(file_id)
+    branch = [dir_id]
+    while dir_id:
+        dir_id = db_ut.dir_min_parent(dir_id)
+        branch.append(dir_id)
+    return branch
+
+def goto_file_in_branch(param: str):
+    file_id, *branch = param.split('-')
     if not branch:
-        single_file(file_id)
-        return
-    idx = expand_branch(
-        (int(it) for it in branch.split(','))
-    )
+        brnch = file_branch(file_id)
+    else:
+        brnch = (int(it) for it in branch.split(','))
+    idx = expand_branch(brnch)
 
     if idx.isValid():
         if ag.mode is not ag.appMode.DIR:

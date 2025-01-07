@@ -54,10 +54,8 @@ class notesContainer(QScrollArea):
 
     def go_to_file(self):
         file_id = self.editor.get_file_id()
-        branch = ','.join((str(i) for i in self.editor.get_branch()))
-        # logger.info(f'{branch=}')
         ag.signals_.user_signal.emit(
-            f"file-note: Go to file\\{file_id}-{branch}"
+            f"file-note: Go to file\\{file_id}"
         )
 
     def is_editing(self):
@@ -75,7 +73,7 @@ class notesContainer(QScrollArea):
             ag.app.ui.edited_file.clear()
 
     def set_file_id(self, file_id: int):
-        self.file_id = file_id
+        self.file_id = db_ut.get_file_id_to_notes(file_id)
         self.set_notes_data()
 
     def set_notes_data(self):
