@@ -883,6 +883,9 @@ def get_file_hash(file_id: int) -> str:
     return hash_[0] if hash_ else ''
 
 def get_file_id_to_notes(file_id: int) -> int:
+    """
+    returns the minimum file_id in duplicate files
+    """
     sql = 'select min(id) from files where hash = ?'
     hash_ = get_file_hash(file_id)
 

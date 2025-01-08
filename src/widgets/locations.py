@@ -213,9 +213,9 @@ class Locations(QTextBrowser):
         self.has_dups = False
         def file_branch_line():
             return (
-                f'<ul><li type="circle">{key}</li></ul>'
-                if val[0] == curr_branch else
-                f'<p><blockquote>{key}</p>'
+                f'<ul><li type="circle">{key0}</li></ul>'
+                if val[0] == curr_branch and val[1] == self.file_id else
+                f'<p><blockquote>{key0}</p>'
             )
 
         def dup_file_branch_line():
@@ -223,12 +223,12 @@ class Locations(QTextBrowser):
             self.has_dups = True
             return (
                 (
-                    f'<ul><li type="circle">{key} &nbsp; &nbsp; '
+                    f'<ul><li type="circle">{key0} &nbsp; &nbsp; '
                     f'&nbsp; &nbsp; ----> &nbsp; Dup: {file_name}</li></ul>'
                 )
-                if val[0] == curr_branch else
+                if val[0] == curr_branch and val[1] == self.file_id else
                 (
-                    f'<p><blockquote>{key} &nbsp; &nbsp; &nbsp; '
+                    f'<p><blockquote>{key0} &nbsp; &nbsp; &nbsp; '
                     f'&nbsp; ----> &nbsp; Dup: {file_name}</p>'
                 )
             )
@@ -238,6 +238,7 @@ class Locations(QTextBrowser):
             'text-indent:-28px; line-height: 66%} </STYLE> </HEAD> <BODY> '
         ]
         for key, val in self.names.items():
+            key0 = key.split('/')[0]
             tt = (
                 file_branch_line()
                 if val[1] == self.file_id else
@@ -265,5 +266,5 @@ class Locations(QTextBrowser):
             name = db_ut.get_dir_name(folder)
             ww.append(name)
             vv.append(folder)
-        # logger.info(f'{">".join(ww)}, {(vv, tt[-1][-1])}')
+        ww[-1] = f'{ww[-1]}/{tt[-1][-1]}'
         return ' > '.join(ww), (vv, tt[-1][-1])
