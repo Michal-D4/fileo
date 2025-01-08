@@ -83,7 +83,6 @@ class shoWindow(QMainWindow):
         def ver1324():
             if saved_v > 1323:
                 ag.save_settings(NOTE_EDIT_STATE=(False,))
-                edit_state = ag.get_setting("NOTE_EDIT_STATE", (0,))
 
         saved_v = tug.get_app_setting("AppVersion", "0")
         cur_v = ag.app_version()
