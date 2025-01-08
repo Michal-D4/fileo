@@ -100,7 +100,6 @@ setting_names = (     # DB settings only
     "APP_MODE",
     "AUTHOR_SEL_LIST",
     "EXT_SEL_LIST",
-    "FILE_LIST_HEADER",
     "TAG_SEL_LIST",
     "DIR_CHECK",
     "SUB_DIR_CHECK",
@@ -131,7 +130,7 @@ setting_names = (     # DB settings only
 )
 
 APP_ID = 1718185071
-USER_VER = 19
+USER_VER = 20
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -210,7 +209,6 @@ in (select id from files where hash = :hash0);
     hash0 = ''
     updated = False
     for hash1, *_ in curs:
-        logger.info(f'{hash1=}, {hash0=}, {updated=}')
         if not hash1:
             return False
         if updated and hash1 == hash0:

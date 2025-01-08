@@ -821,7 +821,6 @@ def dir_parents(dir_id: int) -> apsw.Cursor:
 def dir_min_parent(dir_id: int) -> int:
     sql = 'select parent from parentdir where id = ?'
     parent = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()
-    logger.info(f'{parent=}, {dir_id=}')
     return parent[0]
 
 def dir_children(id: int) -> apsw.Cursor:

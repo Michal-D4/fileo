@@ -37,7 +37,6 @@ def save_bk_settings():
     )
     try:
         settings = {
-            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
             "EXT_SEL_LIST": low_bk.ext_selection(),
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
@@ -258,7 +257,7 @@ def restore_dirs():
 def header_restore():
     hdr: QHeaderView = ag.file_list.header()
     try:
-        state = ag.get_setting("FILE_LIST_HEADER")
+        state = tug.get_app_setting("FILE_LIST_HEADER")
         if state:
             hdr.restoreState(state)
     except Exception as e:

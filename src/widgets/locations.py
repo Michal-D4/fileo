@@ -262,7 +262,6 @@ class Locations(QTextBrowser):
         ww = []
         vv = []
         for folder, *_ in tt:
-            # logger.info(f'{folder=}, {suffix=}')
             name = db_ut.get_dir_name(folder)
             ww.append(name)
             vv.append(folder)

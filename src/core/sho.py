@@ -459,6 +459,7 @@ class shoWindow(QMainWindow):
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
+            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
         }
         if ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
