@@ -400,7 +400,16 @@ def restore_selected_dirs():
         # logger.info(f'{br=}')
         idx = expand_branch(branch=br)
         model.select(idx, QItemSelectionModel.SelectionFlag.Select)
-    model.setCurrentIndex(idx, QItemSelectionModel.SelectionFlag.Current)
+    set_current_dir(idx)
+
+def set_current_dir(idx: QModelIndex):
+    if not idx.isValid():
+        mdl = ag.dir_list.model()
+        if mdl.rowCount():
+            idx = mdl.index(0, 0, QModelIndex())
+        else:
+            show_files([])
+    ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
