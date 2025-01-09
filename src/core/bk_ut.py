@@ -56,6 +56,7 @@ def save_bk_settings():
 
         low_bk.save_file_id(dir_idx)
         ag.filter_dlg.save_filter_settings()
+        tug.save_app_setting(FILE_LIST_HEADER=ag.file_list.header().saveState())
     except Exception:
         pass
 
