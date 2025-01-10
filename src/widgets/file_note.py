@@ -51,14 +51,15 @@ class fileNote(QWidget):
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
         self.set_collapse_icon()
-        if self.id:
-            ag.note_buttons.append((self.ui.edit, "toEdit"))
-            ag.note_buttons.append((self.ui.remove, "cancel2"))
-            ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
         self.resizeEvent = self.note_resize
+
+    def add_buttons(self):
+        ag.note_buttons.append((self.ui.edit, "toEdit"))
+        ag.note_buttons.append((self.ui.remove, "cancel2"))
+        ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
     @pyqtSlot(QPoint)
     def context_menu(self, pos: QPoint):

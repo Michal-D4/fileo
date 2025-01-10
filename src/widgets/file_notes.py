@@ -91,6 +91,7 @@ class notesContainer(QScrollArea):
         for row in data:
             note = fileNote(*row[1:])
             note.set_text(row[0])
+            note.add_buttons()
             add_to_top(note)
         self.collapse()
         self.show_first_note()
