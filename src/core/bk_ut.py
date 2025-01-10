@@ -63,12 +63,12 @@ def save_bk_settings():
 def selected_dirs() -> list:
     idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
-    curr = ag.dir_list.currentIndex()
+    curr = ag.dir_list.currentIndex().internalPointer()
     for idx in idxs:
-        if idx is curr:
+        if idx.internalPointer() is curr:
             continue
         branches.append(low_bk.define_branch(idx))
-    branches.append(low_bk.define_branch(curr))
+    branches.append(low_bk.define_branch(ag.dir_list.currentIndex()))
     return branches
 
 @pyqtSlot()
