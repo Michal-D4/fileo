@@ -600,9 +600,9 @@ def delete_file_dir_link(id: int, dir_id: int):
     ag.db.conn.cursor().execute(sql, (id, dir_id))
 
 def get_file_dir_ids(file_id: int) -> apsw.Cursor:
-    sql_id = 'select dir, file from filedir where file = ?'
+    sql_id = 'select file, dir from filedir where file = ?'
     sql_hash = (
-        'select dir, file from filedir where file in '
+        'select file, dir from filedir where file in '
         '(select id from files where hash = ?)'
     )
     hash_ = get_file_hash(file_id)
@@ -815,7 +815,7 @@ def toggle_hidden_dir_state(id: int, parent: int, hidden: bool):
         conn.cursor().execute(sql, {'hide':hidden, 'id':id, 'parent':parent})
 
 def dir_parents(dir_id: int) -> apsw.Cursor:
-    sql = 'select parent, id, is_link, hide from parentdir where id = ?'
+    sql = 'select parent from parentdir where id = ?'
     return ag.db.conn.cursor().execute(sql, (dir_id,))
 
 def dir_min_parent(dir_id: int) -> int:

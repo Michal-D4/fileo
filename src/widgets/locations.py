@@ -165,105 +165,76 @@ class Locations(QTextBrowser):
         self.build_branch_data()
 
     def get_leaves(self):
-        dirs = self.get_file_dirs()
         self.branches.clear()
-        for dd in dirs:
-            self.branches.append(
-                [(dd.id, dd.file_id), dd.parent_id]
-            )
-
-    def get_file_dirs(self) -> list:
-        dir_ids = db_ut.get_file_dir_ids(self.file_id)
-        dirs = []
-        for dir_id, file_id in dir_ids:
-            for pp in db_ut.dir_parents(dir_id):
-                dirs.append(ag.DirData(*pp, file_id))
-        return dirs
+        for file_id, dir_id in db_ut.get_file_dir_ids(self.file_id):
+            self.branches.append([file_id, dir_id])
 
     def build_branches(self):
-        def add_dir_parent() -> list:
-            ss = tt[:-1]
-            tt[-1] = (qq.id, )
-            tt.append(qq.parent_id)
-            return ss
-
         curr = 0
-        while 1:
-            if curr >= len(self.branches):
-                break
+        while curr < len(self.branches):
             tt = self.branches[curr]
-
-            while 1:
-                if tt[-1] == 0:  # 0 is root dir
-                    break
-                parents = db_ut.dir_parents(tt[-1])
-                first = True
-                for pp in parents:
-                    qq = ag.DirData(*pp)
-                    if first:
-                        ss = add_dir_parent()
-                        first = False
-                        continue
-                    self.branches.append(
-                        [*ss, (qq.id, ), qq.parent_id]
-                    )
+            for parent, *_ in db_ut.dir_parents(tt[-1]):
+                if not parent:
+                    continue
+                self.branches.append([*tt, parent])
             curr += 1
 
     def show_branches(self, curr_branch: list) -> str:
         self.has_dups = False
         def file_branch_line():
             return (
-                f'<ul><li type="circle">{key0}</li></ul>'
+                (f'<ul><li type="circle">{key0}</li></ul>', key0)
                 if val[0] == curr_branch and val[1] == self.file_id else
-                f'<p><blockquote>{key0}</p>'
+                (f'<p><blockquote>{key0}</p>', key0)
             )
 
         def dup_file_branch_line():
             file_name = db_ut.get_file_name(val[1])
+            ku_key = f'{key0} &nbsp; &nbsp; &nbsp; &nbsp; ----> &nbsp; Dup: {file_name}'
+            nu_key = f'{key0}         ---->   Dup: {file_name}'
             self.has_dups = True
             return (
                 (
-                    f'<ul><li type="circle">{key0} &nbsp; &nbsp; '
-                    f'&nbsp; &nbsp; ----> &nbsp; Dup: {file_name}</li></ul>'
+                    f'<ul><li type="circle">{ku_key}</li></ul>', nu_key
                 )
                 if val[0] == curr_branch and val[1] == self.file_id else
                 (
-                    f'<p><blockquote>{key0} &nbsp; &nbsp; &nbsp; '
-                    f'&nbsp; ----> &nbsp; Dup: {file_name}</p>'
+                    f'<p><blockquote>{ku_key}</p>', nu_key
                 )
             )
 
+        re_names = {}
         txt = [
             '<HEAD><STYLE type="text/css"> p, li {text-align: left; '
             'text-indent:-28px; line-height: 66%} </STYLE> </HEAD> <BODY> '
         ]
         for key, val in self.names.items():
             key0 = key.split('/')[0]
-            tt = (
+            tt, nu_key = (
                 file_branch_line()
                 if val[1] == self.file_id else
                 dup_file_branch_line()
             )
+            re_names[nu_key] = val
             txt.append(tt)
 
+        self.names = re_names
         txt.append('<p/></BODY>')
 
         self.setHtml(''.join(txt))
 
     def build_branch_data(self):
         self.names.clear()
-        for bb in self.branches:
-            key, val = self.branch_names(bb)
+        for file_id, *bb in self.branches:
+            key, val = self.branch_names(file_id, bb)
             self.names[key] = val
 
-    def branch_names(self, bb: list) -> str:
-        tt = bb[:-1]
+    def branch_names(self, file_id: int, bb: list) -> tuple:
+        tt = bb
         tt.reverse()
         ww = []
-        vv = []
-        for folder, *_ in tt:
+        for folder in tt:
             name = db_ut.get_dir_name(folder)
             ww.append(name)
-            vv.append(folder)
-        ww[-1] = f'{ww[-1]}/{tt[-1][-1]}'
-        return ' > '.join(ww), (vv, tt[-1][-1])
+        ww[-1] = f'{ww[-1]}/{file_id}'
+        return ' > '.join(ww), (tt, file_id)
