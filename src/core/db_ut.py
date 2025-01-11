@@ -895,7 +895,7 @@ def get_file_id_to_notes(file_id: int) -> int:
 
 def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
     sql_hash = (
-        "select filenote, fileid, id, modified, created from filenotes "
+        "select filenote, id, modified, created from filenotes "
         "where fileid in (select id from files where hash = ?) "
         "order by modified"
     )
