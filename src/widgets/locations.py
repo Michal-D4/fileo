@@ -145,9 +145,9 @@ class Locations(QTextBrowser):
     def select_line_under_mouse(self) -> QTextCursor:
         txt_cursor = self.cursorForPosition(self.cur_pos)
         txt_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-        sel_text = txt_cursor.selectedText().split(' \xa0'*4)[0]  # exclude duplication info, if any
+        sel_text = txt_cursor.selectedText()
         self.setTextCursor(txt_cursor)
-        return sel_text
+        return sel_text.replace('\xa0', ' ')
 
     def set_data(self, file_id: int):
         self.set_file_id(file_id)
