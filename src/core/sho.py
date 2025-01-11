@@ -305,7 +305,6 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
-        logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             self.tune_version()

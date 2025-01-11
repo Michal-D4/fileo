@@ -153,6 +153,7 @@ def tune_new_version() -> bool:
     return True
 
 def convert_to_new_version(conn, old_v):
+    # logger.info(f'<<<  {old_v=}, {USER_VER=}')
     if old_v == 0:
         create_tables(conn)
         return USER_VER
@@ -167,6 +168,7 @@ def convert_to_new_version(conn, old_v):
             return
 
     initialize_settings(conn)
+    # logger.info('>>>')
 
 def update_to_v15(conn: apsw.Connection):
     sql1 = "alter table parentdir ADD COLUMN tool_tip text"

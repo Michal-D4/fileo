@@ -386,6 +386,7 @@ def set_dir_model():
     model: dirModel = dirModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
+    logger.info('ag.dir_list.setFocus()')
     ag.dir_list.setFocus()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
