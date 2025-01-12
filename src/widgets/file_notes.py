@@ -121,6 +121,12 @@ class notesContainer(QScrollArea):
         self.editing = False
 
     def update_note(self):
+        def compare_hashes(file1: int, file2: int) -> bool:
+            return (
+                file1 == file2 or
+                db_ut.get_file_hash(file1) == db_ut.get_file_hash(file2)
+            )
+
         note: fileNote = self.editor.get_note()
         file_id = note.get_file_id()
         note_id = note.get_note_id()
@@ -133,7 +139,7 @@ class notesContainer(QScrollArea):
 
         ag.add_file_to_recent(file_id)
 
-        if self.file_id == file_id:
+        if compare_hashes(self.file_id, file_id):
             self.update_date_in_file_list(ts)
             self.set_notes_data()
 
