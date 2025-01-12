@@ -97,14 +97,12 @@ class Locations(QTextBrowser):
 
     def go_file(self):
         branch = ','.join((str(i) for i in self.branch[0]))
-        ag.signals_.user_signal.emit(
-            f'file-note: Go to file\\{self.branch[1]}-{branch}'
-        )
+        file_id = self.branch[1]
+        ag.signals_.user_signal.emit(f'file-note: Go to file\\{file_id}-{branch}')
 
     def delete_file(self):
-        ag.signals_.user_signal.emit(
-            f'remove_file_from_location\\{self.branch[-1]},{self.branch[0][-1]}' # file_id, dir_id
-        )
+        branch, file_id = self.branch
+        ag.signals_.user_signal.emit(f'remove_file_from_location\\{file_id},{branch[-1]}')
 
     def set_current_branch(self) -> str:
         line = self.select_line_under_mouse()
@@ -138,7 +136,7 @@ class Locations(QTextBrowser):
             except FileNotFoundError:
                 pass
             finally:   # delete from DB independent on os.remove result
-                logger.info(f'{other_fileid=}, {other_branch}')
+                logger.info(f'{file_id=} - {other_fileid=}, {other_branch}')
                 db_ut.delete_file(file_id)
                 ag.file_data.set_data(other_fileid, other_branch)
 

@@ -184,7 +184,7 @@ def goto_file_in_branch(param: str):
             prev = ag.mode.value
             ag.set_mode(ag.appMode.DIR)
             set_check_btn(ag.appMode.DIR)
-            app_mode_changed(prev)
+            change_mode(prev)
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -463,7 +463,7 @@ def dir_view_setup():
 
 #region  Files - setup, populate ...
 @pyqtSlot(int)
-def app_mode_changed(prev_mode: int):
+def change_mode(prev_mode: int):
     prev = ag.appMode(prev_mode)
 
     if not ag.db.conn:
@@ -490,7 +490,7 @@ def app_mode_changed(prev_mode: int):
 def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
         show_folder_files()
-    else:
+    elif ag.mode is ag.appMode.FILTER:
         filtered_files()
 
 @pyqtSlot()
@@ -534,13 +534,8 @@ def show_folder_files():
         show_files([])
 
 def show_recent_files():
-    idx = expand_branch(ag.history.get_current())
-    if idx.isValid():
-        ag.dir_list.setCurrentIndex(idx)
     ag.app.ui.files_heading.setText('Recent files')
-    files = get_recent_files()
-
-    show_files(files)
+    show_files(get_recent_files())
     ag.file_list.setFocus()
 
 def get_recent_files() -> list:

@@ -54,9 +54,7 @@ class notesContainer(QScrollArea):
 
     def go_to_file(self):
         file_id = self.editor.get_file_id()
-        ag.signals_.user_signal.emit(
-            f"file-note: Go to file\\{file_id}"
-        )
+        ag.signals_.user_signal.emit(f"file-note: Go to file\\{file_id}")
 
     def is_editing(self):
         return self.editing

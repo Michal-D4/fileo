@@ -62,7 +62,10 @@ def set_mode(new_mode: appMode):
         return
     if mode.value <= appMode.RECENT_FILES.value:
         prev_mode = mode
+
     mode = new_mode
+    if prev_mode is mode:
+        prev_mode = appMode.DIR
 
     app.ui.app_mode.setText(mode.name)
 

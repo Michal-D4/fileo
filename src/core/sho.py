@@ -145,7 +145,6 @@ class shoWindow(QMainWindow):
             self.ui.left_pane.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
         mode = ag.appMode(
             int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )

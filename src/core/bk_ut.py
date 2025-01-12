@@ -122,7 +122,7 @@ def bk_setup():
     dd.set_drag_drop_handlers()
 
     ag.signals_.start_disk_scanning.connect(file_loading)
-    ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
+    ag.signals_.app_mode_changed.connect(low_bk.change_mode)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
     ag.author_list.edit_item.connect(low_bk.author_changed)
