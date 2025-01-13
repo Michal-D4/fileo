@@ -9,7 +9,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list: # type: ignore
-    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, p.hide, p.file_id, '
                'COALESCE(p.tool_tip, d.name), d.name '
                'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
@@ -197,7 +197,7 @@ def lost_files():
     # check if link to the @@Lost exists in dir tree
     sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
     # add hidden link into dir tree to folder @@Lost
-    sql3 = 'insert into parentdir values (0, 1, 0, 1, 0, "@@Lost")'
+    sql3 = 'insert into parentdir values (0, 1, 1, 0, "@@Lost")'
     # clear @@Lost
     sql4 = 'delete from filedir where dir = 1'
     # check if the @@Lost dir exists
@@ -783,7 +783,7 @@ def update_file_id(d_data: ag.DirData):
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0, ?);'
+    sql3 = 'insert into parentdir values (?, ?, 0, 0, ?);'
     with ag.db.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
@@ -829,25 +829,17 @@ def get_dir_name(id: int) -> str:
     res = ag.db.conn.cursor().execute(sql, (id,)).fetchone()
     return res[0] if res else ''
 
-def delete_dir(id: int, parent: int):
-    """
-    delete dir with all children if any
-    """
-    sql1 = 'delete from parentdir where id = ?'
-    sql2 = 'delete from dirs where id = ?'
-
+def remove_from_parent(id: int, parent: int):
+    sql1 = 'delete from parentdir where (parent, id) = (?,?)'
+    sql2 = 'select count(*) from parentdir where id = ?'
+    sql3 = 'delete from dirs where id = ?'
     with ag.db.conn as conn:
-        curs: apsw.Cursor = conn.cursor()
-        curs.execute(sql1, (id,))
-        curs.execute(sql2, (id,))
-
-def remove_dir_copy(id: int, parent: int):
-    sql = 'delete from parentdir where (parent, id) = (?,?)'
-    with ag.db.conn as conn:
-        conn.cursor().execute(sql, (parent, id))
+        conn.cursor().execute(sql1, (parent, id))
+        if not conn.cursor().execute(sql2, (id,)).fetchone()[0]:
+            conn.cursor().execute(sql3, (id,)).fetchone()
 
 def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
-    sql = 'insert into parentdir values (?, ?, 1, 0, ?, ?);'
+    sql = 'insert into parentdir values (?, ?, 0, ?, ?);'
     with ag.db.conn as conn:
         try:
             conn.cursor().execute(

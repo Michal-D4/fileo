@@ -48,7 +48,6 @@ TABLES = (
     'CREATE TABLE IF NOT EXISTS parentdir ('
     'parent integer NOT NULL, '
     'id integer NOT NULL, '
-    'is_link integer not null default 0, '
     'hide integer not null default 0, '
     'file_id integer not null default 0, '
     'tool_tip text, '
@@ -130,7 +129,7 @@ setting_names = (     # DB settings only
 )
 
 APP_ID = 1718185071
-USER_VER = 20
+USER_VER = 21
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -166,6 +165,9 @@ def convert_to_new_version(conn, old_v):
     if old_v < 19:
         if not update_to_v19(conn):
             return
+
+    if old_v < 21:
+        update_to_v21(conn)
 
     initialize_settings(conn)
     # logger.info('>>>')
@@ -224,6 +226,9 @@ in (select id from files where hash = :hash0);
         updated = False
 
     return True
+
+def update_to_v21(conn: apsw.Connection):
+    conn.cursor().execute("ALTER TABLE parentdir DROP is_link;")
 
 def create_db(db_name: str) -> apsw.Connection:
     return apsw.Connection(db_name)

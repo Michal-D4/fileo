@@ -157,7 +157,6 @@ class Locations(QTextBrowser):
     def set_file_id(self, file_id: int):
         self.has_dups = False
         self.file_id = file_id
-        self.get_leaves()
         self.build_branches()
         self.build_branch_data()
 

@@ -267,7 +267,6 @@ def collect_all_icons(icons_res: dict) -> dict:
     keys = {
         'folder': ('alphaF',),
         'hidden': ('alphaH',),
-        'link': ('alphaL',),
         'prev_folder': ('arrow_back',),
         'next_folder': ('arrow_forward',),
         'history': ('history',),

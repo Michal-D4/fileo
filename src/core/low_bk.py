@@ -928,7 +928,6 @@ def create_folder(index: QModelIndex):
     user_data = ag.DirData(
         parent_id=parent_id,
         id=dir_id,
-        is_link=False,
         hidden=False,
         tool_tip=folder_name
     )
@@ -940,34 +939,17 @@ def delete_folders():
     cur_idx = ag.dir_list.currentIndex()
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        if u_dat.is_link:
-            db_ut.remove_dir_copy(u_dat.id, u_dat.parent_id)
-            continue
-        if visited := delete_tree(u_dat):
-            delete_visited(visited)
+        delete_tree(u_dat)
+        db_ut.remove_from_parent(u_dat.id, u_dat.parent_id)
     model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
 
-def delete_visited(visited: list):
-    visited.reverse()
-    for dir in visited:
-        db_ut.delete_dir(dir.id, dir.parent_id)
-
-def delete_tree(u_dat: ag.DirData, visited=None):
-    if visited is None:
-        visited = []
-    visited.append(u_dat)
-    children = db_ut.dir_children(u_dat.id)
-    for child in children:
+def delete_tree(u_dat: ag.DirData):
+    for child in db_ut.dir_children(u_dat.id):
         dir_dat: ag.DirData = ag.DirData(*child)
-        if dir_dat.is_link:
-            db_ut.remove_dir_copy(dir_dat.id, dir_dat.parent_id)
-            continue
-        if dir_dat in visited:
-            continue
-        delete_tree(dir_dat, visited)
-    return visited
+        delete_tree(dir_dat)
+        db_ut.remove_from_parent(dir_dat.id, dir_dat.parent_id)
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
