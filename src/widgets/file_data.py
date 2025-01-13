@@ -259,9 +259,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             self.new_file_note()
 
     def new_file_note(self):
-        if not self.file_id:
+        file_id = self.notes.get_file_id()
+        if not file_id:
             return
-        self.start_edit(fileNote(self.file_id, 0))
+        self.start_edit(fileNote(file_id, 0))
 
     def start_edit(self, note: fileNote):
         # logger.info(f'editing: {self.notes.is_editing()}')

@@ -517,29 +517,29 @@ def delete_file(id: int):
         'select count(*), sum(nopen), max(rating), max(modified), '
         'max(opened) from files where hash = ?'
     )
-    sql_preserve_id = (
+    sql_saved_id = (
         'select id from files where hash = :hash and id != :be_removed'
     )
-    sql_max_id = 'select max(id) from filenotes where fileid = :preserved'
+    sql_max_id = 'select max(id) from filenotes where fileid = :saved_id'
     sql_upd_filenotes = (
-        'update filenotes set fileid = :preserved, '
+        'update filenotes set fileid = :saved_id, '
         'id = id+:max_id where fileid = :be_removed '
     )
     sql_upd_file = (
         'update files set nopen = :num, rating = :rate, '
-        'modified = :modi, opened = :opnd where id = :preserved'
+        'modified = :modi, opened = :opnd where id = :saved_id'
     )
     sql_upd_tags = (
-        'update filetag set fileid = :preserved '
+        'update filetag set fileid = :saved_id '
         'where fileid = :be_removed'
     )
     sql_upd_authors = (
-        'update fileauthor set fileid = :preserved '
+        'update fileauthor set fileid = :saved_id '
         'where fileid = :be_removed'
     )
     sql_del = 'delete from files where id = ?'
 
-    def update_preserve():
+    def update_with_saved():
         """
         file notes, rating and number of openings will be
         tied to one of the saved files among its duplicates
@@ -549,19 +549,19 @@ def delete_file(id: int):
             return
         sta = curs.execute(sql_sta, (hash[0],)).fetchone()
         if sta[0] > 1:  # if duplicates exists
-            preserve_id = curs.execute(
-                sql_preserve_id,
+            saved_id = curs.execute(
+                sql_saved_id,
                 {'hash': hash[0], 'be_removed': id}
             ).fetchone()[0]
             _id = curs.execute(
-                sql_max_id, {'preserved': preserve_id}
+                sql_max_id, {'saved_id': saved_id}
             ).fetchone()[0]
-            max_id = _id if _id else 0
+            max_note_id = _id if _id else 0
             curs.execute(
                 sql_upd_filenotes,
                 {
-                    'preserved': preserve_id,
-                    'max_id': max_id,
+                    'saved_id': saved_id,
+                    'max_id': max_note_id,
                     'be_removed': id
                 }
             )
@@ -572,27 +572,22 @@ def delete_file(id: int):
                     'rate': sta[2],
                     'modi': sta[3],
                     'opnd': sta[4],
-                    'preserved': preserve_id
+                    'saved_id': saved_id
                 }
             )
-            curs.execute(
-                sql_upd_tags,
-                {
-                    'preserved': preserve_id,
-                    'be_removed': id
-                }
-            )
-            curs.execute(
-                sql_upd_authors,
-                {
-                    'preserved': preserve_id,
-                    'be_removed': id
-                }
-            )
+            try:
+                curs.execute(sql_upd_tags,
+                    {'saved_id': saved_id, 'be_removed': id}
+                )
+                curs.execute(sql_upd_authors,
+                    {'saved_id': saved_id,'be_removed': id}
+                )
+            except apsw.ConstraintError:
+                pass
 
     with ag.db.conn as conn:
         curs = conn.cursor()
-        update_preserve()
+        update_with_saved()
         curs.execute(sql_del, (id,))
 
 def delete_file_dir_link(id: int, dir_id: int):
@@ -947,21 +942,24 @@ def insert_note(fileid: int, note: str) -> int:
         )
         return ts[0]
 
-def update_note(fileid: int, id: int, note: str) -> int:
+def update_note(fileid: int, noteid: int, note: str) -> int:
     sql0 = 'select modified from filenotes where fileid=:fileid and id=:id'
     sql1 = ('update filenotes set (filenote, modified) = (:filenote, unixepoch()) '
         'where fileid=:fileid and id=:id')
+
+    file_id = get_file_id_to_notes(fileid)
     with ag.db.conn as conn:
         curs = conn.cursor()
-        ts0 = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
+        ts0 = curs.execute(sql0, {'fileid': file_id, 'id': noteid,}).fetchone()
         curs.execute(sql1,
             {
-                'fileid': fileid,
-                'id': id,
+                'fileid': file_id,
+                'id': noteid,
                 'filenote': note,
             }
         )
-        ts = curs.execute(sql0,{ 'fileid': fileid, 'id': id, }).fetchone()
+        ts = curs.execute(sql0, {'fileid': file_id, 'id': noteid,}).fetchone()
+
         return ts[0] if ts[0] > ts0[0] else -1
 
 def delete_note(file: int, note: int):
@@ -969,8 +967,16 @@ def delete_note(file: int, note: int):
     ag.db.conn.cursor().execute(sql, (file, note))
 
 def delete_file_notes(file: int):
-    sql = 'delete from filenotes where fileid = ?;'
-    ag.db.conn.cursor().execute(sql, (file,))
+    sql_id = 'delete from filenotes where fileid = ?;'
+    sql_hash = (
+        'delete from filenotes where fileid in '
+        '(select id from files where hash = ?);'
+    )
+    hash_ = get_file_hash(file)
+    if hash_:
+        ag.db.conn.cursor().execute(sql_hash, (hash_,))
+    else:
+        ag.db.conn.cursor().execute(sql_id, (file,))
 
 def get_tags() -> apsw.Cursor:
     sql = 'select Tag, ID from Tags order by Tag COLLATE NOCASE;'

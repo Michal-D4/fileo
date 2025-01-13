@@ -113,11 +113,11 @@ class Locations(QTextBrowser):
         ag.signals_.user_signal.emit(f'file reveal\\{self.branch[1]}')
 
     def remove_duplicate(self):
-        def get_other_branch():
+        def get_other_branch() -> int:
             for bb in self.names.values():
                 if bb[1] != file_id:
-                    return bb
-            return ((0,), 0)
+                    return bb[1]
+            return 0
 
         file_id = self.branch[1]
         path = db_ut.get_file_path(file_id)
@@ -128,17 +128,16 @@ class Locations(QTextBrowser):
             icon=QMessageBox.Icon.Question
         )
         if res == QMessageBox.StandardButton.Ok:
-            other_branch, other_fileid = get_other_branch()
-            pp = Path(path)
-            logger.info(f'{file_id=}, {str(pp)}')
+            other_fileid = get_other_branch()
+            logger.info(f'{file_id=}, {path}')
             try:
-                os.remove(str(pp))
+                os.remove(str(Path(path)))  # in DB path saved in posix format, str(Path) -> native to os
             except FileNotFoundError:
                 pass
             finally:   # delete from DB independent on os.remove result
-                logger.info(f'{file_id=} - {other_fileid=}, {other_branch}')
+                logger.info(f'{file_id=} - {other_fileid=}')
                 db_ut.delete_file(file_id)
-                ag.file_data.set_data(other_fileid, other_branch)
+                ag.file_data.set_data(other_fileid)
 
     def select_line_under_mouse(self) -> QTextCursor:
         txt_cursor = self.cursorForPosition(self.cur_pos)
@@ -162,19 +161,23 @@ class Locations(QTextBrowser):
         self.build_branches()
         self.build_branch_data()
 
-    def get_leaves(self):
-        self.branches.clear()
-        for file_id, dir_id in db_ut.get_file_dir_ids(self.file_id):
-            self.branches.append([file_id, dir_id])
-
     def build_branches(self):
+        def get_leaves():
+            for file_id, dir_id in db_ut.get_file_dir_ids(self.file_id):
+                leaves.append([file_id, dir_id])
+            return leaves
+
+        self.branches.clear()
+        leaves = []
+        get_leaves()
         curr = 0
-        while curr < len(self.branches):
-            tt = self.branches[curr]
+        while curr < len(leaves):
+            tt = leaves[curr]
             for parent, *_ in db_ut.dir_parents(tt[-1]):
                 if not parent:
+                    self.branches.append(tt)
                     continue
-                self.branches.append([*tt, parent])
+                leaves.append([*tt, parent])
             curr += 1
 
     def show_branches(self, curr_branch: list) -> str:

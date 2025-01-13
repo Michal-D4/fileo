@@ -90,7 +90,7 @@ class fileNote(QWidget):
 
             def delete_notes_from_db():
                 db_ut.delete_file_notes(self.file_id)
-                note_text = f'{link}`     Created: {datetime.now().strftime(TIME_FORMAT)}`'
+                note_text = f'{link}  `Created: {datetime.now().strftime(TIME_FORMAT)}`'
                 db_ut.insert_note(self.file_id, note_text)
                 ag.signals_.refresh_note_list.emit()
 

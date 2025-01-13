@@ -74,6 +74,9 @@ class notesContainer(QScrollArea):
         self.file_id = db_ut.get_file_id_to_notes(file_id)
         self.set_notes_data()
 
+    def get_file_id(self):
+        return self.file_id
+
     def set_notes_data(self):
         def add_to_top(item: fileNote):
             item.setSizePolicy(
