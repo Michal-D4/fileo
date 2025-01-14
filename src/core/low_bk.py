@@ -427,7 +427,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        save_file_id(prev_idx)
+        save_curr_file_id(prev_idx)
         show_folder_files()
         add_history_item()
 
@@ -436,14 +436,14 @@ def dirlist_get_focus(e: QFocusEvent):
         return
     ag.switch_to_prev_mode()
 
-def save_file_id(dir_idx: QModelIndex):
-    """ save current file_id in dir (parentdir) table """
+def save_curr_file_id(dir_idx: QModelIndex):
+    """ save id of current file in dir (folder) """
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
         if file_idx.isValid():
             file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
             u_dat = update_file_id_in_dir_model(file_id, dir_idx)
-            db_ut.update_file_id(u_dat)
+            db_ut.save_file_id(u_dat)
 
 def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         model = ag.dir_list.model()
@@ -478,7 +478,7 @@ def change_mode(prev_mode: int):
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
         )
     elif prev is ag.appMode.DIR:
-        save_file_id(ag.dir_list.currentIndex())
+        save_curr_file_id(ag.dir_list.currentIndex())
 
     refresh_file_list()
     if ag.mode is ag.appMode.FILTER:
@@ -560,7 +560,7 @@ def show_files(files, cur_file: int = 0):
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
-        save_file_id(ag.dir_list.currentIndex())
+        save_curr_file_id(ag.dir_list.currentIndex())
     elif ag.mode is ag.appMode.FILTER:
         ag.save_settings(
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
@@ -928,6 +928,7 @@ def create_folder(index: QModelIndex):
     user_data = ag.DirData(
         parent_id=parent_id,
         id=dir_id,
+        is_link=False,
         hidden=False,
         tool_tip=folder_name
     )
@@ -939,17 +940,16 @@ def delete_folders():
     cur_idx = ag.dir_list.currentIndex()
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        delete_tree(u_dat)
-        db_ut.remove_from_parent(u_dat.id, u_dat.parent_id)
+        if not db_ut.break_link(u_dat.id, u_dat.parent_id):
+            delete_tree(u_dat.id)
     model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
 
-def delete_tree(u_dat: ag.DirData):
-    for child in db_ut.dir_children(u_dat.id):
-        dir_dat: ag.DirData = ag.DirData(*child)
-        delete_tree(dir_dat)
-        db_ut.remove_from_parent(dir_dat.id, dir_dat.parent_id)
+def delete_tree(dirid: int):
+    for parent, dir_id in db_ut.dir_children(dirid):
+        if not db_ut.break_link(dir_id, parent):
+            delete_tree(dir_id)
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
@@ -974,7 +974,7 @@ def toggle_hidden_state():
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         if u_dat.id:
             u_dat.hidden = not u_dat.hidden
-            db_ut.toggle_hidden_dir_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
+            db_ut.update_hidden_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
             item: dirItem = model.getItem(idx)
             item.setUserData(u_dat)
 #endregion

@@ -52,9 +52,7 @@ def save_bk_settings():
             "SELECTED_DIRS" : selected_dirs(),
         }
         ag.save_settings(**settings)
-        dir_idx = ag.dir_list.currentIndex()
-
-        low_bk.save_file_id(dir_idx)
+        low_bk.save_curr_file_id(ag.dir_list.currentIndex())
         ag.filter_dlg.save_filter_settings()
         tug.save_app_setting(FILE_LIST_HEADER=ag.file_list.header().saveState())
     except Exception:
