@@ -27,26 +27,28 @@ ico = """\
 <path d="m462 462-30 30-83-30z" fill="#2D84D2"/></svg>\
 """
 
-[alphaF]
+[one_folder]
 ico = """\
-<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
-font-family="Cascadia Code" |>F</text></svg>\
+<svg viewBox="0 0 14 14"><path d="M12.25 4.666v6.416a.584.584 \
+0 0 1-.584.584H2.334a.584.584 0 0 1-.584-.583V2.916a.584.584 0 \
+0 1 .584-.584h3.261a.6.6 0 0 1 .409.169l1.411 1.411a.6.6 0 0 0 \
+.409.169h3.843a.584.584 0 0 1 .584.584" |/></svg>\
 """
-colors = ["fill=\"$greenIcon\""]
+colors = ["style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
 
-[alphaH]
-ico = """\
-<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
-font-family="Cascadia Code" |>H</text></svg>\
-"""
-colors = ["fill=\"$greenIcon\""]
+[one_folder_hide]
+ico_subst = "one_folder"
+colors = ["style=\"fill:$borderColor;stroke:$textColor;stroke-width:1.5\""]
 
-[alphaL]
+[mult_folder]
 ico = """\
-<svg viewBox="0 0 16 16"><text x="2" y="15" font-size="16" \
-font-family="Cascadia Code" |>L</text></svg>\
+<svg viewBox="0 0 16 16"><path | d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666"/><path d="M4.667 11.333h-2A.667.667 0 0 1 2 10.666V2.667A.667.667 0 0 1 2.667 2h2.667a.67.67 0 0 1 .473.193l1.607 1.613a.67.67 0 0 0 .473.193h3.446a.667.667 0 0 1 .667.667v2" |/><path | d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666z"/></svg>\
 """
-colors = ["fill=\"$greenIcon\""]
+colors = ["style=\"fill:none\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
+
+[mult_folder_hide]
+ico_subst = "mult_folder"
+colors = ["style=\"fill:$borderColor\"", "style=\"fill:$borderColor;stroke:$textColor;stroke-width:1.5\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
 
 [arrow_forward]
 ico = """\
@@ -227,8 +229,7 @@ ico = """\
 <svg viewBox="0 0 64 64" |><circle cx="32" cy="32" r="26"/>\
 <circle cx="32" cy="32" r="14" |/></svg>\
 """
-colors = ["fill=\"$svgFill2\"", "stroke=\"$svgFill\"",
-"active|","active|fill=\"$svgAlt\""]
+colors = ["fill=\"$svgFill2\"", "stroke=\"$svgFill\"", "active|","active|fill=\"$svgAlt\""]
 
 [filter_setup]
 ico = """\

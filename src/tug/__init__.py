@@ -265,9 +265,10 @@ def get_dyn_qss(key: str, idx: int=0) -> str|list:
 def collect_all_icons(icons_res: dict) -> dict:
     m_icons.clear()
     keys = {
-        'folder': ('alphaF',),
-        'hidden': ('alphaH',),
-        'link': ('alphaL',),
+        'folder': ('one_folder',),
+        'hidden': ('one_folder_hide',),
+        'mult_folder': ('mult_folder',),
+        'mult_hidden': ('mult_folder_hide',),
         'prev_folder': ('arrow_back',),
         'next_folder': ('arrow_forward',),
         'history': ('history',),
@@ -355,12 +356,16 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
 
         def create_pixs():
             nonlocal svg
+            def create_pix(mode: str, svg: str):
+                pic = QPixmap()
+                pic.loadFromData(bytearray(svg, 'utf-8'),)
+                pics.append((mode, pic))
+                svgs[f'{svg_key}_{mode}'] = svg
+
             colors = get_colors()
             pics = []
             if not colors:
-                pic = QPixmap()
-                pic.loadFromData(bytearray(svg, 'utf-8'),)
-                pics.append(('normal', pic))
+                create_pix('normal', svg)
                 return pics
 
             for mode_, color in colors.items():
@@ -368,14 +373,12 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
                 for i in range(svg.count('|')):
                     j = i % len(color)
                     tmp = tmp.replace('|', color[j], 1)
-                svgs[f'{svg_key}_{mode_}'] = tmp
 
                 if file_name:
                     create_image_file(mode_, tmp)
                     continue
-                pic = QPixmap()
-                pic.loadFromData(bytearray(tmp, 'utf-8'),)
-                pics.append((mode_, pic))
+
+                create_pix(mode_, tmp)
 
             return pics
 
