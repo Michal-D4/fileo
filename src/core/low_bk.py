@@ -928,7 +928,7 @@ def create_folder(index: QModelIndex):
     user_data = ag.DirData(
         parent_id=parent_id,
         id=dir_id,
-        is_link=False,
+        multy=False,
         hidden=False,
         tool_tip=folder_name
     )

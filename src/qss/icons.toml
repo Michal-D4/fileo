@@ -34,21 +34,29 @@ ico = """\
 0 1 .584-.584h3.261a.6.6 0 0 1 .409.169l1.411 1.411a.6.6 0 0 0 \
 .409.169h3.843a.584.584 0 0 1 .584.584" |/></svg>\
 """
-colors = ["style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
+colors = ["style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [one_folder_hide]
 ico_subst = "one_folder"
-colors = ["style=\"fill:$borderColor;stroke:$textColor;stroke-width:1.5\""]
+colors = ["style=\"fill:$iconFill;stroke:$iconStroke;stroke-width:1.5\""]
 
 [mult_folder]
 ico = """\
-<svg viewBox="0 0 16 16"><path | d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666"/><path d="M4.667 11.333h-2A.667.667 0 0 1 2 10.666V2.667A.667.667 0 0 1 2.667 2h2.667a.67.67 0 0 1 .473.193l1.607 1.613a.67.67 0 0 0 .473.193h3.446a.667.667 0 0 1 .667.667v2" |/><path | d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666z"/></svg>\
+<svg viewBox="0 0 16 16"><path | d="M5.333 6.667h8a.667.667 0 0 1 \
+.667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 0 0 1-.666-.667v-6a.667.667 \
+0 0 1 .666-.666"/><path d="M4.667 11.333h-2A.667.667 0 0 1 2 \
+10.666V2.667A.667.667 0 0 1 2.667 2h2.667a.67.67 0 0 1 .473.193l1.607 \
+1.613a.67.67 0 0 0 .473.193h3.446a.667.667 0 0 1 .667.667v2" |/><path | \
+d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 \
+0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666z"/></svg>\
 """
-colors = ["style=\"fill:none\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
+colors = ["style=\"fill:none\"", "style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\"",
+"style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [mult_folder_hide]
 ico_subst = "mult_folder"
-colors = ["style=\"fill:$borderColor\"", "style=\"fill:$borderColor;stroke:$textColor;stroke-width:1.5\"", "style=\"fill:none;stroke:$textColor;stroke-width:1.5\""]
+colors = ["style=\"fill:$iconFill\"", 
+"style=\"fill:$iconFill;stroke:$iconStroke;stroke-width:1.5\"", "style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [arrow_forward]
 ico = """\

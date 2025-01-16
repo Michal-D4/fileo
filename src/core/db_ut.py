@@ -9,7 +9,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list: # type: ignore
-    sql2 = ('select p.parent, d.id, p.is_link, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, p.multy, p.hide, p.file_id, '
                'COALESCE(p.tool_tip, d.name), d.name '
                'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
@@ -926,7 +926,7 @@ def insert_note(fileid: int, note: str) -> int:
         return ts[0]
 
 def update_note(fileid: int, noteid: int, note: str) -> int:
-    sql0 = 'select modified from filenotes where (fileid, id) = :(fileid, :id)'
+    sql0 = 'select modified from filenotes where (fileid, id) = (:fileid, :id)'
     sql1 = ('update filenotes set (filenote, modified) = (:filenote, unixepoch()) '
         'where (fileid, id) = (:fileid, :id)')
 
