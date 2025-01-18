@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 import json
 from pathlib import Path
 import pickle
@@ -386,7 +386,6 @@ def set_dir_model():
     model: dirModel = dirModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
-    logger.info('ag.dir_list.setFocus()')
     ag.dir_list.setFocus()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
@@ -1043,5 +1042,5 @@ def file_notes_show(file_idx: QModelIndex):
         file_idx.data(Qt.ItemDataRole.UserRole).id
         if file_idx.isValid() else 0
     )
-    logger.info(f'{file_id=}')
+    # logger.info(f'{file_id=}')
     ag.file_data.set_data(file_id)

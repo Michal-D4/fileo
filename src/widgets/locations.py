@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 import os
 from pathlib import Path
 
@@ -129,13 +129,13 @@ class Locations(QTextBrowser):
         )
         if res == QMessageBox.StandardButton.Ok:
             other_fileid = get_other_branch()
-            logger.info(f'{file_id=}, {path}')
+            # logger.info(f'{file_id=}, {path}')
             try:
                 os.remove(str(Path(path)))  # in DB path saved in posix format, str(Path) -> native to os
             except FileNotFoundError:
                 pass
             finally:   # delete from DB independent on os.remove result
-                logger.info(f'{file_id=} - {other_fileid=}')
+                # logger.info(f'{file_id=} - {other_fileid=}')
                 db_ut.delete_file(file_id)
                 ag.file_data.set_data(other_fileid)
 
