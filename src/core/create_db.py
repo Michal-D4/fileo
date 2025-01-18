@@ -175,14 +175,9 @@ def convert_to_new_version(conn, old_v):
 
 def update_to_v15(conn: apsw.Connection):
     sql1 = "alter table parentdir ADD COLUMN tool_tip text"
-    sql2 = """ \
-        UPDATE parentdir SET tool_tip = \
-        (SELECT d.name FROM dirs d WHERE d.id = parentdir.id) \
-    """
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
     conn.cursor().execute(sql1)
-    conn.cursor().execute(sql2)
 
 def update_to_v16(conn: apsw.Connection):
     sql = """\

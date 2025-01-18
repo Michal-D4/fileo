@@ -821,20 +821,33 @@ def break_link(folder: int, parent: int) -> int:
     """
     sql1 = 'delete from parentdir where (parent, id) = (?,?)'
     sql2 = 'select count(*) from parentdir where id = ?'
-    sql3 = 'delete from dirs where id = ?'
+    sql3 = 'update parentdir set multy = 0 where id = ?'
+    sql4 = 'delete from dirs where id = ?'
     with ag.db.conn as conn:
         conn.cursor().execute(sql1, (parent, folder))
         cnt = conn.cursor().execute(sql2, (folder,)).fetchone()[0]
+        if cnt == 1:
+            conn.cursor().execute(sql3, (folder,))
         if not cnt:
-            conn.cursor().execute(sql3, (folder,)).fetchone()
+            conn.cursor().execute(sql4, (folder,)).fetchone()
         return cnt
 
 def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
-    sql = 'insert into parentdir values (?, ?, 1, 0, ?, ?);'
+    sql1 = 'update parentdir set multy = 1 where (parent, id) = (:parent, :id)'
+    sql2 = 'insert into parentdir values (:parent, :id, 1, 0, :file_id, :tool_tip)'
     with ag.db.conn as conn:
         try:
             conn.cursor().execute(
-                sql, (parent, dir_data.id, dir_data.file_id, dir_data.tool_tip)
+                sql1,
+                {'parent': dir_data.parent_id,
+                 'id': dir_data.id,}
+            )
+            conn.cursor().execute(
+                sql2,
+                {'parent': parent,
+                 'id': dir_data.id,
+                 'file_id': dir_data.file_id,
+                 'tool_tip':dir_data.tool_tip,}
             )
             return True
         except apsw.ConstraintError:

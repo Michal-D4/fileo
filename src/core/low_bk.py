@@ -832,7 +832,7 @@ def load_file(fl: dict) -> int:
     file_ = fl['file']
     f_path: Path = Path(file_[-1]) / file_[1]
     if not f_path.is_file():
-        return
+        return 0
 
     dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
     existent = 0
@@ -929,8 +929,7 @@ def create_folder(index: QModelIndex):
         parent_id=parent_id,
         id=dir_id,
         multy=False,
-        hidden=False,
-        tool_tip=folder_name
+        hidden=False
     )
     item: dirItem = index.internalPointer()
     item.setUserData(user_data)

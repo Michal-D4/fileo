@@ -101,6 +101,8 @@ class OpenDB(QWidget, Ui_openDB):
 
     def remove_row(self, row: int):
         self.listDB.removeRow(row)
+        db_list = self.get_item_list()
+        tug.save_app_setting(DB_List=db_list)
 
     def add_db_name(self, db_path:str):
         logger.info(f'{db_path=}')

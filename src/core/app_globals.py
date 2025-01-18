@@ -98,19 +98,19 @@ class mimeType(Enum):
 class DirData():
     parent_id: int
     id: int
-    is_link: bool
+    multy: bool
     hidden: bool
     file_id: int = 0
-    tool_tip: str = ''
+    tool_tip: str = None
 
     def __post_init__(self):
-        self.is_link = bool(self.is_link)
+        self.multy = bool(self.multy)
         self.hidden = bool(self.hidden)
 
     def __repr__(self) -> str:
         return (
             f'DirData(parent_id={self.parent_id}, id={self.id}, '
-            f'is_link={bool(self.is_link)}, hidden={bool(self.hidden)}, '
+            f'is_link={bool(self.multy)}, hidden={bool(self.hidden)}, '
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
 
