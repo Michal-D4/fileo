@@ -31,7 +31,7 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
     from .core.win_win import set_app_icon
 
     @pyqtSlot(QWidget, QWidget)
-    def tab_pressed():
+    def tab_toggle_focus():
         if app.focusWidget() is ag.dir_list:
             ag.file_list.setFocus()
         else:
@@ -63,7 +63,7 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
     main_window.show()
 
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
-    tab.activated.connect(tab_pressed)
+    tab.activated.connect(tab_toggle_focus)
     ctrl_h = QShortcut(QKeySequence("Ctrl+h"), ag.app)
     ctrl_h.activated.connect(
         lambda: ag.signals_.user_signal.emit("show_recent_files")

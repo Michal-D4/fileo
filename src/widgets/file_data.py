@@ -1,3 +1,4 @@
+# from loguru import logger
 from enum import Enum, unique
 
 from PyQt6.QtCore import QTimer, pyqtSlot, QPoint
@@ -258,9 +259,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             self.new_file_note()
 
     def new_file_note(self):
-        if not self.file_id:
+        file_id = self.notes.get_file_id()
+        if not file_id:
             return
-        self.start_edit(fileNote(self.file_id, 0))
+        self.start_edit(fileNote(file_id, 0))
 
     def start_edit(self, note: fileNote):
         # logger.info(f'editing: {self.notes.is_editing()}')
@@ -295,10 +297,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             note: fileNote = self.editor.get_note()
             return (
                 True,
-                note.get_note_file_id(),
-                note.get_note_id(),
                 note.get_file_id(),
-                self.editor.get_branch(),
+                note.get_note_id(),
                 self.editor.get_text(),
             )
         return get_attributes() if self.notes.is_editing() else (False,)
@@ -307,14 +307,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if not vals[0]:
             self.cancel_note_editing()
             return
-        note = fileNote(vals[1], vals[2])
-        note.set_file_id(vals[3])
+        note = fileNote(vals[1], vals[2])   # file_id, note_id
         self.editor.set_note(note)
-        self.editor.set_branch(vals[4])
-        self.editor.set_text(vals[5])
+        self.editor.set_text(vals[3])
         self.show_editor()
 
-    def set_data(self, file_id: int, branch: list):
+    def set_data(self, file_id: int):
         # logger.info(f'{file_id=}')
         self.file_id = file_id
 
@@ -322,10 +320,4 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.author_selector.set_file_id(file_id)
         self.file_info.set_file_id(file_id)
         self.notes.set_file_id(file_id)
-
-        self.locator.set_data(file_id, branch)
-        # locator calculates all branches the file belongs to
-        if not branch:
-            branch = self.locator.get_branch(file_id)
-        if not self.notes.is_editing():
-            self.editor.set_branch(branch)
+        self.locator.set_data(file_id)

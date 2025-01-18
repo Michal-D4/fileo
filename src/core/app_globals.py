@@ -1,3 +1,4 @@
+# from loguru import logger
 import apsw
 from dataclasses import dataclass
 from enum import Enum, unique
@@ -22,7 +23,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.23'
+    return '1.3.24'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -62,7 +63,10 @@ def set_mode(new_mode: appMode):
         return
     if mode.value <= appMode.RECENT_FILES.value:
         prev_mode = mode
+
     mode = new_mode
+    if prev_mode is mode:
+        prev_mode = appMode.DIR
 
     app.ui.app_mode.setText(mode.name)
 
@@ -94,19 +98,19 @@ class mimeType(Enum):
 class DirData():
     parent_id: int
     id: int
-    is_link: bool
+    multy: bool
     hidden: bool
     file_id: int = 0
-    tool_tip: str = ''
+    tool_tip: str = None
 
     def __post_init__(self):
-        self.is_link = bool(self.is_link)
+        self.multy = bool(self.multy)
         self.hidden = bool(self.hidden)
 
     def __repr__(self) -> str:
         return (
             f'DirData(parent_id={self.parent_id}, id={self.id}, '
-            f'is_link={bool(self.is_link)}, hidden={bool(self.hidden)}, '
+            f'is_link={bool(self.multy)}, hidden={bool(self.hidden)}, '
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
 

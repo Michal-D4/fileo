@@ -100,11 +100,11 @@ class dirModel(QAbstractItemModel):
             return item.user_data()
         elif role == Qt.ItemDataRole.DecorationRole:
             u_dat = self.getItem(index).user_data()
-            if u_dat.hidden:
-                return tug.get_icon("hidden")
-            if u_dat.is_link:
-                return tug.get_icon("link")
-            return tug.get_icon("folder")
+            if u_dat.multy:
+                return (tug.get_icon("mult_hidden") if u_dat.hidden
+                        else tug.get_icon("mult_folder"))
+            return (tug.get_icon("hidden") if u_dat.hidden
+                    else tug.get_icon("folder"))
 
         return None
 

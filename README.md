@@ -67,8 +67,22 @@ As said, the app is about files. Files have a number of attributes:
 
 ## Folders
 
-Folders are not associated with file system directories, the path is used for that. You can freely create, move, copy and delete folders in the folder tree, the files will remain intact. You can, for example, create multiple folder hierarchies, this can be handy. Of course, if you delete all folders it will be impossible to access files using folder tree, but they remain accessible by filter. The next time the **`@@Lost`** folder will appear, it can be used to access files that are not in any other folder.
+Folders are not linked to the OS file system. Each folder has 2 attributes that affect its appearance: the number of parent folders (one or more than one) and the hidden status (hidden folders are visible if the hidden folder display mode is enabled):
+
+![image-20250118132817380](https://github.com/Michal-D4/fileo/raw/main/img/show_hidden_folders.png)
+
+The following icons used for folders depending of their attributes:
+
+|                     | Hidden                                                       | Visible                                                      |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| one parent          | ![one_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/one_folder_hide.png) | ![one_folder](https://github.com/Michal-D4/fileo/raw/main/img/one_folder.png) |
+| two or more parents | ![mult_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder_hide.png) | ![mult_folder](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder.png) |
+
+You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text of notes, among recently viewed files. In the next session this "lost" file will appear in the hidden folder "@@Lost".
+
 You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
+
+> **Important.** Deleting a folder with only one parent will delete all of its child folders. If a folder has more than one parent folder, it will be removed only from the current parent folder and will remain in the others.
 
 ## File duplicates
 
@@ -84,7 +98,7 @@ After creating the report (if duplicates are detected), you can delete all dupli
 
 ### How to add files?
 
-There are two method to add files:
+There are several methods to add files:
 
 1. Open "Search for files..." dialog with main menu item "Scan disk for files": ![scan_disk_dialog](https://github.com/Michal-D4/fileo/raw/main/img/scan_disk_dialog.png)
 
@@ -109,21 +123,19 @@ There are two method to add files:
 
    > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase references.
 
-File duplicates
-
 ### How to work with filters
 
 First you should setup the filter:
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and were opened after `2022-09-14 00:00:00`.
+With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and were opened on or after `2022-09-14`.
 
-> **Note.** In case of before &mdash; the date before or equal to `2022-11-14 23:59:59`.
+> **Note.** In case "Date of before" &mdash; on or before `2022-11-14` in the case shown in the image.
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
-The Done button applies the filter, closes the dialog, and switches the application to "**Filter Mode**". In this mode, when you change the selection in any of the fields on the left panel (Folders, Tags, Extensions, Authors), the list of files immediately changes.
+The Done button applies the filter, closes the dialog, and switches the application to "**Filter Mode**". In this mode, when you change the selection in any of the fields on the left panel (Folders, Tags, Extensions, Authors), the file list will immediately change accordingly.
 
 ### How to find files by name
 
@@ -176,9 +188,9 @@ The file may be located in different folders. In fact, these are links to the sa
 
 ![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
-1 - list of branches, where the current file can be found. The list also includes the file duplicates, if any. Duplicates are marked with "`----> Dup:`" followed by the name of the duplicate; A duplicate file may have a different name than the file itself; duplicates are identified by identical content.
+1 - list of branches where the current file can be found. The list also includes duplicate files, if any. Duplicates are marked with "`----> Dup:`" followed by the name of the duplicate; a duplicate file may have a different name than the file itself; duplicates are identified by having the same content (by a hash computed from its content).
 
-The location marked with a bullet is a current location.
+The branch marked with a bullet is ***a current location***.
 
 2 - a context menu:
 
@@ -189,22 +201,23 @@ The location marked with a bullet is a current location.
 5. Remove duplicate file - the file under mouse cursor will be removed to the trash bin if duplicate of the file exists
 6. Select All
 
-3 - the current branch
+3 - the current branch "`SVG>to have 2 folders`"
 
-4 - the current file selected in the file list
+4 - the current file selected in the file list "`angle_down_20221002213631.svg`"
 
-The letters "L" and "H" in brackets means "Link" and "Hidden". "Link" and "Hidden" are attributes of folder. For example, the folder "fill" in the branch 2 is a link to the folder "fill"[^2] in the second line both "Link" and "Hidden"
 
-<img src="https://github.com/Michal-D4/fileo/raw/main/img/Folders.jpg" alt="Folders"  />
 
-1. The current folder (fill).
-2. The check box. It is used to switch the "FOLDERS" widget to the "Show hidden folders" mode. The folders "@@Lost" and "fill" are hidden; "folder2"[^2] is link to "folder2" above "to have 2 folders".
-   **Note.** The only difference between folder and link to it is that when you delete folder all its links and all its children will be deleted too, whereas deletion of any link of folder does not impact any other folder.
-3. The current file "angle_down_20221002213631.svg".
+![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.png)
+
+1. Checkbox. Used to switch the "FOLDERS" widget to "Show hidden folders" mode. The "markdown" folder (2b) is hidden, and the same "markdown" folder (2a) is not hidden and is located in the root (does not have a visible parent folder).
+2. A "markdown" folder that has more than one parent folder:  
+   a. not hidden folder in the root  
+   b. hidden folder in the "GUI" folder
+3. hovered folder with the tooltip "verse" different from folder name "rhyme"
+4. The current file "SQLite.md".
+5. The "SQLite" tag assigned to the current "SQLite.md" file.
 
 [^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.
-[^2]: A folder link always has the same name as the folder itself, because the link is a simple pair of folder IDs: the first is the folder ID, the second is the parent folder ID. A folder can have many parent folders. The first parent is set when the folder is created, all the others are set when the folder is copied to another (parent) folder.
-
 ### File info
 
 ![file-info](https://github.com/Michal-D4/fileo/raw/main/img/file-info.jpg)
@@ -239,7 +252,7 @@ All application data is stored into a data base (SQlite DB). The SQlite data bas
 
 ![DB-selector](https://github.com/Michal-D4/fileo/raw/main/img/DB-selector.jpg)
 
-The DB can be opened in the current window by double click on the line in the DB list, or select with keybord up and down arrows key and choose with "Return" key, not "Enter" key on numeric keybord.
+The DB can be opened in the current window by double click on the line in the DB list, or select with keyboard up and down arrows key and choose with "Return" key, not "Enter" key on numeric keyboard.
 
 ## Color themes
 

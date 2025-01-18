@@ -1,3 +1,5 @@
+# from loguru import logger
+
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
@@ -52,11 +54,7 @@ class notesContainer(QScrollArea):
 
     def go_to_file(self):
         file_id = self.editor.get_file_id()
-        branch = ','.join((str(i) for i in self.editor.get_branch()))
-        # logger.info(f'{branch=}')
-        ag.signals_.user_signal.emit(
-            f"file-note: Go to file\\{file_id}-{branch}"
-        )
+        ag.signals_.user_signal.emit(f"file-note: Go to file\\{file_id}")
 
     def is_editing(self):
         return self.editing
@@ -73,9 +71,11 @@ class notesContainer(QScrollArea):
             ag.app.ui.edited_file.clear()
 
     def set_file_id(self, file_id: int):
-        self.file_id = file_id
-        ag.note_buttons.clear()
+        self.file_id = db_ut.get_file_id_to_notes(file_id)
         self.set_notes_data()
+
+    def get_file_id(self):
+        return self.file_id
 
     def set_notes_data(self):
         def add_to_top(item: fileNote):
@@ -86,11 +86,12 @@ class notesContainer(QScrollArea):
             self.scroll_layout.insertWidget(0, item)
 
         self.setUpdatesEnabled(False)
+        ag.note_buttons.clear()
         self.clear_layout()
-        data = db_ut.get_file_notes(self.file_id)
-        for row in data:
-            note = fileNote(*row[1:], self.file_id)
+        for row in db_ut.get_file_notes(self.file_id):
+            note = fileNote(self.file_id, *row[1:])
             note.set_text(row[0])
+            note.add_buttons()
             add_to_top(note)
         self.collapse()
         self.show_first_note()
@@ -123,20 +124,25 @@ class notesContainer(QScrollArea):
         self.editing = False
 
     def update_note(self):
+        def compare_hashes(file1: int, file2: int) -> bool:
+            return (
+                file1 == file2 or
+                db_ut.get_file_hash(file1) == db_ut.get_file_hash(file2)
+            )
+
         note: fileNote = self.editor.get_note()
-        note_file_id = note.get_note_file_id()
+        file_id = note.get_file_id()
         note_id = note.get_note_id()
         txt = self.editor.get_text()
 
         if note_id:
-            ts = db_ut.update_note(note_file_id, note_id, txt)
+            ts = db_ut.update_note(file_id, note_id, txt)
         else:
-            ts = db_ut.insert_note(note_file_id, txt)
+            ts = db_ut.insert_note(file_id, txt)
 
-        file_id = note.get_file_id()
         ag.add_file_to_recent(file_id)
 
-        if self.file_id == file_id:
+        if compare_hashes(self.file_id, file_id):
             self.update_date_in_file_list(ts)
             self.set_notes_data()
 

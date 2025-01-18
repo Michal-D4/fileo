@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 from pathlib import Path
 import time
 
@@ -80,6 +80,10 @@ class shoWindow(QMainWindow):
                 db_list = [(a, b) for a,_,b in db_list]
                 tug.save_app_setting(DB_List=db_list)
 
+        def ver1324():
+            if saved_v > 1323:
+                ag.save_settings(NOTE_EDIT_STATE=(False,))
+
         saved_v = tug.get_app_setting("AppVersion", "0")
         cur_v = ag.app_version()
         # logger.info(f'{saved_v=}, {cur_v=}')
@@ -89,10 +93,12 @@ class shoWindow(QMainWindow):
         saved_v = int(saved_v.replace('.', ''))
         cur_v = int(cur_v.replace('.', ''))
 
-        if cur_v > 1311:
+        if cur_v >= 1312 > saved_v:
             toVer1312()
-        else:
+        elif cur_v < 1312 <= saved_v:
             fromVer1312()
+        elif cur_v == 1324 or saved_v == 1324:
+            ver1324()
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
@@ -139,7 +145,6 @@ class shoWindow(QMainWindow):
             self.ui.left_pane.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
-        # logger.info(f'{ag.mode=!r}, {ag.first_mode=!r}')
         mode = ag.appMode(
             int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
         )
@@ -299,7 +304,6 @@ class shoWindow(QMainWindow):
         if db_name == ag.db.path:
             return
 
-        logger.info(f'{ag.db.path=}, {db_name=}')
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
             self.tune_version()
@@ -453,6 +457,7 @@ class shoWindow(QMainWindow):
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
+            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
         }
         if ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()

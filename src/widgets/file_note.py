@@ -1,3 +1,4 @@
+# from loguru import logger
 import markdown
 from datetime import datetime
 from pathlib import Path
@@ -17,17 +18,15 @@ TIME_FORMAT = "%Y-%m-%d %H:%M"
 class fileNote(QWidget):
 
     def __init__(self,
-                 note_file_id: int = 0,  # file_id from filenotes table, find by hash
+                 file_id: int = 0,
                  note_id: int=0,
                  modified: int=0,
                  created: int=0,
-                 file_id: int=0,         # current file_id in file_list
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
-        self.file_id = file_id if file_id else note_file_id
+        self.file_id = file_id
         self.id = note_id
-        self.note_file_id = note_file_id
 
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -52,13 +51,15 @@ class fileNote(QWidget):
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
 
         self.set_collapse_icon()
-        ag.note_buttons.append((self.ui.edit, "toEdit"))
-        ag.note_buttons.append((self.ui.remove, "cancel2"))
-        ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
         self.resizeEvent = self.note_resize
+
+    def add_buttons(self):
+        ag.note_buttons.append((self.ui.edit, "toEdit"))
+        ag.note_buttons.append((self.ui.remove, "cancel2"))
+        ag.note_buttons.append((self.ui.collapse, "down3", "right3"))
 
     @pyqtSlot(QPoint)
     def context_menu(self, pos: QPoint):
@@ -89,7 +90,7 @@ class fileNote(QWidget):
 
             def delete_notes_from_db():
                 db_ut.delete_file_notes(self.file_id)
-                note_text = f'{link}`     Created: {datetime.now().strftime(TIME_FORMAT)}`'
+                note_text = f'{link}  `Created: {datetime.now().strftime(TIME_FORMAT)}`'
                 db_ut.insert_note(self.file_id, note_text)
                 ag.signals_.refresh_note_list.emit()
 
@@ -179,14 +180,8 @@ class fileNote(QWidget):
     def get_note_id(self) -> int:
         return self.id
 
-    def set_file_id(self, file_id: int):
-        self.file_id = file_id
-
     def get_file_id(self) -> int:
         return self.file_id
-
-    def get_note_file_id(self) -> int:
-        return self.note_file_id
 
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)

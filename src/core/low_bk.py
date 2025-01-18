@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 import json
 from pathlib import Path
 import pickle
@@ -74,7 +74,7 @@ def set_user_action_handlers():
         "srch_files_by_note": srch_files_by_note,
         "enable_next_prev": enable_next_prev,
         "Enable_buttons": enable_buttons,
-        "file-note: Go to file": goto_edited_file,
+        "file-note: Go to file": goto_file_in_branch,
         "remove_file_from_location": remove_file_from_location,
         "SaveEditState": save_note_edit_state,
         "show file": single_file,
@@ -163,21 +163,28 @@ def save_note_edit_state():
         NOTE_EDIT_STATE=ag.file_data.get_edit_state()
     )
 
-def goto_edited_file(param: str):
-    file_id, branch = param.split('-')
+def get_branch(dir_id: int) -> list:
+    branch = [dir_id]
+    while dir_id:
+        dir_id = db_ut.dir_min_parent(dir_id)
+        branch.append(dir_id)
+    return branch
+
+def goto_file_in_branch(param: str):
+    file_id, *branch = param.split('-')
     if not branch:
-        single_file(file_id)
-        return
-    idx = expand_branch(
-        (int(it) for it in branch.split(','))
-    )
+        dir_id = db_ut.get_dir_id_for_file(file_id)
+        brnch = get_branch(dir_id)
+    else:
+        brnch = (int(it) for it in branch[0].split(','))
+    idx = expand_branch(brnch)
 
     if idx.isValid():
         if ag.mode is not ag.appMode.DIR:
             prev = ag.mode.value
             ag.set_mode(ag.appMode.DIR)
             set_check_btn(ag.appMode.DIR)
-            app_mode_changed(prev)
+            change_mode(prev)
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
 
@@ -393,7 +400,16 @@ def restore_selected_dirs():
         # logger.info(f'{br=}')
         idx = expand_branch(branch=br)
         model.select(idx, QItemSelectionModel.SelectionFlag.Select)
-    model.setCurrentIndex(idx, QItemSelectionModel.SelectionFlag.Current)
+    set_current_dir(idx)
+
+def set_current_dir(idx: QModelIndex):
+    if not idx.isValid():
+        mdl = ag.dir_list.model()
+        if mdl.rowCount():
+            idx = mdl.index(0, 0, QModelIndex())
+        else:
+            show_files([])
+    ag.dir_list.setCurrentIndex(idx)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
@@ -410,7 +426,7 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     set_folder_path_label()
 
     if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
-        save_file_id(prev_idx)
+        save_curr_file_id(prev_idx)
         show_folder_files()
         add_history_item()
 
@@ -419,14 +435,14 @@ def dirlist_get_focus(e: QFocusEvent):
         return
     ag.switch_to_prev_mode()
 
-def save_file_id(dir_idx: QModelIndex):
-    """ save current file_id in dir (parentdir) table """
+def save_curr_file_id(dir_idx: QModelIndex):
+    """ save id of current file in dir (folder) """
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
         if file_idx.isValid():
             file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
             u_dat = update_file_id_in_dir_model(file_id, dir_idx)
-            db_ut.update_file_id(u_dat)
+            db_ut.save_file_id(u_dat)
 
 def update_file_id_in_dir_model(file_id: int, idx: QModelIndex) -> ag.DirData:
         model = ag.dir_list.model()
@@ -446,7 +462,7 @@ def dir_view_setup():
 
 #region  Files - setup, populate ...
 @pyqtSlot(int)
-def app_mode_changed(prev_mode: int):
+def change_mode(prev_mode: int):
     prev = ag.appMode(prev_mode)
 
     if not ag.db.conn:
@@ -461,7 +477,7 @@ def app_mode_changed(prev_mode: int):
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
         )
     elif prev is ag.appMode.DIR:
-        save_file_id(ag.dir_list.currentIndex())
+        save_curr_file_id(ag.dir_list.currentIndex())
 
     refresh_file_list()
     if ag.mode is ag.appMode.FILTER:
@@ -473,7 +489,7 @@ def app_mode_changed(prev_mode: int):
 def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
         show_folder_files()
-    else:
+    elif ag.mode is ag.appMode.FILTER:
         filtered_files()
 
 @pyqtSlot()
@@ -517,13 +533,8 @@ def show_folder_files():
         show_files([])
 
 def show_recent_files():
-    idx = expand_branch(ag.history.get_current())
-    if idx.isValid():
-        ag.dir_list.setCurrentIndex(idx)
     ag.app.ui.files_heading.setText('Recent files')
-    files = get_recent_files()
-
-    show_files(files)
+    show_files(get_recent_files())
     ag.file_list.setFocus()
 
 def get_recent_files() -> list:
@@ -548,7 +559,7 @@ def show_files(files, cur_file: int = 0):
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
-        save_file_id(ag.dir_list.currentIndex())
+        save_curr_file_id(ag.dir_list.currentIndex())
     elif ag.mode is ag.appMode.FILTER:
         ag.save_settings(
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
@@ -741,8 +752,7 @@ def remove_files():
 def remove_file_from_location(param: str):
     file_id, dir_id = param.split(',')
     db_ut.delete_file_dir_link(file_id, dir_id)
-    # need branch instead of empty list []
-    ag.file_data.set_data(int(file_id), [])
+    ag.file_data.set_data(int(file_id))
 
 def get_dir_id(file: int) -> int:
     """
@@ -821,7 +831,7 @@ def load_file(fl: dict) -> int:
     file_ = fl['file']
     f_path: Path = Path(file_[-1]) / file_[1]
     if not f_path.is_file():
-        return
+        return 0
 
     dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
     existent = 0
@@ -917,9 +927,8 @@ def create_folder(index: QModelIndex):
     user_data = ag.DirData(
         parent_id=parent_id,
         id=dir_id,
-        is_link=False,
-        hidden=False,
-        tool_tip=folder_name
+        multy=False,
+        hidden=False
     )
     item: dirItem = index.internalPointer()
     item.setUserData(user_data)
@@ -929,34 +938,16 @@ def delete_folders():
     cur_idx = ag.dir_list.currentIndex()
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        if u_dat.is_link:
-            db_ut.remove_dir_copy(u_dat.id, u_dat.parent_id)
-            continue
-        if visited := delete_tree(u_dat):
-            delete_visited(visited)
+        if not db_ut.break_link(u_dat.id, u_dat.parent_id):
+            delete_tree(u_dat.id)
     model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
 
-def delete_visited(visited: list):
-    visited.reverse()
-    for dir in visited:
-        db_ut.delete_dir(dir.id, dir.parent_id)
-
-def delete_tree(u_dat: ag.DirData, visited=None):
-    if visited is None:
-        visited = []
-    visited.append(u_dat)
-    children = db_ut.dir_children(u_dat.id)
-    for child in children:
-        dir_dat: ag.DirData = ag.DirData(*child)
-        if dir_dat.is_link:
-            db_ut.remove_dir_copy(dir_dat.id, dir_dat.parent_id)
-            continue
-        if dir_dat in visited:
-            continue
-        delete_tree(dir_dat, visited)
-    return visited
+def delete_tree(dirid: int):
+    for parent, dir_id in db_ut.dir_children(dirid):
+        if not db_ut.break_link(dir_id, parent):
+            delete_tree(dir_id)
 
 def reload_dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
@@ -981,7 +972,7 @@ def toggle_hidden_state():
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         if u_dat.id:
             u_dat.hidden = not u_dat.hidden
-            db_ut.toggle_hidden_dir_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
+            db_ut.update_hidden_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
             item: dirItem = model.getItem(idx)
             item.setUserData(u_dat)
 #endregion
@@ -1051,9 +1042,5 @@ def file_notes_show(file_idx: QModelIndex):
         file_idx.data(Qt.ItemDataRole.UserRole).id
         if file_idx.isValid() else 0
     )
-    branch = (
-        define_branch(ag.dir_list.currentIndex())
-        if ag.mode is ag.appMode.DIR else []
-    )
-    logger.info(f'{file_id=}, {branch=}')
-    ag.file_data.set_data(file_id, branch)
+    # logger.info(f'{file_id=}')
+    ag.file_data.set_data(file_id)

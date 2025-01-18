@@ -101,6 +101,8 @@ class OpenDB(QWidget, Ui_openDB):
 
     def remove_row(self, row: int):
         self.listDB.removeRow(row)
+        db_list = self.get_item_list()
+        tug.save_app_setting(DB_List=db_list)
 
     def add_db_name(self, db_path:str):
         logger.info(f'{db_path=}')
@@ -150,7 +152,7 @@ class OpenDB(QWidget, Ui_openDB):
             if file_.is_file():
                 if create_db.check_app_schema(file_name):
                     return True
-                if file_.stat().st_size == 0:               # empty file
+                if file_.stat().st_size == 0:                 # empty file
                     create_db.create_tables(
                         create_db.create_db(file_name)
                     )

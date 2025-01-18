@@ -37,7 +37,6 @@ def save_bk_settings():
     )
     try:
         settings = {
-            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
             "TAG_SEL_LIST": low_bk.tag_selection(),
             "EXT_SEL_LIST": low_bk.ext_selection(),
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
@@ -53,22 +52,21 @@ def save_bk_settings():
             "SELECTED_DIRS" : selected_dirs(),
         }
         ag.save_settings(**settings)
-        dir_idx = ag.dir_list.currentIndex()
-
-        low_bk.save_file_id(dir_idx)
+        low_bk.save_curr_file_id(ag.dir_list.currentIndex())
         ag.filter_dlg.save_filter_settings()
+        tug.save_app_setting(FILE_LIST_HEADER=ag.file_list.header().saveState())
     except Exception:
         pass
 
 def selected_dirs() -> list:
     idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
-    curr = ag.dir_list.currentIndex()
+    curr = ag.dir_list.currentIndex().internalPointer()
     for idx in idxs:
-        if idx is curr:
+        if idx.internalPointer() is curr:
             continue
         branches.append(low_bk.define_branch(idx))
-    branches.append(low_bk.define_branch(curr))
+    branches.append(low_bk.define_branch(ag.dir_list.currentIndex()))
     return branches
 
 @pyqtSlot()
@@ -122,7 +120,7 @@ def bk_setup():
     dd.set_drag_drop_handlers()
 
     ag.signals_.start_disk_scanning.connect(file_loading)
-    ag.signals_.app_mode_changed.connect(low_bk.app_mode_changed)
+    ag.signals_.app_mode_changed.connect(low_bk.change_mode)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
     ag.author_list.edit_item.connect(low_bk.author_changed)
@@ -258,7 +256,7 @@ def restore_dirs():
 def header_restore():
     hdr: QHeaderView = ag.file_list.header()
     try:
-        state = ag.get_setting("FILE_LIST_HEADER")
+        state = tug.get_app_setting("FILE_LIST_HEADER")
         if state:
             hdr.restoreState(state)
     except Exception as e:
