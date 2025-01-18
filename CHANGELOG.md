@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.3.24 - 2025, 18 January
+* fix color theme switching issue
+* fix the connection between notes and files in case of file duplication; it is strongly recommended to delete duplicates
+* new set of icons for dir tree items
+* revise README.md, the session related to folder description
+* some other changes and improvements
+
 ## 1.3.23 - 2024, 31 December
 * fix file list header issue
 * Some other code changes
