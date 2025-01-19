@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.24.1 - 2025, 19 January
+* fix issue with displaying/saving notes for recently added files. App crashes and can't be restarted.
+
 ## 1.3.24 - 2025, 18 January
 * fix color theme switching issue
 * fix the connection between notes and files in case of file duplication; it is strongly recommended to delete duplicates

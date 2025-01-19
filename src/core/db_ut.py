@@ -891,7 +891,7 @@ def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
         "order by modified"
     )
     sql_id = (
-        "select filenote, fileid, id, modified, created from filenotes "
+        "select filenote, id, modified, created from filenotes "
         "where fileid  = ? order by modified"
     )
     if file_id <= 0:
