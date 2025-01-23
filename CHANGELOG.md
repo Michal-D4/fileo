@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.25 - 2025, 23 January
+* Removing broken links in folder history after user deleted folders.
+* Some changes in README.md
+
 ## 1.3.24.1 - 2025, 19 January
 * fix issue with displaying/saving notes for recently added files. App crashes and can't be restarted.
 

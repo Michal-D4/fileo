@@ -800,6 +800,11 @@ def dir_parents(dir_id: int) -> apsw.Cursor:
     sql = 'select parent from parentdir where id = ?'
     return ag.db.conn.cursor().execute(sql, (dir_id,))
 
+def not_parent_child(id1, id2) -> bool:
+    sql = 'select 1 from parentdir where (parent,id) = (?,?)'
+    res = ag.db.conn.cursor().execute(sql, (id1, id2)).fetchone()
+    return not res
+
 def dir_min_parent(dir_id: int) -> int:
     sql = 'select parent from parentdir where id = ?'
     parent = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()

@@ -65,7 +65,6 @@ class dlgDup(QWidget, Ui_DlgDup):
             tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp))
         ) / f"duplicate_files.{ag.app.ui.db_name.text()}.log"
 
-
     @pyqtSlot()
     def show_duplicates(self):
         path = self.get_report_path() if self.is_user_request else self.save_report()

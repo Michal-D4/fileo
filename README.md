@@ -84,6 +84,19 @@ You can also *copy/move files from one folder to another*  by dragging *with the
 
 > **Important.** Deleting a folder with only one parent will delete all of its child folders. If a folder has more than one parent folder, it will be removed only from the current parent folder and will remain in the others.
 
+## Folders and files
+
+![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.png)
+
+1. Checkbox. Used to switch the "FOLDERS" widget to "Show hidden folders" mode. The "markdown" folder (2b) is hidden, and the same "markdown" folder (2a) is not hidden and is located in the root (does not have a visible parent folder).
+2. A "markdown" folder that has more than one parent folder:  
+   a. not hidden folder in the root  
+   b. hidden folder in the "GUI" folder
+3. hovered folder with the tooltip "verse" different from folder name "rhyme"
+4. The current (or selected) folder. You can select multiple folders at once using the Shift or Ctrl keys.
+5. The current file "SQLite.md".
+6. The "SQLite" tag assigned to the current "SQLite.md" file.
+
 ## File duplicates
 
 It may happen that there are duplicate files on your disk. It is highly recommended to delete duplicate files. If you need different versions of a file, consider using a version control system such as Git.
@@ -204,18 +217,6 @@ The branch marked with a bullet is ***a current location***.
 3 - the current branch "`SVG>to have 2 folders`"
 
 4 - the current file selected in the file list "`angle_down_20221002213631.svg`"
-
-
-
-![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.png)
-
-1. Checkbox. Used to switch the "FOLDERS" widget to "Show hidden folders" mode. The "markdown" folder (2b) is hidden, and the same "markdown" folder (2a) is not hidden and is located in the root (does not have a visible parent folder).
-2. A "markdown" folder that has more than one parent folder:  
-   a. not hidden folder in the root  
-   b. hidden folder in the "GUI" folder
-3. hovered folder with the tooltip "verse" different from folder name "rhyme"
-4. The current file "SQLite.md".
-5. The "SQLite" tag assigned to the current "SQLite.md" file.
 
 [^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.
 ### File info

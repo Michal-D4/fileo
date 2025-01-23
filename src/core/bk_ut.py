@@ -5,9 +5,7 @@ from PyQt6.QtCore import (pyqtSlot, QPoint, QThread,
     QTimer, Qt,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
-from PyQt6.QtWidgets import (QMenu, QTreeView, QHeaderView,
-    QMessageBox,
-)
+from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
 
 from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd,
@@ -157,13 +155,7 @@ def short_delete_folder():
     if ag.app.focusWidget() is not ag.dir_list:
         return
     if ag.dir_list.currentIndex().isValid():
-        if ag.show_message_box(
-            'Delete folders',
-            'Delete selected folders. Please confirm',
-            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-            icon=QMessageBox.Icon.Question
-        ) == QMessageBox.StandardButton.Ok:
-            ag.signals_.user_signal.emit("Dirs Delete folder(s)")
+        ag.signals_.user_signal.emit("Dirs Delete folder(s)")
 
 @pyqtSlot()
 def show_main_menu():

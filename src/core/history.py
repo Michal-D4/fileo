@@ -1,7 +1,7 @@
 # from loguru import logger
 from datetime import datetime
 
-from . import app_globals as ag
+from . import app_globals as ag, db_ut
 
 
 class History(object):
@@ -9,7 +9,19 @@ class History(object):
         self.limit: int = limit
         self.hist = {}
         self.curr: str = ''
-        self.is_hist = False
+        self.is_hist = True
+
+    def check_remove(self):
+        kk = []
+        for k,v in self.hist.items():
+            vv = ['0', *v.split(',')]
+            for i in range(len(vv)-1):
+                if db_ut.not_parent_child(vv[i], vv[i+1]):
+                    kk.append(k)
+                    break
+
+        for k in kk:
+            self.hist.pop(k)
 
     def set_history(self, hist: list, curr: str):
         self.hist = dict(zip(*hist))
@@ -33,6 +45,7 @@ class History(object):
     def get_current(self):
         if not self.hist or not self.curr:
             return []
+        self.is_hist = True
         return [int(i) for i in self.hist[self.curr].split(',')]
 
     def next_dir(self) -> list:
@@ -46,7 +59,6 @@ class History(object):
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\{self.has_next()},yes'
         )
-        self.is_hist = True
         return self.get_current()
 
     def prev_dir(self) -> list:
@@ -60,7 +72,6 @@ class History(object):
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\yes,{self.has_prev()}'
         )
-        self.is_hist = True
         return self.get_current()
 
     def has_next(self) -> str:
@@ -85,6 +96,9 @@ class History(object):
                 if len(self.hist) == self.limit:  # if limit exceeded
                     self.hist.pop(min(list(self.hist.keys())))
 
+        if not new:
+            return
+
         key = str(datetime.now().replace(microsecond=0))
         val = ','.join((str(x) for x in new))
 
@@ -92,14 +106,9 @@ class History(object):
             self.is_hist = False
             return
 
-        if not self.curr:
-            self.curr = key
-            self.hist[key] = val
-            return
-
         del_if_exists()
-        self.hist[key] = val
         self.curr = key
+        self.hist[key] = val
 
         ag.signals_.user_signal.emit(
             f'enable_next_prev\\no,{self.has_prev()}'

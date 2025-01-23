@@ -365,15 +365,13 @@ def expand_branch(branch: list) -> QModelIndex:
     parent = QModelIndex()
     item: dirItem = model.rootItem
     for it in branch:
-        if parent.isValid():
-            if not ag.dir_list.isExpanded(parent):
-                ag.dir_list.setExpanded(parent, True)
-
         for i,child in enumerate(item.children):
             ud = child.user_data()
             if it == ud.id:
                 parent = model.index(i, 0, parent)
                 item = child
+                if item.children:
+                    ag.dir_list.setExpanded(parent, True)
                 break
         else:
             break    # outer loop
@@ -413,22 +411,14 @@ def set_current_dir(idx: QModelIndex):
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-    def set_folder_path_label():
-        if curr_idx.isValid():
-            ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-
-    def add_history_item():
-        ag.history.add_item(
-            define_branch(ag.dir_list.currentIndex())
-        )
-
     ag.app.collapse_btn.setChecked(False)
-    set_folder_path_label()
+    if curr_idx.isValid():
+        ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
 
-    if curr_idx.isValid() and ag.mode is ag.appMode.DIR:
+    if prev_idx.isValid() and ag.mode is ag.appMode.DIR:
+        ag.history.add_item(define_branch(prev_idx))
         save_curr_file_id(prev_idx)
         show_folder_files()
-        add_history_item()
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
@@ -943,6 +933,7 @@ def delete_folders():
     model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
     reload_dirs_changed(near_curr)
+    ag.history.check_remove()
 
 def delete_tree(dirid: int):
     for parent, dir_id in db_ut.dir_children(dirid):
