@@ -78,7 +78,7 @@ The following icons used for folders depending of their attributes:
 | one parent          | ![one_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/one_folder_hide.png) | ![one_folder](https://github.com/Michal-D4/fileo/raw/main/img/one_folder.png) |
 | two or more parents | ![mult_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder_hide.png) | ![mult_folder](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder.png) |
 
-You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text of notes, among recently viewed files. In the next session this "lost" file will appear in the hidden folder "@@Lost".
+You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files. In the next session this "lost" file will appear in the hidden folder "@@Lost".
 
 You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
 
@@ -175,7 +175,15 @@ The search is performed by pressing the Enter key. "Aa" is a case sensitive sear
 
 > pressing any of these buttons closes the editor
 
-Note is a markdown text. You can insert here web links and links to file(s) registered in the application (in the current DB).
+Note is a markdown and HTML text. Here you can insert *web links*, *links to files registered in the application* (in the current DB), as well as *files from the OS file system*. All this can be done using the drag-drop method.
+
+To display notes the [QTextBrowser](https://doc.qt.io/qt-6/qtextbrowser.html) is used. It supports limited HTML and markdown capabilities. For example, I have to use HTML syntax to display table in this browser:
+
+![note_editor](https://github.com/Michal-D4/fileo/raw/main/img/note_editor.jpg)
+
+Here's how it appears in the note:
+
+![note-with-tabl](https://github.com/Michal-D4/fileo/raw/main/img/note-with-tabl.jpg)
 
 ### Tag selector
 

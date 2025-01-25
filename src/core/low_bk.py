@@ -415,9 +415,10 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
 
-    if prev_idx.isValid() and ag.mode is ag.appMode.DIR:
-        ag.history.add_item(define_branch(prev_idx))
-        save_curr_file_id(prev_idx)
+    if ag.mode is ag.appMode.DIR:
+        if prev_idx.isValid():
+            ag.history.add_item(define_branch(prev_idx))
+            save_curr_file_id(prev_idx)
         show_folder_files()
 
 def dirlist_get_focus(e: QFocusEvent):

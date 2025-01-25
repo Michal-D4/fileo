@@ -59,7 +59,7 @@ class OpenDB(QWidget, Ui_openDB):
                 elif not used and menu_item_text.startswith('Delete'):
                     self.remove_row(item.row())
                 elif menu_item_text.startswith('Open'):
-                    self.open_db(db_path, used)
+                    self.save_header_and_open(db_path, used)
                 elif menu_item_text.startswith('Reveal'):
                     tug.reveal_file(db_path)
                 elif menu_item_text.startswith('Free'):
@@ -115,7 +115,7 @@ class OpenDB(QWidget, Ui_openDB):
         if self.verify_db_file(db_path):
             now = str(datetime.now().replace(microsecond=0))
             self.set_cell_0(db_path, True, now)
-            self.open_db(db_path)
+            self.save_header_and_open(db_path, False)
             return
         ag.show_message_box(
             'Error open DB',
@@ -126,7 +126,7 @@ class OpenDB(QWidget, Ui_openDB):
     def open_if_here(self, db_path: str) -> bool:
         for item, used, _ in self.get_item_list():
             if item == db_path:
-                self.open_db(db_path, used)
+                self.save_header_and_open(db_path, used)
                 return True
         return False
 
@@ -177,7 +177,7 @@ class OpenDB(QWidget, Ui_openDB):
     def item_click(self, item: QTableWidgetItem):
         it = self.listDB.item(item.row(), 0)
         db_path, used, _ = it.data(Qt.ItemDataRole.UserRole)
-        self.open_db(db_path, used)
+        self.save_header_and_open(db_path, used)
 
     def open_db(self, db_path: str, used: bool=False):
         if used:
@@ -185,6 +185,13 @@ class OpenDB(QWidget, Ui_openDB):
         self.save_db_list(ag.db.path, db_path)
         logger.info(f'open_db_signal.emit {db_path}')
         ag.signals_.open_db_signal.emit(db_path)
+
+    def save_header_and_open(self, db_path: str, used: bool):
+        if ag.db.conn:
+            tug.save_app_setting(
+                FILE_LIST_HEADER=ag.file_list.header().saveState()
+            )
+        self.open_db(db_path, used)
 
     def open_in_new_window(self, db_path: str):
         self.save_db_list('', db_path)

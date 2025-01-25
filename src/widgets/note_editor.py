@@ -1,4 +1,6 @@
-from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl
+# from loguru import logger
+
+from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl, QByteArray
 from PyQt6.QtGui import QFocusEvent, QDropEvent, QDragEnterEvent, QTextCursor
 from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout
 
@@ -31,40 +33,63 @@ class noteEditor(QWidget):
 
     def dropEvent(self, e: QDropEvent) -> None:
         def link_string() -> str:
-            ref = url.toString()
-            name = 'xxx'
-            if url.hasFragment():
-                name = url.fragment(QUrl.ComponentFormattingOption.FullyDecoded)
+            html = data.html()
+            if (t_end := html.rfind('</a>')) > 0:
+                t_beg = html.rfind('>', 0, t_end)
+                name = html[t_beg+1 : t_end]
             else:
-                html = data.html()
-                if (t_end := html.rfind('</a>')) > 0:
-                    t_beg = html.rfind('>', 0, t_end)
-                    if t_end > t_beg+1:
-                        name = html[t_beg+1 : t_end]
+                name = uris.fileName()
+                if uris.hasFragment():
+                    name = f'{name}#{uris.fragment(QUrl.ComponentFormattingOption.FullyDecoded)}'
+            ref = uris.toString()
             return f'[{name}]({ref})'
+
+        def insert_file_id() -> str:
+            stream = QDataStream(file_data, QIODevice.OpenModeFlag.ReadOnly)
+            _ = stream.readInt()    # pid - always of current app
+            _ = stream.readInt()    # source dir_id - not used here
+            cnt = stream.readInt()  # number of files
+            tt = []
+            for _ in range(cnt):
+                id_ = stream.readInt()
+                filename = db_ut.get_file_name(id_)
+                tt.append(f'* *[{filename}](fileid:/{id_})*  \n')
+            return ''.join(tt)
+
+        def insert_file_uri() -> str:
+            stream = QDataStream(file_data, QIODevice.OpenModeFlag.ReadOnly)
+            _ = stream.readInt()    # pid - always of current app
+            _ = stream.readInt()    # source dir_id - not used here
+            cnt = stream.readInt()  # number of files
+            tt = []
+            for _ in range(cnt):
+                id_ = stream.readInt()
+                pp = db_ut.get_file_path(id_)
+                url = QUrl.fromLocalFile(pp) if pp else pp
+                if url:
+                    tt.append(f'* [{url.fileName()}]({url.toString().replace(" ","%20")})  \n')
+            return ''.join(tt)
 
         data: QMimeData = e.mimeData()
         t: QTextCursor = self.note_editor.cursorForPosition(e.position().toPoint())
         if data.hasFormat(ag.mimeType.files_uri.value):
-            url: QUrl = data.urls()[0]
-            if url.scheme() == 'file':
-                t.insertText(f'[{url.fileName()}]({url.toString().replace(" ","%20")})')
-            elif url.scheme().startswith('http'):
+            uris: QUrl = data.urls()
+            if uris[0].scheme() == 'file':
+                tt = []
+                for ur in uris:
+                    tt.append(f'* [{ur.fileName()}]({ur.toString().replace(" ","%20")}  )')
+                t.insertText('\n'.join(tt))
+            elif uris[0].scheme().startswith('http'):
                 t.insertText(link_string())
             e.accept()
         elif data.hasFormat(ag.mimeType.files_in.value):
-            files_data = data.data(ag.mimeType.files_in.value)
-            t.insertText(self.inner_file_link(files_data))
+            file_data: QByteArray = data.data(ag.mimeType.files_in.value)
+            t.insertText(
+                insert_file_id()
+                if e.buttons() == Qt.MouseButton.LeftButton
+                else insert_file_uri()
+            )
         return super().dropEvent(e)
-
-    def inner_file_link(self, file_data) -> str:
-        stream = QDataStream(file_data, QIODevice.OpenModeFlag.ReadOnly)
-        _ = stream.readInt()
-        _ = stream.readInt()
-        _ = stream.readInt()
-        id_ = stream.readInt()
-        filename = db_ut.get_file_name(id_)
-        return f'*[{filename}](fileid:/{id_})*'
 
     def focusOutEvent(self, e: QFocusEvent):
         if e.lostFocus():

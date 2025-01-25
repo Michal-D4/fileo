@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.26 - 2025, 25 January
+* fix issue when saving/restoring file list header
+* drag-drop multiple files into a note from the OS file system and from the application's file list
+* change README.md
+
 ## 1.3.25 - 2025, 23 January
 * Removing broken links in folder history after user deleted folders.
 * Some changes in README.md

@@ -269,7 +269,7 @@ def drop_files(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
         if act is Qt.DropAction.MoveAction:
             return move_files(stream, target)
         return False
-    else:
+    else:           # drag from another instance
         files_data = data.data(ag.mimeType.files_out.value)
         stream = QTextStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
         low_bk._import_files(stream)

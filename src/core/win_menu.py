@@ -8,7 +8,7 @@ drop_button = 0
 
 def choose_drop_action(e: QDropEvent):
     """
-    The default action ic Copy,
+    The default action is Copy,
     Right button is used to choose action from menu
     """
     if drop_button == Qt.MouseButton.RightButton:
