@@ -5,7 +5,10 @@ from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
+from PyQt6.QtCore import QTimer, pyqtSlot
 from PyQt6.QtWidgets import QTreeView, QMessageBox
+
+from .. import tug
 
 if TYPE_CHECKING:
     from .compact_list import aBrowser
@@ -23,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.26'
+    return '1.3.27'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -152,6 +155,16 @@ def get_setting(key: str, default=None):
 
     return vv if vv else default
 
+KB, MB, GB = 1024, 1048576, 1073741824
+def hr_size(n):
+    if n > GB:
+        return f'{n/GB:.2f} Gb'
+    if n > MB:
+        return f'{n/MB:.2f} Mb'
+    if n > KB:
+        return f'{n/KB:.2f} Kb'
+    return n
+
 def add_file_to_recent(id_: int):
     """
     id_ - file id, valid value > 0
@@ -186,6 +199,17 @@ def show_message_box(
     dlg.setIcon(icon)
 
     return dlg.exec()
+
+def message_in_status(msg: str):
+    @pyqtSlot()
+    def restore_file_edited():
+        app.ui.edited_file.setText(file_edited)
+        app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
+
+    file_edited = app.ui.edited_file.text()
+    app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message'))
+    app.ui.edited_file.setText(msg)
+    QTimer.singleShot(3000, restore_file_edited)
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals  # noqa: E402

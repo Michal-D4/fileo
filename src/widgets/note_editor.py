@@ -38,11 +38,10 @@ class noteEditor(QWidget):
                 t_beg = html.rfind('>', 0, t_end)
                 name = html[t_beg+1 : t_end]
             else:
-                name = uris.fileName()
-                if uris.hasFragment():
-                    name = f'{name}#{uris.fragment(QUrl.ComponentFormattingOption.FullyDecoded)}'
-            ref = uris.toString()
-            return f'[{name}]({ref})'
+                name = uri.fileName()
+                if uri.hasFragment():
+                    name = f'{name}#{uri.fragment(QUrl.ComponentFormattingOption.FullyDecoded)}'
+            return f'[{name}]({uri.toString()})'
 
         def insert_file_id() -> str:
             stream = QDataStream(file_data, QIODevice.OpenModeFlag.ReadOnly)
@@ -74,12 +73,13 @@ class noteEditor(QWidget):
         t: QTextCursor = self.note_editor.cursorForPosition(e.position().toPoint())
         if data.hasFormat(ag.mimeType.files_uri.value):
             uris: QUrl = data.urls()
-            if uris[0].scheme() == 'file':
+            uri = uris[0]
+            if uri.scheme() == 'file':
                 tt = []
                 for ur in uris:
                     tt.append(f'* [{ur.fileName()}]({ur.toString().replace(" ","%20")}  )')
                 t.insertText('\n'.join(tt))
-            elif uris[0].scheme().startswith('http'):
+            elif uri.scheme().startswith('http'):
                 t.insertText(link_string())
             e.accept()
         elif data.hasFormat(ag.mimeType.files_in.value):

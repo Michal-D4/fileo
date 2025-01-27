@@ -1,6 +1,10 @@
+# from loguru import logger
+
 from PyQt6.QtCore import Qt, QDateTime
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
-    QLineEdit, QVBoxLayout, QScrollArea, QFrame,
+    QLineEdit, QVBoxLayout, QScrollArea, QFrame, QApplication,
+    QToolTip,
 )
 
 from ..core import app_globals as ag, db_ut
@@ -20,6 +24,32 @@ class fileInfo(QWidget):
         self.pages.editingFinished.connect(self.pages_changed)
 
         self.form_setup()
+        self.set_event_handler()
+
+    def copy_file_data(self, e: QMouseEvent, row: int):
+        def copy_row(i: int) -> str:
+            fld = self.form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget()
+            lbl = self.form_layout.itemAt(i, QFormLayout.ItemRole.LabelRole).widget()
+            return f'{lbl.text()}\t{fld.text()}'
+
+        if e.buttons() is Qt.MouseButton.RightButton:
+            if e.modifiers() is Qt.KeyboardModifier.ShiftModifier:
+                tt = []
+                for i in range(self.form_layout.rowCount()):
+                    tt.append(copy_row(i))
+                QApplication.clipboard().setText('\n'.join(tt))
+                msg = 'Everything copied'
+            else:
+                QApplication.clipboard().setText(copy_row(row))
+                msg = 'Line copied'
+            pos = e.globalPosition().toPoint()
+            QToolTip.showText(pos, msg)
+
+    def set_event_handler(self):
+        for i in range(self.form_layout.rowCount()):
+            fld = self.form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget()
+            if isinstance(fld, QLabel):
+                fld.mousePressEvent = lambda event, row=i: self.copy_file_data(event, row)
 
     def rating_changed(self):
         db_ut.update_files_field(self.file_id, 'rating', self.rating.text())
@@ -74,6 +104,8 @@ class fileInfo(QWidget):
             for i in range(self.form_layout.rowCount()):
                 if i >= 2 and i <= 5:
                     field = self.time_value(fields[i])
+                elif i == 8:
+                    field = ag.hr_size(fields[i])
                 else:
                     field = fields[i]
                 self.form_layout.itemAt(

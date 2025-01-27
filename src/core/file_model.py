@@ -8,7 +8,11 @@ from PyQt6.QtWidgets import QMessageBox
 from . import db_ut, app_globals as ag
 
 SORT_ROLE = Qt.ItemDataRole.UserRole + 1
-
+SZ_SCALE = {
+    'Kb': 1024,
+    'Mb': 1048576,
+    'Gb': 1073741824
+}
 
 class fileProxyModel(QSortFilterProxyModel):
 
@@ -53,6 +57,12 @@ class fileProxyModel(QSortFilterProxyModel):
             l_val = self.sourceModel().data(left, SORT_ROLE)
             r_val = self.sourceModel().data(right, SORT_ROLE)
             return l_val < r_val
+        if self.sourceModel().headerData(left.column()) == 'Size':
+            ll = self.sourceModel().data(left, Qt.ItemDataRole.DisplayRole)
+            rr = self.sourceModel().data(right, Qt.ItemDataRole.DisplayRole)
+            l_val = ll if isinstance(ll, int) else int(float(ll[:-3]) * SZ_SCALE[ll[-2:]])
+            r_val = rr if isinstance(rr, int) else int(float(rr[:-3]) * SZ_SCALE[rr[-2:]])
+            return l_val < r_val
         return super().lessThan(left, right)
 
 
@@ -85,7 +95,6 @@ class fileModel(QAbstractTableModel):
                     if self.header[col] == 'Published':
                         return line[col].toString("MMM yyyy")
                     return line[col]
-                return None
             elif role == Qt.ItemDataRole.EditRole:
                 return line[col]
             elif role == Qt.ItemDataRole.UserRole:

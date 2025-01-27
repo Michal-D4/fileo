@@ -569,7 +569,10 @@ def fill_file_model(files) -> fileModel:
             continue
         ff1 = []
         for i,typ in enumerate(field_types):
-            ff1.append(field_val(typ, ff[i]))
+            ff1.append(
+                ag.hr_size(ff[i]) if i == 6 else
+                field_val(typ, ff[i])
+            )
 
         filename = Path(ff[0])
         ff1.append(

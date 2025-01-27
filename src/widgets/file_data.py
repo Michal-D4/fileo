@@ -1,7 +1,7 @@
 # from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import QTimer, pyqtSlot, QPoint
+from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -171,6 +171,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.switch_page(Page.LOCS)
 
     def l_file_info_press(self, e: QMouseEvent):
+        if self.cur_page is not Page.INFO:
+            self.l_file_info.setToolTip("copy file info by Right button press [+Shift]")
         self.switch_page(Page.INFO)
 
     def l_file_notes_press(self, e: QMouseEvent):
@@ -208,6 +210,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if self.cur_page is Page.AUTHORS:
             self.authorEdit.hide()
             self.tagEdit.show()
+
+        if self.cur_page is Page.INFO:
+            self.l_file_info.setToolTip("")
 
         self.cur_page = new_page
         self.pages.setCurrentIndex(new_page.value)
@@ -267,23 +272,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def start_edit(self, note: fileNote):
         # logger.info(f'editing: {self.notes.is_editing()}')
         if self.notes.is_editing():
-            self.is_edit_message()
+            ag.message_in_status("Only one note editor can be opened at a time")
             self.edit_btns.show()
             self.switch_page(Page.EDIT)
             return
         self.editor.start_edit(note)
         self.show_editor()
-
-    def is_edit_message(self):
-        @pyqtSlot()
-        def restore_file_edited():
-            ag.app.ui.edited_file.setText(file_edited)
-            ag.app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
-
-        file_edited = ag.app.ui.edited_file.text()
-        ag.app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message'))
-        ag.app.ui.edited_file.setText("Only one note editor can be opened at a time")
-        QTimer.singleShot(3000, restore_file_edited)
 
     def show_editor(self):
         self.notes.set_editing(True)

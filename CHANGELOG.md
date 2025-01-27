@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.27 - 2025, 27 January
+* Human readable file size
+* Copy information from the "File info" tab to the clipboard
+    * with press Right mouse button to copy current line
+    * with press Right mouse button + Shift to copy everything
+
 ## 1.3.26 - 2025, 25 January
 * fix issue when saving/restoring file list header
 * drag-drop multiple files into a note from the OS file system and from the application's file list

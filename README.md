@@ -231,6 +231,8 @@ The branch marked with a bullet is ***a current location***.
 
 ![file-info](https://github.com/Michal-D4/fileo/raw/main/img/file-info.jpg)
 
+You can copy file information here by pressing Right mouse button or Right mouse button with Shift.
+
 The "File rating" and "Pages" can be edited here. But they also can be edited directly in the file list if visible:
 
 ![file-list-fields](https://github.com/Michal-D4/fileo/raw/main/img/file-list-fields.jpg)
