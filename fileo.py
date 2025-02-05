@@ -3,6 +3,12 @@ import sys
 from src import main
 
 if __name__ == '__main__':
+    """
+    sys.argv - up to 3 parameters:
+    0 - entry_point: str,
+    1 - db_name: str,
+    2 - first_instanse: bool
+    """
     if len(sys.argv) == 1:
         db = ''
         first_instance = True

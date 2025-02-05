@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 from pathlib import Path
 import time
 
@@ -67,38 +67,31 @@ class shoWindow(QMainWindow):
         fold_layout.addWidget(self.container)
 
     def tune_version(self):
-        def toVer1312():
-            """ changed DB_List format """
-            if saved_v <= 1311:
-                db_list = tug.get_app_setting("DB_List", [])
-                db_list = [(a, False, b) for a,b in db_list]
-                tug.save_app_setting(DB_List=db_list)
-
-        def fromVer1312():
-            if saved_v > 1311:
-                db_list = tug.get_app_setting("DB_List", [])
-                db_list = [(a, b) for a,_,b in db_list]
-                tug.save_app_setting(DB_List=db_list)
-
-        def ver1324():
-            if saved_v > 1323:
-                ag.save_settings(NOTE_EDIT_STATE=(False,))
-
-        saved_v = tug.get_app_setting("AppVersion", "0")
+        """
+        make changes to "setting" if necessary
+        """
         cur_v = ag.app_version()
-        # logger.info(f'{saved_v=}, {cur_v=}')
+        saved_v = tug.get_app_setting("AppVersion", "0")
         if saved_v == cur_v:
             return
-        tug.save_app_setting(AppVersion=cur_v)
-        saved_v = int(saved_v.replace('.', ''))
-        cur_v = int(cur_v.replace('.', ''))
 
-        if cur_v >= 1312 > saved_v:
-            toVer1312()
-        elif cur_v < 1312 <= saved_v:
-            fromVer1312()
-        elif cur_v == 1324 or saved_v == 1324:
-            ver1324()
+        if saved_v == "0":    # first start of app
+            tug.save_app_setting(AppVersion=cur_v)
+            return
+
+        logger.info(f'{saved_v=}, {cur_v=}')
+        tug.save_app_setting(AppVersion=cur_v)
+        # saved_v = int(saved_v.replace('.', ''))
+        # cur_v = int(cur_v.replace('.', ''))
+
+        # def ver1324():
+        #     if saved_v < 1324:
+        #         ag.save_settings(NOTE_EDIT_STATE=(False,))
+
+        # if cur_v == 1324:
+        #     # never works, current ver. 1327 !
+        #     # remains as an example
+        #     ver1324()
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
@@ -459,7 +452,7 @@ class shoWindow(QMainWindow):
             "noteHolderHeight": self.ui.noteHolder.height(),
             "FILE_LIST_HEADER": ag.file_list.header().saveState(),
         }
-        if ag.filter_dlg.isVisible():
+        if ag.filter_dlg and ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
 
         if ag.db.conn:

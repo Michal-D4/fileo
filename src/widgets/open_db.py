@@ -59,7 +59,7 @@ class OpenDB(QWidget, Ui_openDB):
                 elif not used and menu_item_text.startswith('Delete'):
                     self.remove_row(item.row())
                 elif menu_item_text.startswith('Open'):
-                    self.save_header_and_open(db_path, used)
+                    self.check_and_open(db_path, used)
                 elif menu_item_text.startswith('Reveal'):
                     tug.reveal_file(db_path)
                 elif menu_item_text.startswith('Free'):
@@ -115,7 +115,7 @@ class OpenDB(QWidget, Ui_openDB):
         if self.verify_db_file(db_path):
             now = str(datetime.now().replace(microsecond=0))
             self.set_cell_0(db_path, True, now)
-            self.save_header_and_open(db_path, False)
+            self.open_db(db_path, False)
             return
         ag.show_message_box(
             'Error open DB',
@@ -126,7 +126,7 @@ class OpenDB(QWidget, Ui_openDB):
     def open_if_here(self, db_path: str) -> bool:
         for item, used, _ in self.get_item_list():
             if item == db_path:
-                self.save_header_and_open(db_path, used)
+                self.check_and_open(db_path, used)
                 return True
         return False
 
@@ -153,17 +153,13 @@ class OpenDB(QWidget, Ui_openDB):
                 if create_db.check_app_schema(file_name):
                     return True
                 if file_.stat().st_size == 0:                 # empty file
-                    create_db.create_tables(
-                        create_db.create_db(file_name)
-                    )
+                    create_db.create_tables(file_name)
                     return True
                 else:
                     self.msg = f"not DB: {file_name}"
                     return False
         elif file_.parent.exists and file_.parent.is_dir():   # file not exist
-            create_db.create_tables(
-                create_db.create_db(file_name)
-            )
+            create_db.create_tables(file_name)
             return True
         else:
             self.msg = f"bad path: {file_name}"
@@ -177,23 +173,34 @@ class OpenDB(QWidget, Ui_openDB):
     def item_click(self, item: QTableWidgetItem):
         it = self.listDB.item(item.row(), 0)
         db_path, used, _ = it.data(Qt.ItemDataRole.UserRole)
-        self.save_header_and_open(db_path, used)
+        self.check_and_open(db_path, used)
 
-    def open_db(self, db_path: str, used: bool=False):
+    def open_db(self, db_path: str, used: bool):
         if used:
             return
-        self.save_db_list(ag.db.path, db_path)
-        logger.info(f'open_db_signal.emit {db_path}')
-        ag.signals_.open_db_signal.emit(db_path)
-
-    def save_header_and_open(self, db_path: str, used: bool):
         if ag.db.conn:
             tug.save_app_setting(
                 FILE_LIST_HEADER=ag.file_list.header().saveState()
             )
-        self.open_db(db_path, used)
+        self.save_db_list(ag.db.path, db_path)
+        logger.info(f'open_db_signal.emit {db_path}')
+        ag.signals_.open_db_signal.emit(db_path)
+
+    def check_and_open(self, db_path: str, used: bool=False) -> bool:
+        if create_db.check_app_schema(db_path):
+            self.open_db(db_path, used)
+        else:
+            ag.show_message_box(
+                'Error open DB',
+                f'Database "{ag.db.path}" is corrupted',
+                icon=QMessageBox.Icon.Critical
+            )
 
     def open_in_new_window(self, db_path: str):
+        if ag.db.conn:
+            tug.save_app_setting(
+                FILE_LIST_HEADER=ag.file_list.header().saveState()
+            )
         self.save_db_list('', db_path)
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
 

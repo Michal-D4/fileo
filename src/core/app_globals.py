@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.27'
+    return '1.3.28'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -113,7 +113,7 @@ class DirData():
     def __repr__(self) -> str:
         return (
             f'DirData(parent_id={self.parent_id}, id={self.id}, '
-            f'is_link={bool(self.multy)}, hidden={bool(self.hidden)}, '
+            f'multy={bool(self.multy)}, hidden={bool(self.hidden)}, '
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
 
@@ -133,7 +133,7 @@ def save_settings(**kwargs):
     if not db.conn:
         return
     cursor: apsw.Cursor = db.conn.cursor()
-    sql = "update settings set value = :value where key = :key;"
+    sql = "insert or replace into settings values (:key, :value);"
 
     for key, val in kwargs.items():
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})

@@ -143,7 +143,7 @@ def create_open_db():
 def init_db(db_path: str):
     if db_path:
         db_open = OpenDB(ag.app)
-        db_open.open_db(db_path)
+        db_open.check_and_open(db_path)
 
 def scan_disk():
     """

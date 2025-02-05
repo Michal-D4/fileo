@@ -91,10 +91,6 @@ class fileInfo(QWidget):
         v_layout.addWidget(scroll)
 
     def populate_fields(self):
-        """
-        populate all fields
-        except QComboBox from authors table
-        """
         idx = ag.file_list.currentIndex()
         if idx.isValid():
             self.file_id = idx.data(Qt.ItemDataRole.UserRole).id

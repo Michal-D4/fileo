@@ -1,3 +1,6 @@
+QFrame {
+   border: none;
+}
 QStackedWidget QWidget {
    background-color: $fileFrameBG;
 }
@@ -10,8 +13,6 @@ QLabel {
    color: $textColor;
 }
 QToolButton {
-   font-family: $fontFamily;
-   font-size: $normalSize;
    background-color: transparent;
 }
 QAbstractButton::menu-indicator {
@@ -65,9 +66,6 @@ QFrame#left_top #app_mode {
 QFrame#left_top, QFrame#topBar {
    background-color: $topBarBG;
 }
-#left_top QLabel, #topBar QLabel {
-   color: $textColor;
-}
 QFrame#topBar QToolButton#close:hover {
    border: none;
    background-color: $closeHoverBG;
@@ -99,14 +97,10 @@ QFrame#ttl_frame {
 QFrame#ttl_frame QLabel {
    font-family: $fontFamily;
    font-size: $bigSize;
-   color: $textColor;
 }
 QFrame#dlg_frame {
    border: $shapeBorder2 $innerBorder;
    background-color: $leftPaneBG;
-}
-QFrame#dlg_frame QLabel {
-   color: $textColor;
 }
 QPushButton {
    border: $shapeBorder1 $innerBorder;
@@ -154,6 +148,7 @@ QFrame[frameShape="5"]:hover {
 QFrame#fileFrame {
    border: none;
    border-right: $shapeBorder2 $borderColor;
+   background-color: $fileFrameBG;
 }
 QScrollBar:vertical {
    border: none;
@@ -198,9 +193,6 @@ QFrame#note_header {
 }
 QFrame#note_header > QWidget {
    background-color: transparent;
-}
-QFrame#note_header QLabel {
-   color: $textColor;
 }
 /* QTreeView */
 QTreeView {
@@ -252,9 +244,6 @@ QHeaderView::section {
    color: $altTextColor;
    border: 1px solid $innerBorder;
 }
-QFrame#fileFrame {
-   background-color: $fileFrameBG;
-}
 /* ------------------------- */
 QFrame#head {
    border-bottom: 2px solid $innerBorder;
@@ -264,11 +253,9 @@ QFrame#head QToolButton {
    background-color: transparent;
 }
 QFrame#noteHolder QToolButton:hover {
-   border: none;
    background-color: $hoverBG;
 }
 QFrame#labels {
-   border: none;
    background-color: $headerBG3;
 }
 QFrame#labels QLabel {
@@ -282,7 +269,7 @@ QFrame#btns QToolButton {
    background-color: transparent;
 }
 /* ------------------------- */
-QFrame#inner QTextBrowser{
+QFrame#inner QTextBrowser {
    border: none;
    background-color: $leftPaneBG;
    color: $textColor;
@@ -315,9 +302,6 @@ QFrame#form QPlainTextEdit {
    color: $textColor;
    selection-color: $selectedText;
    selection-background-color: $selectedBG;
-}
-QFrame#form QLabel#label_2 {
-   color: $textColor;
 }
 /* ----- QDateEdit ----- */
 QDateEdit {
@@ -446,12 +430,12 @@ QMenu::item {
    background-color: transparent;
    color: $textColor;
 }
-QMenu::item:disabled {
-   background-color: transparent;
+QMenu::item:disabled, QMenu::item:selected:disabled {
+   background-color: $headerBG3;
    color: $textColor2;
 }
 QMenu::item:selected {
-   background-color: $headerBG;
+   background-color: $hoverBG;
 }
 QMenu::separator {
    height: 2px;
@@ -464,9 +448,6 @@ QScrollArea#scrollFileInfo {
 QFrame#form_info {
    background-color: transparent;
    border: none;
-}
-QFrame#form_info QLabel {
-   color: $textColor;
 }
 /* ---- openDB ---- */
 QTableWidget {
@@ -483,13 +464,6 @@ QTableWidget::item:selected:!active {
 QTableWidget::item:selected:active {
    color: $selectedText;
    background-color: $selectedBG;
-}
-/* ---- Dup files ---- */
-QFrame#dup_frame {
-   border: none;
-}
-QFrame#dup_frame QLabel {
-   color: $textColor;
 }
 /* END of common qss */
 /* below are special qss which are used for dynamic style switching in code */

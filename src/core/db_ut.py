@@ -9,7 +9,7 @@ from . import app_globals as ag, create_db
 
 
 def dir_tree_select() -> list: # type: ignore
-    sql2 = ('select p.parent, d.id, p.multy, p.hide, p.file_id, '
+    sql2 = ('select p.parent, d.id, d.multy, p.hide, p.file_id, '
                'COALESCE(p.tool_tip, d.name), d.name '
                'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
@@ -190,13 +190,13 @@ def lost_files():
     # check if link to the @@Lost exists in dir tree
     sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
     # add hidden link into dir tree to folder @@Lost
-    sql3 = 'insert into parentdir values (0, 1, 0, 1, 0, "@@Lost")'
+    sql3 = 'insert into parentdir (parent, id, hide, file_id) values (0, 1, 1, 0)'
     # clear @@Lost
     sql4 = 'delete from filedir where dir = 1'
     # check if the @@Lost dir exists
     sql5 = "select 1 from dirs where id = 1"
     # create @@Lost dir
-    sql6 = "insert into dirs values (1, '@@Lost')"
+    sql6 = "insert into dirs (id, name) values (1, '@@Lost')"
     # clear @Lost from files that has copies in other dir(s)
     sql7 = (
         'with x(id, cnt) as (select file, count(*) '
@@ -224,6 +224,8 @@ def lost_files():
         if not existLost:
             conn.cursor().execute(sql6).fetchone()
 
+    if not ag.db.conn:
+        return
     try:
         with ag.db.conn as conn:
             has_lost_files = conn.cursor().execute(sql0).fetchone()
@@ -770,12 +772,12 @@ def save_file_id(d_data: ag.DirData):
 
 def insert_dir(dir_name: str, parent: int) -> int:
     sql2 = 'insert into dirs (name) values (?);'
-    sql3 = 'insert into parentdir values (?, ?, 0, 0, 0, ?);'
+    sql3 = 'insert into parentdir (parent, id, hide, file_id) values (?, ?, 0, 0);'
     with ag.db.conn as conn:
         curs = conn.cursor()
         curs.execute(sql2, (dir_name,))
         id = conn.last_insert_rowid()
-        curs.execute(sql3, (parent, id, dir_name))
+        curs.execute(sql3, (parent, id,))
     return id
 
 def copy_existent(file_id: int, parent_dir: int) -> int:
@@ -826,7 +828,7 @@ def break_link(folder: int, parent: int) -> int:
     """
     sql1 = 'delete from parentdir where (parent, id) = (?,?)'
     sql2 = 'select count(*) from parentdir where id = ?'
-    sql3 = 'update parentdir set multy = 0 where id = ?'
+    sql3 = 'update dirs set multy = 0 where id = ?'
     sql4 = 'delete from dirs where id = ?'
     with ag.db.conn as conn:
         conn.cursor().execute(sql1, (parent, folder))
@@ -838,21 +840,16 @@ def break_link(folder: int, parent: int) -> int:
         return cnt
 
 def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
-    sql1 = 'update parentdir set multy = 1 where (parent, id) = (:parent, :id)'
-    sql2 = 'insert into parentdir values (:parent, :id, 1, 0, :file_id, :tool_tip)'
+    sql1 = 'update dirs set multy = 1 where id = :id'
+    sql2 = 'insert into parentdir (parent, id, hide, file_id) values (:parent, :id, 0, :file_id)'
     with ag.db.conn as conn:
         try:
-            conn.cursor().execute(
-                sql1,
-                {'parent': dir_data.parent_id,
-                 'id': dir_data.id,}
-            )
+            conn.cursor().execute(sql1, {'id': dir_data.id,})
             conn.cursor().execute(
                 sql2,
                 {'parent': parent,
                  'id': dir_data.id,
-                 'file_id': dir_data.file_id,
-                 'tool_tip':dir_data.tool_tip,}
+                 'file_id': dir_data.file_id,}
             )
             return True
         except apsw.ConstraintError:

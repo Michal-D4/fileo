@@ -6,7 +6,7 @@ from . import app_globals as ag
 TABLES = (
     (                # settings
     'CREATE TABLE IF NOT EXISTS settings ('
-    'key text NOT NULL, '
+    'key text PRIMARY KEY NOT NULL, '
     'value blob); '
     ),
     (                # files
@@ -29,7 +29,8 @@ TABLES = (
     (                # dirs
     'CREATE TABLE IF NOT EXISTS dirs ('
     'id integer PRIMARY KEY NOT NULL, '
-    'name text); '
+    'name text, '
+    'multy integer not null default 0); '
     ),
     (                # paths
     'CREATE TABLE IF NOT EXISTS paths ('
@@ -48,7 +49,6 @@ TABLES = (
     'CREATE TABLE IF NOT EXISTS parentdir ('
     'parent integer NOT NULL, '
     'id integer NOT NULL, '
-    'multy integer not null default 0, '
     'hide integer not null default 0, '
     'file_id integer not null default 0, '
     'tool_tip text, '
@@ -96,41 +96,9 @@ TABLES = (
     'extension text); '
     ),
 )
-setting_names = (     # DB settings only
-    "APP_MODE",
-    "AUTHOR_SEL_LIST",
-    "EXT_SEL_LIST",
-    "TAG_SEL_LIST",
-    "DIR_CHECK",
-    "SUB_DIR_CHECK",
-    "TAG_CHECK",
-    "IS_ALL",
-    "EXT_CHECK",
-    "AUTHOR_CHECK",
-    "DATE_TYPE",
-    "AFTER",
-    "BEFORE",
-    "AFTER_DATE",
-    "BEFORE_DATE",
-    "OPEN_CHECK",
-    "OPEN_OP",
-    "OPEN_VAL",
-    "RATING_CHECK",
-    "RATING_OP",
-    "RATING_VAL",
-    "LAST_SCAN_OPENED",
-    "SHOW_HIDDEN",
-    "DIR_HISTORY",
-    "RECENT_FILES",
-    "SEARCH_FILE",
-    "NOTE_EDIT_STATE",
-    "FILTER_FILE_ROW",
-    "SELECTED_DIRS",
-    "SEARCH_BY_NOTE",
-)
 
 APP_ID = 1718185071
-USER_VER = 21
+USER_VER = 22
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -153,11 +121,7 @@ def tune_new_version() -> bool:
     return True
 
 def convert_to_new_version(conn, old_v):
-    # logger.info(f'<<<  {old_v=}, {USER_VER=}')
-    if old_v == 0:
-        create_tables(conn)
-        return USER_VER
-
+    logger.info(f'<<<  {old_v=}, {USER_VER=}')
     if old_v < 15:
         update_to_v15(conn)
     elif old_v == 15:
@@ -170,7 +134,10 @@ def convert_to_new_version(conn, old_v):
     if old_v < 21:
         update_to_v21(conn)
 
-    initialize_settings(conn)
+    if old_v < 22:
+        update_to_v22(conn)
+
+    conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
     # logger.info('>>>')
 
 def update_to_v15(conn: apsw.Connection):
@@ -181,9 +148,9 @@ def update_to_v15(conn: apsw.Connection):
 
 def update_to_v16(conn: apsw.Connection):
     sql = """\
-    update parentdir set tool_tip = null \
-    from dirs d where parentdir.id = d.id \
-    and parentdir.tool_tip = d.name;\
+update parentdir set tool_tip = null \
+from dirs d where parentdir.id = d.id \
+and parentdir.tool_tip = d.name;\
     """
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
@@ -224,14 +191,37 @@ in (select id from files where hash = :hash0);
     return True
 
 def update_to_v21(conn: apsw.Connection):
-    conn.cursor().execute(
-        'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
-    )
+    try:
+        conn.cursor().execute(
+            'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
+        )
+    except apsw.SQLError:
+        pass
 
-def create_db(db_name: str) -> apsw.Connection:
-    return apsw.Connection(db_name)
+def update_to_v22(conn: apsw.Connection):
+    sql = """\
+update dirs set multy = 1 where id in (\
+select id from parentdir p group by id having count(*) > 1)\
+    """
+    def settings_add_primary_key():
+        sql1 = 'INSERT or ignore INTO copy_stns SELECT * FROM settings'
+        tbl_def = TABLES[0].replace("settings", "copy_stns")
+        curs.execute(tbl_def)
+        curs.execute(sql1)
+        curs.execute('DROP TABLE settings')
+        curs.execute('ALTER TABLE copy_stns RENAME TO settings')
 
-def create_tables(conn: apsw.Connection):
+    curs = conn.cursor()
+    settings_add_primary_key()
+    try:
+        curs.execute('ALTER TABLE parentdir DROP multy;')
+        curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
+        curs.execute(sql)
+    except apsw.SQLError as err:
+        logger.info(f'{err=}')
+
+def create_tables(db_name: str):
+    conn = apsw.Connection(db_name)
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
     cursor = conn.cursor()
@@ -239,29 +229,13 @@ def create_tables(conn: apsw.Connection):
         cursor.execute(tbl)
 
     initiate_db(conn)
-
-def initialize_settings(conn):
-    sql0 = 'select key from settings'
-    sql1 = 'delete from settings where key = ?'
-    sql2 = 'insert or ignore into settings (key) values (:key)'
-
-    cursor = conn.cursor()
-    for key in conn.cursor().execute(sql0):
-        if key not in setting_names:
-            cursor.execute(sql1, key)
-
-    for name in setting_names:
-        cursor.execute(sql2, {'key': name})
-
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 
 def initiate_db(connection):
     sql = (
-        'insert or ignore into dirs (id) values (:key)',
-        'insert or ignore into dirs values (:key, :val)',
+        'insert or ignore into dirs (id, name) values (:key, :val)',
+        'insert into parentdir (parent, id, hide, file_id) values (?, ?, ?, ?)'
     )
     curs = connection.cursor()
-    curs.execute(sql[0], {'key': 0})
-    curs.execute(sql[1], {'key': 1, 'val': '@@Lost'})
-
-    initialize_settings(connection)
+    curs.execute(sql[0], {'key': 1, 'val': '@@Lost'})
+    curs.execute(sql[1], (0, 1, 1, 0))

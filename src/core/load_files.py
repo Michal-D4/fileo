@@ -63,6 +63,8 @@ class loadFiles(QObject):
             file = Path(line)
             self.drop_file(file)
 
+        if self.ext_inserted:
+            ag.signals_.user_signal.emit("ext inserted")
         self.conn.close()
 
     def drop_file(self, filename: Path):

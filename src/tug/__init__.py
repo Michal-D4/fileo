@@ -41,7 +41,6 @@ entry_point: str = None
 open_db = None  # keep OpenDB instance, need !!!
 cfg_path = Path()
 config = {}
-settings = None
 qss_params = {}
 dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
@@ -57,7 +56,6 @@ def new_window(db_name: str):
     else:
         logger.info(f'not frozen: {db_name=}, {entry_point}')
         subprocess.Popen(
-
             [sys.executable, entry_point, db_name, 'False', ],  # sys.executable - python interpreter
         )
 
@@ -65,9 +63,7 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
     used to restore settings on application level
     """
-    global settings
-    if not settings:
-        settings = QSettings(MAKER, APP_NAME)
+    settings = QSettings(MAKER, APP_NAME)
     try:
         to_set = settings.value(key, default)
     except (TypeError, SystemError):
@@ -145,9 +141,7 @@ def save_app_setting(**kwargs):
     """
     if not kwargs:
         return
-    global settings
-    if not settings:
-        settings = QSettings(MAKER, APP_NAME)
+    settings = QSettings(MAKER, APP_NAME)
 
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))

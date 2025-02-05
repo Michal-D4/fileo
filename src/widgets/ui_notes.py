@@ -34,6 +34,8 @@ class Ui_FileNotes(object):
         self.tagEdit.setObjectName("tagEdit")
         self.horizontalLayout.addWidget(self.tagEdit)
         self.srch_in_notes = QtWidgets.QToolButton(parent=self.head)
+        self.srch_in_notes.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.srch_in_notes.setAutoRaise(True)
         self.srch_in_notes.setObjectName("srch_in_notes")
         self.horizontalLayout.addWidget(self.srch_in_notes)
         self.expand = QtWidgets.QToolButton(parent=self.head)

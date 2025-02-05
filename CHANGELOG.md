@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.28 - 2025, 05 February
+* Revised saving of settings between sessions.
+* Fixed a several bugs based on testing results on a clean Linux system.
+* fileo.AppImage created for Linux deployment.
+
 ## 1.3.27 - 2025, 27 January
 * Human readable file size
 * Copy information from the "File info" tab to the clipboard
