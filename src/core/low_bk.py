@@ -143,7 +143,8 @@ def create_open_db():
 def init_db(db_path: str):
     if db_path:
         db_open = OpenDB(ag.app)
-        db_open.check_and_open(db_path)
+        if not db_open.open_existed(db_path):
+            db_open.close()
 
 def scan_disk():
     """
@@ -254,19 +255,18 @@ def enable_next_prev(param: str):
     ag.app.btn_prev.setDisabled(prev == 'no')
 
 def srch_files_by_note(param: str):
-    srch, _ = param.split(',')
     row_cnt = srch_files_common(param, db_ut.get_all_notes())
     if row_cnt:
-        ag.app.ui.files_heading.setText(f'Found files, text in notes "{srch}"')
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{param[:-3]}"')
         ag.set_mode(ag.appMode.FOUND_FILES)
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search in notes',
-            f'Text "{srch}" not found in notes!',
+            f'Text "{param[:-3]}" not found in notes!',
             icon=QMessageBox.Icon.Warning)
 
 def srch_files_common(param: str, search_in) -> int:
-    srch, key = param.split(',')
+    srch, key = param[:-3],param[-3:]
     def srch_prepare():
         p = fr'\b{srch}\b' if key[2] == '1' else srch    # match whole word
         rex = re.compile(p) if key[1] == '1' else re.compile(p, re.IGNORECASE)
@@ -274,7 +274,7 @@ def srch_files_common(param: str, search_in) -> int:
         return {
             '000': lambda x: q in x.lower(),  # ignore case
             '010': lambda x: srch in x,       # case sensitive
-        }.get(key, lambda x: rex.search(x))
+        }.get(key, lambda x: rex.search(x))   # lambda x: rex.search(x); defoult: key = 'x11'
 
     srch_exp = srch_prepare()
     last_id = 0
@@ -292,15 +292,14 @@ def srch_files_common(param: str, search_in) -> int:
     return model.rowCount()
 
 def find_files_by_name(param: str):
-    srch, _ = param.split(',')
     row_cnt = srch_files_common(param, db_ut.get_file_names())
     if row_cnt:
-        ag.app.ui.files_heading.setText(f'Found files "{srch}"')
+        ag.app.ui.files_heading.setText(f'Found files "{param[:-3]}"')
         ag.set_mode(ag.appMode.FOUND_FILES)
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search files',
-            f'File "{srch}" not found!',
+            f'File "{param[:-3]}" not found!',
             icon=QMessageBox.Icon.Warning)
 
 def set_preferences():
@@ -395,7 +394,6 @@ def restore_selected_dirs():
     model.clearSelection()
     idx = QModelIndex()
     for br in branches:
-        # logger.info(f'{br=}')
         idx = expand_branch(branch=br)
         model.select(idx, QItemSelectionModel.SelectionFlag.Select)
     set_current_dir(idx)
@@ -458,7 +456,6 @@ def change_mode(prev_mode: int):
 
     if not ag.db.conn:
         return
-    # logger.info(f'{ag.mode=!r}, {prev=!r}')
     if (ag.mode is ag.appMode.FILTER_SETUP
         or ag.mode is prev):
         return
@@ -624,7 +621,6 @@ def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
         ag.file_list.scrollTo(curr)
         ag.app.ui.current_filename.setText(file_name(curr))
-        # logger.info(f'{curr.data(Qt.ItemDataRole.DisplayRole)}, {curr.row()=}')
         file_notes_show(curr)
 
 def copy_file_name():
@@ -688,7 +684,6 @@ def open_file_by_model_index(index: QModelIndex):
     ag.add_file_to_recent(index.data(Qt.ItemDataRole.UserRole).id)
 
 def open_with_url(path: str) -> bool:
-    # logger.info(f'{path=}')
     url = QUrl()
     return QDesktopServices.openUrl(url.fromLocalFile(path))
 
@@ -1037,5 +1032,4 @@ def file_notes_show(file_idx: QModelIndex):
         file_idx.data(Qt.ItemDataRole.UserRole).id
         if file_idx.isValid() else 0
     )
-    # logger.info(f'{file_id=}')
     ag.file_data.set_data(file_id)

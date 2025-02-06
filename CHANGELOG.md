@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.29 - 2025, 06 February
+* fix file search error if template contains comma
+* do not open DB on startup if used
+
 ## 1.3.28 - 2025, 05 February
 * Revised saving of settings between sessions.
 * Fixed a several bugs based on testing results on a clean Linux system.

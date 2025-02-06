@@ -150,11 +150,27 @@ The Apply button applies a specified filter without closing the Filter Setup dia
 
 The Done button applies the filter, closes the dialog, and switches the application to "**Filter Mode**". In this mode, when you change the selection in any of the fields on the left panel (Folders, Tags, Extensions, Authors), the file list will immediately change accordingly.
 
-### How to find files by name
+### Search files by name
 
 ![image-20230428203253627](https://github.com/Michal-D4/fileo/raw/main/img/find_file.jpg)
 
-The search is performed by pressing the Enter key. "Aa" is a case sensitive search, if checked, "ab" - exact search, but you can use wildcards: "*" - any number of any letters, or "?" - any single letter.
+Search dialog is opened by clicking button ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name or by shortcut `Ctrl-F`.
+
+The search is performed by pressing the Enter key. "Aa" is a case sensitive search, if checked, "ab" - full word match.
+
+### Search files by text in notes
+
+![search-in-notes](https://github.com/Michal-D4/fileo/raw/main/img/search-in-notes.jpg)
+
+Search dialog is opened by clicking button ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files or by shortcut `Ctrl-Shift-F`.
+
+The available options are
+
+- regular expression,
+- case sensitive,
+- match full word.
+
+The regular expression and match full word options are mutually exclusive. 
 
 ### How to make notes to the file
 

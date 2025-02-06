@@ -106,7 +106,7 @@ class OpenDB(QWidget, Ui_openDB):
 
     def add_db_name(self, db_path:str):
         logger.info(f'{db_path=}')
-        if self.open_if_here(db_path):
+        if self.open_existed(db_path):
             return
 
         self.open_if_ok(db_path)
@@ -115,7 +115,7 @@ class OpenDB(QWidget, Ui_openDB):
         if self.verify_db_file(db_path):
             now = str(datetime.now().replace(microsecond=0))
             self.set_cell_0(db_path, True, now)
-            self.open_db(db_path, False)
+            self.open_db(db_path)
             return
         ag.show_message_box(
             'Error open DB',
@@ -123,11 +123,10 @@ class OpenDB(QWidget, Ui_openDB):
             icon=QMessageBox.Icon.Critical
         )
 
-    def open_if_here(self, db_path: str) -> bool:
+    def open_existed(self, db_path: str) -> bool:
         for item, used, _ in self.get_item_list():
             if item == db_path:
-                self.check_and_open(db_path, used)
-                return True
+                return self.check_and_open(db_path, used)
         return False
 
     def add_db(self):
@@ -175,9 +174,7 @@ class OpenDB(QWidget, Ui_openDB):
         db_path, used, _ = it.data(Qt.ItemDataRole.UserRole)
         self.check_and_open(db_path, used)
 
-    def open_db(self, db_path: str, used: bool):
-        if used:
-            return
+    def open_db(self, db_path: str):
         if ag.db.conn:
             tug.save_app_setting(
                 FILE_LIST_HEADER=ag.file_list.header().saveState()
@@ -187,14 +184,17 @@ class OpenDB(QWidget, Ui_openDB):
         ag.signals_.open_db_signal.emit(db_path)
 
     def check_and_open(self, db_path: str, used: bool=False) -> bool:
+        if used:
+            return False
         if create_db.check_app_schema(db_path):
-            self.open_db(db_path, used)
-        else:
-            ag.show_message_box(
-                'Error open DB',
-                f'Database "{ag.db.path}" is corrupted',
-                icon=QMessageBox.Icon.Critical
-            )
+            self.open_db(db_path)
+            return True
+        ag.show_message_box(
+            'Error open DB',
+            f'Database "{ag.db.path}" is corrupted',
+            icon=QMessageBox.Icon.Critical
+        )
+        return False
 
     def open_in_new_window(self, db_path: str):
         if ag.db.conn:
@@ -213,7 +213,7 @@ class OpenDB(QWidget, Ui_openDB):
 
     def mark_not_used(self, row: int):
         item = self.listDB.item(row, 0)
-        path, used, dt = item.data(Qt.ItemDataRole.UserRole)
+        path, _, dt = item.data(Qt.ItemDataRole.UserRole)
         name = Path(path).name
         res = ag.show_message_box(
             f'Mark DB {name} as currently unused',

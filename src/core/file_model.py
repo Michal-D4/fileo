@@ -131,8 +131,6 @@ class fileModel(QAbstractTableModel):
             return self.header[section]
 
     def setHeaderData(self, p_int, orientation, value, role=None):
-        if isinstance(value, str):
-            value = value.split(' ')
         self.header = value
 
     def setData(self, index, value, role: Qt.ItemDataRole):

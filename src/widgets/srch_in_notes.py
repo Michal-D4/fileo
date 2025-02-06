@@ -89,7 +89,7 @@ class srchInNotes(QWidget):
 
         ag.save_settings(SEARCH_BY_NOTE=(txt, rex, case, word))
         ag.signals_.user_signal.emit(
-            f'srch_files_by_note\\{txt},{int(rex)}{int(case)}{int(word)}'
+            f'srch_files_by_note\\{txt}{int(rex)}{int(case)}{int(word)}'
         )
         self.close()
 
