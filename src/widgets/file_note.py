@@ -66,6 +66,9 @@ class fileNote(QWidget):
         def copy_link():
             QApplication.clipboard().setText(self.ui.textBrowser.anchorAt(pos))
 
+        def copy_html():
+            QApplication.clipboard().setText(self.ui.textBrowser.toHtml())
+
         def read_note_file(pp: Path):
             with open(pp) as ff:
                 return ff.read()
@@ -120,6 +123,7 @@ class fileNote(QWidget):
         acts = menu.actions()
         acts[1].setEnabled(bool(self.ui.textBrowser.anchorAt(pos)))
         menu.addSeparator()
+        menu.addAction('Copy HTML')
         menu.addAction(f'Save "{filepath.name}" notes')
         act = menu.exec(self.ui.textBrowser.mapToGlobal(pos))
         if act:
@@ -127,6 +131,8 @@ class fileNote(QWidget):
                 save_notes_to_file()
             elif 'Link' in act.text():
                 copy_link()
+            elif act.text() == 'Copy HTML':
+                copy_html()
 
     def set_text(self, note: str):
         def set_note_title():

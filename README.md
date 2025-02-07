@@ -113,7 +113,8 @@ After creating the report (if duplicates are detected), you can delete all dupli
 
 There are several methods to add files:
 
-1. Open "Search for files..." dialog with main menu item "Scan disk for files": ![scan_disk_dialog](https://github.com/Michal-D4/fileo/raw/main/img/scan_disk_dialog.png)
+1. Open "Search for files..." dialog with main menu item "Scan disk for files":   
+   ![scan_disk_dialog](https://github.com/Michal-D4/fileo/raw/main/img/scan_disk_dialog.png)
 
 2. drag files from the file explorer (or similar application) to the folder in the folder tree.
 

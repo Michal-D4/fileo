@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.30 - 2025, 07 February
+* some minor changes, aligned top bar along the entire length, README.md, etc.
+
 ## 1.3.29 - 2025, 06 February
 * fix file search error if template contains comma
 * do not open DB on startup if used
