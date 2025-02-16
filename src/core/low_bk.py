@@ -48,6 +48,7 @@ def set_user_action_handlers():
         "Dirs Edit tooltip": edit_tooltip,
         "Dirs Toggle hidden state": toggle_hidden_state,
         "Dirs Import files": import_files,
+        "Dirs Copy to clipboard": copy_trees,
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
         "author_inserted": populate_author_list,
@@ -101,6 +102,46 @@ def set_user_action_handlers():
             )
 
     return execute_action
+
+def copy_trees():
+    ss = '🗆🗇'
+    legend = '\nLegend: 🗆 - single folder, 🗇 - multy'
+    def children(ini: list):
+        dd = []
+        for name1, id1 in ini:
+            first = f'{name1}/' if id1 else ''
+            for name2, id2, mu in db_ut.children_names(id1):
+                dd.append((f'{first}{ss[mu]}{name2}', id2))
+        if dd:
+            tt.extend(dd)
+            children(dd)
+
+    idxs = ag.dir_list.selectionModel().selectedIndexes()
+    dirs = []
+    tt = []
+    ii = 0
+    model = ag.dir_list.model()
+    root_child = model.index(0, 0, QModelIndex())
+    root_rows = model.rowCount(root_child.parent())
+
+    for idx in idxs:
+        if not idx.parent().isValid():  # child of root
+            ii += 1
+            if ii == root_rows:
+                dirs = [('', 0)]
+                break
+        udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
+        dirs.append((
+            f'{ss[udat.multy]}{idx.data(Qt.ItemDataRole.DisplayRole)}',
+            udat.id
+        ))
+    else:
+        tt.extend(dirs)
+    children(dirs)
+    qq = [x[0] for x in tt]
+    qq.sort(key=str.lower)
+    qq.append(legend)
+    QApplication.clipboard().setText('\n'.join(qq))
 
 def new_window(db_name: str=''):
     tug.save_app_setting(MainWindowGeometry=ag.app.normalGeometry())
@@ -393,22 +434,21 @@ def restore_selected_dirs():
     model = ag.dir_list.selectionModel()
     model.clearSelection()
     idx = QModelIndex()
+    first = True
     for br in branches:
         idx = expand_branch(branch=br)
+        if first:
+            ag.dir_list.setCurrentIndex(idx)
+            first = False
         model.select(idx, QItemSelectionModel.SelectionFlag.Select)
-    set_current_dir(idx)
-
-def set_current_dir(idx: QModelIndex):
-    if not idx.isValid():
-        mdl = ag.dir_list.model()
-        if mdl.rowCount():
-            idx = mdl.index(0, 0, QModelIndex())
-        else:
-            show_files([])
-    ag.dir_list.setCurrentIndex(idx)
+    curr = ag.dir_list.currentIndex()
+    if not curr.isValid():
+        model = ag.dir_list.model()
+        ag.dir_list.setCurrentIndex(model.index(0, 0, QModelIndex()))
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
+    # logger.info(f'perv: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     ag.app.collapse_btn.setChecked(False)
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))

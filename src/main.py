@@ -10,8 +10,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from . import tug
-from .core import app_globals as ag
-from .core.sho import shoWindow
+from .core import app_globals as ag, sho
 
 
 def run_instance(lock: list) -> bool:
@@ -35,12 +34,17 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
         if app.focusWidget() is ag.dir_list:
             ag.file_list.setFocus()
         else:
+            if ag.mode is ag.appMode.FILTER:
+                ag.dir_list.selectionModel().selectionChanged.disconnect(ag.filter_dlg.dir_selection_changed)
+
             ag.dir_list.setFocus()
 
             sel_model = ag.dir_list.selectionModel()
-            cur_selection = sel_model.selection()
-            sel_model.select(cur_selection, QItemSelectionModel.SelectionFlag.Clear)
-            sel_model.select(cur_selection, QItemSelectionModel.SelectionFlag.Select)
+            selection = sel_model.selection()
+            sel_model.select(selection, QItemSelectionModel.SelectionFlag.Clear)
+            sel_model.select(selection, QItemSelectionModel.SelectionFlag.Select)
+            if ag.mode is ag.appMode.FILTER:
+                ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
     def set_style():
         styles = tug.prepare_styles(theme_key, to_save=log_qss)
@@ -58,7 +62,7 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
         logger.exception(f"styleSheet Error?: {e.args};", exc_info=True)
         return
 
-    main_window = shoWindow(db_name, first_instanse)
+    main_window = sho.shoWindow(db_name, first_instanse)
 
     main_window.show()
 

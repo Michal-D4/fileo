@@ -817,6 +817,13 @@ def dir_children(id: int) -> apsw.Cursor:
     with ag.db.conn as conn:
         return conn.cursor().execute(sql, (id,))
 
+def children_names(parent: int) -> apsw.Cursor:
+    sql = ('select d.name, d.id, d.multy from dirs d '
+          'join parentdir p on d.id = p.id where p.parent = ?;'
+    )
+    with ag.db.conn as conn:
+        return conn.cursor().execute(sql, (parent,))
+
 def get_dir_name(id: int) -> str:
     sql = 'select name from dirs where id = ?'
     res = ag.db.conn.cursor().execute(sql, (id,)).fetchone()

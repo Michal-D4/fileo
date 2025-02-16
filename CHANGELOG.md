@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.31 - 2025, 16 February
+* Fixed some issues with restoring the application state on startup.
+* Added the ability to copy a folder tree. This can be useful if you plan to reorganize the folder tree.
+
 ## 1.3.30 - 2025, 07 February
 * some minor changes, aligned top bar along the entire length, README.md, etc.
 

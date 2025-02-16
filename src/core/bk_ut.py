@@ -8,7 +8,7 @@ from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd,
+    drag_drop as dd, file_model,
 )
 from ..widgets import search_files as sf, workers, dup
 from .. import tug
@@ -43,12 +43,12 @@ def save_bk_settings():
             "RECENT_FILES": ag.recent_files,
             "APP_MODE": mode,
             "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
-            "FILTER_FILE_ROW": (
-                ag.file_list.currentIndex().row()
-                if ag.mode is ag.appMode.FILTER else 0
-            ),
             "SELECTED_DIRS" : selected_dirs(),
         }
+        if ag.mode is ag.appMode.FILTER:
+            model: file_model.fileProxyModel = ag.file_list.model()
+            idx = model.mapToSource(ag.file_list.currentIndex())
+            settings["FILTER_FILE_ROW"] = idx.row()
         ag.save_settings(**settings)
         low_bk.save_curr_file_id(ag.dir_list.currentIndex())
         ag.filter_dlg.save_filter_settings()
@@ -58,13 +58,9 @@ def save_bk_settings():
 def selected_dirs() -> list:
     idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
-    curr = ag.dir_list.currentIndex().internalPointer()
     for idx in idxs:
-        if idx.internalPointer() is curr:
-            continue
         branches.append(low_bk.define_branch(idx))
-    branches.append(low_bk.define_branch(ag.dir_list.currentIndex()))
-    return branches
+    return branches[::-1]
 
 @pyqtSlot()
 def search_files():
@@ -229,15 +225,18 @@ def toggle_show_column(state: bool, index: int):
 
 def restore_dirs():
     low_bk.set_dir_model()
+    restore_history()
     low_bk.restore_selected_dirs()
     ag.filter_dlg.restore_filter_settings()
-    restore_history()
     if ag.mode is ag.appMode.FILTER:
         low_bk.filtered_files()
         row = ag.get_setting("FILTER_FILE_ROW", 0)
-        idx = ag.file_list.model().index(row, 0)
-        ag.file_list.setCurrentIndex(idx)
-        ag.file_list.scrollTo(idx)
+        model: file_model.fileProxyModel = ag.file_list.model()
+        s_idx = model.sourceModel().index(row, 0)
+        if s_idx.isValid():
+            idx = model.mapFromSource(s_idx)
+            ag.file_list.setCurrentIndex(idx)
+            ag.file_list.scrollTo(idx)
     elif  ag.mode is ag.appMode.RECENT_FILES:
         low_bk.show_recent_files()
     elif  ag.mode is ag.appMode.FILTER_SETUP:
@@ -322,17 +321,18 @@ def dir_menu(pos):
     idx = ag.dir_list.indexAt(pos)
     menu = QMenu(self)
     if idx.isValid():
-        menu.addSeparator()
-        menu.addAction("Delete folder(s)\tDel")
+        menu.addAction("Create folder\tCtrl-W")
+        menu.addAction("Create folder as child\tCtrl-E")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
         menu.addAction("Edit tooltip")
         menu.addSeparator()
+        menu.addAction("Copy to clipboard")
+        menu.addSeparator()
         menu.addAction("Import files")
         menu.addSeparator()
-        menu.addAction("Create folder\tCtrl-W")
-        menu.addAction("Create folder as child\tCtrl-E")
+        menu.addAction("Delete folder(s)\tDel")
     else:
         menu.addAction("Create folder\tCtrl-W")
 

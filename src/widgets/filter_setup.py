@@ -1,3 +1,4 @@
+# from loguru import logger
 from PyQt6.QtCore import Qt, QDate, QPoint
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget
@@ -183,29 +184,41 @@ class FilterSetup(QWidget):
         for id in authors:
             db_ut.save_to_temp('author', id)
 
-    def dir_selection_changed(self):
+    def set_dir_list(self):
         indexes = ag.dir_list.selectedIndexes()
         dirs = []
         for idx in indexes:
             dirs.append(f"[{idx.data(Qt.ItemDataRole.DisplayRole)}]")
         dirs.sort(key=str.lower)
         self.ui.dir_list.setPlainText(', '.join(dirs))
+
+    def dir_selection_changed(self):
+        self.set_dir_list()
         if ag.mode is ag.appMode.FILTER and self.ui.selected_dir.isChecked():
             ag.signals_.user_signal.emit("filter_changed")
 
-    def tag_selection_changed(self, tags: list[str]):
+    def set_tag_list(self, tags: list[str]):
         self.ui.tag_list.setPlainText(', '.join([f"[{tag}]" for tag in tags]))
+
+    def tag_selection_changed(self, tags: list[str]):
+        self.set_tag_list(tags)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_tag.isChecked():
             ag.signals_.user_signal.emit("filter_changed")
 
-    def ext_selection_changed(self, exts: list[str]):
+    def set_ext_list(self, exts: list[str]):
         self.ui.ext_list.setPlainText(', '.join([f"[{ext}]" for ext in exts]))
+
+    def ext_selection_changed(self, exts: list[str]):
+        self.set_ext_list(exts)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_ext.isChecked():
             ag.signals_.user_signal.emit("filter_changed")
 
-    def author_selection_changed(self, authors: list[str]):
+    def set_author_list(self, authors: list[str]):
         self.ui.author_list.setPlainText(
             ', '.join([f"[{author}]" for author in authors]))
+
+    def author_selection_changed(self, authors: list[str]):
+        self.set_author_list(authors)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_author.isChecked():
             ag.signals_.user_signal.emit("filter_changed")
 
@@ -259,7 +272,7 @@ class FilterSetup(QWidget):
         self.ui.after_date.setDate(QDate.fromJulianDay(after))
         self.ui.before_date.setDate(QDate.fromJulianDay(before))
 
-        self.tag_selection_changed(ag.tag_list.get_selected())
-        self.ext_selection_changed(ag.ext_list.get_selected())
-        self.author_selection_changed(ag.author_list.get_selected())
-        self.dir_selection_changed()
+        self.set_tag_list(ag.tag_list.get_selected())
+        self.set_ext_list(ag.ext_list.get_selected())
+        self.set_author_list(ag.author_list.get_selected())
+        self.set_dir_list()
