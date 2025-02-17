@@ -294,9 +294,8 @@ You can switch theme in the preferences menu item:
 
 # Installation
 
-* Windows. Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge](https://sourceforge.net/projects/fileo/) where `x.y.z` - version and run it.
-
-
+* Windows. Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge Windows](https://sourceforge.net/projects/fileo/files/Windows/) where `x.y.z` - version and run it.
+* Linux. Download `fileo.AppImage` from [sourceforge Linux](https://sourceforge.net/projects/fileo/files/Linux/)
 
 * Linux and Windows
   install as Python package from PyPi:

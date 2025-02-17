@@ -104,14 +104,14 @@ def set_user_action_handlers():
     return execute_action
 
 def copy_trees():
-    ss = '🗆🗇'
-    legend = '\nLegend: 🗆 - single folder, 🗇 - multy'
+    ss = '¹²'
+    legend = f'\nLegend: {ss[0]} - single folder, {ss[1]} - multy'
     def children(ini: list):
         dd = []
         for name1, id1 in ini:
             first = f'{name1}/' if id1 else ''
             for name2, id2, mu in db_ut.children_names(id1):
-                dd.append((f'{first}{ss[mu]}{name2}', id2))
+                dd.append((f'{first}{name2}{ss[mu]}', id2))
         if dd:
             tt.extend(dd)
             children(dd)
@@ -132,7 +132,7 @@ def copy_trees():
                 break
         udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         dirs.append((
-            f'{ss[udat.multy]}{idx.data(Qt.ItemDataRole.DisplayRole)}',
+            f'{idx.data(Qt.ItemDataRole.DisplayRole)}{ss[udat.multy]}',
             udat.id
         ))
     else:
@@ -142,6 +142,16 @@ def copy_trees():
     qq.sort(key=str.lower)
     qq.append(legend)
     QApplication.clipboard().setText('\n'.join(qq))
+
+@pyqtSlot()
+def refresh_dir_list():
+    branch = define_branch(ag.dir_list.currentIndex())
+    set_dir_model()
+    idx = expand_branch(branch)
+    if not idx.isValid():
+        idx = ag.dir_list.model().index(0, 0, QModelIndex())
+
+    ag.dir_list.setCurrentIndex(idx)
 
 def new_window(db_name: str=''):
     tug.save_app_setting(MainWindowGeometry=ag.app.normalGeometry())
@@ -209,7 +219,9 @@ def get_branch(dir_id: int) -> list:
     branch = [dir_id]
     while dir_id:
         dir_id = db_ut.dir_min_parent(dir_id)
-        branch.append(dir_id)
+        if dir_id:
+            branch.append(dir_id)
+    branch.reverse()
     return branch
 
 def goto_file_in_branch(param: str):
@@ -218,7 +230,8 @@ def goto_file_in_branch(param: str):
         dir_id = db_ut.get_dir_id_for_file(file_id)
         brnch = get_branch(dir_id)
     else:
-        brnch = (int(it) for it in branch[0].split(','))
+        brnch = [int(it) for it in branch[0].split(',')]
+    brnch.append(False)
     idx = expand_branch(brnch)
 
     if idx.isValid():
@@ -361,8 +374,9 @@ def show_about():
 
 #region Common
 def save_branch(index: QModelIndex):
-    branch = define_branch(index)
-    db_ut.save_branch_in_aux(pickle.dumps(branch))
+    db_ut.save_branch_in_aux(
+        pickle.dumps(define_branch(index))
+    )
 
 def restore_branch() -> QModelIndex:
     val = db_ut.get_branch_from_aux()
@@ -383,6 +397,7 @@ def define_branch(index: QModelIndex) -> list:
             break
         item = item.parent()
     branch.reverse()
+    branch.append(ag.dir_list.isExpanded(index))
     return branch
 
 def get_dir_names_path(index: QModelIndex) -> list:
@@ -403,14 +418,18 @@ def get_dir_names_path(index: QModelIndex) -> list:
 def expand_branch(branch: list) -> QModelIndex:
     model = ag.dir_list.model()
     parent = QModelIndex()
+    if not branch:
+        return parent
+    model = ag.dir_list.model()
     item: dirItem = model.rootItem
-    for it in branch:
+    expanded = branch[-1]
+    for it in branch[:-1]:
         for i,child in enumerate(item.children):
             ud = child.user_data()
             if it == ud.id:
                 parent = model.index(i, 0, parent)
                 item = child
-                if item.children:
+                if expanded:
                     ag.dir_list.setExpanded(parent, True)
                 break
         else:
@@ -449,6 +468,8 @@ def restore_selected_dirs():
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     # logger.info(f'perv: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
+    # udat: ag.DirData = curr_idx.data(Qt.ItemDataRole.UserRole)
+    # logger.info(f'curr: {udat.id=}, {udat.parent_id=}')
     ag.app.collapse_btn.setChecked(False)
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))

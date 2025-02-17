@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.32 - 2025, 17 February
+* Minor change in copying folder tree
+* some other minor changes and improvements
+
 ## 1.3.31 - 2025, 16 February
 * Fixed some issues with restoring the application state on startup.
 * Added the ability to copy a folder tree. This can be useful if you plan to reorganize the folder tree.

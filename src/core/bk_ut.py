@@ -305,17 +305,6 @@ def restore_history():
 
     ag.history.set_history(*hist)
 
-@pyqtSlot()
-def refresh_dir_list():
-    """
-    QCheckBox stateChanged signal handler
-    """
-    branch = low_bk.define_branch(ag.dir_list.currentIndex())
-    low_bk.set_dir_model()
-    idx = low_bk.expand_branch(branch)
-
-    ag.dir_list.setCurrentIndex(idx)
-
 @pyqtSlot(QPoint)
 def dir_menu(pos):
     idx = ag.dir_list.indexAt(pos)

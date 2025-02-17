@@ -171,7 +171,7 @@ class shoWindow(QMainWindow):
         self.btn_next.setDisabled(True)
 
         self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')
-        self.refresh_tree.clicked.connect(bk_ut.refresh_dir_list)
+        self.refresh_tree.clicked.connect(low_bk.refresh_dir_list)
         self.refresh_tree.setDisabled(True)
 
         self.show_hidden = self._create_button("show_hide", 'show_hide', 'Show hidden folders')
@@ -198,7 +198,7 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def show_hide_click(self, state: bool):
-        bk_ut.refresh_dir_list()
+        low_bk.refresh_dir_list()
         self.show_hidden.setIcon(tug.get_icon("show_hide", int(state)))
 
     def setup_global_widgets(self):
