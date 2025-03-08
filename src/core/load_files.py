@@ -195,12 +195,12 @@ class loadFiles(QObject):
         return path_id
 
     def insert_extension(self, file: Path) -> int:
-        FIND_EXT = 'select id from extensions where extension = ?;'
+        FIND_EXT = 'select id from extensions where lower(extension) = ?;'
         INSERT_EXT = 'insert into extensions (extension) values (:ext);'
 
         ext = file.suffix.strip('.')
         cursor = self.conn.cursor()
-        item = cursor.execute(FIND_EXT, (ext,)).fetchone()
+        item = cursor.execute(FIND_EXT, (ext.lower(),)).fetchone()
         if item:
             return item[0]
 

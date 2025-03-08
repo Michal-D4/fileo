@@ -172,7 +172,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def l_file_info_press(self, e: QMouseEvent):
         if self.cur_page is not Page.INFO:
-            self.l_file_info.setToolTip("copy file info by Right button press [+Shift]")
+            self.l_file_info.setToolTip('copy file info by press "Right button + Shift"')
         self.switch_page(Page.INFO)
 
     def l_file_notes_press(self, e: QMouseEvent):

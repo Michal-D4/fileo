@@ -16,7 +16,7 @@ class dirItem(object):
         self.userData: ag.DirData = user_data
 
     def child(self, row):
-        return self.children[row]
+        return self.children[row] if self.children else None
 
     def childCount(self):
         return len(self.children)

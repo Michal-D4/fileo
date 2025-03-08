@@ -397,7 +397,7 @@ def define_branch(index: QModelIndex) -> list:
             break
         item = item.parent()
     branch.reverse()
-    branch.append(ag.dir_list.isExpanded(index))
+    branch.append(int(ag.dir_list.isExpanded(index)))
     return branch
 
 def get_dir_names_path(index: QModelIndex) -> list:

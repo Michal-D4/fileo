@@ -13,17 +13,21 @@ The graphical interface is shown in the image below.
 1. application mode, it determinates how files in the list (8) is selected.
 2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane.
 3. Describes how the list of files (8) was created.
-4. buttons related to the file list (8):
-   * ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files
-   * ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,
-   * ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the columns that will be visible in the file list
-5. a group of buttons for working with the folder tree: previous-next folder in the history of visited folders; show hidden folders; collapse all branches - expand the last branch if all branches were collapsed.
-6. left toolbar, it contains the following buttons from top to bottom:
-   1. menu button
-   2. switch to "DIR" mode, the file list displays files from the current folder
-   3. switch to the "FILTER" mode, the file list displays files according to the filter settings
-   4. open filter settings dialog, switch to "FILTER_SETUP" mode
-   5. hide/show left pane
+4. group of buttons related to the file list (8):  
+    ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files  
+    ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,  
+    ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the columns that will be visible in the file list
+5. a group of buttons for working with the folder tree:   
+    "previous  folder" &mdash; "next folder" in the folder history;   
+    refresh folder tree;  
+    show hidden folders;   
+    "collapse all branches" &mdash; "expand the last branch" if all branches were collapsed.
+6. left toolbar, it contains the following buttons from top to bottom:  
+    menu button;  
+    switch to "DIR" mode, the file list displays files from the current folder;  
+    switch to the "FILTER" mode, the file list displays files according to the filter settings;  
+    open filter settings dialog, switch to "FILTER_SETUP" mode;  
+    hide/show left pane
 7. the folder tree window
 8. the file list window
 9. panel for displaying/editing file data: notes, tags, authors (for books), file locations (file can be located in several folders)
@@ -33,12 +37,14 @@ The graphical interface is shown in the image below.
 13. the name of the file whose note is open in the editor, this is not displaying if no note is edited, click here to go to this file and the folder containing this file
 14. number of files in the file list
 
-The application works in three main modes: DIR, FILTER and FILTER_SETUP.
+The application works in three main modes: DIR, FILTER and FILTER_SETUP. 
+
 * In DIR mode, files are selected by the current directory in the "Folders" widget.
-* In FILTER mode, files are selected according to the parameters choosen in the FILTER_SETUP dialog.
-* In FILTER_SETUP mode. The filter setup dialog is openning, the file list is changing only by clicking the "Apply" or "Done" button.
+* In FILTER mode, files are selected according to the parameters chosen in the FILTER_SETUP dialog.
+* In FILTER_SETUP mode. The filter setup dialog is opening, the file list is changing only by clicking the "Apply" or "Done" button.
 
 There are three additional application modes: RECENT_FILES, FOUND_FILES and FILE_BY_REF.
+
 * RECENT_FILES - list of files you've recently done something with
 * FOUND_FILES - list of files you found using the search dialog
 * FILE_BY_REF - the file list window contains a file referenced from the note of some file. The transition to this mode occurs after clicking on the link.
@@ -62,7 +68,7 @@ As said, the app is about files. Files have a number of attributes:
     4. publication (books)
     5. date of last created/modified note to the file
 8. number of file openings
-9. size in bytes
+9. size
 10. number of pages - usually for books
 
 ## Folders
@@ -208,7 +214,7 @@ Here's how it appears in the note:
 
 1. The list of tags associated with the current file. You can input here a list of tags separated by commas. *It is the only place where the new tag can be created.* The new tags will appear in the list 2 and 4.
 2. The list of tags. The tags selected in this list apply to the file filter.
-3. The context menu in the list of tags. Selected tags are highlighted ('Linux' and 'package'). The tag  'package' is a current tag (last selected).
+3. The context menu in the list of tags. Selected tags are highlighted ('importlib' and 'Pandas'). The tag  'package' is a current tag (last selected).
 4. The tag selector. The tags selected here will appear in the list 1.
 
 ### Author selector
@@ -295,15 +301,19 @@ You can switch theme in the preferences menu item:
 # Installation
 
 * Windows. Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge Windows](https://sourceforge.net/projects/fileo/files/Windows/) where `x.y.z` - version and run it.
+
 * Linux. Download `fileo.AppImage` from [sourceforge Linux](https://sourceforge.net/projects/fileo/files/Linux/)
 
 * Linux and Windows
-  install as Python package from PyPi:
+  install as Python package from PyPi:  
 
   ```
     > pip install md2fileo
   ```
-  and then run with
+  
+  and then run with  
+  
+  
   ```
     > python -m fileo
   ```

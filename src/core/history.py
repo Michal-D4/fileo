@@ -46,7 +46,7 @@ class History(object):
         if not self.hist or not self.curr:
             return []
         self.is_hist = True
-        return [int(i) for i in self.hist[self.curr].split(',')]
+        return [int(eval(x)) for x in self.hist[self.curr].split(',')]
 
     def next_dir(self) -> list:
         kk: list = list(self.hist.keys())

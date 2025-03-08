@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.33 - 2025, 08 March
+* case insensitive file extensions
+* fixed critical error in displaying empty folder tree
+* fixed error in viewing folder history.
+
 ## 1.3.32 - 2025, 17 February
 * Minor change in copying folder tree
 * some other minor changes and improvements

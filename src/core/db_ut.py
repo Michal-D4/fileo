@@ -284,11 +284,11 @@ def insert_file(file_: list) -> int:
         return conn.last_insert_rowid()
 
     def _get_ext_id(conn: apsw.Connection) -> int:
-        sql1 = 'select id from extensions where extension = ?'
+        sql1 = 'select id from extensions where lower(extension) = ?'
         sql2 = 'insert into extensions (extension) values (?)'
         ext = PurePath(file_[1]).suffix.strip('.')
         curs = conn.cursor()
-        res = curs.execute(sql1, (ext,)).fetchone()
+        res = curs.execute(sql1, (ext.lower(),)).fetchone()
         if res:
             return res[0]
         curs.execute(sql2, (ext,)).fetchone()
