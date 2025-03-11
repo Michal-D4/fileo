@@ -390,7 +390,7 @@ def finish_loading(has_new_ext: bool):
     self.set_busy(False)
     if has_new_ext:
         ag.signals_.user_signal.emit("ext inserted")
-    low_bk.reload_dirs_changed(ag.dir_list.currentIndex())
+    low_bk.dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
 def check_duplicates(auto: bool=True):

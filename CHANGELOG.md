@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.34 - 2025, 11 March
+* revised folder history processing, walking through folder history
+
 ## 1.3.33 - 2025, 08 March
 * case insensitive file extensions
 * fixed critical error in displaying empty folder tree

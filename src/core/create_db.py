@@ -98,7 +98,7 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 22
+USER_VER = 23
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -112,7 +112,7 @@ def tune_new_version() -> bool:
     conn = ag.db.conn
     try:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
-        logger.info(f'{v=}')
+        logger.info(f'{v=}, {USER_VER=}')
         if v[0] != USER_VER:
             convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
@@ -122,103 +122,15 @@ def tune_new_version() -> bool:
 
 def convert_to_new_version(conn, old_v):
     logger.info(f'<<<  {old_v=}, {USER_VER=}')
-    if old_v < 15:
-        update_to_v15(conn)
-    elif old_v == 15:
-        update_to_v16(conn)
 
-    if old_v < 19:
-        if not update_to_v19(conn):
-            return
-
-    if old_v < 21:
-        update_to_v21(conn)
-
-    if old_v < 22:
-        update_to_v22(conn)
+    if old_v < 23:
+        update_to_v23(conn)
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
-    # logger.info('>>>')
 
-def update_to_v15(conn: apsw.Connection):
-    sql1 = "alter table parentdir ADD COLUMN tool_tip text"
-    conn.cursor().execute('pragma journal_mode=WAL')
-    conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    conn.cursor().execute(sql1)
-
-def update_to_v16(conn: apsw.Connection):
-    sql = """\
-update parentdir set tool_tip = null \
-from dirs d where parentdir.id = d.id \
-and parentdir.tool_tip = d.name;\
-    """
-    conn.cursor().execute('pragma journal_mode=WAL')
-    conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    conn.cursor().execute(sql)
-
-def update_to_v19(conn: apsw.Connection) -> bool:
-    """
-    in case of duplicate files,
-    link all notes to only one of the duplicate files
-    with the minimum file id
-    """
-    hash_sql = '''
-select f.hash from files f
-join filenotes fn on fn.fileid=f.id
-order by f.hash
-'''
-    id_upd ='''
-update filenotes set fileid = :minid where fileid
-in (select id from files where hash = :hash0);
-'''
-    min_id_sql = 'select min(id) from files where hash = ?'
-    curs = conn.cursor().execute(hash_sql)
-    hash0 = ''
-    updated = False
-    for hash1, *_ in curs:
-        if not hash1:
-            return False
-        if updated and hash1 == hash0:
-            continue
-        if not updated and hash1 == hash0:
-            min_id = conn.cursor().execute(min_id_sql, (hash0,)).fetchone()
-            conn.cursor().execute(id_upd, {'minid': min_id[0], 'hash0': hash0})
-            updated = True
-            continue
-        hash0 = hash1
-        updated = False
-
-    return True
-
-def update_to_v21(conn: apsw.Connection):
-    try:
-        conn.cursor().execute(
-            'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
-        )
-    except apsw.SQLError:
-        pass
-
-def update_to_v22(conn: apsw.Connection):
-    sql = """\
-update dirs set multy = 1 where id in (\
-select id from parentdir p group by id having count(*) > 1)\
-    """
-    def settings_add_primary_key():
-        sql1 = 'INSERT or ignore INTO copy_stns SELECT * FROM settings'
-        tbl_def = TABLES[0].replace("settings", "copy_stns")
-        curs.execute(tbl_def)
-        curs.execute(sql1)
-        curs.execute('DROP TABLE settings')
-        curs.execute('ALTER TABLE copy_stns RENAME TO settings')
-
-    curs = conn.cursor()
-    settings_add_primary_key()
-    try:
-        curs.execute('ALTER TABLE parentdir DROP multy;')
-        curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
-        curs.execute(sql)
-    except apsw.SQLError as err:
-        logger.info(f'{err=}')
+def update_to_v23(conn: apsw.Connection):
+    sql = 'delete from settings where key = ?'
+    conn.cursor().execute(sql, ('DIR_HISTORY',))
 
 def create_tables(db_name: str):
     conn = apsw.Connection(db_name)

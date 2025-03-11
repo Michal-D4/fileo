@@ -443,7 +443,6 @@ def set_dir_model():
     model: dirModel = dirModel()
     model.set_model_data()
     ag.dir_list.setModel(model)
-    ag.dir_list.setFocus()
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
@@ -467,7 +466,7 @@ def restore_selected_dirs():
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
-    # logger.info(f'perv: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
+    # logger.info(f'prev: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     # udat: ag.DirData = curr_idx.data(Qt.ItemDataRole.UserRole)
     # logger.info(f'curr: {udat.id=}, {udat.parent_id=}')
     ag.app.collapse_btn.setChecked(False)
@@ -992,7 +991,7 @@ def delete_folders():
             delete_tree(u_dat.id)
     model: dirModel = ag.dir_list.model()
     near_curr = model.neighbor_idx(cur_idx)
-    reload_dirs_changed(near_curr)
+    dirs_changed(near_curr)
     ag.history.check_remove()
 
 def delete_tree(dirid: int):
@@ -1000,7 +999,7 @@ def delete_tree(dirid: int):
         if not db_ut.break_link(dir_id, parent):
             delete_tree(dir_id)
 
-def reload_dirs_changed(index: QModelIndex, last_id: int=0):
+def dirs_changed(index: QModelIndex, last_id: int=0):
     set_dir_model()
     if index.isValid():
         branch = define_branch(index)

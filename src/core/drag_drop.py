@@ -147,7 +147,7 @@ def start_drag_dirs(action):
     )
 
     if bb is not Qt.DropAction.IgnoreAction:
-        low_bk.reload_dirs_changed(drop_target, dropped_ids[0])
+        low_bk.dirs_changed(drop_target, dropped_ids[0])
 
 @pyqtSlot(Qt.DropAction)
 def start_drag_files(action):
