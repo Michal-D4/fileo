@@ -104,6 +104,7 @@ def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
         try:
             v = conn.cursor().execute("PRAGMA application_id").fetchone()
+            logger.info(f'{v=}, {APP_ID=}')
         except apsw.NotADBError:
             return False
     return v[0] == APP_ID

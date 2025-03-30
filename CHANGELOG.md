@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.35 - 2025, 30 March
+* fix not opening DB in new window
+* clear filelist when create new DB
+
 ## 1.3.34 - 2025, 11 March
 * revised folder history processing, walking through folder history
 

@@ -462,7 +462,10 @@ def restore_selected_dirs():
     curr = ag.dir_list.currentIndex()
     if not curr.isValid():
         model = ag.dir_list.model()
-        ag.dir_list.setCurrentIndex(model.index(0, 0, QModelIndex()))
+        curr = model.index(0, 0, QModelIndex())
+        if not curr.isValid():
+            show_files([])
+        ag.dir_list.setCurrentIndex(curr)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):

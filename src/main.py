@@ -26,7 +26,7 @@ def run_instance(lock: list) -> bool:
     return True
 
 # @logger.catch           # to have traceback
-def start_app(app: QApplication, db_name: str, first_instanse: bool):
+def start_app(app: QApplication, db_name: str, first_instance: bool):
     from .core.win_win import set_app_icon
 
     @pyqtSlot(QWidget, QWidget)
@@ -62,7 +62,7 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
         logger.exception(f"styleSheet Error?: {e.args};", exc_info=True)
         return
 
-    main_window = sho.shoWindow(db_name, first_instanse)
+    main_window = sho.shoWindow(db_name, first_instance)
 
     main_window.show()
 
@@ -75,15 +75,17 @@ def start_app(app: QApplication, db_name: str, first_instanse: bool):
 
     sys.exit(app.exec())
 
-def main(entry_point: str, db_name: str, first_instanse: bool):
+def main(entry_point: str, db_name: str, first_instance: bool):
     app = QApplication([])
     tug.entry_point = entry_point
     tug.set_logger()
 
-    logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {db_name=}')
+    logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {first_instance=}')
+    logger.info(f'{entry_point=}')
+    logger.info(f'{db_name=}')
 
     lock = []
     if run_instance(lock):
-        start_app(app, db_name, first_instanse)
+        start_app(app, db_name, first_instance)
         if lock:
             lock[0].unlock()

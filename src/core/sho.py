@@ -34,9 +34,9 @@ def set_widget_to_frame(frame: QFrame, widget: QWidget):
 
 
 class shoWindow(QMainWindow):
-    def __init__(self, db_name: str, first_instanse: bool, parent = None) -> None:
+    def __init__(self, db_name: str, first_instance: bool, parent = None) -> None:
         super().__init__(parent)
-        self.first_instance = first_instanse
+        self.first_instance = first_instance
         self.loader: QObject = None
 
         self.ui = Ui_Sho()

@@ -201,7 +201,6 @@ class OpenDB(QWidget, Ui_openDB):
             tug.save_app_setting(
                 FILE_LIST_HEADER=ag.file_list.header().saveState()
             )
-        self.save_db_list('', db_path)
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
 
     def get_item_list(self) -> list:
