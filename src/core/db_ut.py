@@ -339,38 +339,35 @@ def tag_author_insert(conn: apsw.Connection, sqls: list, item: str, id: int):
         t_id = conn.last_insert_rowid()
         cursor.execute(sqls[2], (id, t_id))
 
-def insert_filenotes(id: int, file_notes: list):
-    """
-    id - file id
-    """
-    sql3 = (
-        'insert into filenotes values (?,?,?,?,?)'
-    )
+def insert_filenotes(file_id: int, file_notes: list):
+    if len(file_notes) == 0:
+        return
+    sql3 = 'insert into filenotes values (?,?,?,?,?)'
 
-    def get_max_note_id(cursor: apsw.Cursor) -> int:
+    def get_max_note_id() -> int:
         sql = 'select max(id) from filenotes where fileid = ?'
 
-        tt = cursor.execute(sql, (id,)).fetchone()
+        tt = cursor.execute(sql, (file_id,)).fetchone()
         return tt[0] if tt[0] else 0
 
-    def note_already_exists(cursor: apsw.Cursor, rec: list) -> bool:
+    def note_already_exists(rec: list) -> bool:
         """
         suppose that there can't be more than one note
         for the same file created at the same time
         """
         sql = 'select 1 from filenotes where (fileid, created, modified) = (?,?,?) '
-        tt = cursor.execute(sql, (id, rec[2], rec[3])).fetchone()
+        tt = cursor.execute(sql, (file_id, rec[3], rec[4])).fetchone()
         return bool(tt)
 
     with ag.db.conn as conn:
-        curs = conn.cursor()
-        max_note_id = get_max_note_id(curs)
+        cursor = conn.cursor()
+        max_note_id = get_max_note_id()
 
         for rec in file_notes:
-            if note_already_exists(curs, rec):
+            if note_already_exists(rec):
                 continue
             max_note_id += 1
-            curs.execute(sql3, (id, max_note_id, *rec[1:]))
+            cursor.execute(sql3, (file_id, max_note_id, rec[0], *rec[3:]))
 
 def recent_loaded_files() -> apsw.Cursor:
     sql = (
@@ -697,7 +694,13 @@ def update_files_field(id: int, field: str, val):
     with ag.db.conn as conn:
         conn.cursor().execute(sql, (val, id))
 
-def get_export_data(fileid: int) -> dict:
+def get_file_export(fileid: int) -> dict:
+    def in_export(sql: str) -> list:
+        tt = []
+        for cc in cursor.execute(sql, (fileid,)):
+            tt.append(cc[0])
+        return tt
+
     sql1 = (
         'select f.hash, f.filename, f.modified, f.opened, '
         'f.created, f.rating, f.nopen, f.size, f.pages, '
@@ -705,14 +708,10 @@ def get_export_data(fileid: int) -> dict:
         'on p.id = f.path where f.id = ?'
     )
     sql2 = (
-        'select id, filenote, created, modified '
-        'from filenotes where fileid = ?'
-    )
-    sql3 = (
         'select t.tag from tags t join filetag f on '
         'f.tagid = t.id where f.fileid = ?'
     )
-    sql4 = (
+    sql3 = (
         'select a.author from authors a join fileauthor f on '
         'f.aid = a.id where f.fileid = ?'
     )
@@ -725,20 +724,9 @@ def get_export_data(fileid: int) -> dict:
             return None
         res['file'] = tt
 
-        tt = []
-        for cc in cursor.execute(sql2, (fileid,)):
-            tt.append(cc)
-        res['notes'] = tt
+        res['tags'] = in_export(sql2)
 
-        tt = []
-        for cc in cursor.execute(sql3, (fileid,)):
-            tt.append(cc[0])
-        res['tags'] = tt
-
-        tt = []
-        for cc in cursor.execute(sql4, (fileid,)):
-            tt.append(cc[0])
-        res['authors'] = tt
+        res['authors'] = in_export(sql3)
 
     return res
 #endregion
@@ -895,12 +883,12 @@ def get_file_id_to_notes(file_id: int) -> int:
 
 def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
     sql_hash = (
-        "select filenote, id, modified, created from filenotes "
+        "select filenote, fileid, id, modified, created from filenotes "
         "where fileid in (select id from files where hash = ?) "
         "order by modified"
     )
     sql_id = (
-        "select filenote, id, modified, created from filenotes "
+        "select filenote, fileid, id, modified, created from filenotes "
         "where fileid  = ? order by modified"
     )
     if file_id <= 0:
@@ -946,6 +934,19 @@ def insert_note(fileid: int, note: str) -> int:
             }
         )
         return ts[0]
+
+def update_note_exported(fileid: int, noteid: int, note: str) -> int:
+    sql1 = ('update filenotes set filenote = :filenote '
+        'where (fileid, id) = (:fileid, :id)')
+
+    with ag.db.conn as conn:
+        conn.cursor().execute(sql1,
+            {
+                'fileid': fileid,
+                'id': noteid,
+                'filenote': note,
+            }
+        )
 
 def update_note(fileid: int, noteid: int, note: str) -> int:
     sql0 = 'select modified from filenotes where (fileid, id) = (:fileid, :id)'

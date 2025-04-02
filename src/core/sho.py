@@ -456,7 +456,7 @@ class shoWindow(QMainWindow):
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
 
         if ag.db.conn:
-            low_bk.save_db_list()
+            low_bk.save_db_list_at_close()
             settings["DB_NAME"] = ag.db.path
 
         tug.save_app_setting(**settings)

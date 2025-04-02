@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.36 - 2025, 02 April
+* fix DB list processing in multi-instance mode
+* export/import files, including files referenced from notes
+
 ## 1.3.35 - 2025, 30 March
 * fix not opening DB in new window
 * clear filelist when create new DB

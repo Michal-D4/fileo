@@ -182,6 +182,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.save_db_list(ag.db.path, db_path)
         logger.info(f'open_db_signal.emit {db_path}')
         ag.signals_.open_db_signal.emit(db_path)
+        self.close()
 
     def check_and_open(self, db_path: str, used: bool=False) -> bool:
         if used:
@@ -202,6 +203,7 @@ class OpenDB(QWidget, Ui_openDB):
                 FILE_LIST_HEADER=ag.file_list.header().saveState()
             )
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
+        self.close()
 
     def get_item_list(self) -> list:
         rows = {}
@@ -223,10 +225,11 @@ class OpenDB(QWidget, Ui_openDB):
         if res == QMessageBox.StandardButton.Ok:
             item.setData(Qt.ItemDataRole.UserRole, (path, False, dt))
             self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
+            self.save_db_list(path)
 
     def save_db_list(self, db_close:str='', db_open: str=''):
         now = str(datetime.now().replace(microsecond=0))
-        db_list = self.get_item_list()
+        db_list = tug.get_app_setting("DB_List", [])
         for i,item in enumerate(db_list):
             if item[0] == db_close:
                 db_list[i] = (item[0], False, now)
@@ -234,7 +237,6 @@ class OpenDB(QWidget, Ui_openDB):
                 db_list[i] = (item[0], True, now)
 
         tug.save_app_setting(DB_List=db_list)
-        self.close()
 
     def close(self):
         tug.open_db = None

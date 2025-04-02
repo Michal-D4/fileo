@@ -166,7 +166,7 @@ def remove_files_from_recent():
         ag.recent_files.remove(idx.data(Qt.ItemDataRole.UserRole).id)
     show_recent_files()
 
-def save_db_list():
+def save_db_list_at_close():
     db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
     db_open.save_db_list(ag.db.path)
 
@@ -844,11 +844,47 @@ def export_files():
         _export_files(QTextStream(fl))
 
 def _export_files(out: QTextStream):
+    def get_notes():
+        def file_ids_in_note():
+            txt, *_ = note
+            pos = txt.find('fileid:/')
+            step = 0
+            while pos > 0:      # pos can't be 0
+                step += 1
+                if step > 15:
+                    break
+                pos2 = txt.find(')', pos)
+                file_id = int(txt[pos+8:pos2])
+                if file_id not in ids:
+                    active_next.add(file_id)
+                    ids.add(file_id)
+                pos = txt.find('fileid:/', pos2)
+
+        active = set(ids)
+        while active:
+            active_next = set()
+            for it in active:
+                file_notes = []
+                for note in db_ut.get_file_notes(it):
+                    file_ids_in_note()
+                    file_notes.append(note)
+                notes[it] = file_notes
+            active = active_next
+
+    ids = set()
     for idx in ag.file_list.selectionModel().selectedRows(0):
+        ids.add(idx.data(Qt.ItemDataRole.UserRole).id)
+
+    notes = {}
+    get_notes()
+
+    for idn in ids:
         try:
-            file_data = db_ut.get_export_data(idx.data(Qt.ItemDataRole.UserRole).id)
+            file_data = db_ut.get_file_export(idn)
         except TypeError:
             continue
+        file_data['notes'] = notes[idn]
+        file_data['id'] = idn
         out << f"{json.dumps(file_data)}\n"
 
 def import_files():
@@ -864,12 +900,55 @@ def import_files():
         _import_files(QTextStream(fp))
 
 def _import_files(fp: QTextStream):
+    def load_file(fl: dict) -> int:
+        nonlocal exist_dir, file_ids
+        file_ = fl['file']
+        f_path: Path = Path(file_[-1]) / file_[1]
+        if not f_path.is_file():
+            return 0
+
+        dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+
+        file_id = db_ut.registered_file_id(file_[-1], file_[1])
+        if file_id:
+            exist_dir = db_ut.copy_existent(file_id, dir_id)
+        else:
+            file_id = db_ut.insert_file(file_)
+            db_ut.copy_file(file_id, dir_id)
+
+        file_ids[fl['id']] = file_id
+
+        db_ut.insert_tags(file_id, fl['tags'])
+        db_ut.insert_filenotes(file_id, fl['notes'])
+        db_ut.insert_authors(file_id, fl['authors'])
+
+    def reset_file_ids_in_notes():
+        def replace_file_id(note):
+            txt, f_id, note_id, *_ = note
+            pp = pos = txt.find('fileid:/')
+            while pos > 0:      # pos can't be 0
+                pos2 = txt.find(')', pos)
+                file_id = txt[pos+8:pos2]
+                txt = txt.replace(file_id, str(file_ids[int(file_id)]))
+                pos = txt.find('fileid:/', pos2)
+            if pp:
+                db_ut.update_note_exported(f_id, note_id, txt)
+
+        for new_id in file_ids.values():
+            for note in db_ut.get_file_notes(new_id):
+                replace_file_id(note)
+
     branch = define_branch(ag.dir_list.currentIndex())
     exist_dir = 0
+    file_ids = {}
 
     while not fp.atEnd():
-        line = fp.readLine()
-        exist_dir = load_file(json.loads(line))
+        load_file(json.loads(fp.readLine()))
+
+    reset_file_ids_in_notes()
+
+    ag.tag_list.list_changed.emit()
+    ag.author_list.list_changed.emit()
 
     if exist_dir > 0:
         branch.append(exist_dir)
@@ -878,29 +957,6 @@ def _import_files(fp: QTextStream):
         ag.dir_list.setCurrentIndex(idx)
     else:
         show_folder_files()
-
-def load_file(fl: dict) -> int:
-    file_ = fl['file']
-    f_path: Path = Path(file_[-1]) / file_[1]
-    if not f_path.is_file():
-        return 0
-
-    dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
-    existent = 0
-
-    file_id = db_ut.registered_file_id(file_[-1], file_[1])
-    if file_id:
-        existent = db_ut.copy_existent(file_id, dir_id)
-    else:
-        file_id = db_ut.insert_file(file_)
-        db_ut.copy_file(file_id, dir_id)
-
-    db_ut.insert_tags(file_id, fl['tags'])
-    db_ut.insert_filenotes(file_id, fl['notes'])
-    db_ut.insert_authors(file_id, fl['authors'])
-    ag.tag_list.list_changed.emit()
-    ag.author_list.list_changed.emit()
-    return existent
 #endregion
 
 #region  Files - Dirs

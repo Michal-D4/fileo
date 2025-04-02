@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
-from PyQt6.QtGui import QDesktopServices, QResizeEvent
+from PyQt6.QtGui import QDesktopServices, QResizeEvent, QAction
 from PyQt6.QtWidgets import QWidget, QApplication
 
 from ..core import app_globals as ag, db_ut
@@ -25,8 +25,8 @@ class fileNote(QWidget):
                  parent: QWidget=None) -> None:
         super().__init__(parent)
 
-        self.file_id = file_id
-        self.id = note_id
+        self.file_id = int(file_id)
+        self.id = int(note_id)
 
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -123,6 +123,10 @@ class fileNote(QWidget):
         acts = menu.actions()
         acts[1].setEnabled(bool(self.ui.textBrowser.anchorAt(pos)))
         menu.addSeparator()
+        act_open = QAction('Open file')
+        act_open.setEnabled(self.ui.textBrowser.anchorAt(pos).startswith('fileid:'))
+        menu.addAction(act_open)
+        menu.addSeparator()
         menu.addAction('Copy HTML')
         menu.addAction(f'Save "{filepath.name}" notes')
         act = menu.exec(self.ui.textBrowser.mapToGlobal(pos))
@@ -133,6 +137,11 @@ class fileNote(QWidget):
                 copy_link()
             elif act.text() == 'Copy HTML':
                 copy_html()
+            elif act.text() == 'Open file':
+                file_id = self.ui.textBrowser.anchorAt(pos)[8:]
+                ag.signals_.user_signal.emit(
+                    f'Open file by path\\{db_ut.get_file_path(file_id)}'
+                )
 
     def set_text(self, note: str):
         def set_note_title():

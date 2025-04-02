@@ -89,7 +89,7 @@ class notesContainer(QScrollArea):
         ag.note_buttons.clear()
         self.clear_layout()
         for row in db_ut.get_file_notes(self.file_id):
-            note = fileNote(self.file_id, *row[1:])
+            note = fileNote(*row[1:])
             note.set_text(row[0])
             note.add_buttons()
             add_to_top(note)
