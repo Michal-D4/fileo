@@ -126,6 +126,7 @@ class shoWindow(QMainWindow):
             self.init_filter_setup()
             ag.file_data.set_tag_author_data()
             return True
+        self.ui.db_name.setText('Click to select DB')
         return False
 
     def restore_container(self):

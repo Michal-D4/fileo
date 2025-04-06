@@ -194,8 +194,10 @@ def create_open_db():
 def init_db(db_path: str):
     if db_path:
         db_open = OpenDB(ag.app)
-        if not db_open.open_existed(db_path):
-            db_open.close()
+        if db_open.open_existed(db_path):
+            return
+        db_open.close()
+    ag.app.ui.db_name.setText('Click to select DB')
 
 def scan_disk():
     """
@@ -475,7 +477,6 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     ag.app.collapse_btn.setChecked(False)
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-
     if ag.mode is ag.appMode.DIR:
         if prev_idx.isValid():
             ag.history.add_item(define_branch(prev_idx))
@@ -703,7 +704,7 @@ def open_folder():
     if idx.isValid():
         path = full_file_name(idx)
         tug.reveal_file(str(Path(path)))
-        ag.add_file_to_recent(idx.data(Qt.ItemDataRole.UserRole).id)
+        ag.add_recent_file(idx.data(Qt.ItemDataRole.UserRole).id)
 
 def reveal_in_explorer(file_id: int|str):
     path = db_ut.get_file_path(file_id)
@@ -744,7 +745,7 @@ def open_file_by_model_index(index: QModelIndex):
         update_open_date(index)
     else:
         open_manualy(index)
-    ag.add_file_to_recent(index.data(Qt.ItemDataRole.UserRole).id)
+    ag.add_recent_file(index.data(Qt.ItemDataRole.UserRole).id)
 
 def open_with_url(path: str) -> bool:
     url = QUrl()

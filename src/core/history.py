@@ -9,7 +9,7 @@ class History(object):
         self.limit: int = limit
         self.hist = {}
         self.curr: str = ''
-        self.is_hist = False
+        self.is_hist = True
 
     def check_remove(self):
         kk = []
@@ -28,7 +28,7 @@ class History(object):
         self.curr = curr
 
         ag.signals_.user_signal.emit(
-            f'enable_next_prev\\{self.has_next()},{self.has_prev()}'
+            f'enable_next_prev\\{self.enable_next_prev()}'
         )
 
     def set_limit(self, limit: int):
@@ -43,49 +43,41 @@ class History(object):
             self.hist.pop(kk[i])
 
     def get_current(self):
-        if not self.hist or not self.curr:
+        if not self.curr:
             return []
         self.is_hist = True
-        return [int(x) for x in (*self.hist[self.curr][0].split(','), self.hist[self.curr][1])]
+        return (*(int(x) for x in self.hist[self.curr][0].split(',')), self.hist[self.curr][1])
 
     def next_dir(self) -> list:
-        kk: list = list(self.hist.keys())
-        kk.sort()
-
+        kk: list = sorted(self.hist)
         i = kk.index(self.curr)
         if i < len(self.hist)-1:
             self.curr = kk[i+1]
 
-        ag.signals_.user_signal.emit(
-            f'enable_next_prev\\{self.has_next()},yes'
-        )
+        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
         return self.get_current()
 
     def prev_dir(self) -> list:
-        kk: list = list(self.hist.keys())
-        kk.sort()
-
+        kk: list = sorted(self.hist)
         i = kk.index(self.curr)
         if i > 0:
             self.curr = kk[i-1]
 
-        ag.signals_.user_signal.emit(
-            f'enable_next_prev\\yes,{self.has_prev()}'
-        )
+        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
         return self.get_current()
 
-    def has_next(self) -> str:
-        if len(self.hist) == 0:
-            return 'no'
-        return 'yes' if max(self.hist.keys()) > self.curr else 'no'
+    def enable_next_prev(self) -> str:
+        res = ('no', 'yes')
 
-    def has_prev(self) -> str:
         if len(self.hist) == 0:
-            return 'no'
-        return 'yes' if min(self.hist.keys()) < self.curr else 'no'
+            return 'no,no'
+        if len(self.hist) == 1:
+            self.curr = next(iter(self.hist))
+            return "no,yes"
+        return f'{res[self.curr < max(self.hist.keys())]},{res[self.curr > min(self.hist.keys())]}'
 
     def add_item(self, branch: list):
-        if not branch:
+        if not branch[:-1]:
             return
 
         def find_key() -> str:
@@ -94,25 +86,29 @@ class History(object):
                     return k
             return ''
 
+        def set_curr_history_item():
+            if old_key:
+                if self.is_hist:
+                    return
+                self.hist.pop(old_key)
+            else:
+                if len(self.hist) == self.limit:
+                    self.hist.pop(min(self.hist.keys()))
+
+            key = str(datetime.now().replace(microsecond=0))
+            if len(self.hist) > 1:
+                self.curr = key
+            self.hist[key] = val, branch[-1]
+
         val = ','.join((str(x) for x in branch[:-1]))
         old_key = find_key()
-        is_hist, self.is_hist = self.is_hist, False
+        set_curr_history_item()
 
-        if old_key:
-            if is_hist:
-                return
-            self.hist.pop(old_key)
-        else:
-            if len(self.hist) == self.limit:
-                self.hist.pop(min(self.hist.keys()))
+        self.is_hist = False
 
-        key = str(datetime.now().replace(microsecond=0))
-        self.curr = key
-        self.hist[key] = (val, branch[-1])
-
-        ag.signals_.user_signal.emit(
-            f'enable_next_prev\\no,{self.has_prev()}'
-        )
+        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
 
     def get_history(self) -> list:
-        return [(list(self.hist.keys()), list(self.hist.values())), self.curr]
+        if not self.curr and self.hist:
+            self.curr = next(iter(self.hist))
+        return (list(self.hist.keys()), list(self.hist.values())), self.curr

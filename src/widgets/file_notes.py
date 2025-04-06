@@ -140,7 +140,7 @@ class notesContainer(QScrollArea):
         else:
             ts = db_ut.insert_note(file_id, txt)
 
-        ag.add_file_to_recent(file_id)
+        ag.add_recent_file(file_id)
 
         if compare_hashes(self.file_id, file_id):
             self.update_date_in_file_list(ts)

@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.36'
+    return '1.3.37'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -165,7 +165,7 @@ def hr_size(n):
         return f'{n/KB:.2f} Kb'
     return n
 
-def add_file_to_recent(id_: int):
+def add_recent_file(id_: int):
     """
     id_ - file id, valid value > 0
     """

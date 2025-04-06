@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.37 - 2025, 06 April
+* Revised folder history
+
 ## 1.3.36 - 2025, 02 April
 * fix DB list processing in multi-instance mode
 * export/import files, including files referenced from notes
