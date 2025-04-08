@@ -31,6 +31,10 @@ class OpenDB(QWidget, Ui_openDB):
         self.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.listDB.customContextMenuRequested.connect(self.item_menu)
         self.listDB.setCurrentCell(0, 0)
+        self.btn_add.setIcon(tug.get_icon("plus"))
+        self.btn_add.clicked.connect(
+            lambda: ag.signals_.user_signal.emit("MainMenu Create/Open DB")
+        )
 
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
         return_key.activated.connect(self.keystroke)
@@ -81,8 +85,6 @@ class OpenDB(QWidget, Ui_openDB):
         return menu
 
     def restore_db_list(self):
-        self.listDB.setHorizontalHeaderItem(0, QTableWidgetItem('DB name'))
-        self.listDB.setHorizontalHeaderItem(1, QTableWidgetItem('last use date'))
         db_list = tug.get_app_setting("DB_List", [])
 
         row = 0
@@ -179,7 +181,7 @@ class OpenDB(QWidget, Ui_openDB):
             tug.save_app_setting(
                 FILE_LIST_HEADER=ag.file_list.header().saveState()
             )
-        self.save_db_list(ag.db.path, db_path)
+        self.save_db_list(ag.db.path, db_path, self.get_item_list())
         logger.info(f'open_db_signal.emit {db_path}')
         ag.signals_.open_db_signal.emit(db_path)
         self.close()
@@ -210,7 +212,7 @@ class OpenDB(QWidget, Ui_openDB):
         for i in range(self.listDB.rowCount()):
             path, used, dt = self.listDB.item(i, 0).data(Qt.ItemDataRole.UserRole)
             rows[path] = (used, dt)
-        return sorted([(a,*b) for a,b in rows.items()], key=lambda x: x[2], reverse=True)
+        return sorted([(k,*v) for k,v in rows.items()], key=lambda x: x[2], reverse=True)
 
     def mark_not_used(self, row: int):
         item = self.listDB.item(row, 0)
@@ -227,9 +229,9 @@ class OpenDB(QWidget, Ui_openDB):
             self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
             self.save_db_list(path)
 
-    def save_db_list(self, db_close:str='', db_open: str=''):
+    def save_db_list(self, db_close:str='', db_open: str='', dblist: list=[]):
         now = str(datetime.now().replace(microsecond=0))
-        db_list = tug.get_app_setting("DB_List", [])
+        db_list = dblist if dblist else tug.get_app_setting("DB_List", [])
         for i,item in enumerate(db_list):
             if item[0] == db_close:
                 db_list[i] = (item[0], False, now)

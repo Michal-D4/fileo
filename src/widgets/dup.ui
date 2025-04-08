@@ -77,13 +77,6 @@
          </item>
          <item>
           <widget class="QLabel" name="txt1">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
            <property name="text">
             <string>Duplicate files found</string>
            </property>
@@ -124,11 +117,6 @@
          </property>
          <item>
           <widget class="QLabel" name="txt2">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
            <property name="text">
             <string>It is highly recommended to remove duplicate files</string>
            </property>
@@ -169,11 +157,6 @@
                 <height>32</height>
                </size>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Show list of duplicates</string>
               </property>
@@ -193,11 +176,6 @@
                 <height>32</height>
                </size>
               </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="text">
                <string>Delete duplicates</string>
               </property>
@@ -216,11 +194,6 @@
                 <width>0</width>
                 <height>32</height>
                </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
               </property>
               <property name="text">
                <string>Close</string>

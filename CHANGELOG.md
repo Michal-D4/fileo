@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.38 - 2025, 08 April
+* fixed error with adding new DB in db list
+* button in the DB list to add DB
+
 ## 1.3.37 - 2025, 06 April
 * Revised folder history
 

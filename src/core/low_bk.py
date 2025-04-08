@@ -197,7 +197,7 @@ def init_db(db_path: str):
         if db_open.open_existed(db_path):
             return
         db_open.close()
-    ag.app.ui.db_name.setText('Click to select DB')
+        ag.app.ui.db_name.setText('Click to select DB')
 
 def scan_disk():
     """
