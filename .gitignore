@@ -1,26 +1,15 @@
+# Python-generated files
 __pycache__/
-.git/
+*.py[oc]
 build/
 dist/
-# installation folder EXE/
+wheels/
 EXE/
+*.egg-info
+.history
+*.lock
 *.code-workspace
-.history/
-.pyc
-.qt_for_python/
-.eggs/
-tmp/
-try/
-tests/
-.venv/
-.vscode/
-*.egg-info/
-#*.lock
 
-*.log
-*.db*
-# *.xml
-*.back
-
-/*.png
-/*.jpg
+# Virtual environments
+.venv
+.python-version

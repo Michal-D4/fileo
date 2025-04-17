@@ -90,14 +90,11 @@ class dirModel(QAbstractItemModel):
     def data(self, index, role: Qt.ItemDataRole):
         if (role == Qt.ItemDataRole.DisplayRole or
             role == Qt.ItemDataRole.EditRole):
-            item = self.getItem(index)
-            return item.data()
+            return self.getItem(index).data()
         elif role == Qt.ItemDataRole.ToolTipRole:
-            u_dat = self.getItem(index).user_data()
-            return u_dat.tool_tip
+            return self.getItem(index).user_data().tool_tip
         elif role == Qt.ItemDataRole.UserRole:
-            item = self.getItem(index)
-            return item.user_data()
+            return self.getItem(index).user_data()
         elif role == Qt.ItemDataRole.DecorationRole:
             u_dat = self.getItem(index).user_data()
             if u_dat.multy:
@@ -212,15 +209,3 @@ class dirModel(QAbstractItemModel):
             idx = self.index(int(id_), 0, parent)
             parent = idx
         return parent
-
-    def supportedDropActions(self) -> Qt.DropAction:
-        return Qt.DropAction.CopyAction | Qt.DropAction.MoveAction
-
-    def neighbor_idx(self, index: QModelIndex) -> QModelIndex:
-        row = index.row()
-        if row > 0:
-            return self.index(row-1, 0, index.parent())
-
-        if self.rowCount(index.parent()) > 1:
-            return self.index(1, 0, index.parent())
-        return index.parent()

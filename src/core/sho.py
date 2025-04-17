@@ -1,10 +1,10 @@
-from loguru import logger
+# from loguru import logger
 from pathlib import Path
 import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-    QResizeEvent, QKeySequence, QShortcut,
+    QResizeEvent, QKeySequence,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
     QVBoxLayout, QTreeView, QFrame, QWidget,
@@ -45,7 +45,6 @@ class shoWindow(QMainWindow):
         self.create_fold_container()
 
         self.start_pos: QPoint = QPoint()
-        self.window_maximized: bool = False
 
         self.set_button_icons()
         self.connect_slots()
@@ -55,8 +54,6 @@ class shoWindow(QMainWindow):
         self.restore_settings(db_name)
         bk_ut.bk_setup()
         self.set_busy(False)
-        ctrl_b = QShortcut(QKeySequence("Ctrl+b"), ag.app)
-        ctrl_b.activated.connect(self.click_toggle_bar)
         bk_ut.set_files_resize_event()
 
     def create_fold_container(self):
@@ -66,23 +63,16 @@ class shoWindow(QMainWindow):
         self.container = FoldContainer(self.ui.left_pane)
         fold_layout.addWidget(self.container)
 
-    def tune_version(self):
+    def tune_app_version(self):
         """
         make changes to "setting" if necessary
         """
         cur_v = ag.app_version()
-        saved_v = tug.get_app_setting("AppVersion", "0")
+        cur_v = int(cur_v.replace('.', ''))
+        saved_v = ag.get_setting("AppVersion", 0)
+
         if saved_v == cur_v:
             return
-
-        if saved_v == "0":    # first start of app
-            tug.save_app_setting(AppVersion=cur_v)
-            return
-
-        logger.info(f'{saved_v=}, {cur_v=}')
-        tug.save_app_setting(AppVersion=cur_v)
-        # saved_v = int(saved_v.replace('.', ''))
-        # cur_v = int(cur_v.replace('.', ''))
 
         # def ver1324():
         #     if saved_v < 1324:
@@ -91,7 +81,15 @@ class shoWindow(QMainWindow):
         # if cur_v == 1324:
         #     # never works, current ver. 1327 !
         #     # remains as an example
-        #     ver1324()
+        #     ver1324()  'DIR_HISTORY', [[], -1]
+
+        def ver1339():
+            if saved_v < 1339:
+                ag.save_settings(DIR_HISTORY=[[], -1])
+
+        ver1339()
+
+        ag.save_settings(AppVersion=cur_v)
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
@@ -206,13 +204,12 @@ class shoWindow(QMainWindow):
         frames = self.container.get_widgets()
 
         ag.dir_list = QTreeView()
-        ag.dir_list.setObjectName("dir_list")
         ag.dir_list.setDragEnabled(True)
         ag.dir_list.setAcceptDrops(True)
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         ag.dir_list.setObjectName('dir_list')
-        ag.dir_list.expanded.connect(self.branch_expanded)
+        ag.dir_list.expanded.connect(lambda: self.collapse_btn.setChecked(False))
         set_widget_to_frame(frames[0], ag.dir_list)
         ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
         ag.dir_list.setItemDelegateForColumn(0, folderEditDelegate(self))
@@ -232,10 +229,6 @@ class shoWindow(QMainWindow):
         ag.file_list = self.ui.file_list
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
 
-    @pyqtSlot()
-    def branch_expanded(self):
-        self.collapse_btn.setChecked(False)
-
     def set_button_icons(self):
         m_icons = [
             "btnDir", "btnFilter", "btnFilterSetup", "btnToggleBar",
@@ -249,11 +242,13 @@ class shoWindow(QMainWindow):
         self.ui.btn_search.setIcon(tug.get_icon("search"))
         ag.buttons.append((self.ui.btn_search, "search"))
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
+        self.ui.btn_search.setShortcut(QKeySequence("Ctrl+f"))
         self.ui.btn_search.setDisabled(True)
 
         self.ui.recent_files.setIcon(tug.get_icon("history"))
         ag.buttons.append((self.ui.recent_files, "history"))
         self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
+        self.ui.recent_files.setShortcut(QKeySequence("Ctrl+h"))
 
         self.ui.field_menu.setIcon(tug.get_icon("more"))
         ag.buttons.append((self.ui.field_menu, "more"))
@@ -266,6 +261,7 @@ class shoWindow(QMainWindow):
         self.connect_checkable()
 
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
+        self.ui.btnToggleBar.setShortcut(QKeySequence("Ctrl+b"))
         self.ui.btnSetup.clicked.connect(bk_ut.show_main_menu)
 
         self.ui.db_name.mousePressEvent = self.db_list_show
@@ -300,7 +296,7 @@ class shoWindow(QMainWindow):
 
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
-            self.tune_version()
+            self.tune_app_version()
             self.restore_mode()
             bk_ut.populate_all()
             bk_ut.restore_dirs()
@@ -397,9 +393,6 @@ class shoWindow(QMainWindow):
             btn.clicked.connect(lambda state, bc=key:
                 self.click_checkable_button(bt_key=bc))
 
-    def minimize(self):
-        self.showMinimized()
-
     def close_app(self):
         if self.is_busy:
             ag.stop_thread = True
@@ -447,11 +440,10 @@ class shoWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         settings = {
-            "maximizedWindow": int(self.window_maximized),
+            "maximizedWindow": int(self.isMaximized()),
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
-            "FILE_LIST_HEADER": ag.file_list.header().saveState(),
         }
         if ag.filter_dlg and ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
@@ -459,6 +451,7 @@ class shoWindow(QMainWindow):
         if ag.db.conn:
             low_bk.save_db_list_at_close()
             settings["DB_NAME"] = ag.db.path
+            settings["FILE_LIST_HEADER"] = ag.file_list.header().saveState()
 
         tug.save_app_setting(**settings)
         bk_ut.save_bk_settings()

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from PyQt6.QtCore import pyqtSlot, QSize, QPoint, Qt
-from PyQt6.QtGui import QPixmap, QMouseEvent
+from PyQt6.QtGui import QPixmap, QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import QStyle, QWidget
 
 from ..core import app_globals as ag, db_ut
@@ -21,6 +21,7 @@ class dlgDup(QWidget, Ui_DlgDup):
         self.is_user_request = False
 
         self.close_btn.clicked.connect(self.close)
+        self.close_btn.setShortcut(QKeySequence(Qt.Key.Key_Escape))
         self.del_btn.clicked.connect(self.delete_duplicates)
         self.show_btn.clicked.connect(self.show_duplicates)
         self.mouseMoveEvent = self.move_self

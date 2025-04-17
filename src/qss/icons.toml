@@ -55,7 +55,7 @@ colors = ["style=\"fill:none\"", "style=\"fill:none;stroke:$iconStroke;stroke-wi
 
 [mult_folder_hide]
 ico_subst = "mult_folder"
-colors = ["style=\"fill:$iconFill\"", 
+colors = ["style=\"fill:$iconFill\"",
 "style=\"fill:$iconFill;stroke:$iconStroke;stroke-width:1.5\"", "style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [arrow_forward]

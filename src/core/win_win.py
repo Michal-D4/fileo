@@ -1,9 +1,14 @@
+# from loguru import logger
 from PyQt6.QtCore import Qt, QEvent, QPoint
 from PyQt6.QtGui import QMouseEvent, QPixmap, QIcon
 from PyQt6.QtWidgets import QApplication
+from typing import TYPE_CHECKING
 
 from ..widgets import custom_grips as cg
 from .. import tug
+
+if TYPE_CHECKING:
+    from .sho import shoWindow
 
 MOVE_THRESHOLD = 50
 
@@ -21,9 +26,8 @@ def set_app_icon(app: QApplication):
         ico.addPixmap(pict)
         app.setWindowIcon(ico)
 
-def setup_ui(self):
+def setup_ui(self: 'shoWindow'):
     self.start_move = QPoint()
-    self._geom = None
 
     self.setWindowFlags(
         Qt.WindowType.FramelessWindowHint |
@@ -32,7 +36,7 @@ def setup_ui(self):
     self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     self.ui.close.clicked.connect(self.close_app)
-    self.ui.minimize.clicked.connect(self.minimize)
+    self.ui.minimize.clicked.connect(lambda: self.showMinimized())
 
     # CUSTOM GRIPS
     self.grips = {}
@@ -45,19 +49,20 @@ def setup_ui(self):
         if self.isMaximized():
             self.ui.appMargins.setContentsMargins(cg.MG, cg.MG, cg.MG, cg.MG)
             [grip.show() for grip in self.grips.values()]
-            self.setGeometry(self._geom)
+            self.showNormal()
         else:
-            self._geom = self.normalGeometry()
-            self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
-            [grip.hide() for grip in self.grips.values()]
-            self.showMaximized()
+            maximize()
         self.ui.maximize.setIcon(tug.get_icon("maximize", self.isMaximized()))
 
     self.ui.maximize.clicked.connect(maximize_restore)
 
+    def maximize():
+        self.ui.appMargins.setContentsMargins(0, 0, 0, 0)
+        [grip.hide() for grip in self.grips.values()]
+        self.showMaximized()
+
     def move_window(e: QMouseEvent):
         if self.isMaximized():
-            maximize_restore()
             return
         if e.buttons() == Qt.MouseButton.LeftButton:
             pos_ = e.globalPosition().toPoint()
@@ -72,9 +77,8 @@ def setup_ui(self):
     self.ui.toolBar.mouseMoveEvent = move_window
     self.ui.left_top.mouseMoveEvent = move_window
 
-    is_maximized = int(tug.get_app_setting("maximizedWindow", False))
-    if is_maximized:
-        maximize_restore()
+    if tug.get_app_setting("maximizedWindow", False):
+        maximize()
 
     def double_click_maximize_restore(e: QMouseEvent):
         if e.type() == QEvent.Type.MouseButtonDblClick:
@@ -82,7 +86,7 @@ def setup_ui(self):
 
     self.ui.topBar.mouseDoubleClickEvent = double_click_maximize_restore
 
-def update_grips(self):
+def update_grips(self: 'shoWindow'):
     self.grips['left_grip'].setGeometry(
         0, cg.GT, cg.GT, self.height()-cg.G2)
     self.grips['right_grip'].setGeometry(

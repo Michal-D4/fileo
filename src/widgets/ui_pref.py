@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\pref.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\widgets\pref.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_prefForm(object):
     def setupUi(self, prefForm):
         prefForm.setObjectName("prefForm")
-        prefForm.resize(400, 310)
+        prefForm.resize(465, 355)
         self.verticalLayout = QtWidgets.QVBoxLayout(prefForm)
         self.verticalLayout.setObjectName("verticalLayout")
         self.dlg_frame = QtWidgets.QFrame(parent=prefForm)

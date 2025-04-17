@@ -2,7 +2,7 @@ from loguru import logger
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import (pyqtSlot, QPoint, QThread,
-    QTimer, Qt,
+    QTimer, Qt, QModelIndex,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
@@ -59,7 +59,7 @@ def selected_dirs() -> list:
     idxs = ag.dir_list.selectionModel().selectedRows()
     branches = []
     for idx in idxs:
-        branches.append(low_bk.define_branch(idx))
+        branches.append(ag.define_branch(idx))
     return branches[::-1]
 
 @pyqtSlot()
@@ -71,9 +71,22 @@ def search_files():
 
 @pyqtSlot(bool)
 def toggle_collapse(collapse: bool):
+    def move_to_root() -> QModelIndex:
+        idx = ag.dir_list.currentIndex()
+        logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}')
+        prev = idx.parent()
+        while prev.isValid():
+            idx = prev
+            prev = prev.parent()
+        return idx
+
+    logger.info(f'{collapse=}')
     if collapse:
         low_bk.save_branch(ag.dir_list.currentIndex())
-        ag.dir_list.collapseAll()
+        idx = move_to_root()
+        if idx.isValid():
+            ag.dir_list.setCurrentIndex(idx)
+            ag.dir_list.collapse(idx)
     else:
         idx = low_bk.restore_branch()
         ag.dir_list.setCurrentIndex(idx)
@@ -123,34 +136,14 @@ def bk_setup():
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_signal.emit("double click file"))
 
-    ctrl_f = QShortcut(QKeySequence("Ctrl+f"), ag.app)
-    ctrl_f.activated.connect(search_files)
-    ctrl_w = QShortcut(QKeySequence("Ctrl+w"), ag.app)
-    ctrl_w.activated.connect(short_create_folder)
-    ctrl_e = QShortcut(QKeySequence("Ctrl+e"), ag.app)
-    ctrl_e.activated.connect(short_create_child)
-    del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.app)
-    del_key.activated.connect(short_delete_folder)
-
-@pyqtSlot()
-def short_create_folder():
-    if ag.app.focusWidget() is not ag.dir_list:
-        return
-    ag.signals_.user_signal.emit("Dirs Create folder")
-
-@pyqtSlot()
-def short_create_child():
-    if ag.app.focusWidget() is not ag.dir_list:
-        return
-    if ag.dir_list.currentIndex().isValid():
-        ag.signals_.user_signal.emit("Dirs Create folder as child")
-
-@pyqtSlot()
-def short_delete_folder():
-    if ag.app.focusWidget() is not ag.dir_list:
-        return
-    if ag.dir_list.currentIndex().isValid():
-        ag.signals_.user_signal.emit("Dirs Delete folder(s)")
+    ctrl_w = QShortcut(QKeySequence("Ctrl+w"), ag.dir_list)
+    ctrl_w.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder"))
+    ctrl_e = QShortcut(QKeySequence("Ctrl+e"), ag.dir_list)
+    ctrl_e.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder as child"))
+    del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.dir_list)
+    del_key.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Delete folder(s)"))
+    act_pref = QShortcut(QKeySequence("Ctrl+,"), ag.app)
+    act_pref.activated.connect(lambda: ag.signals_.user_signal.emit("MainMenu Preferences"))
 
 @pyqtSlot()
 def show_main_menu():
@@ -174,7 +167,9 @@ def show_main_menu():
     act_same.setEnabled(is_db_opened)
     menu.addAction(act_same)
     menu.addSeparator()
-    menu.addAction('Preferences')
+    act_pref = QAction('Preferences', ag.app)
+    act_pref.setShortcut(QKeySequence("Ctrl+,"))
+    menu.addAction(act_pref)
     menu.addSeparator()
     menu.addAction('Check for update')
     menu.addSeparator()
@@ -225,8 +220,8 @@ def toggle_show_column(state: bool, index: int):
 
 def restore_dirs():
     low_bk.set_dir_model()
-    restore_history()
     low_bk.restore_selected_dirs()
+    restore_history()
     ag.filter_dlg.restore_filter_settings()
     if ag.mode is ag.appMode.FILTER:
         low_bk.filtered_files()
@@ -299,7 +294,7 @@ def populate_all():
 
 def restore_history():
     ag.recent_files = ag.get_setting('RECENT_FILES', [])
-    hist = ag.get_setting('DIR_HISTORY', [[], ''])
+    hist = ag.get_setting('DIR_HISTORY', [[], -1])
     ag.history.set_history(*hist)
 
 @pyqtSlot(QPoint)

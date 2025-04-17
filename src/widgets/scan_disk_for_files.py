@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, pyqtSlot, QPoint
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import QWidget, QFileDialog
 
 from .ui_scan_disk import Ui_scanDisk
@@ -22,7 +22,9 @@ class diskScanner(QWidget):
         self.ui.open_btn.clicked.connect(self.get_root_path)
 
         self.ui.btnCancel.clicked.connect(self.close)
+        self.ui.btnCancel.setShortcut(QKeySequence(Qt.Key.Key_Escape))
         self.ui.btnGo.clicked.connect(self.go)
+        self.ui.btnGo.setShortcut(QKeySequence(Qt.Key.Key_Return))
         self.start_pos = QPoint()
         self.mouseMoveEvent = self.move_self
 

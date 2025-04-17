@@ -75,15 +75,15 @@ def get_log_path() -> str:
     parent = Path(report_path).parent if report_path else Path()
     return config.get('log_path', parent / 'log')
 
-def set_logger():
+def set_logger(first_instance: bool):
     logger.remove()
-    use_logging = config.get('logging', False)
+    use_logging = get_app_setting('USE_LOGGING', config.get('logging', False))
     if not use_logging:
         return
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
 
-    log_path = get_log_path() / 'fileo.log'
+    log_path = get_log_path() / ('fileo.log' if first_instance else 'second.log')
     logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr, format='"{file.path}({line})", {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")

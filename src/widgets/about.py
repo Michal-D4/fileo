@@ -30,8 +30,11 @@ class AboutDialog(QWidget, Ui_aboutForm):
 
         f11 = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
         f11.activated.connect(self.get_py_db_versions)
+        esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        esc.activated.connect(self.close)
 
         self.ok_btn.clicked.connect(self.close)
+        self.ok_btn.setShortcut(QKeySequence(Qt.Key.Key_Return))
 
         self.mouseMoveEvent = self.move_self
 

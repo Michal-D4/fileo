@@ -145,7 +145,7 @@ def copy_trees():
 
 @pyqtSlot()
 def refresh_dir_list():
-    branch = define_branch(ag.dir_list.currentIndex())
+    branch = ag.define_branch(ag.dir_list.currentIndex())
     set_dir_model()
     idx = expand_branch(branch)
     if not idx.isValid():
@@ -376,31 +376,13 @@ def show_about():
 
 #region Common
 def save_branch(index: QModelIndex):
-    db_ut.save_branch_in_aux(
-        pickle.dumps(define_branch(index))
-    )
+    branch = ag.define_branch(index)
+    branch[-1] = 1
+    db_ut.save_branch_in_aux(pickle.dumps(branch))
 
 def restore_branch() -> QModelIndex:
     val = db_ut.get_branch_from_aux()
     return expand_branch(pickle.loads(val) if val else [])
-
-def define_branch(index: QModelIndex) -> list:
-    """
-    return branch - a list of node ids from root to index
-    """
-    if not index.isValid():
-        return []
-    item: dirItem = index.internalPointer()
-    branch = []
-    while 1:
-        u_dat = item.user_data()
-        branch.append(u_dat.id)
-        if u_dat.parent_id == 0:
-            break
-        item = item.parent()
-    branch.reverse()
-    branch.append(int(ag.dir_list.isExpanded(index)))
-    return branch
 
 def get_dir_names_path(index: QModelIndex) -> list:
     """
@@ -474,12 +456,11 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     # logger.info(f'prev: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     # udat: ag.DirData = curr_idx.data(Qt.ItemDataRole.UserRole)
     # logger.info(f'curr: {udat.id=}, {udat.parent_id=}')
-    ag.app.collapse_btn.setChecked(False)
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.mode is ag.appMode.DIR:
         if prev_idx.isValid():
-            ag.history.add_item(define_branch(prev_idx))
+            ag.history.add_item(ag.define_branch(prev_idx))
             save_curr_file_id(prev_idx)
         show_folder_files()
 
@@ -898,9 +879,9 @@ def import_files():
     if ok:
         fp = QFile(file_name)
         fp.open(QIODeviceBase.OpenModeFlag.ReadOnly)
-        _import_files(QTextStream(fp))
+        _import_files(QTextStream(fp), ag.dir_list.currentIndex())
 
-def _import_files(fp: QTextStream):
+def _import_files(fp: QTextStream, target: QModelIndex):
     def load_file(fl: dict) -> int:
         nonlocal exist_dir, file_ids
         file_ = fl['file']
@@ -908,7 +889,7 @@ def _import_files(fp: QTextStream):
         if not f_path.is_file():
             return 0
 
-        dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+        dir_id = target.data(Qt.ItemDataRole.UserRole).id
 
         file_id = db_ut.registered_file_id(file_[-1], file_[1])
         if file_id:
@@ -939,7 +920,6 @@ def _import_files(fp: QTextStream):
             for note in db_ut.get_file_notes(new_id):
                 replace_file_id(note)
 
-    branch = define_branch(ag.dir_list.currentIndex())
     exist_dir = 0
     file_ids = {}
 
@@ -952,12 +932,16 @@ def _import_files(fp: QTextStream):
     ag.author_list.list_changed.emit()
 
     if exist_dir > 0:
+        branch = ag.define_branch(target)
         branch.append(exist_dir)
         set_dir_model()
         idx = expand_branch(branch)
         ag.dir_list.setCurrentIndex(idx)
     else:
-        show_folder_files()
+        if ag.dir_list.currentIndex() == target:
+            refresh_dir_list()
+        else:
+            ag.dir_list.setCurrentIndex(target)
 #endregion
 
 #region  Files - Dirs
@@ -997,6 +981,8 @@ def open_manualy(index: QModelIndex):
             open_with_url(str(f_path))
 
 def create_child_dir():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
     cur_idx = ag.dir_list.selectionModel().currentIndex()
 
     new_idx = insert_dir_row(0, cur_idx)
@@ -1004,6 +990,7 @@ def create_child_dir():
     if new_idx.isValid():
         create_folder(new_idx)
         ag.dir_list.setExpanded(cur_idx, True)
+        ag.dir_list.clearSelection()
         ag.dir_list.setCurrentIndex(new_idx)
         ag.dir_list.edit(new_idx)
 
@@ -1014,12 +1001,15 @@ def insert_dir_row(row: int, parent: QModelIndex) -> QModelIndex:
     return model.index(row, 0, parent)
 
 def create_dir():
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
     cur_idx = ag.dir_list.currentIndex()
 
     new_idx = insert_dir_row(cur_idx.row()+1, cur_idx.parent())
 
     if new_idx.isValid():
         create_folder(new_idx)
+        ag.dir_list.clearSelection()
         ag.dir_list.setCurrentIndex(new_idx)
         ag.dir_list.edit(new_idx)
 
@@ -1044,14 +1034,23 @@ def create_folder(index: QModelIndex):
     item.setData("New folder", Qt.ItemDataRole.EditRole)
 
 def delete_folders():
-    cur_idx = ag.dir_list.currentIndex()
+    def index_to() -> QModelIndex:
+        cur_idx = ag.dir_list.currentIndex()
+        cnt = ag.dir_list.model().rowCount(cur_idx.parent())
+        if cnt > 1:
+            row = cur_idx.row()
+            return cur_idx.siblingAtRow(row-1 if row > 0 else row+1)
+        return cur_idx.parent()
+
+    if ag.app.focusWidget() is not ag.dir_list:
+        return
+    to_idx = index_to()
+
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         if not db_ut.break_link(u_dat.id, u_dat.parent_id):
             delete_tree(u_dat.id)
-    model: dirModel = ag.dir_list.model()
-    near_curr = model.neighbor_idx(cur_idx)
-    dirs_changed(near_curr)
+    dirs_changed(to_idx)
     ag.history.check_remove()
 
 def delete_tree(dirid: int):
@@ -1059,12 +1058,12 @@ def delete_tree(dirid: int):
         if not db_ut.break_link(dir_id, parent):
             delete_tree(dir_id)
 
-def dirs_changed(index: QModelIndex, last_id: int=0):
+def dirs_changed(index: QModelIndex, sure_expand: bool=False):
+    branch = ag.define_branch(index)
     set_dir_model()
     if index.isValid():
-        branch = define_branch(index)
-        if last_id:
-            branch.append(last_id)
+        if sure_expand:
+            branch[-1] = 1
         idx = expand_branch(branch)
         if idx.isValid():
             ag.dir_list.setCurrentIndex(idx)

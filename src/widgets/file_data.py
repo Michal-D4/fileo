@@ -72,26 +72,22 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.srch_in_notes.setIcon(tug.get_icon("search"))
         self.srch_in_notes.clicked.connect(self.srch_notes)
-        ctrl_shift_f = QShortcut(QKeySequence("Ctrl+Shift+f"), ag.app)
-        ctrl_shift_f.activated.connect(self.srch_notes)
+        self.srch_in_notes.setShortcut(QKeySequence("Ctrl+Shift+f"))
 
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
-        ctrl_n = QShortcut(QKeySequence("Ctrl+n"), self)
-        ctrl_n.activated.connect(self.short_new_note)
+        self.plus.setShortcut(QKeySequence("Ctrl+n"))
 
         self.collapse_notes.setIcon(tug.get_icon("collapse_notes"))
         self.collapse_notes.clicked.connect(self.notes.collapse)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.save_note)
-        ctrl_s = QShortcut(QKeySequence("Ctrl+s"), self)
-        ctrl_s.activated.connect(self.save_note)
+        self.save.setShortcut(QKeySequence("Ctrl+s"))
 
         self.cancel.setIcon(tug.get_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
-        ctrl_q = QShortcut(QKeySequence("Ctrl+q"), self)
-        ctrl_q.activated.connect(self.short_cancel_editing)
+        self.cancel.setShortcut("Ctrl+q")
 
         self.edit_btns.hide()
         ag.buttons.append((self.expand, "up", "down3"))
@@ -258,10 +254,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def set_tag_author_data(self):
         self.tag_selector.set_list(db_ut.get_tags())
         self.author_selector.set_authors()
-
-    def short_new_note(self):
-        if ag.app.focusWidget() is self.notes:
-            self.new_file_note()
 
     def new_file_note(self):
         file_id = self.notes.get_file_id()

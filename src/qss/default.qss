@@ -242,7 +242,10 @@ QHeaderView::section {
    padding-left: 8px;
    background-color: transparent;
    color: $altTextColor;
-   border: 1px solid $innerBorder;
+   border: 1px solid $fileFrameBG;
+   border-bottom: 0px;
+   border-top: 0px;
+   border-left: 0px;
 }
 /* ------------------------- */
 QFrame#head {

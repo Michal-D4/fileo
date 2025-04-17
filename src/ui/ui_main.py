@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\ui\main.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\ui\main.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -414,7 +414,7 @@ class Ui_Sho(object):
         _translate = QtCore.QCoreApplication.translate
         Sho.setWindowTitle(_translate("Sho", "MainWindow"))
         self.more.setToolTip(_translate("Sho", "Hide/Show Views"))
-        self.btnSetup.setToolTip(_translate("Sho", "Main menu"))
+        self.btnSetup.setToolTip(_translate("Sho", "Main menu, Ctrl+,"))
         self.btnDir.setToolTip(_translate("Sho", "Show file list for current folder"))
         self.btnFilter.setToolTip(_translate("Sho", "Show file list by filter"))
         self.btnFilterSetup.setToolTip(_translate("Sho", "Setup file list filter"))

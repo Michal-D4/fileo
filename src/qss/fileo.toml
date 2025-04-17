@@ -1,5 +1,6 @@
+all_preferences = true
 instance_control = false
-logging = true
+logging = false
 save_prepared_qss = false
 history_min = 2
 history_max = 50

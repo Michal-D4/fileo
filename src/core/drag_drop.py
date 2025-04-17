@@ -1,3 +1,4 @@
+# from loguru import logger
 from collections import deque
 import sys
 
@@ -19,15 +20,13 @@ elif sys.platform.startswith("linux"):
 else:
     raise ImportError(f"doesn't support {sys.platform} system")
 
-drop_target: QModelIndex = QModelIndex()
 dragged_ids = []
-dropped_ids = []
 
-def get_index_path(index: QModelIndex) -> list[int]:
+def get_index_path(this_index: QModelIndex) -> list[int]:
     """
-    for index returns the full path from root to this index
+    returns path as row numbers from root to this_index
     """
-    idx = index
+    idx = this_index
     path = []
     while idx.isValid():
         path.append(idx.row())
@@ -36,68 +35,62 @@ def get_index_path(index: QModelIndex) -> list[int]:
     return path
 
 def get_files_mime_data() -> QMimeData:
-    indexes = ag.file_list.selectionModel().selectedRows()
-    return file_mime_data(indexes)
-
-def file_mime_data(indexes) -> QMimeData:
     """
     mimedata contains:
     - Pid of current instance
     - number of selected files
     - for each file: id, dir_id
     """
-    drag_data = QByteArray()
-    data_stream = QDataStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
-    pid = QCoreApplication.applicationPid()
-    data_stream.writeInt(pid)
+    def dir_id() -> int:
+        if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
+            dir_idx = ag.dir_list.currentIndex()
+            return dir_idx.data(Qt.ItemDataRole.UserRole).id
+        else:
+            return 0
 
-    if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
-        dir_idx = ag.dir_list.currentIndex()
-        dir_id = dir_idx.data(Qt.ItemDataRole.UserRole).id
-    else:
-        dir_id = 0
+    def external_file_list() -> QMimeData:
+        """
+        create QMimeData to drag to another app instance
+        .QtCore.QCoreApplication.applicationPid()
+        """
+        drag_data = QByteArray()
+        data_stream = QTextStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
+        low_bk._export_files(data_stream)
+        return drag_data
 
-    data_stream.writeInt(dir_id)
-    data_stream.writeInt(len(indexes))
-    model = ag.file_list.model()
-    for idx in indexes:
-        s_idx = model.mapToSource(idx)
-        data_stream.writeInt(
-            model.sourceModel().data(
-                s_idx, role=Qt.ItemDataRole.UserRole
-            ).id
-        )
+    def internal_file_list() -> QMimeData:
+        drag_data = QByteArray()
+        data_stream = QDataStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
+        pid = QCoreApplication.applicationPid()
+        data_stream.writeInt(pid)
+
+        data_stream.writeInt(dir_id())
+        indexes = ag.file_list.selectionModel().selectedRows()
+        data_stream.writeInt(len(indexes))
+        model = ag.file_list.model()
+        for idx in indexes:
+            s_idx = model.mapToSource(idx)
+            data_stream.writeInt(
+                model.sourceModel().data(
+                    s_idx, role=Qt.ItemDataRole.UserRole
+                ).id
+            )
+        return drag_data
 
     mime_data = QMimeData()
-    mime_data.setData(ag.mimeType.files_in.value, drag_data)
-    mime_data.setData(
-        ag.mimeType.files_out.value,
-        external_file_list(indexes)
-    )
+    mime_data.setData(ag.mimeType.files_in.value, internal_file_list())
+    mime_data.setData(ag.mimeType.files_out.value, external_file_list())
     return mime_data
 
-def external_file_list(indexes) ->QMimeData:
-    """
-    create QMimeData to drag to another instance
-    .QtCore.QCoreApplication.applicationPid()
-    """
-    drag_data = QByteArray()
-    data_stream = QTextStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
-    low_bk._export_files(data_stream)
-
-    return drag_data
-
 def get_dir_mime_data() -> QMimeData:
-
     indexes = ag.dir_list.selectionModel().selectedRows()
     get_dragged_ids(indexes)
     return dir_mime_data(indexes)
 
 def get_dragged_ids(indexes: QModelIndex):
     """
-    save full tree of dragged dirs
-    used in bk_ut.is_descendant() method
-    to reject dragging if a loop is created in the tree
+    collect all ids of dragged folders.
+    This collection is used to avoid loop in folder tree.
     """
     model = ag.dir_list.model()
     dragged_ids.clear()
@@ -114,9 +107,6 @@ def get_dragged_ids(indexes: QModelIndex):
     dragged_ids.extend(set(ids))
 
 def dir_mime_data(indexes) -> QMimeData:
-    """
-    returns mime_data with paths from root to each selected dir
-    """
     drag_data = QByteArray()
     data_stream = QDataStream(drag_data, QIODevice.OpenModeFlag.WriteOnly)
 
@@ -139,28 +129,16 @@ def set_drag_drop_handlers():
 @pyqtSlot(Qt.DropAction)
 def start_drag_dirs(action):
     drag = QDrag(ag.app)
-
-    mime_data = get_dir_mime_data()
-    drag.setMimeData(mime_data)
-    bb = drag.exec(
-        Qt.DropAction.CopyAction | Qt.DropAction.MoveAction
-    )
-
-    if bb is not Qt.DropAction.IgnoreAction:
-        low_bk.dirs_changed(drop_target, dropped_ids[0])
+    drag.setMimeData(get_dir_mime_data())
+    drag.exec(Qt.DropAction.CopyAction | Qt.DropAction.MoveAction)
 
 @pyqtSlot(Qt.DropAction)
 def start_drag_files(action):
     drag = QDrag(ag.app)
-
-    mime_data = get_files_mime_data()
-    drag.setMimeData(mime_data)
-    bb = drag.exec(
-        Qt.DropAction.CopyAction | Qt.DropAction.MoveAction,
-        Qt.DropAction.CopyAction)
-
-    if bb is Qt.DropAction.MoveAction:
-        low_bk.refresh_file_list()
+    drag.setMimeData(get_files_mime_data())
+    drag.exec(
+        Qt.DropAction.CopyAction | Qt.DropAction.MoveAction, Qt.DropAction.CopyAction
+    )
 
 @pyqtSlot(QDragEnterEvent)
 def drag_enter_event(event: QDragEnterEvent):
@@ -210,24 +188,23 @@ def is_descendant(idx: QModelIndex) -> bool:
 
 @pyqtSlot(QDropEvent)
 def drop_event(e: QDropEvent):
-    global drop_target
     menu.choose_drop_action(e)
     pos = e.position().toPoint()
-    index = ag.dir_list.indexAt(pos)
-    id = (
-        index.data(role=Qt.ItemDataRole.UserRole).id
-        if index.isValid() else 0
-    )
-    if drop_data(e.mimeData(), e.dropAction(), id):
-        drop_target = index
+    target = ag.dir_list.indexAt(pos)
+    data = e.mimeData()
+    if drop_data(data, e.dropAction(), target):
         e.accept()
     else:
         e.setDropAction(Qt.DropAction.IgnoreAction)
         e.ignore()
 
-def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
+def drop_data(data: QMimeData, act: Qt.DropAction, target: QModelIndex) -> bool:
+    target_id = (
+        target.data(role=Qt.ItemDataRole.UserRole).id
+        if target.isValid() else 0
+    )
     if data.hasFormat(ag.mimeType.files_uri.value):
-        drop_uri_list(data, target)
+        drop_uri_list(data, target_id)
         update_file_list(target)
         return True
 
@@ -235,22 +212,26 @@ def drop_data(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
         return drop_files(data, act, target)
 
     if data.hasFormat(ag.mimeType.folders.value):
-        return drop_folders(data, act, target)
+        res = drop_folders(data, act, target_id)
+        low_bk.dirs_changed(target, sure_expand=True)
+        return res
 
     return False
 
-def update_file_list(target: int):
+def update_file_list(target: QModelIndex):
     idx = ag.dir_list.currentIndex()
     if idx.isValid():
-        if ((ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder())
-            and idx.data(Qt.ItemDataRole.UserRole).id == target):
+        if ((ag.mode is ag.appMode.DIR and idx == target) or ag.mode is ag.appMode.FILTER):
             low_bk.refresh_file_list()
-    if ag.mode is ag.appMode.FILTER:
-        ag.show_message_box(
-            'Drop files',
-            'Application is in Filter mode, so you may not see the dropped files.',
-            icon=QMessageBox.Icon.Warning
-        )
+        elif ag.mode is ag.appMode.DIR:
+            ag.dir_list.setCurrentIndex(target)
+
+        if ag.mode is ag.appMode.FILTER:
+            ag.show_message_box(
+                'Drop files',
+                'Application is in Filter mode, so you may not see the dropped files.',
+                icon=QMessageBox.Icon.Warning
+            )
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
@@ -259,20 +240,25 @@ def drop_uri_list(data: QMimeData, target: int) -> bool:
     )
     load.load_to_dir(target)
 
-def drop_files(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
+def drop_files(data: QMimeData, act: Qt.DropAction, target: QModelIndex) -> bool:
     files_data = data.data(ag.mimeType.files_in.value)
     stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
-    pid_from = stream.readInt()
-    if QCoreApplication.applicationPid() == pid_from:
+    pid_drag_from = stream.readInt()
+    if QCoreApplication.applicationPid() == pid_drag_from:   # mimeType.files_in
+        target_id = target.data(role=Qt.ItemDataRole.UserRole).id
         if act is Qt.DropAction.CopyAction:
-            return copy_files(stream, target)
+            res = copy_files(stream, target_id)
+            ag.dir_list.setCurrentIndex(target)
+            return res
         if act is Qt.DropAction.MoveAction:
-            return move_files(stream, target)
+            res = move_files(stream, target_id)
+            low_bk.refresh_file_list()
+            return res
         return False
-    else:           # drag from another instance
+    else:           # mimeType.files_out
         files_data = data.data(ag.mimeType.files_out.value)
         stream = QTextStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
-        low_bk._import_files(stream)
+        low_bk._import_files(stream, target)
 
 def copy_files(stream: QDataStream, target: int) -> bool:
     _ = stream.readInt()   # source dir_id - not used here
@@ -299,7 +285,6 @@ def move_files(stream: QDataStream, target: int) -> bool:
     return True
 
 def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
-    dropped_ids.clear()
     copy_move = (
         move_folder if act is Qt.DropAction.MoveAction
         else copy_folder
@@ -311,23 +296,17 @@ def drop_folders(data: QMimeData, act: Qt.DropAction, target: int) -> bool:
     model: dirModel = ag.dir_list.model()
     for _ in range(idx_count):
         tmp_str = stream.readQString()
-        id_list = (int(i) for i in tmp_str.split(','))
-        idx = model.restore_index(id_list)
+        path = (int(i) for i in tmp_str.split(','))
+        idx = model.restore_index(path)
+
         if not copy_move(idx, target):
             return False
     return True
 
 def copy_folder(index: QModelIndex, target: int) -> bool:
     dir_data = index.data(Qt.ItemDataRole.UserRole)
-    dropped_ids.append(dir_data.id)
-
-    db_ut.copy_dir(target, dir_data)
-    return True
+    return db_ut.copy_dir(target, dir_data)
 
 def move_folder(index: QModelIndex, target: int) -> bool:
-    u_dat = index.data(Qt.ItemDataRole.UserRole)
-    dropped_ids.append(u_dat.id)
-
-    if db_ut.move_dir(target, u_dat.parent_id, u_dat.id):
-        return True
-    return False
+    dir_data = index.data(Qt.ItemDataRole.UserRole)
+    return db_ut.move_dir(target, dir_data.parent_id, dir_data.id)

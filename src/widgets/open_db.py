@@ -27,7 +27,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.listDB.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         self.listDB.itemEntered.connect(self.item_enter)
-        self.listDB.itemDoubleClicked.connect(self.item_click)
+        self.listDB.itemClicked.connect(self.item_click)
         self.listDB.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.listDB.customContextMenuRequested.connect(self.item_menu)
         self.listDB.setCurrentCell(0, 0)

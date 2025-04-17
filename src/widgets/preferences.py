@@ -1,10 +1,11 @@
-from loguru import logger
+# from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import QSize, Qt, QCoreApplication, QPoint
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtCore import Qt, QCoreApplication, QPoint
+from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QFormLayout,
-    QLineEdit, QCheckBox, QComboBox,
+    QLineEdit, QCheckBox, QComboBox, QHBoxLayout,
+    QLabel,
 )
 
 from .. import tug
@@ -25,6 +26,7 @@ class Preferences(QWidget):
 
         form_layout = QFormLayout()
         form_layout.setContentsMargins(9, 9, 9, 9)
+        self.log_path = QLabel()
         self.set_inputs()
 
         form_layout.addRow('Color theme:', self.themes)
@@ -32,15 +34,22 @@ class Preferences(QWidget):
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
         form_layout.addRow('Folder history depth:', self.folder_history_depth)
-        form_layout.addRow('Check duplicates:', self.check_dup)
-        if tug.config['instance_control']:
-            form_layout.addRow('Allow single instance only:', self.single_instance)
+        form_layout.addRow('Recent file list length:', self.last_file_list_length)
+        form_layout.addRow(self.check_dup)
+        if tug.config.get("all_preferences", 0):
+            form_layout.addRow(self.single_instance)
+            h_lay = QHBoxLayout()
+            h_lay.addWidget(self.use_logging)
+            h_lay.addWidget(self.log_path)
+            form_layout.addRow(h_lay)
 
         self.ui.pref_form.setLayout(form_layout)
 
         self.mouseMoveEvent = self.move_self
         self.ui.accept_pref.clicked.connect(self.accept)
+        self.ui.accept_pref.setShortcut(QKeySequence(Qt.Key.Key_Return))
         self.ui.cancel.clicked.connect(self.reject)
+        self.ui.cancel.setShortcut(QKeySequence(Qt.Key.Key_Escape))
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -50,9 +59,6 @@ class Preferences(QWidget):
                 self.move(self.pos() + dist)
                 e.accept()
             self.start_pos = pos_
-
-    def sizeHint(self) -> QSize:
-        return QSize(499,184)
 
     def reject(self):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
@@ -70,10 +76,12 @@ class Preferences(QWidget):
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
+            "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
         }
-        if tug.config['instance_control']:
-            settings['SINGLE_INSTANCE'] = int(self.single_instance.isChecked())
+        if tug.config.get("all_preferences", 0):
+            settings["SINGLE_INSTANCE"] = int(self.single_instance.isChecked())
+            settings["USE_LOGGING"] = int(self.use_logging.isChecked())
             ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         tug.save_app_setting(**settings)
         tug.create_dir(Path(self.db_path.text()))
@@ -109,22 +117,49 @@ class Preferences(QWidget):
         val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setText(str(val))
         ag.history.set_limit(int(val))
-        self.check_dup = QCheckBox()
+
+        self.last_file_list_length = QLineEdit()
+        self.last_file_list_length.editingFinished.connect(self.file_list_length_changed)
+        val = tug.get_app_setting('RECENT_FILE_LIST_LENGTH', 30)
+        self.last_file_list_length.setText(str(val))
+        ag.recent_files_length = int(val)
+
+        self.check_dup = QCheckBox("check duplicates")
         self.check_dup.setChecked(
             int(tug.get_app_setting('CHECK_DUPLICATES', 1))
         )
-        if tug.config['instance_control']:
-            self.single_instance = QCheckBox()
+
+        if tug.config.get('all_preferences', 0):
+            self.single_instance = QCheckBox("single instance")
             self.single_instance.setChecked(
                 int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
 
+            self.use_logging = QCheckBox("use logging")
+            self.use_logging.stateChanged.connect(
+                lambda state: self.log_path.setText(
+                    f'log path: {tug.get_log_path()}' if state else ''
+                )
+            )
+            self.use_logging.setChecked(
+                int(tug.get_app_setting('USE_LOGGING', 0))
+            )
+
     def history_depth_changed(self):
         val = int(self.folder_history_depth.text())
-        if tug.config['history_min'] > val:
-            self.folder_history_depth.setText(str(tug.config['history_min']))
-        elif tug.config['history_max'] < val:
-            self.folder_history_depth.setText(str(tug.config['history_max']))
+        n_val, x_val = tug.config.get('history_min', 2), tug.config.get('history_max', 50)
+        if n_val > val:
+            self.folder_history_depth.setText(str(n_val))
+        elif x_val < val:
+            self.folder_history_depth.setText(str(x_val))
+
+    def file_list_length_changed(self):
+        val = int(self.last_file_list_length.text())
+        n_val, x_val = tug.config.get('history_min', 2), 2 * tug.config.get('history_max', 50)
+        if n_val > val:
+            self.last_file_list_length.setText(str(n_val))
+        elif x_val < val:
+            self.last_file_list_length.setText(str(x_val))
 
     def change_theme(self, idx: int):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
@@ -132,7 +167,6 @@ class Preferences(QWidget):
 
     def set_theme(self, theme_key: str):
         log_qss = tug.config.get("save_prepared_qss", False)
-        logger.info(f'{theme_key=}, {log_qss=}')
         styles = tug.prepare_styles(theme_key, to_save=log_qss)
         QCoreApplication.instance().setStyleSheet(styles)
         self.apply_dyn_qss()

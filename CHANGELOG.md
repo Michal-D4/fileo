@@ -1,5 +1,14 @@
 # Change Log
 
+## 1.3.39 - 2025, 17 April
+* revised folder tree history
+* predictable behavior of collapse-expand branch of folder tree button
+* fixed maximizing app window issue
+* shortcuts for many actions have been created
+* fixed saving file list header issue
+* revised drag-drop usage
+* transition to python 3.13
+
 ## 1.3.38 - 2025, 08 April
 * fixed error with adding new DB in db list
 * button in the DB list to add DB

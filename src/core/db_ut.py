@@ -13,8 +13,9 @@ def dir_tree_select() -> list: # type: ignore
                'COALESCE(p.tool_tip, d.name), d.name '
                'from dirs d join parentdir p on p.id = d.id '
                'where p.parent = :pid',
-               'and p.hide = 0')
-    sql = sql2[0] if ag.app.show_hidden.isChecked() else ' '.join(sql2)
+               'and p.hide = 0',
+               'order by d.name collate nocase')
+    sql = ' '.join(sql2[::2] if ag.app.show_hidden.isChecked() else sql2)
 
     curs: apsw.Cursor = ag.db.conn.cursor()
 

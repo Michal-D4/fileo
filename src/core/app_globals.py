@@ -5,7 +5,7 @@ from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QTimer, pyqtSlot
+from PyQt6.QtCore import QTimer, pyqtSlot, QModelIndex
 from PyQt6.QtWidgets import QTreeView, QMessageBox
 
 from .. import tug
@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.38'
+    return '1.3.39'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -41,6 +41,7 @@ buttons = []
 note_buttons = []
 history: 'History' = None
 recent_files = []
+recent_files_length = 20
 single_instance = False
 stop_thread = False
 start_thread = None
@@ -155,6 +156,24 @@ def get_setting(key: str, default=None):
 
     return vv if vv else default
 
+def define_branch(index: QModelIndex) -> list:
+    """
+    return branch - a list of node ids from root to index
+    """
+    if not index.isValid():
+        return []
+    item = index.internalPointer()
+    branch = []
+    while 1:
+        u_dat = item.user_data()
+        branch.append(u_dat.id)
+        if u_dat.parent_id == 0:
+            break
+        item = item.parent()
+    branch.reverse()
+    branch.append(int(dir_list.isExpanded(index)))
+    return branch
+
 KB, MB, GB = 1024, 1048576, 1073741824
 def hr_size(n):
     if n > GB:
@@ -178,6 +197,8 @@ def add_recent_file(id_: int):
         pass
 
     recent_files.append(id_)
+    if len(recent_files) > recent_files_length:
+        recent_files.pop(0)
 
 def show_message_box(
         title: str, msg: str,

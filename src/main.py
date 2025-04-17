@@ -14,14 +14,13 @@ from .core import app_globals as ag, sho
 
 
 def run_instance(lock: list) -> bool:
-    if tug.config.get('instance_control', False):
-        ag.single_instance = int(tug.get_app_setting("SINGLE_INSTANCE", 0))
-        logger.info(f'{ag.single_instance=}')
-        if ag.single_instance:
-            if not lock:
-                lock.append(QLockFile(QDir.tempPath() + '/fileo.lock'))
-            if not lock[0].tryLock():
-                return False
+    ag.single_instance = bool(tug.get_app_setting("SINGLE_INSTANCE", 0))
+    logger.info(f'{ag.single_instance=}')
+    if ag.single_instance:
+        if not lock:
+            lock.append(QLockFile(QDir.tempPath() + '/fileo.lock'))
+        if not lock[0].tryLock():
+            return False
 
     return True
 
@@ -68,17 +67,13 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
 
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
     tab.activated.connect(tab_toggle_focus)
-    ctrl_h = QShortcut(QKeySequence("Ctrl+h"), ag.app)
-    ctrl_h.activated.connect(
-        lambda: ag.signals_.user_signal.emit("show_recent_files")
-    )
 
     sys.exit(app.exec())
 
 def main(entry_point: str, db_name: str, first_instance: bool):
     app = QApplication([])
     tug.entry_point = entry_point
-    tug.set_logger()
+    tug.set_logger(first_instance)
 
     logger.info(f'{ag.app_name()=}, {ag.app_version()=}, {first_instance=}')
     logger.info(f'{entry_point=}')

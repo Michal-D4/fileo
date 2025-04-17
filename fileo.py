@@ -7,7 +7,7 @@ if __name__ == '__main__':
     sys.argv - up to 3 parameters:
     0 - entry_point: str,
     1 - db_name: str,
-    2 - first_instanse: bool
+    2 - first_instanse: str,  = 'True'|'False'
     """
     if len(sys.argv) == 1:
         db = ''
