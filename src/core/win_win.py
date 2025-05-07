@@ -77,7 +77,7 @@ def setup_ui(self: 'shoWindow'):
     self.ui.toolBar.mouseMoveEvent = move_window
     self.ui.left_top.mouseMoveEvent = move_window
 
-    if tug.get_app_setting("maximizedWindow", False):
+    if int(tug.get_app_setting("maximizedWindow", False)):
         maximize()
 
     def double_click_maximize_restore(e: QMouseEvent):

@@ -467,6 +467,8 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
         return
+    if ag.mode.value < ag.appMode.RECENT_FILES.value:
+        return
     ag.switch_to_prev_mode()
 
 def save_curr_file_id(dir_idx: QModelIndex):
@@ -628,7 +630,6 @@ def fill_file_model(files) -> fileModel:
     ag.app.ui.file_count.setText(f"files: {rows}")
     if rows == 0:
         file_notes_show(QModelIndex())
-        ag.dir_list.setFocus()
 
     return model
 

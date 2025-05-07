@@ -109,7 +109,6 @@ def set_menu_more(self):
 def single_shot():
     if int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
         QTimer.singleShot(10 * 1000, check_duplicates)
-    QTimer.singleShot(20 * 1000, show_lost_files)
     QTimer.singleShot(5 * 60 * 1000, run_update0_files)
     QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
     QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
@@ -400,10 +399,6 @@ def check_duplicates(auto: bool=True):
             "No duplicates found",
             "No file duplicates found in DB"
         )
-
-@pyqtSlot()
-def show_lost_files():
-    workers.find_lost_files()
 
 @pyqtSlot()
 def run_update0_files():

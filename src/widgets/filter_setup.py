@@ -22,6 +22,7 @@ class FilterSetup(QWidget):
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
         self.ui.after_date.setCalendarPopup(True)
         self.ui.before_date.setCalendarPopup(True)
         ttls = tug.qss_params['$FoldTitles'].lower()
@@ -34,7 +35,9 @@ class FilterSetup(QWidget):
         self.ui.after_date.setDisplayFormat("yyyy-MM-dd")
         self.ui.before_date.setDisplayFormat("yyyy-MM-dd")
 
-        self.ui.selected_tag.stateChanged.connect(self.toggle_tag_check)
+        self.ui.selected_dir.checkStateChanged.connect(self.dir_check)
+        self.ui.no_folder.checkStateChanged.connect(self.no_dir_check)
+        self.ui.selected_tag.checkStateChanged.connect(self.toggle_tag_check)
         self.ui.btnDone.clicked.connect(self.done_clicked)
         self.ui.btnApply.clicked.connect(self.apply_clicked)
         self.ui.after.clicked.connect(self.after_clicked)
@@ -55,9 +58,17 @@ class FilterSetup(QWidget):
                 e.accept()
             self.start_pos = pos_
 
-    def toggle_tag_check(self, state: int):
-        self.ui.all_btn.setEnabled(state)
-        self.ui.any_btn.setEnabled(state)
+    def dir_check(self, state: Qt.CheckState):
+        if state is Qt.CheckState.Checked:
+            self.ui.no_folder.setCheckState(Qt.CheckState.Unchecked)
+
+    def no_dir_check(self, state: Qt.CheckState):
+        if state is Qt.CheckState.Checked:
+            self.ui.selected_dir.setCheckState(Qt.CheckState.Unchecked)
+
+    def toggle_tag_check(self, state: Qt.CheckState):
+        self.ui.all_btn.setEnabled(state is Qt.CheckState.Checked)
+        self.ui.any_btn.setEnabled(state is Qt.CheckState.Checked)
 
     def is_single_folder(self) -> bool:
         return self.single_folder
@@ -126,6 +137,7 @@ class FilterSetup(QWidget):
     def store_temp(self):
         self.checks = {
             'dir': self.ui.selected_dir.isChecked(),
+            'no_dir': self.ui.no_folder.isChecked(),
             'tag': self.ui.selected_tag.isChecked(),
             'ext': self.ui.selected_ext.isChecked(),
             'author': self.ui.selected_author.isChecked(),
@@ -142,6 +154,8 @@ class FilterSetup(QWidget):
     def store_dir_ids(self):
         if not self.checks['dir']:   # if any folder is not selected
             self.single_folder = False
+            if self.checks['no_dir']:
+                db_ut.temp_files_no_dir()
             return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.single_folder = (len(idxs) == 1)

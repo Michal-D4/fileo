@@ -16,6 +16,7 @@ class diskScanner(QWidget):
 
         self.ui = Ui_scanDisk()
         self.ui.setupUi(self)
+        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
 
         self.ui.open_btn.setIcon(tug.get_icon("folder_open"))
 
@@ -33,7 +34,7 @@ class diskScanner(QWidget):
     @pyqtSlot()
     def go(self):
         # start scanning
-        root = Path(self.ui.root_dir.text())
+        root = Path(self.ui.root_dir.text()).absolute()
         if not root.exists():
             self.ui.root_dir.setPlaceholderText(
                 f'path "{str(root)}" does not exist'

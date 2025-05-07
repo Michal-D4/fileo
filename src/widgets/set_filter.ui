@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>431</width>
-    <height>447</height>
+    <height>459</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,13 +46,20 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1">
          <property name="topMargin">
           <number>6</number>
          </property>
          <property name="bottomMargin">
           <number>6</number>
          </property>
+         <item>
+          <widget class="QLabel" name="ico">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QLabel" name="hdr_lbl">
            <property name="text">
@@ -129,7 +136,7 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
+         <item row="2" column="0">
           <widget class="QFrame" name="frame_tag">
            <property name="maximumSize">
             <size>
@@ -186,7 +193,7 @@
            </layout>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="2" column="1">
           <widget class="QPlainTextEdit" name="tag_list">
            <property name="maximumSize">
             <size>
@@ -205,11 +212,10 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QCheckBox" name="selected_ext">
-          </widget>
+         <item row="4" column="0">
+          <widget class="QCheckBox" name="selected_ext"/>
          </item>
-         <item row="3" column="1">
+         <item row="4" column="1">
           <widget class="QPlainTextEdit" name="ext_list">
            <property name="maximumSize">
             <size>
@@ -228,11 +234,10 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QCheckBox" name="selected_author">
-          </widget>
+         <item row="5" column="0">
+          <widget class="QCheckBox" name="selected_author"/>
          </item>
-         <item row="4" column="1">
+         <item row="5" column="1">
           <widget class="QPlainTextEdit" name="author_list">
            <property name="maximumSize">
             <size>
@@ -251,47 +256,34 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="6" column="0">
           <widget class="QCheckBox" name="open_sel">
            <property name="text">
-            <string>file open number</string>
+            <string>open #</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
+         <item row="6" column="1">
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
             <widget class="QComboBox" name="open_cond">
              <property name="minimumSize">
               <size>
-               <width>110</width>
+               <width>40</width>
                <height>0</height>
               </size>
              </property>
              <item>
               <property name="text">
-               <string>less or equal</string>
+               <string>&lt;=</string>
               </property>
              </item>
              <item>
               <property name="text">
-               <string>greater than</string>
+               <string>&gt;</string>
               </property>
              </item>
             </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
            <item>
             <widget class="QLineEdit" name="open_edit">
@@ -318,44 +310,8 @@
              </property>
             </widget>
            </item>
-          </layout>
-         </item>
-         <item row="6" column="0">
-          <widget class="QCheckBox" name="rating_sel">
-           <property name="text">
-            <string>rating</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QComboBox" name="rating_cond">
-             <property name="minimumSize">
-              <size>
-               <width>110</width>
-               <height>0</height>
-              </size>
-             </property>
-             <item>
-              <property name="text">
-               <string>less than</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>equal to</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>greater than</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_3">
+            <spacer name="horizontalSpacer_2">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -366,6 +322,42 @@
               </size>
              </property>
             </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="7" column="0">
+          <widget class="QCheckBox" name="rating_sel">
+           <property name="text">
+            <string>rating</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QComboBox" name="rating_cond">
+             <property name="minimumSize">
+              <size>
+               <width>40</width>
+               <height>0</height>
+              </size>
+             </property>
+             <item>
+              <property name="text">
+               <string>&lt;</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>=</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>&gt;</string>
+              </property>
+             </item>
+            </widget>
            </item>
            <item>
             <widget class="QLineEdit" name="rating_edit">
@@ -392,9 +384,22 @@
              </property>
             </widget>
            </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
           </layout>
          </item>
-         <item row="7" column="0">
+         <item row="8" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <property name="spacing">
             <number>9</number>
@@ -438,7 +443,7 @@
            </item>
           </layout>
          </item>
-         <item row="7" column="1">
+         <item row="8" column="1">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -447,6 +452,12 @@
              </property>
              <item>
               <widget class="QCheckBox" name="after">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string>after</string>
                </property>
@@ -456,8 +467,20 @@
               </widget>
              </item>
              <item>
-              <widget class="QDateEdit" name="after_date">
-              </widget>
+              <widget class="QDateEdit" name="after_date"/>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </item>
@@ -468,18 +491,43 @@
              </property>
              <item>
               <widget class="QCheckBox" name="before">
+               <property name="minimumSize">
+                <size>
+                 <width>60</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="text">
                 <string>before</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QDateEdit" name="before_date">
-              </widget>
+              <widget class="QDateEdit" name="before_date"/>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </item>
           </layout>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="no_folder">
+           <property name="text">
+            <string>files not included in any folder</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -501,6 +549,19 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item>
          <widget class="QPushButton" name="btnApply">
           <property name="minimumSize">

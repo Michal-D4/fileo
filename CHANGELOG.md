@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.3.40 - 2025, 07 May
+* fix bug with maximize-restore main window. Found in linux
+* revise the loading files (including drag from os file system)
+* remove predefined @@Lost folder. Now all folders are identical in their properties.
+* a new condition has been created in the filter to display files that are not in any folder
+![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/filter_no_dir.png)
+
 ## 1.3.39 - 2025, 17 April
 * revised folder tree history
 * predictable behavior of collapse-expand branch of folder tree button

@@ -174,76 +174,6 @@ def get_file(file_id: int) -> abc.Iterable:
     )
     return ag.db.conn.cursor().execute(sql, {'f_id': file_id}).fetchone()
 
-def lost_files():
-    """
-    put the lost files in a special folder and show it
-    """
-    # check if there are lost files
-    sql0 = (
-        'select 1 from files where id not in ('
-        'select distinct file from filedir)'
-    )
-    # add lost files to @@Lost dir (dir_id=1)
-    sql1 = (
-        'insert into filedir select id,1 from files where id '
-        'not in (select distinct file from filedir)'
-    )
-    # check if link to the @@Lost exists in dir tree
-    sql2 = 'select 1 from parentdir where (parent,id) = (0,1)'
-    # add hidden link into dir tree to folder @@Lost
-    sql3 = 'insert into parentdir (parent, id, hide, file_id) values (0, 1, 1, 0)'
-    # clear @@Lost
-    sql4 = 'delete from filedir where dir = 1'
-    # check if the @@Lost dir exists
-    sql5 = "select 1 from dirs where id = 1"
-    # create @@Lost dir
-    sql6 = "insert into dirs (id, name) values (1, '@@Lost')"
-    # clear @Lost from files that has copies in other dir(s)
-    sql7 = (
-        'with x(id, cnt) as (select file, count(*) '
-        'from filedir where file in (select file '
-        'from filedir where dir = 1) group by file) '
-        'delete from filedir where dir = 1 and file '
-        'in (select id from x where cnt > 1)'
-    )
-
-
-    def add_lost_in_tree():
-        '''
-        add @@Lost link (sql3) into dir tree (parentdir)
-        if doesn't exist (sql2)
-        '''
-        lost_in_tree = conn.cursor().execute(sql2).fetchone()
-        if not lost_in_tree:
-            conn.cursor().execute(sql3)
-
-    def create_lost_dir():
-        '''
-        create @@Lost dir (sql6) if doesn't exist (sql5)
-        '''
-        existLost = conn.cursor().execute(sql5).fetchone()
-        if not existLost:
-            conn.cursor().execute(sql6).fetchone()
-
-    if not ag.db.conn:
-        return
-    try:
-        with ag.db.conn as conn:
-            has_lost_files = conn.cursor().execute(sql0).fetchone()
-            if not has_lost_files:
-                # delete from @Lost dir files that has copies in other dir(s)
-                conn.cursor().execute(sql7).fetchone()
-                return
-
-            create_lost_dir()
-
-            conn.cursor().execute(sql4)   # clear @@Lost dir
-            conn.cursor().execute(sql1)   # fill @@Lost dir
-
-            add_lost_in_tree()
-    finally:
-        pass
-
 def registered_file_id(path: str, filename: str) -> int:
     sql = (
         'select f.id from files f join paths p on p.id = f.path '
@@ -440,7 +370,7 @@ def filter_files(param: dict) -> apsw.Cursor:
         }[key]
 
     def filter_subsqls():
-        if param['dir']:
+        if param['dir'] or param['no_dir']:
             sqlist.append(filter_sqls('dir_sql'))
         if param['tag']:
             sqlist.append(filter_sqls('tag_sql'))
@@ -621,6 +551,13 @@ def temp_files_dir(dirs: list, sub_dirs: bool):
         curs.executemany(sql0, dirs)
 
     curs.execute(sql2)
+
+def temp_files_no_dir():
+    sql = (
+        "insert into aux (key, val) select 'files_dir', id from "
+        "files where id not in (select distinct file from filedir)"
+    )
+    ag.db.conn.cursor().execute(sql)
 
 def clear_temp():
     sql = "delete from aux where key != 'TREE_PATH'"

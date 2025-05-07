@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\scan_disk.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\widgets\scan_disk.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -40,9 +40,14 @@ class Ui_scanDisk(object):
         self.ttl_frame.setObjectName("ttl_frame")
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.ttl_frame)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.ico = QtWidgets.QLabel(parent=self.ttl_frame)
+        self.ico.setText("")
+        self.ico.setObjectName("ico")
+        self.horizontalLayout_4.addWidget(self.ico)
         self.win_title = QtWidgets.QLabel(parent=self.ttl_frame)
         self.win_title.setObjectName("win_title")
         self.horizontalLayout_4.addWidget(self.win_title)
+        self.horizontalLayout_4.setStretch(1, 1)
         self.verticalLayout_2.addWidget(self.ttl_frame)
         self.path_frame = QtWidgets.QFrame(parent=self.dlg_frame)
         self.path_frame.setObjectName("path_frame")

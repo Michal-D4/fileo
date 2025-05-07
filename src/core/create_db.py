@@ -141,14 +141,4 @@ def create_tables(db_name: str):
     for tbl in TABLES:
         cursor.execute(tbl)
 
-    initiate_db(conn)
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
-
-def initiate_db(connection):
-    sql = (
-        'insert or ignore into dirs (id, name) values (:key, :val)',
-        'insert into parentdir (parent, id, hide, file_id) values (?, ?, ?, ?)'
-    )
-    curs = connection.cursor()
-    curs.execute(sql[0], {'key': 1, 'val': '@@Lost'})
-    curs.execute(sql[1], (0, 1, 1, 0))

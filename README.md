@@ -84,7 +84,7 @@ The following icons used for folders depending of their attributes:
 | one parent          | ![one_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/one_folder_hide.png) | ![one_folder](https://github.com/Michal-D4/fileo/raw/main/img/one_folder.png) |
 | two or more parents | ![mult_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder_hide.png) | ![mult_folder](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder.png) |
 
-You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files. In the next session this "lost" file will appear in the hidden folder "@@Lost".
+You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files. 
 
 You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
 
@@ -143,15 +143,11 @@ There are several methods to add files:
 
    > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase references.
 
-### How to work with filters
-
-First you should setup the filter:
+### Working with filters
 
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
 
-With the filter set in the picture, the list of files will include files from the any of `DB`, `ML` or `Rust` folders that have at least one of the `Math`, `ML` or `package` tags, have a rating higher than 4 and were opened on or after `2022-09-14`.
-
-> **Note.** In case "Date of before" &mdash; on or before `2022-11-14` in the case shown in the image.
+The "folders" and "files not in any folder" options are mutually exclusive.
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
@@ -275,7 +271,7 @@ Besides them you can copy / move files from one folder to another.
 
 You can also open files by double clicking on "File name". If the file is executable, it will be executed, not opened. Thus, the application can be used as a "Start Menu", it can be even more convenient than the standard "Start Menu".
 
-> **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, it can be found by searching by name or part of the name, or using a filter, or at least it will appear in (hidden) folder "@@Lost".
+> **Note:** If you delete a file from a folder, the file will still remain in the DB, even if you delete it from all folders, it can be found by searching by name or part of the name, or using a filter.
 > If you delete a file from the DB, it will be deleted from all folders, and all notes for this file and its links to tags and authors will be lost.
 
 ***

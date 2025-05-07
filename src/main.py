@@ -30,20 +30,22 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
 
     @pyqtSlot(QWidget, QWidget)
     def tab_toggle_focus():
-        if app.focusWidget() is ag.dir_list:
-            ag.file_list.setFocus()
-        else:
-            if ag.mode is ag.appMode.FILTER:
-                ag.dir_list.selectionModel().selectionChanged.disconnect(ag.filter_dlg.dir_selection_changed)
-
-            ag.dir_list.setFocus()
-
-            sel_model = ag.dir_list.selectionModel()
+        def reset_dir_selection():
             selection = sel_model.selection()
             sel_model.select(selection, QItemSelectionModel.SelectionFlag.Clear)
             sel_model.select(selection, QItemSelectionModel.SelectionFlag.Select)
+        if app.focusWidget() is ag.dir_list:
+            ag.file_list.setFocus()
+        else:
+            sel_model = ag.dir_list.selectionModel()
             if ag.mode is ag.appMode.FILTER:
-                ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
+                sel_model.selectionChanged.disconnect(ag.filter_dlg.dir_selection_changed)
+
+            ag.dir_list.setFocus()
+            reset_dir_selection()
+
+            if ag.mode is ag.appMode.FILTER:
+                sel_model.selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
 
     def set_style():
         styles = tug.prepare_styles(theme_key, to_save=log_qss)

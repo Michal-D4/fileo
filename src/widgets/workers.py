@@ -11,9 +11,6 @@ def report_duplicates() -> dict[list]:
     rep_creator = reports.Duplicates()
     return rep_creator.get_report()
 
-def find_lost_files():
-    db_ut.lost_files()
-
 def sha256sum(filename: Path) -> str:
     h  = hashlib.sha256()
     b  = bytearray(128*1024)

@@ -136,9 +136,9 @@ class Preferences(QWidget):
             )
 
             self.use_logging = QCheckBox("use logging")
-            self.use_logging.stateChanged.connect(
+            self.use_logging.checkStateChanged.connect(
                 lambda state: self.log_path.setText(
-                    f'log path: {tug.get_log_path()}' if state else ''
+                    f'log path: {tug.get_log_path()}' if state is Qt.CheckState.Checked else ''
                 )
             )
             self.use_logging.setChecked(
