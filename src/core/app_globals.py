@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
-    from ..widgets.fold_container import FoldState
+    from ..widgets.fold_container import foldGrip
 
 
 def app_name() -> str:
@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.40'
+    return '1.3.41'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -36,7 +36,7 @@ file_list: QTreeView = None
 author_list: 'aBrowser' = None
 file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
-fold_states: 'list[FoldState]' = None
+fold_grips: 'list[foldGrip]' = None
 buttons = []
 note_buttons = []
 history: 'History' = None

@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.41 - 2025, 11 May
+* I decided not to extract author names from pdf files. The AUTHORS widget can now be used to store any data and will work similarly to tags, i.e. items can be used in the file filter. Title of widget may be changed/edited with right mouse button click.
+* some other changes and improvements
+
 ## 1.3.40 - 2025, 07 May
 * fix bug with maximize-restore main window. Found in linux
 * revise the loading files (including drag from os file system)

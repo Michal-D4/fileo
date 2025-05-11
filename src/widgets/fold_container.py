@@ -48,7 +48,7 @@ class MouseEventFilter(QObject):
         return super().eventFilter(obj, event_)
 
 
-class FoldState():
+class foldGrip():
     __slot__ = ("__height", "__is_collapsed", "wid", "__is_hidden")
 
     def __init__(self, widget: Foldable):
@@ -123,10 +123,13 @@ class FoldContainer(QWidget):
 
         self.ui = Ui_Foldings()
         self.ui.setupUi(self)
-        self.widgets: list[FoldState] = [FoldState(getattr(self.ui, m))
+        self.widgets: list[foldGrip] = [foldGrip(getattr(self.ui, m))
             for m in dir(self.ui) if type(getattr(self.ui, m)) is Foldable]
+        wid = self.widgets[-1].wid
+        wid.ui.toFold.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        wid.ui.toFold.customContextMenuRequested.connect(wid.change_title)
 
-        ag.fold_states = self.widgets
+        ag.fold_grips = self.widgets
 
         self.__first_visible: int = -1
 
@@ -489,7 +492,7 @@ class FoldContainer(QWidget):
         increase first uncollapsed widget above current one
         -- decrease current widget and bellow current
         """
-        above: FoldState = self._find_above(seq)
+        above: foldGrip = self._find_above(seq)
         if not above:
             return self.y0
 
@@ -503,7 +506,7 @@ class FoldContainer(QWidget):
         above.height += delta - dd
         self.y0 += delta - dd
 
-    def _find_above(self, seq: int) -> FoldState:
+    def _find_above(self, seq: int) -> foldGrip:
         for ff in self.widgets[seq-1::-1]:
             if not (ff.is_collapsed or ff.is_hidden):
                 return ff
@@ -516,7 +519,7 @@ class FoldContainer(QWidget):
            or first uncollapsed widget bellow current
         -- decrease widgets above current one
         """
-        to_increase: FoldState = self._find_below(seq)
+        to_increase: foldGrip = self._find_below(seq)
         if not to_increase:
             return self.y0
 
@@ -530,7 +533,7 @@ class FoldContainer(QWidget):
         to_increase.height += delta - dd
         self.y0 -= delta + dd
 
-    def _find_below(self, seq: int) -> FoldState:
+    def _find_below(self, seq: int) -> foldGrip:
         """
         find first uncollapsed widget starting from seq-th
         seq is a number of current widget
@@ -540,7 +543,7 @@ class FoldContainer(QWidget):
                 return ff
         return None
 
-    def _decrease_one(self, ff: FoldState, delta: int) -> int:
+    def _decrease_one(self, ff: foldGrip, delta: int) -> int:
         """
         decrease height of one widget
         ff:    - FoldState object corresponds to current widget

@@ -56,7 +56,7 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
     _, theme_key = tug.get_app_setting(
         "Current Theme", ("Default Theme", "Default_Theme")
     )
-    logger.info(f'{theme_key=}')
+
     try:
         set_style()
     except Exception as e:

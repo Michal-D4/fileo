@@ -147,53 +147,51 @@ def save_app_setting(**kwargs):
         settings.setValue(key, QVariant(value))
 
 def prepare_styles(theme_key: str, to_save: bool) -> str:
-    global qss_params
-    icons_txt = styles = params = ''
-    files = {'qss': "default.qss", 'ico': "icons.toml", 'params': "default.param"}
+    files = {'qss': "default.qss", 'ico': "icons.toml", 'param': "default.param"}
     dyn_qss.clear()
+    qss_params.clear()
 
     get_theme_list()
+    logger.info(f'{theme_key=}')
+    theme = themes.get(theme_key, {})
 
     def translate_qss(styles: str) -> str:
         for key, val in qss_params.items():
             styles = styles.replace(key, val)
         return styles
 
-    def read_theme():
-        nonlocal icons_txt, styles, params
+    def read_file(name: str) -> str:
+        res_file = cfg_path / name
+        if res_file.exists():
+            with open(res_file, "r") as ft:
+                return ft.read()
+        return resources.read_text(qss, name)
 
-        def read_file(key: str) -> str:
-            name = theme.get(key, '') or files[key]
-            res_file = cfg_path / name
-            if res_file.exists():
-                with open(res_file, "r") as ft:
-                    return ft.read()
-            return resources.read_text(qss, name)
+    def read_params():
+        param = theme.get('param', '')
+        parse_params(param)
+        parse_params('common.param')
 
-        logger.info(f'{theme_key=}')
-        theme = themes.get(theme_key, {})
+        extra = theme.get('extra', '')
+        if extra:
+            parse_params(extra)
 
-        styles = read_file('qss')
-        params = read_file('param')
-        icons_txt = read_file('ico')
+    def parse_params(param: str):
+        def check_for_double_key():
+            seen = set()
+            for name, _ in params:
+                if name in seen:
+                    raise Exception(f'Duplicate key "{name}" in qss parameters')
+                seen.add(name)
 
-    def parse_params(params):
-        global qss_params
+        params = read_file(param)
         params = [it.split('~') for it in params.splitlines() if it.startswith("$") and ('~' in it)]
-        check_for_double_key(params)
+        check_for_double_key()
         params.sort(key=lambda x: x[0], reverse=True)
-        qss_params = {key.strip():value.strip() for key,value in params}
+        qss_params.update(params)
         param_substitution()
 
-    def check_for_double_key(params: list):
-        seen = set()
-        for name, _ in params:
-            if name in seen:
-                raise Exception(f'Duplicate key "{name}" in qss parameters')
-            seen.add(name)
-
     def param_substitution():
-        global qss_params
         def val_subst(val: str) -> str:
             nonlocal loop_check
             if val.startswith("$"):
@@ -220,21 +218,18 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     def dyn_qss_add_lines(lines: list[str]):
         for line in lines:
             if line.startswith('##'):
-                key, val = line.split('~')
-                dyn_qss[key[2:]].append(val)
+                key, val = line[2:].split('~')
+                dyn_qss[key].append(val)
 
-    read_theme()
-
-    parse_params(params)
+    styles = read_file(theme.get('qss', '') or files['qss'])
+    icons_txt = read_file(theme.get('ico', '') or files['ico'])
+    read_params()
+    qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'])
 
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)
 
     svgs = collect_all_icons(icons_res)
-
-    params = [(key, val) for key, val in qss_params.items()]
-    params.sort(key=lambda x: x[0], reverse=True)
-    qss_params = {key:value for key,value in params}
 
     tr_styles = translate_qss(styles)
     start_dyn = extract_dyn_qss()

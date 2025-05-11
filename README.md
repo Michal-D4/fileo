@@ -13,20 +13,20 @@ The graphical interface is shown in the image below.
 1. application mode, it determinates how files in the list (8) is selected.
 2. the button to display menu to hide/show the widgets("Folders", "Tags", "File Extensions", "Authors") on the left pane.
 3. Describes how the list of files (8) was created.
-4. group of buttons related to the file list (8):  
-    ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files  
-    ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,  
+4. group of buttons related to the file list (8):
+    ![recent](https://github.com/Michal-D4/fileo/raw/main/img/recent.png) - show list of recent files
+    ![search](https://github.com/Michal-D4/fileo/raw/main/img/search.png) - search files by name,
     ![fields](https://github.com/Michal-D4/fileo/raw/main/img/more.png) - selecting the columns that will be visible in the file list
-5. a group of buttons for working with the folder tree:   
-    "previous  folder" &mdash; "next folder" in the folder history;   
-    refresh folder tree;  
-    show hidden folders;   
+5. a group of buttons for working with the folder tree:
+    "previous  folder" &mdash; "next folder" in the folder history;
+    refresh folder tree;
+    show hidden folders;
     "collapse all branches" &mdash; "expand the last branch" if all branches were collapsed.
-6. left toolbar, it contains the following buttons from top to bottom:  
-    menu button;  
-    switch to "DIR" mode, the file list displays files from the current folder;  
-    switch to the "FILTER" mode, the file list displays files according to the filter settings;  
-    open filter settings dialog, switch to "FILTER_SETUP" mode;  
+6. left toolbar, it contains the following buttons from top to bottom:
+    menu button;
+    switch to "DIR" mode, the file list displays files from the current folder;
+    switch to the "FILTER" mode, the file list displays files according to the filter settings;
+    open filter settings dialog, switch to "FILTER_SETUP" mode;
     hide/show left pane
 7. the folder tree window
 8. the file list window
@@ -37,7 +37,7 @@ The graphical interface is shown in the image below.
 13. the name of the file whose note is open in the editor, this is not displaying if no note is edited, click here to go to this file and the folder containing this file
 14. number of files in the file list
 
-The application works in three main modes: DIR, FILTER and FILTER_SETUP. 
+The application works in three main modes: DIR, FILTER and FILTER_SETUP.
 
 * In DIR mode, files are selected by the current directory in the "Folders" widget.
 * In FILTER mode, files are selected according to the parameters chosen in the FILTER_SETUP dialog.
@@ -84,7 +84,7 @@ The following icons used for folders depending of their attributes:
 | one parent          | ![one_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/one_folder_hide.png) | ![one_folder](https://github.com/Michal-D4/fileo/raw/main/img/one_folder.png) |
 | two or more parents | ![mult_folder_hide](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder_hide.png) | ![mult_folder](https://github.com/Michal-D4/fileo/raw/main/img/mult_folder.png) |
 
-You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files. 
+You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files.
 
 You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
 
@@ -95,8 +95,8 @@ You can also *copy/move files from one folder to another*  by dragging *with the
 ![Folders](https://github.com/Michal-D4/fileo/raw/main/img/Folders.png)
 
 1. Checkbox. Used to switch the "FOLDERS" widget to "Show hidden folders" mode. The "markdown" folder (2b) is hidden, and the same "markdown" folder (2a) is not hidden and is located in the root (does not have a visible parent folder).
-2. A "markdown" folder that has more than one parent folder:  
-   a. not hidden folder in the root  
+2. A "markdown" folder that has more than one parent folder:
+   a. not hidden folder in the root
    b. hidden folder in the "GUI" folder
 3. hovered folder with the tooltip "verse" different from folder name "rhyme"
 4. The current (or selected) folder. You can select multiple folders at once using the Shift or Ctrl keys.
@@ -119,7 +119,7 @@ After creating the report (if duplicates are detected), you can delete all dupli
 
 There are several methods to add files:
 
-1. Open "Search for files..." dialog with main menu item "Scan disk for files":   
+1. Open "Search for files..." dialog with main menu item "Scan disk for files":
    ![scan_disk_dialog](https://github.com/Michal-D4/fileo/raw/main/img/scan_disk_dialog.png)
 
 2. drag files from the file explorer (or similar application) to the folder in the folder tree.
@@ -173,7 +173,7 @@ The available options are
 - case sensitive,
 - match full word.
 
-The regular expression and match full word options are mutually exclusive. 
+The regular expression and match full word options are mutually exclusive.
 
 ### How to make notes to the file
 
@@ -245,7 +245,6 @@ The branch marked with a bullet is ***a current location***.
 
 4 - the current file selected in the file list "`angle_down_20221002213631.svg`"
 
-[^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.
 ### File info
 
 ![file-info](https://github.com/Michal-D4/fileo/raw/main/img/file-info.jpg)
@@ -282,7 +281,13 @@ All application data is stored into a data base (SQlite DB). The SQlite data bas
 
 ![DB-selector](https://github.com/Michal-D4/fileo/raw/main/img/DB-selector.jpg)
 
-The DB can be opened in the current window by double click on the line in the DB list, or select with keyboard up and down arrows key and choose with "Return" key, not "Enter" key on numeric keyboard.
+The DB selector can be opened either from the Main menu or by clicking on the label with the name of the current DB in the status bar.
+
+You can open a database from the DB selector in the current window by clicking on a row in the DB list or by selecting it using the up and down arrow keys on your keyboard and pressing Return, but not Enter, on the numeric keypad.
+
+You can also open the database in a new window using the context menu.
+
+The "last use date" field contains "Now" for the currently used DB. It may not be used at the moment if the previous session failed. In this case, you can release this DB using the context menu item "Free DB <db-name>".
 
 ## Color themes
 
@@ -301,15 +306,19 @@ You can switch theme in the preferences menu item:
 * Linux. Download `fileo.AppImage` from [sourceforge Linux](https://sourceforge.net/projects/fileo/files/Linux/)
 
 * Linux and Windows
-  install as Python package from PyPi:  
+
+  install as Python package from PyPi:
 
   ```
     > pip install md2fileo
   ```
-  
-  and then run with  
-  
-  
+
+  and then run with
+
   ```
     > python -m fileo
   ```
+
+
+
+[^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.

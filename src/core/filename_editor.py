@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import QStyledItemDelegate, QLineEdit
@@ -35,10 +35,8 @@ class folderEditDelegate(QStyledItemDelegate):
         return editor
 
     def setEditorData(self, editor, index):
-        logger.info(f'data_role: {self.data_role}')
         editor.setText(index.data(self.data_role))
 
     def setModelData(self, editor, model, index):
-        logger.info(f'data: {editor.text()}, role: {self.data_role}')
         model.setData(index, editor.text(), self.data_role)
         folderEditDelegate.data_role = Qt.ItemDataRole.EditRole

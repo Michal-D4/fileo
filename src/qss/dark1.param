@@ -48,11 +48,5 @@ $toolCheckMark~#FFFFFF
 $topBarBG~#2D2D2D
 $topFrameBG~#474747
 * ----------------------------------
-$shapeBorder1~1px solid
-$shapeBorder2~2px solid
-$bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:
-$fontFamily~Segoe UI
-$SemiboldFamily~Segoe UI Semibold
 $normalSize~10pt
 $bigSize~12pt
-$FoldTitles~Folders,Tags,File Extensions,Authors

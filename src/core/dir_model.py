@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 
 from collections import defaultdict
 
@@ -168,7 +168,6 @@ class dirModel(QAbstractItemModel):
         return parentItem.childCount()
 
     def setData(self, index, value, role: Qt.ItemDataRole):
-        logger.info(f'{role=}, {value=}')
         if role != Qt.ItemDataRole.EditRole and role != Qt.ItemDataRole.ToolTipRole:
             return False
 

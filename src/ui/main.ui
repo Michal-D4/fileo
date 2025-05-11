@@ -284,7 +284,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>Main menu, Ctrl+,</string>
+                  <string>Main menu</string>
                  </property>
                  <property name="styleSheet">
                   <string notr="true"/>
@@ -1096,7 +1096,7 @@
        <item>
         <widget class="QLabel" name="db_name">
          <property name="toolTip">
-          <string>DB name, click to open db list</string>
+          <string>DB name, click to open DB selector</string>
          </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>

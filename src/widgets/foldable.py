@@ -1,6 +1,6 @@
 from typing import List
 
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QLineEdit
 
 from ..core import app_globals as ag
 from .ui_foldable import Ui_foldable
@@ -77,3 +77,31 @@ class Foldable(QWidget):
 
     def get_inner_widget(self) -> QWidget:
         return self.ui.inner
+
+    def change_title(self, pos):
+        def finish_edit():
+            ttl = editor.text()
+            self.ui.toFold.setText(ttl.upper())
+            ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
+            tug.save_app_setting(FoldTitles=(','.join((*ttls.split(',')[:-1], ttl))))
+            ag.signals_.author_widget_title.emit(ttl)
+            editor.close()
+
+        def editor_setup():
+            rect = self.ui.toFold.rect()
+            rect.moveTo(
+                rect.left() + rect.height(),
+                rect.top() + rect.height() - 2
+            )
+
+            editor.setGeometry(rect)
+            editor.setText(self.ui.toFold.text())
+            editor.selectAll()
+
+        editor = QLineEdit(self)
+        editor.editingFinished.connect(finish_edit)
+
+        editor_setup()
+
+        editor.show()
+        editor.setFocus()

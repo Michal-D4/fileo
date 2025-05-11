@@ -174,7 +174,7 @@ class Preferences(QWidget):
 
     def apply_dyn_qss(self):
         Foldable.set_decorator_qss(tug.get_dyn_qss('decorator', -1))
-        for fs in ag.fold_states:
+        for fs in ag.fold_grips:
             fs.wid.set_hovering(False)
 
         if ag.file_data.cur_page.value == 0:  # Page.TAGS

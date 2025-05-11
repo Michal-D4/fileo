@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 from pathlib import Path
 import time
 
@@ -93,6 +93,7 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
+        ag.signals_.author_widget_title.connect(self.change_menu_more)
 
         self.restore_geometry()
         self.restore_container()
@@ -119,6 +120,7 @@ class shoWindow(QMainWindow):
         )
 
     def connect_db(self, path: str) -> bool:
+        logger.info(f'open DB: {Path(path).name}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
             self.init_filter_setup()
@@ -132,7 +134,7 @@ class shoWindow(QMainWindow):
         if state:
             self.container.restore_state(state[1:])
             menu = self.ui.more.menu()
-            for i, ff in enumerate(ag.fold_states):
+            for i, ff in enumerate(ag.fold_grips):
                 menu.actions()[i].setChecked(not ff.is_hidden)
             self.ui.left_pane.setMinimumWidth(int(state[0]))
 
@@ -256,6 +258,10 @@ class shoWindow(QMainWindow):
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
         bk_ut.set_menu_more(self)
 
+    def change_menu_more(self, new_ttl: str):
+        menu = self.ui.more.menu()
+        menu.actions()[-1].setText(new_ttl)
+
     def connect_slots(self):
         ag.app = bk_ut.self = self
         self.connect_checkable()
@@ -281,7 +287,7 @@ class shoWindow(QMainWindow):
 
     def db_list_show(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
-            ag.signals_.user_signal.emit("MainMenu Select DB from list")
+            ag.signals_.user_signal.emit("MainMenu DB selector")
 
     @pyqtSlot()
     def close_filter_setup(self):

@@ -2,7 +2,7 @@
 from enum import Enum, unique
 
 from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
+from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
 from .ui_notes import Ui_FileNotes
@@ -36,6 +36,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.setupUi(self)
 
+        authors_ttl = tug.qss_params['$FoldTitles'].split(',')[-1]
+        self.set_author_title(authors_ttl)
+
         self.page_selectors = {
             Page.TAGS: self.l_tags,
             Page.AUTHORS: self.l_authors,
@@ -51,6 +54,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_editor.hide()
 
         ag.signals_.start_edit_note.connect(self.start_edit)
+        ag.signals_.author_widget_title.connect(self.set_author_title)
 
         self.set_buttons()
 
@@ -64,6 +68,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_file_info.mousePressEvent = self.l_file_info_press
         self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
+
+    def set_author_title(self, ttl: str):
+        self.l_authors.setText(f"{ttl[:-1]} selector")
+        self.authorEdit.setToolTip(f"File\'s {ttl.lower()}")
+        self.authorEdit.setPlaceholderText(
+            f'Enter a list of {ttl.lower()} separated by commas or select from the "{ttl[:-1]} selector"'
+        )
 
     def set_buttons(self):
 

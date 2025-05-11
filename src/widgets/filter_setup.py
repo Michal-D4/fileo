@@ -46,6 +46,7 @@ class FilterSetup(QWidget):
         self.ui.rating_sel.clicked.connect(self.rating_clicked)
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
+        ag.signals_.author_widget_title.connect(lambda ttl: self.ui.selected_author.setText(ttl.lower()))
 
         self.mouseMoveEvent = self.move_self
 

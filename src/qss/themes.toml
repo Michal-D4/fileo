@@ -6,30 +6,23 @@ param = "default.param"
 
 [Dark_Theme_1]
 name = "Dark Theme 1"
-ico = ""
-qss = ""
 param = "dark1.param"
 
 [Dark_Theme_2]
 name = "Dark Theme 2"
-ico = ""
-qss = ""
 param = "dark2.param"
 
 [Default_Theme_Big]
 name = "Default Theme-Big"
-ico = ""
-qss = ""
-param = "default-12.param"
+param = "default.param"
+extra = "big.param"
 
 [Dark_Theme_1_Big]
 name = "Dark Theme 1-Big"
-ico = ""
-qss = ""
-param = "dark1-12.param"
+param = "dark1.param"
+extra = "big.param"
 
 [Dark_Theme_2_Big]
 name = "Dark Theme 2-Big"
-ico = ""
-qss = ""
-param = "dark2-12.param"
+param = "dark2.param"
+extra = "big.param"

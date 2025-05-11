@@ -414,7 +414,7 @@ class Ui_Sho(object):
         _translate = QtCore.QCoreApplication.translate
         Sho.setWindowTitle(_translate("Sho", "MainWindow"))
         self.more.setToolTip(_translate("Sho", "Hide/Show Views"))
-        self.btnSetup.setToolTip(_translate("Sho", "Main menu, Ctrl+,"))
+        self.btnSetup.setToolTip(_translate("Sho", "Main menu"))
         self.btnDir.setToolTip(_translate("Sho", "Show file list for current folder"))
         self.btnFilter.setToolTip(_translate("Sho", "Show file list by filter"))
         self.btnFilterSetup.setToolTip(_translate("Sho", "Setup file list filter"))
@@ -422,7 +422,7 @@ class Ui_Sho(object):
         self.recent_files.setToolTip(_translate("Sho", "List of recent files, Ctrl+H"))
         self.btn_search.setToolTip(_translate("Sho", "Search files by name, Ctrl+F"))
         self.field_menu.setToolTip(_translate("Sho", "Show/hide list columns"))
-        self.db_name.setToolTip(_translate("Sho", "DB name, click to open db list"))
+        self.db_name.setToolTip(_translate("Sho", "DB name, click to open DB selector"))
         self.folder_path.setToolTip(_translate("Sho", "Current branch of the folders"))
         self.current_filename.setToolTip(_translate("Sho", "Current file name"))
         self.edited_file.setToolTip(_translate("Sho", "click to go to the editable file"))

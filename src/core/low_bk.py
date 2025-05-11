@@ -65,7 +65,7 @@ def set_user_action_handlers():
         "filter_changed": filtered_files,
         "MainMenu New window": new_window,
         "MainMenu Create/Open DB": create_open_db,
-        "MainMenu Select DB from list": show_db_list,
+        "MainMenu DB selector": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
         "MainMenu About": show_about,
         "MainMenu Report files with same names": report_same_names,
@@ -454,8 +454,6 @@ def restore_selected_dirs():
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     # logger.info(f'prev: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
-    # udat: ag.DirData = curr_idx.data(Qt.ItemDataRole.UserRole)
-    # logger.info(f'curr: {udat.id=}, {udat.parent_id=}')
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
     if ag.mode is ag.appMode.DIR:

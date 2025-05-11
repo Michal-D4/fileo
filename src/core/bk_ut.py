@@ -73,14 +73,12 @@ def search_files():
 def toggle_collapse(collapse: bool):
     def move_to_root() -> QModelIndex:
         idx = ag.dir_list.currentIndex()
-        logger.info(f'{idx.data(Qt.ItemDataRole.DisplayRole)}')
         prev = idx.parent()
         while prev.isValid():
             idx = prev
             prev = prev.parent()
         return idx
 
-    logger.info(f'{collapse=}')
     if collapse:
         low_bk.save_branch(ag.dir_list.currentIndex())
         idx = move_to_root()
@@ -95,11 +93,11 @@ def set_menu_more(self):
     self.ui.more.setIcon(tug.get_icon("more"))
     ag.buttons.append((self.ui.more, "more"))
     menu = QMenu(self)
-    for i,item in enumerate(tug.qss_params['$FoldTitles'].split(',')):
+    ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
+    for i,item in enumerate(ttls.split(',')):
         act = QAction(item, self, checkable=True)
         act.setChecked(True)
         act.triggered.connect(
-            # lambda state, it = i: self.set_hidden(state, seq=it)
             lambda state, it = i: ag.signals_.hideSignal.emit(state, it)
         )
         menu.addAction(act)
@@ -111,7 +109,6 @@ def single_shot():
         QTimer.singleShot(10 * 1000, check_duplicates)
     QTimer.singleShot(5 * 60 * 1000, run_update0_files)
     QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
-    QTimer.singleShot(25 * 60 * 1000, run_update_pdf_files)
 
 def bk_setup():
     low_bk.dir_view_setup()
@@ -153,7 +150,7 @@ def show_main_menu():
     menu.addAction(act_new)
     menu.addSeparator()
     menu.addAction('Create/Open DB')
-    menu.addAction('Select DB from list')
+    menu.addAction('DB selector')
     menu.addSeparator()
     act_scan = QAction('Scan disk for files')
     act_scan.setEnabled(is_db_opened)
@@ -413,13 +410,6 @@ def run_update_touched_files():
     update the data of files opened since the last update
     """
     run_worker(workers.update_touched_files)
-
-@pyqtSlot()
-def run_update_pdf_files():
-    """
-    collect specifict data about recently loaded pdf files
-    """
-    run_worker(workers.update_pdf_files)
 
 def run_worker(func):
     if self.is_busy or not ag.db.conn:

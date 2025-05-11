@@ -314,15 +314,6 @@ def files_toched(last_scan: int) -> apsw.Cursor:
     )
     return ag.db.conn.cursor().execute(sql, (last_scan,))
 
-def get_pdf_files() -> apsw.Cursor:
-    sql = (
-        "select f.id, f.filename, p.path from files f "
-        "join paths p on p.id = f.path "
-        "join extensions e on e.id = f.extid "
-        "where (f.pages, e.extension) = (0, 'pdf')"
-    )
-    return ag.db.conn.cursor().execute(sql)
-
 def update_file_data(id, st, hash):
     hs = (', hash', ',?') if hash else ('','')
     sql = (
