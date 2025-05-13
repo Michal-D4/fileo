@@ -8,7 +8,7 @@ from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, file_model,
+    drag_drop as dd, file_model, check_update as upd,
 )
 from ..widgets import search_files as sf, workers, dup
 from .. import tug
@@ -105,8 +105,7 @@ def set_menu_more(self):
     self.ui.more.setMenu(menu)
 
 def single_shot():
-    if int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
-        QTimer.singleShot(10 * 1000, check_duplicates)
+    QTimer.singleShot(5 * 1000, checks)
     QTimer.singleShot(5 * 60 * 1000, run_update0_files)
     QTimer.singleShot(15 * 60 * 1000, run_update_touched_files)
 
@@ -167,7 +166,7 @@ def show_main_menu():
     act_pref.setShortcut(QKeySequence("Ctrl+,"))
     menu.addAction(act_pref)
     menu.addSeparator()
-    menu.addAction('Check for update')
+    menu.addAction('Check for updates')
     menu.addSeparator()
     menu.addAction('About')
     pos = self.ui.btnSetup.pos()
@@ -381,7 +380,17 @@ def finish_loading(has_new_ext: bool):
     low_bk.dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()
+def checks():
+    if int(tug.get_app_setting("CHECK_UPDATE", 0)):
+        upd.check4update(True)
+        QTimer.singleShot(10 * 1000, check_duplicates)
+        return
+    check_duplicates()
+
+@pyqtSlot()
 def check_duplicates(auto: bool=True):
+    if not int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
+        return
     rep = workers.report_duplicates()
     if rep:
         dup_dlg = dup.dlgDup(rep, ag.app)

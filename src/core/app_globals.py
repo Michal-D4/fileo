@@ -26,7 +26,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.41'
+    return '1.3.42'
 
 app: 'shoWindow' = None
 dir_list: QTreeView = None
@@ -202,7 +202,6 @@ def add_recent_file(id_: int):
 
 def show_message_box(
         title: str, msg: str,
-        custom_btns=None,
         btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
         icon: QMessageBox.Icon = QMessageBox.Icon.Information,
         details: str = '') -> int:
@@ -211,12 +210,7 @@ def show_message_box(
     dlg.setText(msg)
     dlg.setDetailedText(details)
 
-    if custom_btns:
-        btns = []
-        for btn in custom_btns:
-            btns.append(dlg.addButton(*btn))
-    else:
-        dlg.setStandardButtons(btn)
+    dlg.setStandardButtons(btn)
     dlg.setIcon(icon)
 
     return dlg.exec()

@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.42 - 2025, 13 May
+* Fixed bug with checking for updates.
+* Now checking for updates can be performed automatically when the application is launched if the corresponding flag is set in the preferences.
+
 ## 1.3.41 - 2025, 11 May
 * I decided not to extract author names from pdf files. The AUTHORS widget can now be used to store any data and will work similarly to tags, i.e. items can be used in the file filter. Title of widget may be changed/edited with right mouse button click.
 * some other changes and improvements

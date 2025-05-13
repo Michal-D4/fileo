@@ -70,7 +70,7 @@ def set_user_action_handlers():
         "MainMenu About": show_about,
         "MainMenu Report files with same names": report_same_names,
         "MainMenu Preferences": set_preferences,
-        "MainMenu Check for update": upd.check4update,
+        "MainMenu Check for updates": upd.check4update,
         "find_files_by_name": find_files_by_name,
         "srch_files_by_note": srch_files_by_note,
         "enable_next_prev": enable_next_prev,

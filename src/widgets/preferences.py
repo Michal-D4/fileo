@@ -24,24 +24,31 @@ class Preferences(QWidget):
         self.start_pos = QPoint()
         self.cur_theme = ''
 
+        self.set_inputs()
+
         form_layout = QFormLayout()
         form_layout.setContentsMargins(9, 9, 9, 9)
-        self.log_path = QLabel()
-        self.set_inputs()
 
         form_layout.addRow('Color theme:', self.themes)
         form_layout.addRow('Path to DBs:', self.db_path)
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
-        form_layout.addRow('Folder history depth:', self.folder_history_depth)
-        form_layout.addRow('Recent file list length:', self.last_file_list_length)
+        h_lay0 = QHBoxLayout()
+        h_lay0.addWidget(self.folder_history_depth, 1)
+        h_lay0.addStretch(5)
+        form_layout.addRow('Folder history depth:', h_lay0)
+        h_lay1 = QHBoxLayout()
+        h_lay1.addWidget(self.last_file_list_length, 1)
+        h_lay1.addStretch(5)
+        form_layout.addRow('Recent file list length:', h_lay1)
+        form_layout.addRow(self.check_upd)
         form_layout.addRow(self.check_dup)
         if tug.config.get("all_preferences", 0):
             form_layout.addRow(self.single_instance)
-            h_lay = QHBoxLayout()
-            h_lay.addWidget(self.use_logging)
-            h_lay.addWidget(self.log_path)
-            form_layout.addRow(h_lay)
+            h_lay2 = QHBoxLayout()
+            h_lay2.addWidget(self.use_logging)
+            h_lay2.addWidget(self.log_path)
+            form_layout.addRow(h_lay2)
 
         self.ui.pref_form.setLayout(form_layout)
 
@@ -78,6 +85,7 @@ class Preferences(QWidget):
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
             "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
+            "CHECK_UPDATE": int(self.check_upd.isChecked()),
         }
         if tug.config.get("all_preferences", 0):
             settings["SINGLE_INSTANCE"] = int(self.single_instance.isChecked())
@@ -113,12 +121,14 @@ class Preferences(QWidget):
             tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
         )
         self.folder_history_depth = QLineEdit()
+        self.folder_history_depth.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.folder_history_depth.editingFinished.connect(self.history_depth_changed)
         val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setText(str(val))
         ag.history.set_limit(int(val))
 
         self.last_file_list_length = QLineEdit()
+        self.last_file_list_length.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.last_file_list_length.editingFinished.connect(self.file_list_length_changed)
         val = tug.get_app_setting('RECENT_FILE_LIST_LENGTH', 30)
         self.last_file_list_length.setText(str(val))
@@ -129,12 +139,18 @@ class Preferences(QWidget):
             int(tug.get_app_setting('CHECK_DUPLICATES', 1))
         )
 
+        self.check_upd = QCheckBox("check for updates")
+        self.check_upd.setChecked(
+            int(tug.get_app_setting('CHECK_UPDATE', 0))
+        )
+
         if tug.config.get('all_preferences', 0):
             self.single_instance = QCheckBox("single instance")
             self.single_instance.setChecked(
                 int(tug.get_app_setting('SINGLE_INSTANCE', 0))
             )
 
+            self.log_path = QLabel()
             self.use_logging = QCheckBox("use logging")
             self.use_logging.checkStateChanged.connect(
                 lambda state: self.log_path.setText(

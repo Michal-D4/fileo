@@ -12,7 +12,7 @@ from . import app_globals as ag
 
 URL = 'https://sourceforge.net/projects/fileo'
 
-def check4update():
+def check4update(silently: bool=False):
     request = QNetworkRequest()
     manager = QNetworkAccessManager(ag.app)
     config = QSslConfiguration(QSslConfiguration.defaultConfiguration())
@@ -23,11 +23,10 @@ def check4update():
     request.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
 
     manager.get(request)
-    manager.finished.connect(installer_update_replay)
+    manager.finished.connect(lambda replay, cond=silently: installer_update_replay(replay, cond))
 
-
-@pyqtSlot(QNetworkReply)
-def installer_update_replay(replay: QNetworkReply):
+@pyqtSlot(QNetworkReply, bool)
+def installer_update_replay(replay: QNetworkReply, silently: bool):
     if replay.error() is QNetworkReply.NetworkError.NoError:
         rep = replay.readAll()
         json_rep = QJsonDocument.fromJson(rep)
@@ -35,17 +34,18 @@ def installer_update_replay(replay: QNetworkReply):
         release = obj['platform_releases']['windows']
         filename = release['filename'].toString()
         if filename.count('.') <= 1:
-            ag.show_message_box(
-                'Fileo',
-                "Something went wrong, can't find any app.version in the repository. "
-                'Please try again later.',
-                icon=QMessageBox.Icon.Critical
-            )
+            if not silently:
+                ag.show_message_box(
+                    'Fileo',
+                    "Something went wrong, can't find any app.version in the repository. "
+                    'Please try again later.',
+                    icon=QMessageBox.Icon.Critical
+                )
             return
         ver = filename[filename.find('.')+1:filename.rfind('.')]
         if ag.app_version() < ver:
             if getattr(sys, "frozen", False):
-                get_sourceforge(ver)
+                open_sourceforge(ver)
             else:
                 ag.show_message_box(
                     'Fileo',
@@ -53,21 +53,22 @@ def installer_update_replay(replay: QNetworkReply):
                     'You can itstall it with "pip install md2fileo" command',
                     btn=QMessageBox.StandardButton.Ok
                 )
-        else:
+        elif not silently:
             ag.show_message_box(
                 'Fileo',
                 'There are currently no updates available.',
                 btn=QMessageBox.StandardButton.Ok
             )
 
-def get_sourceforge(ver: str):
-    btn_clicked = ag.show_message_box(
-        'Fileo',
-        f'New version "{ver}" available.',
-        custom_btns=(
-            ('Go to download', QMessageBox.ButtonRole.YesRole),
-            ('Cancel', QMessageBox.ButtonRole.NoRole),
-        )
-    )
-    if btn_clicked == 0:
+def open_sourceforge(ver: str):
+    msgbox = QMessageBox(ag.app)
+    msgbox.setWindowTitle('Fileo')
+    msgbox.setText(f'New version "{ver}" available.',)
+    go_btn = msgbox.addButton('Go to download', QMessageBox.ButtonRole.YesRole)
+    msgbox.addButton('Cancel', QMessageBox.ButtonRole.YesRole)
+    msgbox.setIcon(QMessageBox.Icon.Information)
+
+    msgbox.exec()
+
+    if msgbox.clickedButton() is go_btn:
         QDesktopServices.openUrl(QUrl(URL))
