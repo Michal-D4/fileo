@@ -431,6 +431,11 @@
              </item>
              <item>
               <property name="text">
+               <string>added</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
                <string>published</string>
               </property>
              </item>

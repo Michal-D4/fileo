@@ -60,15 +60,13 @@ colors = ["style=\"fill:$iconFill\"",
 
 [arrow_forward]
 ico = """\
-<svg viewBox="0 -960 960 960" |><path d="m560-240 240-240-240-240-58 56 \
-142 142H158v80h486L502-300"/></svg>\
+<svg viewBox="0 0 480 480" |><path d="m420 240-146 146-33-33 88-88h-268v-48h268l-88-88 33-33z"/></svg>
 """
 colors = ["fill=\"$svgFill\""]
 
 [arrow_back]
 ico = """\
-<svg viewBox="0 -960 960 960" |><path d="M400-240 160-480l240-240 56 58\
--142 142h486v80H314l142 142"/></svg>\
+<svg viewBox="0 0 480 480" |><path d="m60 240 146-146 33 33-88 88h268v48h-268l88 88-33 33z"/></svg>
 """
 colors = ["fill=\"$svgFill\""]
 

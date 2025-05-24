@@ -15,6 +15,7 @@ TABLES = (
     'extid integer NOT NULL, '
     'path integer NOT NULL, '
     'filename text NOT NULL, '
+    'added date not null default -62135596800, '
     'modified date not null default -62135596800, '
     'opened date not null default -62135596800, '
     'created date not null default -62135596800, '
@@ -98,7 +99,7 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 23
+USER_VER = 24
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -121,17 +122,34 @@ def tune_new_version() -> bool:
         return False
     return True
 
-def convert_to_new_version(conn, old_v):
-    logger.info(f'<<<  {old_v=}, {USER_VER=}')
+def convert_to_new_version(conn, db_v):
+    logger.info(f'<<<  {db_v=}, {USER_VER=}')
 
-    if old_v < 23:
+    if db_v < 23:
         update_to_v23(conn)
+
+    if db_v < 24:
+        update_to_v24(conn)
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 
 def update_to_v23(conn: apsw.Connection):
     sql = 'delete from settings where key = ?'
     conn.cursor().execute(sql, ('DIR_HISTORY',))
+
+def update_to_v24(conn: apsw.Connection):
+    sql1 = (
+        'INSERT or ignore into COPY_FILES select id, extid, '
+        'path, filename, -62135596800, modified, opened, created, '
+        'rating, nopen, hash, size, pages, published FROM files'
+    )
+
+    tbl_def = TABLES[1].replace("files", "COPY_FILES")
+    curs = conn.cursor()
+    curs.execute(tbl_def)
+    curs.execute(sql1)
+    curs.execute('DROP TABLE files')
+    curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
 
 def create_tables(db_name: str):
     conn = apsw.Connection(db_name)

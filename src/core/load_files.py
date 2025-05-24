@@ -134,10 +134,11 @@ class loadFiles(QObject):
             return file_id[0] if file_id else 0
 
         def file_insert():
-            INSERT_FILE = ('insert into files (filename, extid, path) '
-                'values (:file, :ext_id, :path);')
+            INSERT_FILE = ('insert into files (filename, extid, path, added) '
+                'values (:file, :ext_id, :path, :now);')
+            ts = int(datetime.now().timestamp())
             self.conn.cursor().execute(INSERT_FILE,
-                {'file': filepath.name, 'ext_id': ext_id, 'path': path_id}
+                {'file': filepath.name, 'ext_id': ext_id, 'path': path_id, 'now': ts}
             )
             return self.conn.last_insert_rowid()
 

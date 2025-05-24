@@ -40,30 +40,17 @@ def get_file_author_id(id: int) -> apsw.Cursor:
     sql = "select aid from fileauthor where fileid = ?"
     return ag.db.conn.cursor().execute(sql, (id,))
 
-def add_author(id: int, author: str) -> int:
-    """
-    id:  file id
-    insert new author if doesn't exist
-    and creates link between author and file
-    if new author inserted returns its id
-    else returns 0
-    """
-    sql1 = 'select id from authors where author = ?'
-    sql2 = 'insert into authors (author) values (?);'
-    sql3 = 'insert into fileauthor (aid, fileid) values (:a_id, :id)'
+def insert_author(author: str) -> int:
+    sql = 'insert into authors (author) values (?);'
+    ag.db.conn.cursor().execute(sql, (author,))
+    return ag.db.conn.last_insert_rowid()
 
-    author_id = 0
-    with ag.db.conn as conn:
-        cursor = conn.cursor()
-        a_id = cursor.execute(sql1, (author,)).fetchone()
-        if a_id:
-            a_id = a_id[0]
-        else:
-            cursor.execute(sql2, (author,))
-            a_id = conn.last_insert_rowid()
-            author_id = a_id
-        cursor.execute(sql3, {'a_id': a_id, 'id': id})
-    return author_id
+def insert_file_author(a_id: int, f_id: int):
+    sql = 'insert into fileauthor (aid, fileid) values (:author_id, :file_id)'
+    try:
+        ag.db.conn.cursor().execute(sql, {'author_id': a_id, 'file_id': f_id})
+    except apsw.ConstraintError:
+        pass         # ignore, duplication
 
 def break_file_authors_link(f_id: int, a_id: int):
     sql = 'delete from fileauthor where (aid, fileid) = (:a_id, :f_id)'
@@ -143,7 +130,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
     sql = (
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '
-        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
@@ -157,7 +144,7 @@ def get_found_files() -> apsw.Cursor:
     sql = (
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '
-        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
         'f.id, f.extid, f.path from files f '
         'left join x on x.fileid = f.id '
@@ -167,7 +154,7 @@ def get_found_files() -> apsw.Cursor:
 
 def get_file(file_id: int) -> abc.Iterable:
     sql = (
-        'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+        'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(max(fn.modified), -62135596800), '
         'f.created, f.id, f.extid, f.path from files f '
         'left join filenotes fn on fn.fileid = f.id where f.id = :f_id;'
@@ -200,8 +187,8 @@ def update_file_name_path(file_id: int, path_id: int, file_name: str):
 def insert_file(file_: list) -> int:
     sql = (
         'insert into files (path, extid, hash, filename, '
-        'modified, opened, created, rating, nopen, size, '
-        'pages, published) values (?,?,?,?,?,?,?,?,?,?,?,?)'
+        'added, modified, opened, created, rating, nopen, size, '
+        'pages, published) values (?,?,?,?,?,?,?,?,?,?,?,?,?)'
     )
 
     def _get_path_id(conn: apsw.Connection) -> int:
@@ -346,7 +333,7 @@ def filter_files(param: dict) -> apsw.Cursor:
             'sql0': (
                 'with x(fileid, last_note_date) as (select fileid, max(modified) '
                 'from filenotes group by fileid) '
-                'select f.filename, f.opened, f.rating, f.nopen, f.modified, f.pages, '
+                'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
                 'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
                 'f.id, f.extid, f.path from files f '
                 'left join x on x.fileid = f.id '
@@ -580,9 +567,9 @@ def get_file_path(id: int) -> str:
 
 def get_file_info(id: int) -> apsw.Cursor:
     sql = (
-        'select f.filename, p.path, f.opened, f.modified, f.created, '
-        'f.published, f.nopen, f.rating, f.size, f.pages from files f '
-        'join paths p on p.id = f.path where f.id = ?'
+        'select f.filename, p.path, f.added, f.opened, f.modified, '
+        'f.created, f.published, f.nopen, f.rating, f.size, f.pages '
+        'from files f join paths p on p.id = f.path where f.id = ?'
     )
     return ag.db.conn.cursor().execute(sql, (id,)).fetchone()
 
@@ -631,7 +618,7 @@ def get_file_export(fileid: int) -> dict:
         return tt
 
     sql1 = (
-        'select f.hash, f.filename, f.modified, f.opened, '
+        'select f.hash, f.filename, f.added, f.modified, f.opened, '
         'f.created, f.rating, f.nopen, f.size, f.pages, '
         'f.published, p.path from files f join paths p '
         'on p.id = f.path where f.id = ?'
@@ -926,7 +913,7 @@ def insert_tag(tag: str) -> int:
     ag.db.conn.cursor().execute(sql, {'tag': tag})
     return ag.db.conn.last_insert_rowid()
 
-def insert_tag_file(tag: int, file: int):
+def insert_file_tag(tag: int, file: int):
     sql = 'insert into filetag (tagid, fileid) values (:tag_id, :file_id);'
     try:
         ag.db.conn.cursor().execute(sql, {'tag_id': tag, 'file_id': file})

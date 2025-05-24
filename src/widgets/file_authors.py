@@ -1,4 +1,5 @@
-from PyQt6.QtCore import pyqtSlot
+# from loguru import logger
+from PyQt6.QtCore import pyqtSlot, Qt
 from PyQt6.QtWidgets import (QWidget,
     QVBoxLayout, QFrame, QLineEdit,
 )
@@ -75,18 +76,17 @@ class authorBrowser(QWidget):
     def get_edited_list(self) -> list[str]:
         tt = self.editor.text().strip()
         tt = tt.replace('[', '')
-        pp = [t.strip() for t in tt.split('],') if t.strip()]
-        if pp:
-            if tt.endswith(']'):
-                pp[-1] = pp[-1][:-1]
-            else:
-                qq = [t.strip() for t in pp[-1].split(',') if t.strip()]
-                pp = [*pp[:-1], *qq]
+        tt = tt.replace('],', '\n')
+        tt = tt.replace(']', '')
+        tt = tt.replace(',', '\n')
+        pp = [t.strip() for t in tt.split('\n') if t.strip()]
         return pp
 
     def sel_list_changed(self, old: list[str], new: list[str]):
         self.remove_items(old, new)
-        self.add_items(old, new)
+        if self.add_items(old, new):
+            self.br.set_list(db_ut.get_authors())
+            ag.signals_.user_signal.emit("author_inserted")
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
@@ -94,12 +94,21 @@ class authorBrowser(QWidget):
             if id := self.br.get_tag_id(d):
                 db_ut.break_file_authors_link(self.file_id, id)
 
-    def add_items(self, old: list[str], new: list[str]):
+    def add_items(self, old: list[str], new: list[str]) -> bool:
+        def to_selected_files(a_id: int):
+            if not selected_files:
+                db_ut.insert_file_author(a_id, self.file_id)
+                return
+            for idx in selected_files:
+                fileid = idx.data(Qt.ItemDataRole.UserRole).id
+                db_ut.insert_file_author(a_id, fileid)
+
         inserted = False
         diff = set(new) - set(old)
+        selected_files: list = ag.file_list.selectionModel().selectedRows(0)
         for d in diff:
-            if db_ut.add_author(self.file_id, d):
+            if not (id := self.br.get_tag_id(d)):
+                id = db_ut.insert_author(d)
                 inserted = True
-        if inserted:
-            self.set_authors()
-            ag.signals_.user_signal.emit("author_inserted")
+            to_selected_files(id)
+        return inserted

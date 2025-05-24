@@ -33,10 +33,6 @@ class tagBrowser(aBrowser):
         if self.add_tags(old, new):
             self.set_list(db_ut.get_tags())
             ag.signals_.user_signal.emit("tag_inserted")
-        self.set_selection(
-            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
-        )
-        self.editor.setText(', '.join(self.get_selected()))
 
     def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)
@@ -45,22 +41,22 @@ class tagBrowser(aBrowser):
             db_ut.delete_tag_file(id, self.file_id)
 
     def add_tags(self, old, new) -> bool:
-        def tag_to_selected_files(tag_id: int, file_id: int):
-            selected_files: list = ag.file_list.selectionModel().selectedRows(0)
+        def to_selected_files(tag_id: int):
             if not selected_files:
-                db_ut.insert_tag_file(tag_id, file_id)
+                db_ut.insert_file_tag(tag_id, self.file_id)
                 return
             for idx in selected_files:
                 fileid = idx.data(Qt.ItemDataRole.UserRole).id
-                db_ut.insert_tag_file(tag_id, fileid)
+                db_ut.insert_file_tag(tag_id, fileid)
 
         inserted = False
         diff = set(new) - set(old)
+        selected_files: list = ag.file_list.selectionModel().selectedRows(0)
         for d in diff:
             if not (id := self.get_tag_id(d)):
                 id = db_ut.insert_tag(d)
                 inserted = True
-            tag_to_selected_files(id, self.file_id)
+            to_selected_files(id)
         return inserted
 
     @pyqtSlot()
@@ -80,6 +76,9 @@ class tagBrowser(aBrowser):
         old = self.get_selected()
         new = self.editor_tag_list()
         self.tag_list_changed(old, new)
+        self.set_selection(
+            (int(s[0]) for s in db_ut.get_file_tagid(self.file_id))
+        )
 
     def editor_tag_list(self):
         """

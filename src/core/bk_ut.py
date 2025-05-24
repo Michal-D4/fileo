@@ -20,7 +20,7 @@ self: 'shoWindow' = None
 min_width = 220
 
 tool_tips = (
-    ",Last opening date,rating of file,number of file openings,"
+    ",Added date, Last opening date,rating of file,number of file openings,"
     "Last modified date,Number of pages(in book),Size of file,"
     "Publication date(book),Date of last note,File creation date"
 ).split(',')

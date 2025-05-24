@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.43 - 2025, 24 May
+* set authors for all selected files at once
+* save file addition date to DB
+* context menu on "File info" tab
+
 ## 1.3.42 - 2025, 13 May
 * Fixed bug with checking for updates.
 * Now checking for updates can be performed automatically when the application is launched if the corresponding flag is set in the preferences.

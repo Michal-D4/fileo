@@ -90,7 +90,7 @@ class fileModel(QAbstractTableModel):
                 if len(line) > col:
                     if self.header[col] in ('Date of last note','Modified','Open Date',):
                         return line[col].toString("yyyy-MM-dd hh:mm")
-                    if self.header[col] == 'Created':
+                    if self.header[col] in ('Added date', 'Created'):
                         return line[col].toString("yyyy-MM-dd")
                     if self.header[col] == 'Published':
                         return line[col].toString("MMM yyyy")

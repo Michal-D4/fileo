@@ -7,7 +7,6 @@ wheels/
 EXE/
 *.egg-info
 .history
-*.lock
 *.code-workspace
 
 # Virtual environments

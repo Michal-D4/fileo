@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
     QLineEdit, QVBoxLayout, QScrollArea, QFrame, QApplication,
-    QToolTip,
+    QMenu,
 )
 
 from ..core import app_globals as ag, db_ut
@@ -33,17 +33,18 @@ class fileInfo(QWidget):
             return f'{lbl.text()}\t{fld.text()}'
 
         if e.buttons() is Qt.MouseButton.RightButton:
-            if e.modifiers() is Qt.KeyboardModifier.ShiftModifier:
-                tt = []
-                for i in range(self.form_layout.rowCount()):
-                    tt.append(copy_row(i))
-                QApplication.clipboard().setText('\n'.join(tt))
-                msg = 'Everything copied'
-            else:
-                QApplication.clipboard().setText(copy_row(row))
-                msg = 'Line copied'
-            pos = e.globalPosition().toPoint()
-            QToolTip.showText(pos, msg)
+            menu = QMenu(self)
+            menu.addAction('Copy current line')
+            menu.addAction('Copy all')
+            act = menu.exec(e.globalPosition().toPoint())
+            if act:
+                if act.text() == 'Copy current line':
+                    QApplication.clipboard().setText(copy_row(row))
+                elif act.text() == 'Copy all':
+                    tt = []
+                    for i in range(self.form_layout.rowCount()):
+                        tt.append(copy_row(i))
+                    QApplication.clipboard().setText('\n'.join(tt))
 
     def set_event_handler(self):
         for i in range(self.form_layout.rowCount()):
@@ -67,6 +68,7 @@ class fileInfo(QWidget):
 
         self.form_layout.addRow("File name:", QLabel())
         self.form_layout.addRow("Path:", QLabel())
+        self.form_layout.addRow("Added date:", QLabel())
         self.form_layout.addRow("Last opened date:", QLabel())
         self.form_layout.addRow("Modified date:", QLabel())
         self.form_layout.addRow("Created date:", QLabel())
@@ -98,9 +100,9 @@ class fileInfo(QWidget):
             if not fields:
                 return
             for i in range(self.form_layout.rowCount()):
-                if i >= 2 and i <= 5:
+                if i >= 2 and i <= 6:
                     field = self.time_value(fields[i])
-                elif i == 8:
+                elif i == 9:
                     field = ag.hr_size(fields[i])
                 else:
                     field = fields[i]

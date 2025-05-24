@@ -26,11 +26,11 @@ from .filename_editor import folderEditDelegate
 MAX_WIDTH_DB_DIALOG = 340
 
 fields = (
-    'File Name', 'Open Date', 'rating', 'Open#', 'Modified',
+    'File Name', 'Added date', 'Open Date', 'rating', 'Open#', 'Modified',
     'Pages', 'Size', 'Published', 'Date of last note', 'Created',
 )
 field_types = (
-    'str', 'date', 'int', 'int', 'date',
+    'str', 'date', 'date', 'int', 'int', 'date',
     'int', 'int', 'date', 'date', 'date',
 )
 
@@ -612,7 +612,7 @@ def fill_file_model(files) -> fileModel:
         ff1 = []
         for i,typ in enumerate(field_types):
             ff1.append(
-                ag.hr_size(ff[i]) if i == 6 else
+                ag.hr_size(ff[i]) if i == 7 else
                 field_val(typ, ff[i])
             )
 
