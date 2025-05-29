@@ -216,7 +216,7 @@ QTreeView::item:selected:!active {
    color: $textColor;
 }
 QTreeView::branch {
-	background-color: transparent;
+   background-color: transparent;
 }
 QTreeView::branch:!adjoins-item {
    border-image: url('$vline3') 0;
@@ -419,10 +419,12 @@ QFrame#frame_tag QRadioButton::indicator {
    width: 20;
    height: 20;
    background-color: transparent;
-   border-image: url('$radio_btn');
 }
-QFrame#frame_tag QRadioButton::indicator:checked {
-   border-image: url('$radio_btn_active');
+QFrame#frame_tag QRadioButton::indicator::unchecked  {
+   image: url('$radio_btn');
+}
+QFrame#frame_tag QRadioButton::indicator::checked {
+   image: url('$radio_btn_active');
 }
 /* ---------- Menu ----------- */
 QMenu {

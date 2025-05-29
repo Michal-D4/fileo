@@ -41,8 +41,8 @@ class fileInfo(QWidget):
                 if act.text() == 'Copy current line':
                     QApplication.clipboard().setText(copy_row(row))
                 elif act.text() == 'Copy all':
-                    tt = []
-                    for i in range(self.form_layout.rowCount()):
+                    tt = [f'{copy_row(0)};  file_id: {self.file_id}']
+                    for i in range(1, self.form_layout.rowCount()):
                         tt.append(copy_row(i))
                     QApplication.clipboard().setText('\n'.join(tt))
 

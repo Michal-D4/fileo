@@ -6,16 +6,25 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>431</width>
-    <height>459</height>
+    <width>504</width>
+    <height>487</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="spacing">
-    <number>0</number>
+  <layout class="QVBoxLayout" name="VLayoutMain">
+   <property name="leftMargin">
+    <number>9</number>
+   </property>
+   <property name="topMargin">
+    <number>9</number>
+   </property>
+   <property name="rightMargin">
+    <number>9</number>
+   </property>
+   <property name="bottomMargin">
+    <number>9</number>
    </property>
    <item>
     <widget class="QFrame" name="dlg_frame">
@@ -25,7 +34,7 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -46,7 +55,7 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1">
+        <layout class="QHBoxLayout" name="HLayoutTitle" stretch="0,1">
          <property name="topMargin">
           <number>6</number>
          </property>
@@ -79,43 +88,66 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QFormLayout" name="formLayout">
+         <property name="horizontalSpacing">
+          <number>0</number>
+         </property>
          <item row="0" column="0">
-          <layout class="QVBoxLayout" name="verticalLayout_4">
-           <property name="spacing">
-            <number>0</number>
+          <widget class="QFrame" name="frameDir">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
            </property>
-           <item>
-            <widget class="QCheckBox" name="selected_dir">
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_8">
-             <item>
-              <spacer name="verticalSpacer">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="subDirs">
-               <property name="text">
-                <string>all subfolders</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="VLayoutDir">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="selected_dir">
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="HLayoutSubDir">
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="subDirs">
+                <property name="text">
+                 <string>all subfolders</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </item>
          <item row="0" column="1">
           <widget class="QPlainTextEdit" name="dir_list">
@@ -137,6 +169,13 @@
           </widget>
          </item>
          <item row="2" column="0">
+          <widget class="QCheckBox" name="no_folder">
+           <property name="text">
+            <string>files not included in any folder</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
           <widget class="QFrame" name="frame_tag">
            <property name="maximumSize">
             <size>
@@ -153,7 +192,7 @@
            <property name="lineWidth">
             <number>1</number>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <layout class="QHBoxLayout" name="HLayoutTags">
             <property name="leftMargin">
              <number>0</number>
             </property>
@@ -193,7 +232,7 @@
            </layout>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="QPlainTextEdit" name="tag_list">
            <property name="maximumSize">
             <size>
@@ -212,10 +251,10 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QCheckBox" name="selected_ext"/>
          </item>
-         <item row="4" column="1">
+         <item row="5" column="1">
           <widget class="QPlainTextEdit" name="ext_list">
            <property name="maximumSize">
             <size>
@@ -234,10 +273,10 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="7" column="0">
           <widget class="QCheckBox" name="selected_author"/>
          </item>
-         <item row="5" column="1">
+         <item row="7" column="1">
           <widget class="QPlainTextEdit" name="author_list">
            <property name="maximumSize">
             <size>
@@ -256,21 +295,36 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="0">
+         <item row="9" column="0">
           <widget class="QCheckBox" name="open_sel">
            <property name="text">
             <string>open #</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout">
+         <item row="9" column="1">
+          <layout class="QHBoxLayout" name="HLayoutOpen" stretch="1,0,2,1">
+           <property name="leftMargin">
+            <number>9</number>
+           </property>
            <item>
             <widget class="QComboBox" name="open_cond">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
-               <width>40</width>
+               <width>50</width>
                <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>16777215</height>
               </size>
              </property>
              <item>
@@ -286,22 +340,38 @@
             </widget>
            </item>
            <item>
+            <spacer name="horizontalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>12</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QLineEdit" name="open_edit">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="minimumSize">
               <size>
-               <width>32</width>
+               <width>0</width>
                <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>32</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -315,9 +385,12 @@
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
              <property name="sizeHint" stdset="0">
               <size>
-               <width>40</width>
+               <width>80</width>
                <height>20</height>
               </size>
              </property>
@@ -325,21 +398,36 @@
            </item>
           </layout>
          </item>
-         <item row="7" column="0">
+         <item row="11" column="0">
           <widget class="QCheckBox" name="rating_sel">
            <property name="text">
             <string>rating</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item row="11" column="1">
+          <layout class="QHBoxLayout" name="HLayoutRating" stretch="1,0,2,1">
+           <property name="leftMargin">
+            <number>9</number>
+           </property>
            <item>
             <widget class="QComboBox" name="rating_cond">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
-               <width>40</width>
+               <width>50</width>
                <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>16777215</height>
               </size>
              </property>
              <item>
@@ -360,22 +448,38 @@
             </widget>
            </item>
            <item>
+            <spacer name="horizontalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>12</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QLineEdit" name="rating_edit">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="minimumSize">
               <size>
-               <width>32</width>
+               <width>0</width>
                <height>0</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>32</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -389,9 +493,12 @@
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
              <property name="sizeHint" stdset="0">
               <size>
-               <width>40</width>
+               <width>80</width>
                <height>20</height>
               </size>
              </property>
@@ -399,139 +506,362 @@
            </item>
           </layout>
          </item>
-         <item row="8" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <property name="spacing">
-            <number>9</number>
+         <item row="12" column="0">
+          <widget class="QFrame" name="date_type_frame">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <item>
-            <widget class="QLabel" name="label_2">
-             <property name="text">
-              <string>Date of</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QComboBox" name="date_type">
-             <property name="minimumSize">
-              <size>
-               <width>130</width>
-               <height>0</height>
-              </size>
-             </property>
-             <item>
-              <property name="text">
-               <string>opened</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>modified</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>added</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>published</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>last_note_date</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="8" column="1">
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <property name="leftMargin">
-              <number>3</number>
-             </property>
-             <item>
-              <widget class="QCheckBox" name="after">
-               <property name="minimumSize">
-                <size>
-                 <width>60</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>after</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDateEdit" name="after_date"/>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <property name="leftMargin">
-              <number>3</number>
-             </property>
-             <item>
-              <widget class="QCheckBox" name="before">
-               <property name="minimumSize">
-                <size>
-                 <width>60</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>before</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDateEdit" name="before_date"/>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_4">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="no_folder">
-           <property name="text">
-            <string>files not included in any folder</string>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
            </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <property name="spacing">
+               <number>12</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>41</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Date of</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="date_type">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>91</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>opened</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>modified</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>added</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>published</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>note_date</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>32</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="leftMargin">
+               <number>9</number>
+              </property>
+              <item>
+               <spacer name="horizontalSpacer_9">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>50</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QComboBox" name="note_date_type">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>11</pointsize>
+                 </font>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>last modified</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>any modified</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>last created</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>any created</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>10</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="12" column="1">
+          <widget class="QFrame" name="date_frame">
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <property name="leftMargin">
+             <number>9</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QHBoxLayout" name="HLayoutAfter_2">
+                <item>
+                 <widget class="QCheckBox" name="after">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>after</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDateEdit" name="after_date">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="HLayoutBefore_2">
+                <item>
+                 <widget class="QCheckBox" name="before">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>80</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>before</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDateEdit" name="before_date">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>24</height>
+                   </size>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>

@@ -1,6 +1,6 @@
 [project]
 name = "md2fileo"
-version = "1.3.43"
+version = "1.3.44"
 description = "Yet another file organizer"
 readme = "README.md"
 
@@ -8,7 +8,7 @@ requires-python = ">=3.13"
 
 dependencies = [
     "loguru>=0.7.3",
-    "pyqt6>=6.7.1",
+    "pyqt6<6.8.0",    # instead of "pyqt6>=6.7.1", because v >= 6.8.0 has bug
     "apsw>=3.47.1.0",
     "markdown>=3.7",
 ]

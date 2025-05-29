@@ -157,7 +157,7 @@ class OpenDB(QWidget, Ui_openDB):
                     create_db.create_tables(file_name)
                     return True
                 else:
-                    self.msg = f"not DB: {file_name}"
+                    self.msg = f"not fileo DB: {file_name}"
                     return False
         elif file_.parent.exists and file_.parent.is_dir():   # file not exist
             create_db.create_tables(file_name)

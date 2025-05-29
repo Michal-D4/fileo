@@ -4,3 +4,4 @@ $bottomBorder~border-left: none; border-top: none; border-right: none; border-bo
 $fontFamily~Segoe UI
 $SemiboldFamily~Segoe UI Semibold
 $FoldTitles~Folders,Tags,File Extensions,Authors
+$ico_app~app.png

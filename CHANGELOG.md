@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.44 - 2025, 29 May
+* Filter files by note creation and modification dates
+* fixed bug in qss handling
+* downgraded to PyQT6 6.7.3 from PyQT6 6.9.0. PyQT6 since 6.8.0 has problem in TreeView qss
+* some other changes and improvements
+
 ## 1.3.43 - 2025, 24 May
 * set authors for all selected files at once
 * save file addition date to DB

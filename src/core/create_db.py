@@ -105,7 +105,7 @@ def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
         try:
             v = conn.cursor().execute("PRAGMA application_id").fetchone()
-            logger.info(f'{v=}, {APP_ID=}')
+            # logger.info(f'{v=}, {APP_ID=}')
         except apsw.NotADBError:
             return False
     return v[0] == APP_ID
@@ -125,6 +125,12 @@ def tune_new_version() -> bool:
 def convert_to_new_version(conn, db_v):
     logger.info(f'<<<  {db_v=}, {USER_VER=}')
 
+    if db_v < 21:
+        update_to_v21(conn)
+
+    if db_v < 22:
+        update_to_v22(conn)
+
     if db_v < 23:
         update_to_v23(conn)
 
@@ -132,6 +138,27 @@ def convert_to_new_version(conn, db_v):
         update_to_v24(conn)
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
+
+def update_to_v21(conn: apsw.Connection):
+    try:
+        conn.cursor().execute(
+            'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
+        )
+    except apsw.SQLError:
+        pass
+
+def update_to_v22(conn: apsw.Connection):
+    sql = (
+        "update dirs set multy = 1 where id in ("
+        "select id from parentdir p group by id having count(*) > 1)"
+    )
+    curs = conn.cursor()
+    try:
+        curs.execute('ALTER TABLE parentdir DROP multy;')
+        curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
+        curs.execute(sql)
+    except apsw.SQLError:
+        pass
 
 def update_to_v23(conn: apsw.Connection):
     sql = 'delete from settings where key = ?'

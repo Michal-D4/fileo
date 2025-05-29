@@ -313,7 +313,7 @@ def update_file_data(id, st, hash):
         (int(st.st_mtime), int(st.st_ctime), st.st_size, id)
     )
 
-def filter_files(param: dict) -> apsw.Cursor:
+def filter_files(checks: dict) -> apsw.Cursor:
     par = []
     cond = []
     sqlist = []
@@ -330,12 +330,13 @@ def filter_files(param: dict) -> apsw.Cursor:
                 "select fileid from fileauthor where aid in "
                 "(select val from aux where key = 'author')"
             ),
+            'note_date': "select val from aux where key = 'note_date_files'",
             'sql0': (
                 'with x(fileid, last_note_date) as (select fileid, max(modified) '
                 'from filenotes group by fileid) '
-                'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-                'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
-                'f.id, f.extid, f.path from files f '
+                'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, '
+                'f.pages, f.size, f.published, COALESCE(x.last_note_date, -62135596800), '
+                'f.created, f.id, f.extid, f.path from files f '
                 'left join x on x.fileid = f.id '
             ),
             'open-0': "nopen <= ?",
@@ -348,28 +349,31 @@ def filter_files(param: dict) -> apsw.Cursor:
         }[key]
 
     def filter_subsqls():
-        if param['dir'] or param['no_dir']:
+        if checks['dir'] or checks['no_dir']:
             sqlist.append(filter_sqls('dir_sql'))
-        if param['tag']:
+        if checks['tag']:
             sqlist.append(filter_sqls('tag_sql'))
-        if param['ext']:
+        if checks['ext']:
             sqlist.append(filter_sqls('ext_sql'))
-        if param['author']:
+        if checks['author']:
             sqlist.append(filter_sqls('author_sql'))
+        if checks['date'] == 'note_date':
+            sqlist.append(filter_sqls('note_date'))
 
     def filter_parcond():
-        if param['open_check']:
-            cond.append(filter_sqls(f'open-{param["open_op"]}'))
-            par.append(param['open_val'])
-        if param['rating_check']:
-            cond.append(filter_sqls(f'rating-{param["rating_op"]}'))
-            par.append(param['rating_val'])
-        if param['after']:
-            cond.append(filter_sqls('after', param["date"]))
-            par.append(param['date_after'])
-        if param['before']:
-            cond.append(filter_sqls('before', param["date"]))
-            par.append(param['date_before'])
+        if checks['open_check']:
+            cond.append(filter_sqls(f'open-{checks["open_op"]}'))
+            par.append(checks['open_val'])
+        if checks['rating_check']:
+            cond.append(filter_sqls(f'rating-{checks["rating_op"]}'))
+            par.append(checks['rating_val'])
+        if checks["date"] != "note_date":
+            if checks['after']:
+                cond.append(filter_sqls('after', checks["date"]))
+                par.append(checks['date_after'])
+            if checks['before']:
+                cond.append(filter_sqls('before', checks["date"]))
+                par.append(checks['date_before'])
 
     def assemble_filter_sql() -> str:
         if sqlist:
@@ -937,13 +941,43 @@ def detele_tag(id):
     with ag.db.conn as conn:
         conn.cursor().execute(sql, {'id': id})
 
-def get_files_tag(tag: int) -> set[int]:
+def get_tag_files(tag: int) -> set[int]:
     sql = 'select fileid from FileTag where tagid = ?'
     curs = ag.db.conn.cursor().execute(sql, (tag,))
     files = []
     for id in curs:
         files.append(id[0])
     return set(files)
+
+def get_note_date_files(checks: dict) -> apsw.Cursor:
+    """
+    checks['note_date'] — one of the options:
+    "last modified", "any modified", "last created", "any created"
+    So last_any is last or any; date_field — modified or created
+    """
+    last_any, date_field = checks['note_date'].split(' ')
+    param = {}
+    def compose_sql() -> str:
+        cond = []
+        if checks['after']:
+            cond.append(f"{date_field} >= :after")
+            param['after'] = checks['date_after']
+        if checks['before']:
+            cond.append(f"{date_field} <= :before")
+            param['before'] = checks['date_before']
+        if last_any == "any":
+            return f'select distinct fileid from filenotes where {" and ".join(cond)}'
+        if last_any == "last":
+            return (f'with x(fileid, {date_field}) as '
+            f'(select fileid, max({date_field}) from filenotes group by fileid) '
+            f'select * from x where {" and ".join(cond)}'
+        )
+
+    if checks['after'] or checks['before']:
+        sql = compose_sql()
+        return ag.db.conn.cursor().execute(sql, param)
+    else:
+        return []
 
 def create_connection(path: str) -> bool:
     if not path:

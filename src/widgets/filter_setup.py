@@ -22,6 +22,8 @@ class FilterSetup(QWidget):
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        self.ui.note_date_type.setVisible(self.ui.date_type.currentText() == 'note_date')
+
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
         self.ui.after_date.setCalendarPopup(True)
         self.ui.before_date.setCalendarPopup(True)
@@ -44,6 +46,9 @@ class FilterSetup(QWidget):
         self.ui.before.clicked.connect(self.before_clicked)
         self.ui.open_sel.clicked.connect(self.open_clicked)
         self.ui.rating_sel.clicked.connect(self.rating_clicked)
+        self.ui.date_type.currentIndexChanged.connect(
+            lambda: self.ui.note_date_type.setVisible(self.ui.date_type.currentText() == 'note_date')
+        )
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
         ag.signals_.author_widget_title.connect(lambda ttl: self.ui.selected_author.setText(ttl.lower()))
@@ -127,12 +132,6 @@ class FilterSetup(QWidget):
         self.checks['rating_check'] = self.ui.rating_sel.isChecked()
         self.checks['rating_op'] = self.ui.rating_cond.currentIndex()
         self.checks['rating_val'] = self.ui.rating_edit.text()
-        self.checks['date'] = self.ui.date_type.currentText()
-        self.checks['after'] = self.ui.after.isChecked()
-        self.checks['before'] = self.ui.before.isChecked()
-        # date interval includes both ends: 'after' and 'before'
-        self.checks['date_after'] = unix_date(self.ui.after_date.date().toJulianDay())
-        self.checks['date_before'] = unix_date(self.ui.before_date.date().addDays(1).toJulianDay())
         return db_ut.filter_files(self.checks)
 
     def store_temp(self):
@@ -142,17 +141,25 @@ class FilterSetup(QWidget):
             'tag': self.ui.selected_tag.isChecked(),
             'ext': self.ui.selected_ext.isChecked(),
             'author': self.ui.selected_author.isChecked(),
+            'date': self.ui.date_type.currentText(),
+            'note_date': self.ui.note_date_type.currentText(),
+            'after': self.ui.after.isChecked(),
+            'before': self.ui.before.isChecked(),
+            'date_after': str(unix_date(self.ui.after_date.date().toJulianDay())),
+            'date_before': str(unix_date(self.ui.before_date.date().addDays(1).toJulianDay())),
         }
         db_ut.clear_temp()
-        self.store_dir_ids()
+        self.store_dir_files()
         if self.checks['tag']:
-            self.store_tag_ids()
+            self.store_tag_files()
         if self.checks['ext']:
             self.store_ext_ids()
         if self.checks['author']:
             self.store_author_ids()
+        if self.checks['date'] == "note_date":
+            self.store_note_date_files()
 
-    def store_dir_ids(self):
+    def store_dir_files(self):
         if not self.checks['dir']:   # if any folder is not selected
             self.single_folder = False
             if self.checks['no_dir']:
@@ -165,23 +172,28 @@ class FilterSetup(QWidget):
             dirs.append((idx.data(Qt.ItemDataRole.UserRole).id,))
         db_ut.temp_files_dir(dirs, self.ui.subDirs.isChecked())
 
-    def store_tag_ids(self):
+    def store_tag_files(self):
         id_list = ag.tag_list.get_selected_ids()
-        if not id_list:   # if any tag is not selected
+        if not id_list:              # if any tag is not selected
             self.checks['tag'] = False
             return
         if self.ui.all_btn.isChecked():
-            files_tag = db_ut.get_files_tag(id_list[0])
+            tag_files = db_ut.get_tag_files(id_list[0])   # tag_files: set
             for id in id_list[1:]:
-                files_tag &= db_ut.get_files_tag(id)
-                if not files_tag:
+                tag_files &= db_ut.get_tag_files(id)
+                if not tag_files:
                     break
-        else:   # self.ui.any_btn.isChecked()
-            files_tag = set()
+        else:                        # self.ui.any_btn.isChecked()
+            tag_files = set()
             for id in id_list:
-                files_tag |= db_ut.get_files_tag(id)
-        for file in files_tag:
+                tag_files |= db_ut.get_tag_files(id)
+        for file in tag_files:
             db_ut.save_to_temp('file_tag', file)
+
+    def store_note_date_files(self):
+        files = db_ut.get_note_date_files(self.checks)
+        for file in files:
+            db_ut.save_to_temp('note_date_files', file[0])
 
     def store_ext_ids(self):
         ext_list = ag.ext_list.get_selected_ids()
@@ -252,6 +264,7 @@ class FilterSetup(QWidget):
             "RATING_OP": self.ui.rating_cond.currentIndex(),
             "RATING_VAL": self.ui.rating_edit.text(),
             "DATE_TYPE": self.ui.date_type.currentIndex(),
+            "NOTE_DATE_TYPE": self.ui.note_date_type.currentIndex(),
             "AFTER": self.ui.after.isChecked(),
             "BEFORE": self.ui.before.isChecked(),
             "AFTER_DATE": self.ui.after_date.date().toJulianDay(),
@@ -275,6 +288,7 @@ class FilterSetup(QWidget):
         self.ui.rating_cond.setCurrentIndex(ag.get_setting("RATING_OP", 0))
         self.ui.rating_edit.setText(str(ag.get_setting("RATING_VAL", "0")))
         self.ui.date_type.setCurrentIndex(ag.get_setting("DATE_TYPE", 0))
+        self.ui.note_date_type.setCurrentIndex(ag.get_setting("NOTE_DATE_TYPE", 0))
         self.ui.after.setChecked(ag.get_setting("AFTER", False))
         self.ui.before.setChecked(ag.get_setting("BEFORE", False))
         cur_date = QDate.currentDate().toJulianDay()

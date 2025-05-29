@@ -19,8 +19,6 @@ $toolIcon~#808080
 $iconFill~#C6D9AF
 $iconStroke~#538CAA
 *
-$ico_app~app.ico
-*
 $altTextColor~#424242
 $borderColor~#A0A0A0
 $closeHoverBG~#DE1B2E

@@ -156,8 +156,10 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     theme = themes.get(theme_key, {})
 
     def translate_qss(styles: str) -> str:
-        for key, val in qss_params.items():
-            styles = styles.replace(key, val)
+        keys = list(qss_params.keys())
+        keys.sort(reverse=True)
+        for key in keys:
+            styles = styles.replace(key, qss_params[key])
         return styles
 
     def read_file(name: str) -> str:
@@ -175,6 +177,9 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         extra = theme.get('extra', '')
         if extra:
             parse_params(extra)
+
+        with resources.path(qss, qss_params['$ico_app']) as _path:
+            qss_params['$ico_app'] = str(_path)
 
     def parse_params(param: str):
         def check_for_double_key():
@@ -201,8 +206,6 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
                 return val_subst(qss_params[val])
             return val
 
-        with resources.path(qss, qss_params['$ico_app']) as _path:
-            qss_params['$ico_app'] = str(_path)
         for key, val in qss_params.items():
             loop_check = set(key)
             qss_params[key] = val_subst(val)
@@ -338,8 +341,8 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
             for clr in color_set:
                 mm, color = get_color()
                 colors[mm].append(
-                    color if color else
-                    colors['normal'][len(colors[mm])]
+                    '' if color == '`' else color if color
+                    else colors['normal'][len(colors[mm])]
                 )
             return colors
 
