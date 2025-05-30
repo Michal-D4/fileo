@@ -414,11 +414,24 @@ class shoWindow(QMainWindow):
     def toggle_filter_show(self):
         if not ag.db.conn:
             return
-        if self.ui.btnFilterSetup.isChecked():
+        def show_filter():
             pos_: QPoint = tug.get_app_setting("filterDialogPosition",
                 QPoint(self.width() - ag.filter_dlg.width() - 10, 32))
+
+            if pos_.x() < 0:
+                pos_.setX(15)
+            if pos_.y() < 0:
+                pos_.setY(15)
+            if pos_.x() > self.width() - 30:
+                pos_.setX(self.width() - ag.filter_dlg.width())
+            if pos_.y() > self.height() - 30:
+                pos_.setY(self.height() - ag.filter_dlg.height())
+
             ag.filter_dlg.move(pos_)
             ag.filter_dlg.show()
+
+        if self.ui.btnFilterSetup.isChecked():
+            show_filter()
         elif ag.filter_dlg:
             if ag.filter_dlg.isVisible():
                 tug.save_app_setting(filterDialogPosition = ag.filter_dlg.pos())

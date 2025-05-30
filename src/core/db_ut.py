@@ -357,7 +357,7 @@ def filter_files(checks: dict) -> apsw.Cursor:
             sqlist.append(filter_sqls('ext_sql'))
         if checks['author']:
             sqlist.append(filter_sqls('author_sql'))
-        if checks['date'] == 'note_date':
+        if checks['note date is set']:
             sqlist.append(filter_sqls('note_date'))
 
     def filter_parcond():
@@ -973,7 +973,8 @@ def get_note_date_files(checks: dict) -> apsw.Cursor:
             f'select * from x where {" and ".join(cond)}'
         )
 
-    if checks['after'] or checks['before']:
+    checks['note date is set'] = checks['after'] or checks['before']
+    if checks['note date is set']:
         sql = compose_sql()
         return ag.db.conn.cursor().execute(sql, param)
     else:

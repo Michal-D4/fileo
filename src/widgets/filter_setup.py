@@ -40,8 +40,6 @@ class FilterSetup(QWidget):
         self.ui.selected_dir.checkStateChanged.connect(self.dir_check)
         self.ui.no_folder.checkStateChanged.connect(self.no_dir_check)
         self.ui.selected_tag.checkStateChanged.connect(self.toggle_tag_check)
-        self.ui.btnDone.clicked.connect(self.done_clicked)
-        self.ui.btnApply.clicked.connect(self.apply_clicked)
         self.ui.after.clicked.connect(self.after_clicked)
         self.ui.before.clicked.connect(self.before_clicked)
         self.ui.open_sel.clicked.connect(self.open_clicked)
@@ -52,6 +50,9 @@ class FilterSetup(QWidget):
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
         ag.signals_.author_widget_title.connect(lambda ttl: self.ui.selected_author.setText(ttl.lower()))
+
+        self.ui.btnDone.clicked.connect(self.done_clicked)
+        self.ui.btnApply.clicked.connect(self.apply_clicked)
 
         self.mouseMoveEvent = self.move_self
 

@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.45 - 2025, 30 May
+* quick fix, filter must show all files if no option is selected
+
 ## 1.3.44 - 2025, 29 May
 * Filter files by note creation and modification dates
 * fixed bug in qss handling
