@@ -157,8 +157,7 @@ class FilterSetup(QWidget):
             self.store_ext_ids()
         if self.checks['author']:
             self.store_author_ids()
-        if self.checks['date'] == "note_date":
-            self.store_note_date_files()
+        self.store_note_date_files()
 
     def store_dir_files(self):
         if not self.checks['dir']:   # if any folder is not selected
@@ -192,6 +191,12 @@ class FilterSetup(QWidget):
             db_ut.save_to_temp('file_tag', file)
 
     def store_note_date_files(self):
+        self.checks['note date is set'] = (
+            self.checks['date'] == "note_date" and
+            (self.checks['after'] or self.checks['before'])
+        )
+        if not self.checks['note date is set']:
+            return
         files = db_ut.get_note_date_files(self.checks)
         for file in files:
             db_ut.save_to_temp('note_date_files', file[0])

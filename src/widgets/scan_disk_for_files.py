@@ -68,3 +68,7 @@ class diskScanner(QWidget):
                 self.move(self.pos() + dist)
                 e.accept()
             self.start_pos = pos_
+
+    def close(self) -> bool:
+        ag.take_files = None
+        return super().close()

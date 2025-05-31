@@ -973,7 +973,6 @@ def get_note_date_files(checks: dict) -> apsw.Cursor:
             f'select * from x where {" and ".join(cond)}'
         )
 
-    checks['note date is set'] = checks['after'] or checks['before']
     if checks['note date is set']:
         sql = compose_sql()
         return ag.db.conn.cursor().execute(sql, param)

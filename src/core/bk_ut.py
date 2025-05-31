@@ -389,17 +389,19 @@ def checks():
 
 @pyqtSlot()
 def check_duplicates(auto: bool=True):
-    if not int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
+    if ag.dup_dialog:
+        return
+    if auto and not int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
         return
     rep = workers.report_duplicates()
     if rep:
-        dup_dlg = dup.dlgDup(rep, ag.app)
-        dup_dlg.move(
-            (ag.app.width()-dup_dlg.width()) // 3,
-            (ag.app.height()-dup_dlg.height()) // 3
+        ag.dup_dialog = dup.dlgDup(rep, ag.app)
+        ag.dup_dialog.move(
+            (ag.app.width()-ag.dup_dialog.width()) // 3,
+            (ag.app.height()-ag.dup_dialog.height()) // 3
         )
-        dup_dlg.asked_by_user(not auto)
-        dup_dlg.show()
+        ag.dup_dialog.asked_by_user(not auto)
+        ag.dup_dialog.show()
     elif not auto:
         ag.show_message_box(
             "No duplicates found",

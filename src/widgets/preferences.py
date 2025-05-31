@@ -71,6 +71,7 @@ class Preferences(QWidget):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
         if theme_key != self.cur_theme:
             self.set_theme(self.cur_theme)
+        ag.prefs = None
         super().close()
 
     def accept(self):
@@ -96,6 +97,7 @@ class Preferences(QWidget):
         tug.create_dir(Path(self.export_path.text()))
         tug.create_dir(Path(self.report_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
+        ag.prefs = None
         super().close()
 
     def set_inputs(self):

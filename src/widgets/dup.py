@@ -1,3 +1,4 @@
+# from loguru import logger
 import os
 from pathlib import Path
 
@@ -89,4 +90,5 @@ class dlgDup(QWidget, Ui_DlgDup):
     def close(self) -> bool:
         if not self.is_user_request:
             tug.save_app_setting(CHECK_DUPLICATES = int(not self.checkBox.isChecked()))
+        ag.dup_dialog = None
         return super().close()

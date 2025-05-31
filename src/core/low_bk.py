@@ -204,13 +204,13 @@ def scan_disk():
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if not ag.db.conn:
+    if not ag.db.conn or ag.take_files:
         return
-    srch_files = diskScanner(ag.app)
-    srch_files.move(
-        (ag.app.width()-srch_files.width()) // 4,
-        (ag.app.height()-srch_files.height()) // 4)
-    srch_files.show()
+    ag.take_files = diskScanner(ag.app)
+    ag.take_files.move(
+        (ag.app.width()-ag.take_files.width()) // 4,
+        (ag.app.height()-ag.take_files.height()) // 4)
+    ag.take_files.show()
 
 def save_note_edit_state():
     ag.save_settings(
@@ -359,20 +359,24 @@ def find_files_by_name(param: str):
             icon=QMessageBox.Icon.Warning)
 
 def set_preferences():
-    pref = preferences.Preferences(ag.app)
-    pref.move(
-        (ag.app.width()-pref.width()) // 3,
-        (ag.app.height()-pref.height()) // 3
+    if ag.prefs:
+        return
+    ag.prefs = preferences.Preferences(ag.app)
+    ag.prefs.move(
+        (ag.app.width()-ag.prefs.width()) // 3,
+        (ag.app.height()-ag.prefs.height()) // 3
     )
-    pref.show()
+    ag.prefs.show()
 
 def show_about():
-    dlg = about.AboutDialog(ag.app)
-    dlg.move(
-        (ag.app.width()-dlg.width()) // 3,
-        (ag.app.height()-dlg.height()) // 3
+    if ag.about_dialog:
+        return
+    ag.about_dialog = about.AboutDialog(ag.app)
+    ag.about_dialog.move(
+        (ag.app.width()-ag.about_dialog.width()) // 3,
+        (ag.app.height()-ag.about_dialog.height()) // 3
     )
-    dlg.show()
+    ag.about_dialog.show()
 
 #region Common
 def save_branch(index: QModelIndex):

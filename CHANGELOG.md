@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.46 - 2025, 31 May
+* quick fix, filter setup bug - when notes date were not selected.
+* Dialogue: "About the program", "Report duplicate files", "Settings", "Scan disk for files" should not open more than one main window.
+* Filter setup dialog, if accidentally moved out of main window, shold be opened next time inside main window.
+
 ## 1.3.45 - 2025, 30 May
 * quick fix, filter must show all files if no option is selected
 

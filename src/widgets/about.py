@@ -74,3 +74,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
             self.ttl_label.setText(f'About Fileo, Python {ver[0]}, DB user v.{ver[1]}, {ver[2]}')
         else:
             self.ttl_label.setText('About Fileo')
+
+    def close(self) -> bool:
+        ag.about_dialog = None
+        return super().close()
