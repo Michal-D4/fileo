@@ -1,11 +1,13 @@
+# from loguru import logger
 from pathlib import Path
 
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
-    QSortFilterProxyModel,
-    )
+    QSortFilterProxyModel, QDateTime,
+)
 from PyQt6.QtWidgets import QMessageBox
 
 from . import db_ut, app_globals as ag
+from .. import tug
 
 SORT_ROLE = Qt.ItemDataRole.UserRole + 1
 SZ_SCALE = {
@@ -36,10 +38,6 @@ class fileProxyModel(QSortFilterProxyModel):
         )
 
     def update_opened(self, ts: int, index: QModelIndex):
-        """
-        update timestamp when file is opened
-        ts - the unix epoch timestamp
-        """
         self.sourceModel().update_opened(ts, self.mapToSource(index))
 
     def update_field_by_name(self, val, name: str, index: QModelIndex):
@@ -48,9 +46,6 @@ class fileProxyModel(QSortFilterProxyModel):
     def get_index_by_id(self, id: int) -> int:
         idx = self.sourceModel().get_index_by_id(id)
         return self.mapFromSource(idx)
-
-    def get_user_data(self) -> list:
-        return self.sourceModel().get_user_data()
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
         if left.column() == 0:
@@ -71,7 +66,7 @@ class fileModel(QAbstractTableModel):
         super().__init__(parent)
         self.header = ()
         self.rows = []
-        self.user_data: list[ag.FileData] = []
+        self.user_data: list[int] = []  # file_id
 
     def rowCount(self, parent=None):
         return len(self.rows)
@@ -107,12 +102,30 @@ class fileModel(QAbstractTableModel):
                 return Qt.AlignmentFlag.AlignLeft
         return None
 
-    def get_user_data(self):
-        return self.user_data
-
-    def append_row(self, row:list, user_data=ag.FileData()):
+    def append_row(self, row:list, file_id: int=0):
         self.rows.append(row)
-        self.user_data.append(user_data)
+        self.user_data.append(file_id)
+
+    def insertRows(self, row: int, count: int, parent: QModelIndex=QModelIndex()):
+        self.beginInsertRows(parent, row, row + count - 1)
+        if 0 > row > len(self.rows):
+            success = False
+        else:
+            date0 = QDateTime().fromSecsSinceEpoch(-62135596800)
+            for i in range(count):
+                self.rows.insert(
+                    row, ['<file_name>.md',date0,date0,0,0,date0,0,0,date0,date0,date0,('<file_name>','md')]
+                )
+                self.user_data.insert(row, 0)
+            success = True
+        self.endInsertRows()
+        return success
+
+    def index(self, row, column, parent: QModelIndex=QModelIndex()):
+        if 0 > row or row >= len(self.rows):
+            return QModelIndex()
+
+        return self.createIndex(row, column, self.rows[row])
 
     def removeRows(self, row, count=1, parent=QModelIndex()):
         self.beginRemoveRows(QModelIndex(), row, row + count - 1)
@@ -138,27 +151,66 @@ class fileModel(QAbstractTableModel):
             return False
 
         def _rename_file(new_name: str) -> bool:
-            path = Path(db_ut.get_file_path(file_id))
-            try:
-                new_path = path.rename(path.parent / new_name)
-                line[0] = new_name
-                line[-1] = (
-                    (new_path.stem.lower(), new_path.suffix.lower())
-                    if new_path.suffix else
-                    (new_path.stem.lower(),)
+            def new_file():
+                try:
+                    new_path.touch(exist_ok=False)
+                except (FileExistsError, OSError) as e:
+                    ag.show_message_box(
+                        'File already exists',
+                        f'{e}',
+                        icon=QMessageBox.Icon.Information
+                    )
+                    return
+
+                cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_birthtime))
+                line[1] = line[5] = line[10] = cre_time
+                file_id = db_ut.insert_file(
+                    ('', new_name, *(
+                        line[i].toSecsSinceEpoch() if
+                        isinstance(line[i], QDateTime)
+                        else line[i] for i in (1,5,2,10,3,4,7,6,8,)
+                        ), path
+                    )
                 )
-                ag.app.ui.current_filename.setText(new_name)
+                self.user_data[index.row()] = file_id
+                dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+                db_ut.copy_file(file_id, dir_id)
+                ag.signals_.user_signal.emit("Files Open file")
+
+            def old_file() -> bool:
+                try:
+                    path.rename(new_path)
+                except (FileExistsError, FileNotFoundError, PermissionError) as e:
+                    ag.show_message_box(
+                        'Error renaming file',
+                        f'{e}',
+                        icon=QMessageBox.Icon.Critical
+                    )
+                    return False
                 return True
-            except (FileExistsError, FileNotFoundError) as e:
-                ag.show_message_box(
-                    'Error renaming file',
-                    f'{e}',
-                    icon=QMessageBox.Icon.Critical
-                )
-                return False
+
+            if file_id:
+                path = db_ut.get_file_path(file_id)
+                new_path = Path(path).parent / new_name
+                ok = old_file()
+            else:
+                path = tug.get_app_setting('DEFAULT_FILE_PATH',
+                    str(Path('~/fileo/files').expanduser()))
+                new_path = Path(path) / new_name
+                ok = False
+                new_file()
+
+            line[0] = new_name
+            line[-1] = (
+                (new_path.stem.lower(), new_path.suffix.lower())
+                if new_path.suffix else
+                (new_path.stem.lower(),)
+            )
+            ag.app.ui.current_filename.setText(new_name)
+            return ok
 
         col = index.column()
-        file_id = self.user_data[index.row()].id
+        file_id = self.user_data[index.row()]
         line = self.rows[index.row()]
         if col < 0 or col >= len(line):
             return False
@@ -173,17 +225,12 @@ class fileModel(QAbstractTableModel):
                 value = value.toSecsSinceEpoch()
         db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
-        ag.add_recent_file(self.user_data[index.row()].id)
+        ag.add_recent_file(self.user_data[index.row()])
         return True
 
-    def get_row(self, row):
-        if row >= 0 & row < self.rowCount():
-            return self.rows[row], self.user_data[row]
-        return ()
-
-    def get_index_by_id(self, id: int) -> QModelIndex:
-        for i,ud in enumerate(self.user_data):
-            if ud.id == id:
+    def get_index_by_id(self, file_id: int) -> QModelIndex:
+        for i,f_id in enumerate(self.user_data):
+            if f_id == file_id:
                 return self.index(i, 0, QModelIndex())
         return QModelIndex()
 

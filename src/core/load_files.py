@@ -183,11 +183,10 @@ class loadFiles(QObject):
         return dir_id
 
     def get_path_id(self, path: str) -> int:
-        INSERT_PATH = 'insert into paths (path) values (:path)'
-
         if path in self.paths:
             return self.paths[path].pathId
 
+        INSERT_PATH = 'insert into paths (path) values (:path)'
         self.conn.cursor().execute(INSERT_PATH, {'path': path})
         path_id = self.conn.last_insert_rowid()
         self.paths[path] = PathDir(path_id, 0)

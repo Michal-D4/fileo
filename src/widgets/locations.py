@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 import os
 from pathlib import Path
 
@@ -20,14 +20,13 @@ class Locations(QTextBrowser):
         self.names = {}
 
         self.cur_pos = QPoint()
-        self.setTabChangesFocus(False)
 
     def mousePressEvent(self, e: QMouseEvent) -> None:
         _keys = ["Copy", "go to this location", "Reveal in explorer",
                       "delete file from this location", "delimiter",
                       "Remove duplicate file", "delimiter", "Select All"]
         _menu = { # key is menu items text, (the_must, method, shortcut)
-            _keys[0]: (True, self.copy, QKeySequence.StandardKey.Copy),
+            _keys[0]: (False, self.copy, QKeySequence.StandardKey.Copy),
             _keys[1]: (False, self.go_file, None),
             _keys[2]: (False, self.reveal_file, None),
             _keys[3]: (False, self.delete_file, None),
@@ -149,7 +148,7 @@ class Locations(QTextBrowser):
     def set_data(self, file_id: int):
         self.set_file_id(file_id)
         if ag.mode is ag.appMode.DIR:
-            curr_branch = ag.define_branch(ag.dir_list.currentIndex())
+            *curr_branch, _ = ag.define_branch(ag.dir_list.currentIndex())
         else:
             curr_branch = []
         self.show_branches(curr_branch)
@@ -170,7 +169,7 @@ class Locations(QTextBrowser):
         leaves = []
         get_leaves()
         curr = 0
-        while curr < len(leaves):
+        while curr < len(leaves):   # not for-loop because len(leaves) changed in loop
             tt = leaves[curr]
             for parent, *_ in db_ut.dir_parents(tt[-1]):
                 if not parent:
@@ -193,15 +192,7 @@ class Locations(QTextBrowser):
             ku_key = f'{key0} &nbsp; &nbsp; &nbsp; &nbsp; ----> &nbsp; Dup: {file_name}'
             nu_key = f'{key0}         ---->   Dup: {file_name}'
             self.has_dups = True
-            return (
-                (
-                    f'<ul><li type="circle">{ku_key}</li></ul>', nu_key
-                )
-                if val[0] == curr_branch and val[1] == self.file_id else
-                (
-                    f'<p><blockquote>{ku_key}</p>', nu_key
-                )
-            )
+            return f'<p><blockquote>{ku_key}</p>', nu_key
 
         re_names = {}
         txt = [
@@ -209,7 +200,7 @@ class Locations(QTextBrowser):
             'text-indent:-28px; line-height: 66%} </STYLE> </HEAD> <BODY> '
         ]
         for key, val in self.names.items():
-            key0 = key.split('/')[0]
+            key0, *_ = key.split('/')
             tt, nu_key = (
                 file_branch_line()
                 if val[1] == self.file_id else
@@ -220,7 +211,6 @@ class Locations(QTextBrowser):
 
         self.names = re_names
         txt.append('<p/></BODY>')
-
         self.setHtml(''.join(txt))
 
     def build_branch_data(self):

@@ -6,11 +6,12 @@ import pickle
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QTimer, pyqtSlot, QModelIndex
-from PyQt6.QtWidgets import QTreeView, QMessageBox
+from PyQt6.QtWidgets import QMessageBox
 
 from .. import tug
 
 if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QTreeView
     from .compact_list import aBrowser
     from .sho import shoWindow
     from ..widgets.file_data import fileDataHolder
@@ -30,13 +31,13 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.46'
+    return '1.3.48'
 
 app: 'shoWindow' = None
-dir_list: QTreeView = None
+dir_list: 'QTreeView' = None
+file_list: 'QTreeView' = None
 tag_list: 'aBrowser' = None
 ext_list: 'aBrowser' = None
-file_list: QTreeView = None
 author_list: 'aBrowser' = None
 file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
@@ -111,8 +112,8 @@ class mimeType(Enum):
 class DirData():
     parent_id: int
     id: int
-    multy: bool
-    hidden: bool
+    multy: bool = False
+    hidden: bool = False
     file_id: int = 0
     tool_tip: str = None
 
@@ -123,18 +124,9 @@ class DirData():
     def __repr__(self) -> str:
         return (
             f'DirData(parent_id={self.parent_id}, id={self.id}, '
-            f'multy={bool(self.multy)}, hidden={bool(self.hidden)}, '
+            f'multy={self.multy}, hidden={self.hidden}, '
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
-
-@dataclass(slots=True)
-class FileData():
-    id: int = 0
-    ext_id: int = 0
-    path: int = 0
-
-    def __repr__(self) -> str:
-        return f'(file_id={self.id}, ext_id={self.ext_id}, path_id={self.path})'
 
 def save_settings(**kwargs):
     """
@@ -170,7 +162,7 @@ def define_branch(index: QModelIndex) -> list:
     return branch - a list of node ids from root to index
     """
     if not index.isValid():
-        return []
+        return [0]
     item = index.internalPointer()
     branch = []
     while 1:
@@ -184,7 +176,7 @@ def define_branch(index: QModelIndex) -> list:
     return branch
 
 KB, MB, GB = 1024, 1048576, 1073741824
-def hr_size(n):
+def human_readable_size(n):
     if n > GB:
         return f'{n/GB:.2f} Gb'
     if n > MB:

@@ -8,10 +8,11 @@ from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
 
 from . import (app_globals as ag, low_bk, load_files,
-    drag_drop as dd, file_model, check_update as upd,
+    drag_drop as dd, check_update as upd,
 )
 from ..widgets import search_files as sf, workers, dup
 from .. import tug
+from .file_model import fileProxyModel
 
 if TYPE_CHECKING:
     from .sho import shoWindow
@@ -19,11 +20,6 @@ if TYPE_CHECKING:
 self: 'shoWindow' = None
 min_width = 220
 
-tool_tips = (
-    ",Added date, Last opening date,rating of file,number of file openings,"
-    "Last modified date,Number of pages(in book),Size of file,"
-    "Publication date(book),Date of last note,File creation date"
-).split(',')
 
 def save_bk_settings():
     if not ag.db.conn:
@@ -46,7 +42,7 @@ def save_bk_settings():
             "SELECTED_DIRS" : selected_dirs(),
         }
         if ag.mode is ag.appMode.FILTER:
-            model: file_model.fileProxyModel = ag.file_list.model()
+            model: fileProxyModel = ag.file_list.model()
             idx = model.mapToSource(ag.file_list.currentIndex())
             settings["FILTER_FILE_ROW"] = idx.row()
         ag.save_settings(**settings)
@@ -131,9 +127,9 @@ def bk_setup():
     ag.file_list.doubleClicked.connect(
         lambda: ag.signals_.user_signal.emit("double click file"))
 
-    ctrl_w = QShortcut(QKeySequence("Ctrl+w"), ag.dir_list)
+    ctrl_w = QShortcut(QKeySequence("Ctrl+W"), ag.dir_list)
     ctrl_w.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder"))
-    ctrl_e = QShortcut(QKeySequence("Ctrl+e"), ag.dir_list)
+    ctrl_e = QShortcut(QKeySequence("Ctrl+E"), ag.dir_list)
     ctrl_e.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder as child"))
     del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.dir_list)
     del_key.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Delete folder(s)"))
@@ -194,10 +190,15 @@ def set_files_resize_event():
     ag.file_list.resizeEvent = file_list_resize
 
 def set_field_menu():
+    tool_tips = (
+        ",Added date, Last opening date,rating of file,number of file openings,"
+        "Last modified date,Number of pages(in book),Size of file,"
+        "Publication date(book),Date of last note,File creation date"
+    ).split(',')
     hdr = ag.file_list.header()
 
     menu = QMenu(ag.app)
-    for i,field,tt in zip(range(len(low_bk.fields)), low_bk.fields, tool_tips):
+    for i,field,tt in zip(range(len(low_bk.file_list_fields)), low_bk.file_list_fields, tool_tips):
         act = QAction(field, ag.app, checkable=True)
         if tt:
             act.setToolTip(tt)
@@ -221,7 +222,7 @@ def restore_dirs():
     if ag.mode is ag.appMode.FILTER:
         low_bk.filtered_files()
         row = ag.get_setting("FILTER_FILE_ROW", 0)
-        model: file_model.fileProxyModel = ag.file_list.model()
+        model: fileProxyModel = ag.file_list.model()
         s_idx = model.sourceModel().index(row, 0)
         if s_idx.isValid():
             idx = model.mapFromSource(s_idx)
@@ -255,7 +256,7 @@ def header_menu(pos: QPoint):
     idx = hdr.logicalIndexAt(pos)
     if idx:
         me = QMenu()
-        me.addAction(f'Hide column "{low_bk.fields[idx]}"')
+        me.addAction(f'Hide column "{low_bk.file_list_fields[idx]}"')
         action = me.exec(hdr.mapToGlobal(
             QPoint(pos.x(), pos.y() + hdr.height()))
         )
@@ -319,29 +320,35 @@ def dir_menu(pos):
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
-    idx = ag.file_list.indexAt(pos)
-    if idx.isValid():
-        menu = QMenu(self)
-        menu.addAction("Copy file name(s)")
-        menu.addAction("Copy full file name(s)")
+    menu = QMenu(self)
+    sel_model = ag.file_list.selectionModel()
+    if sel_model.currentIndex().isValid():
         menu.addAction("Reveal in explorer")
         menu.addSeparator()
         menu.addAction("Open file")
         menu.addSeparator()
         menu.addAction("Rename file")
         menu.addSeparator()
+    if sel_model.hasSelection():
+        menu.addAction("Copy file name(s)")
+        menu.addAction("Copy full file name(s)")
+        menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
-        if ag.mode is ag.appMode.RECENT_FILES:
-            menu.addAction("Clear file history")
+    menu.addAction("Create new file")
+    if ag.mode is ag.appMode.RECENT_FILES:
+        menu.addSeparator()
+        menu.addAction("Clear file history")
+        if sel_model.hasSelection():
             menu.addAction("Remove selected from history")
-        else:
-            menu.addAction("Remove file(s) from folder")
+    if sel_model.hasSelection():
+        menu.addSeparator()
+        menu.addAction("Remove file(s) from folder")
         menu.addSeparator()
         menu.addAction("Delete file(s) from DB")
-        action = menu.exec(ag.file_list.mapToGlobal(pos))
-        if action:
-            ag.signals_.user_signal.emit(f"Files {action.text()}")
+    action = menu.exec(ag.file_list.mapToGlobal(pos))
+    if action:
+        ag.signals_.user_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):

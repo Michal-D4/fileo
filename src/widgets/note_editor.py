@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 
 from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl, QByteArray
 from PyQt6.QtGui import QFocusEvent, QDropEvent, QDragEnterEvent, QTextCursor
@@ -17,6 +17,7 @@ class noteEditor(QWidget):
         self.layout.addWidget(self.note_editor)
 
         self.note: fileNote = None
+        self.drag_enter_btns = 0
 
         self.note_editor.setAcceptDrops(False)
         self.setAcceptDrops(True)
@@ -27,6 +28,8 @@ class noteEditor(QWidget):
         if ((mimedata.hasFormat(ag.mimeType.files_in.value)
             and e.source() is ag.app)
             or mimedata.hasFormat(ag.mimeType.files_uri.value)):
+            # logger.info(f'{e.buttons()=}')
+            self.drag_enter_btns = e.buttons()
             e.accept()
         else:
             e.ignore()
@@ -74,6 +77,7 @@ class noteEditor(QWidget):
         if data.hasFormat(ag.mimeType.files_uri.value):
             uris: QUrl = data.urls()
             uri = uris[0]
+            # logger.info(f'{uri.scheme()=}')
             if uri.scheme() == 'file':
                 tt = []
                 for ur in uris:
@@ -84,9 +88,11 @@ class noteEditor(QWidget):
             e.accept()
         elif data.hasFormat(ag.mimeType.files_in.value):
             file_data: QByteArray = data.data(ag.mimeType.files_in.value)
+            logger.info(f'{e.buttons()=}')  # intensionaly, to see if Qt recover bottons in dropEvent
             t.insertText(
                 insert_file_id()
-                if e.buttons() == Qt.MouseButton.LeftButton
+                # if e.buttons() & Qt.MouseButton.LeftButton
+                if self.drag_enter_btns & Qt.MouseButton.LeftButton
                 else insert_file_uri()
             )
         return super().dropEvent(e)

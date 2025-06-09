@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\notes.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo2\src\widgets\notes.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -131,7 +131,7 @@ class Ui_FileNotes(object):
         self.authorEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of authors separated by commas or select from the \"Author selector\""))
         self.tagEdit.setToolTip(_translate("FileNotes", "File\'s tags"))
         self.tagEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of tags separated by commas or select from the \"Tag selector\""))
-        self.srch_in_notes.setToolTip(_translate("FileNotes", "search files by notes context, Ctrl+Shift+F"))
+        self.srch_in_notes.setToolTip(_translate("FileNotes", "search files by notes context, Ctrl+F"))
         self.srch_in_notes.setText(_translate("FileNotes", "..."))
         self.expand.setToolTip(_translate("FileNotes", "Maximize panel"))
         self.expand.setText(_translate("FileNotes", "..."))
@@ -141,11 +141,11 @@ class Ui_FileNotes(object):
         self.l_file_info.setText(_translate("FileNotes", "File info"))
         self.l_file_notes.setText(_translate("FileNotes", "Notes"))
         self.l_editor.setText(_translate("FileNotes", "Note editor"))
-        self.plus.setToolTip(_translate("FileNotes", "Create new note, Ctrl-N"))
+        self.plus.setToolTip(_translate("FileNotes", "Create new note, Ctrl+N"))
         self.plus.setText(_translate("FileNotes", "..."))
         self.collapse_notes.setToolTip(_translate("FileNotes", "Collapse all notes"))
         self.collapse_notes.setText(_translate("FileNotes", "..."))
-        self.save.setToolTip(_translate("FileNotes", "Save note, Ctrl-S"))
+        self.save.setToolTip(_translate("FileNotes", "Save note, Ctrl+S"))
         self.save.setText(_translate("FileNotes", "..."))
-        self.cancel.setToolTip(_translate("FileNotes", "Cancel editing, Ctrl-Q"))
+        self.cancel.setToolTip(_translate("FileNotes", "Cancel editing, Ctrl+Q"))
         self.cancel.setText(_translate("FileNotes", "..."))

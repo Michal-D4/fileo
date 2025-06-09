@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.48 - 2025, 09 June
+* Add the ability to create new file(s) from within the app. The app creates a blank file. It may not be opened by an app that requires a special file format, such as a PDF file.
+* some other changes, improvements and bug fixes
+
 ## 1.3.46 - 2025, 31 May
 * quick fix, filter setup bug - when notes date were not selected.
 * Dialogue: "About the program", "Report duplicate files", "Settings", "Scan disk for files" should not open more than one main window.

@@ -26,8 +26,7 @@ def dir_tree_select() -> list: # type: ignore
         dir_id, path = qu.pop()
         pp = [*path]
         pp.append(dir_id)
-        rows = curs.execute(sql, {'pid': dir_id})
-        for row in rows:
+        for row in curs.execute(sql, {'pid': dir_id}):
             qu.appendleft((row[1], pp))
             key = ','.join([str(p) for p in pp])
             yield key, row[-1], ag.DirData(*row[:-1])
@@ -90,7 +89,7 @@ def file_duplicates():
 def duplicate_count(file_id: int) -> int:
     sql = (
         'select count(*) from files where hash = '
-        '(select hash from files where id = ?)'
+        '(select hash from files where id = ? and hash != "")'
     )
     return ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
 
@@ -132,7 +131,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
         'from filenotes group by fileid) '
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
-        'f.id, f.extid, f.path from files f '
+        'f.id from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
         'join parentdir p on fd.dir = p.id '      # to avoid duplication
@@ -146,7 +145,7 @@ def get_found_files() -> apsw.Cursor:
         'from filenotes group by fileid) '
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(x.last_note_date, -62135596800), f.created, '
-        'f.id, f.extid, f.path from files f '
+        'f.id from files f '
         'left join x on x.fileid = f.id '
         'where f.id in (select val from aux where key="file_srch");'
     )
@@ -156,7 +155,7 @@ def get_file(file_id: int) -> abc.Iterable:
     sql = (
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
         'f.size, f.published, COALESCE(max(fn.modified), -62135596800), '
-        'f.created, f.id, f.extid, f.path from files f '
+        'f.created, f.id from files f '
         'left join filenotes fn on fn.fileid = f.id where f.id = :f_id;'
     )
     return ag.db.conn.cursor().execute(sql, {'f_id': file_id}).fetchone()
@@ -184,7 +183,7 @@ def update_file_name_path(file_id: int, path_id: int, file_name: str):
     sql = 'update files set (filename, path) = (?, ?) where id = ?'
     ag.db.conn.cursor().execute(sql, (file_name, path_id, file_id))
 
-def insert_file(file_: list) -> int:
+def insert_file(file_data: list) -> int:
     sql = (
         'insert into files (path, extid, hash, filename, '
         'added, modified, opened, created, rating, nopen, size, '
@@ -195,16 +194,16 @@ def insert_file(file_: list) -> int:
         sql1 = 'select id from paths where path = ?'
         sql2 = 'insert into paths (path) values (?)'
         curs = conn.cursor()
-        res = curs.execute(sql1, (file_[-1],)).fetchone()
+        res = curs.execute(sql1, (file_data[-1],)).fetchone()
         if res:
             return res[0]
-        curs.execute(sql2, (file_[-1],)).fetchone()
+        curs.execute(sql2, (file_data[-1],)).fetchone()
         return conn.last_insert_rowid()
 
     def _get_ext_id(conn: apsw.Connection) -> int:
         sql1 = 'select id from extensions where lower(extension) = ?'
         sql2 = 'insert into extensions (extension) values (?)'
-        ext = PurePath(file_[1]).suffix.strip('.')
+        ext = PurePath(file_data[1]).suffix.strip('.')
         curs = conn.cursor()
         res = curs.execute(sql1, (ext.lower(),)).fetchone()
         if res:
@@ -215,7 +214,7 @@ def insert_file(file_: list) -> int:
     with ag.db.conn as conn:
         path_id = _get_path_id(conn)
         ext_id = _get_ext_id(conn)
-        conn.cursor().execute(sql, (path_id, ext_id, *file_[:-1]))
+        conn.cursor().execute(sql, (path_id, ext_id, *file_data[:-1]))
         return conn.last_insert_rowid()
 
 def insert_tags(id, tags: list):
@@ -336,7 +335,7 @@ def filter_files(checks: dict) -> apsw.Cursor:
                 'from filenotes group by fileid) '
                 'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, '
                 'f.pages, f.size, f.published, COALESCE(x.last_note_date, -62135596800), '
-                'f.created, f.id, f.extid, f.path from files f '
+                'f.created, f.id from files f '
                 'left join x on x.fileid = f.id '
             ),
             'open-0': "nopen <= ?",

@@ -95,7 +95,7 @@ class fileInfo(QWidget):
     def populate_fields(self):
         idx = ag.file_list.currentIndex()
         if idx.isValid():
-            self.file_id = idx.data(Qt.ItemDataRole.UserRole).id
+            self.file_id = idx.data(Qt.ItemDataRole.UserRole)
             fields = db_ut.get_file_info(self.file_id)
             if not fields:
                 return
@@ -103,7 +103,7 @@ class fileInfo(QWidget):
                 if i >= 2 and i <= 6:
                     field = self.time_value(fields[i])
                 elif i == 9:
-                    field = ag.hr_size(fields[i])
+                    field = ag.human_readable_size(fields[i])
                 else:
                     field = fields[i]
                 self.form_layout.itemAt(

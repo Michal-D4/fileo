@@ -70,11 +70,7 @@ def get_files_mime_data() -> QMimeData:
         model = ag.file_list.model()
         for idx in indexes:
             s_idx = model.mapToSource(idx)
-            data_stream.writeInt(
-                model.sourceModel().data(
-                    s_idx, role=Qt.ItemDataRole.UserRole
-                ).id
-            )
+            data_stream.writeInt(model.sourceModel().data(s_idx, role=Qt.ItemDataRole.UserRole))
         return drag_data
 
     mime_data = QMimeData()

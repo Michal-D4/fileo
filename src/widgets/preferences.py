@@ -27,22 +27,26 @@ class Preferences(QWidget):
         self.set_inputs()
 
         form_layout = QFormLayout()
-        form_layout.setContentsMargins(9, 9, 9, 9)
 
         form_layout.addRow('Color theme:', self.themes)
         form_layout.addRow('Path to DBs:', self.db_path)
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
+        form_layout.addRow('Files path:', self.file_path)
+
         h_lay0 = QHBoxLayout()
         h_lay0.addWidget(self.folder_history_depth, 1)
         h_lay0.addStretch(5)
         form_layout.addRow('Folder history depth:', h_lay0)
+
         h_lay1 = QHBoxLayout()
         h_lay1.addWidget(self.last_file_list_length, 1)
         h_lay1.addStretch(5)
+
         form_layout.addRow('Recent file list length:', h_lay1)
         form_layout.addRow(self.check_upd)
         form_layout.addRow(self.check_dup)
+
         if tug.config.get("all_preferences", 0):
             form_layout.addRow(self.single_instance)
             h_lay2 = QHBoxLayout()
@@ -51,6 +55,7 @@ class Preferences(QWidget):
             form_layout.addRow(h_lay2)
 
         self.ui.pref_form.setLayout(form_layout)
+        self.adjustSize()
 
         self.mouseMoveEvent = self.move_self
         self.ui.accept_pref.clicked.connect(self.accept)
@@ -83,6 +88,7 @@ class Preferences(QWidget):
             "DEFAULT_DB_PATH": self.db_path.text(),
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
+            "DEFAULT_FILE_PATH": self.file_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
             "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
@@ -96,6 +102,7 @@ class Preferences(QWidget):
         tug.create_dir(Path(self.db_path.text()))
         tug.create_dir(Path(self.export_path.text()))
         tug.create_dir(Path(self.report_path.text()))
+        tug.create_dir(Path(self.file_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
         ag.prefs = None
         super().close()
@@ -109,8 +116,9 @@ class Preferences(QWidget):
         )
         self.themes.setCurrentText(_theme)
         self.themes.currentIndexChanged.connect(self.change_theme)
-        self.db_path = QLineEdit()
+
         pp = Path('~/fileo').expanduser()
+        self.db_path = QLineEdit()
         self.db_path.setText(
             tug.get_app_setting('DEFAULT_DB_PATH', str(pp / 'dbs'))
         )
@@ -122,6 +130,11 @@ class Preferences(QWidget):
         self.report_path.setText(
             tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp / 'report'))
         )
+        self.file_path = QLineEdit()
+        self.file_path.setText(
+            tug.get_app_setting('DEFAULT_FILE_PATH', str(pp / 'files'))
+        )
+
         self.folder_history_depth = QLineEdit()
         self.folder_history_depth.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.folder_history_depth.editingFinished.connect(self.history_depth_changed)
@@ -181,6 +194,7 @@ class Preferences(QWidget):
 
     def change_theme(self, idx: int):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
+        self.adjustSize()
         self.set_theme(theme_key)
 
     def set_theme(self, theme_key: str):

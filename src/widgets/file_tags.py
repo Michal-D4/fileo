@@ -46,7 +46,7 @@ class tagBrowser(aBrowser):
                 db_ut.insert_file_tag(tag_id, self.file_id)
                 return
             for idx in selected_files:
-                fileid = idx.data(Qt.ItemDataRole.UserRole).id
+                fileid = idx.data(Qt.ItemDataRole.UserRole)
                 db_ut.insert_file_tag(tag_id, fileid)
 
         inserted = False

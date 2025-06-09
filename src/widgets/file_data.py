@@ -1,8 +1,8 @@
 # from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QMouseEvent, QKeySequence
+from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
 from .ui_notes import Ui_FileNotes
@@ -83,22 +83,26 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.srch_in_notes.setIcon(tug.get_icon("search"))
         self.srch_in_notes.clicked.connect(self.srch_notes)
-        self.srch_in_notes.setShortcut(QKeySequence("Ctrl+Shift+f"))
+        ctrl_f = QShortcut(QKeySequence("Ctrl+F"), self)
+        ctrl_f.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        ctrl_f.activated.connect(self.srch_notes)
 
         self.plus.setIcon(tug.get_icon("plus"))
         self.plus.clicked.connect(self.new_file_note)
-        self.plus.setShortcut(QKeySequence("Ctrl+n"))
+        ctrl_n = QShortcut(QKeySequence("Ctrl+N"), self)
+        ctrl_n.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        ctrl_n.activated.connect(self.new_file_note)
 
         self.collapse_notes.setIcon(tug.get_icon("collapse_notes"))
         self.collapse_notes.clicked.connect(self.notes.collapse)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.save_note)
-        self.save.setShortcut(QKeySequence("Ctrl+s"))
+        self.save.setShortcut(QKeySequence("Ctrl+S"))
 
         self.cancel.setIcon(tug.get_icon("cancel2"))
         self.cancel.clicked.connect(self.cancel_note_editing)
-        self.cancel.setShortcut("Ctrl+q")
+        self.cancel.setShortcut("Ctrl+Q")
 
         self.edit_btns.hide()
         ag.buttons.append((self.expand, "up", "down3"))

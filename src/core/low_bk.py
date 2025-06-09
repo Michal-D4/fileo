@@ -13,7 +13,8 @@ from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
     QFileDialog, QMessageBox,
 )
 
-from . import (db_ut, app_globals as ag, reports as rep, check_update as upd,
+from . import (db_ut, app_globals as ag, reports as rep,
+    check_update as upd,
 )
 from .file_model import fileModel, fileProxyModel
 from .dir_model import dirModel, dirItem
@@ -25,13 +26,9 @@ from .filename_editor import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 340
 
-fields = (
+file_list_fields = (
     'File Name', 'Added date', 'Open Date', 'rating', 'Open#', 'Modified',
     'Pages', 'Size', 'Published', 'Date of last note', 'Created',
-)
-field_types = (
-    'str', 'date', 'date', 'int', 'int', 'date',
-    'int', 'int', 'date', 'date', 'date',
 )
 
 
@@ -62,6 +59,7 @@ def set_user_action_handlers():
         "Files Reveal in explorer": open_folder,
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
+        "Files Create new file": create_file,
         "filter_changed": filtered_files,
         "MainMenu New window": new_window,
         "MainMenu Create/Open DB": create_open_db,
@@ -83,7 +81,7 @@ def set_user_action_handlers():
         "Files Clear file history": clear_recent_files,
         "Files Remove selected from history": remove_files_from_recent,
         "show_recent_files": show_recent_files,
-      }
+    }
 
     @pyqtSlot(str)
     def execute_action(action: str):
@@ -102,6 +100,19 @@ def set_user_action_handlers():
             )
 
     return execute_action
+
+def create_file():
+    model:  fileProxyModel = ag.file_list.model()
+    smodel: fileModel = model.sourceModel()
+    idx = ag.file_list.currentIndex()
+    sidx = model.mapToSource(idx)
+    row = sidx.row()+1
+    if smodel.insertRow(row):
+        sidx = smodel.index(row, 0)
+        model: fileProxyModel = ag.file_list.model()
+        idx = model.mapFromSource(sidx)
+        ag.file_list.edit(idx)
+        ag.file_list.setCurrentIndex(idx)
 
 def copy_trees():
     ss = '¹²'
@@ -163,7 +174,7 @@ def clear_recent_files():
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
-        ag.recent_files.remove(idx.data(Qt.ItemDataRole.UserRole).id)
+        ag.recent_files.remove(idx.data(Qt.ItemDataRole.UserRole))
     show_recent_files()
 
 def save_db_list_at_close():
@@ -302,7 +313,6 @@ def enable_buttons():   # when create connection to DB
 def rename_file():
     idx: QModelIndex = ag.file_list.currentIndex()
     idx = ag.file_list.model().index(idx.row(), 0)
-    ag.file_list.setCurrentIndex(idx)
     ag.file_list.edit(idx)
 
 def enable_next_prev(param: str):
@@ -389,9 +399,6 @@ def restore_branch() -> QModelIndex:
     return expand_branch(pickle.loads(val) if val else [])
 
 def get_dir_names_path(index: QModelIndex) -> list:
-    """
-    return:  a list of node names from root to index
-    """
     item: dirItem = index.internalPointer()
     branch = []
     while item:
@@ -478,7 +485,7 @@ def save_curr_file_id(dir_idx: QModelIndex):
     if dir_idx.isValid():
         file_idx = ag.file_list.currentIndex()
         if file_idx.isValid():
-            file_id = file_idx.data(Qt.ItemDataRole.UserRole).id
+            file_id = file_idx.data(Qt.ItemDataRole.UserRole)
             u_dat = update_file_id_in_dir_model(file_id, dir_idx)
             db_ut.save_file_id(u_dat)
 
@@ -552,8 +559,7 @@ def _history_folder(branch: list):
 
 def filtered_files():
     ag.app.ui.files_heading.setText('filtered files')
-    files = ag.filter_dlg.get_file_list()
-    show_files(files)
+    show_files(ag.filter_dlg.get_file_list())
 
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
@@ -563,9 +569,7 @@ def show_folder_files():
         )
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
 
-        files = db_ut.get_files(u_dat.id, u_dat.parent_id)
-
-        show_files(files, u_dat.file_id)
+        show_files(db_ut.get_files(u_dat.id, u_dat.parent_id), u_dat.file_id)
     else:
         show_files([])
 
@@ -608,6 +612,10 @@ def single_file(file_id: str):
     ag.file_list.setFocus()
 
 def fill_file_model(files) -> fileModel:
+    field_types = (
+        'str', 'date', 'date', 'int', 'int', 'date',
+        'int', 'int', 'date', 'date', 'date',
+    )
     model: fileModel = fileModel()
 
     for ff in files:
@@ -616,8 +624,8 @@ def fill_file_model(files) -> fileModel:
         ff1 = []
         for i,typ in enumerate(field_types):
             ff1.append(
-                ag.hr_size(ff[i]) if i == 7 else
-                field_val(typ, ff[i])
+                ag.human_readable_size(ff[i]) if file_list_fields[i] == 'Size'
+                else field_val(typ, ff[i])
             )
 
         filename = Path(ff[0])
@@ -626,7 +634,7 @@ def fill_file_model(files) -> fileModel:
             if filename.suffix else
             (filename.stem.lower(),)
         )
-        model.append_row(ff1, ag.FileData(*ff[-3:]))
+        model.append_row(ff1, ff[-1])   # ff[-1] - file_id
 
     rows = model.rowCount()
     ag.app.ui.file_count.setText(f"files: {rows}")
@@ -661,7 +669,7 @@ def set_file_model(model: fileModel):
     proxy_model = fileProxyModel()
     proxy_model.setSourceModel(model)
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
-    model.setHeaderData(0, Qt.Orientation.Horizontal, fields)
+    model.setHeaderData(0, Qt.Orientation.Horizontal, file_list_fields)
     ag.file_list.setModel(proxy_model)
 
 @pyqtSlot(QModelIndex, QModelIndex)
@@ -688,15 +696,14 @@ def open_folder():
     if idx.isValid():
         path = full_file_name(idx)
         tug.reveal_file(str(Path(path)))
-        ag.add_recent_file(idx.data(Qt.ItemDataRole.UserRole).id)
+        ag.add_recent_file(idx.data(Qt.ItemDataRole.UserRole))
 
 def reveal_in_explorer(file_id: int|str):
     path = db_ut.get_file_path(file_id)
     tug.reveal_file(str(Path(path)))
 
 def full_file_name(index: QModelIndex) -> str:
-    file_id = index.data(Qt.ItemDataRole.UserRole).id
-    return db_ut.get_file_path(file_id)
+    return db_ut.get_file_path(index.data(Qt.ItemDataRole.UserRole))
 
 def file_name(index: QModelIndex) -> str:
     if index.column():
@@ -714,8 +721,7 @@ def open_current_file():
         open_file_by_model_index(idx)
 
 def open_file_by_model_index(index: QModelIndex):
-    file_id = index.data(Qt.ItemDataRole.UserRole).id
-    cnt = db_ut.duplicate_count(file_id)
+    cnt = db_ut.duplicate_count(index.data(Qt.ItemDataRole.UserRole))
     if cnt[0] > 1:
         ag.show_message_box(
             "Duplicated file",
@@ -729,15 +735,14 @@ def open_file_by_model_index(index: QModelIndex):
         update_open_date(index)
     else:
         open_manualy(index)
-    ag.add_recent_file(index.data(Qt.ItemDataRole.UserRole).id)
+    ag.add_recent_file(index.data(Qt.ItemDataRole.UserRole))
 
 def open_with_url(path: str) -> bool:
     url = QUrl()
     return QDesktopServices.openUrl(url.fromLocalFile(path))
 
 def update_open_date(index: QModelIndex):
-    id = index.data(Qt.ItemDataRole.UserRole).id
-    ts = db_ut.update_opened_file(id)
+    ts = db_ut.update_opened_file(index.data(Qt.ItemDataRole.UserRole))
     if ts > 0:
         ag.file_list.model().update_opened(ts, index)
 
@@ -761,7 +766,7 @@ def delete_files():
         row = ag.file_list.model().rowCount()
         skip_edited = False
         for idx in ag.file_list.selectionModel().selectedRows(0):
-            del_file_id = idx.data(Qt.ItemDataRole.UserRole).id
+            del_file_id = idx.data(Qt.ItemDataRole.UserRole)
             if del_file_id == ed_file_id:
                 skip_edited = True
                 continue
@@ -781,7 +786,7 @@ def remove_files():
     row = ag.file_list.model().rowCount()
     for idx in ag.file_list.selectionModel().selectedRows(0):
         row = min(row, idx.row())
-        id = idx.data(Qt.ItemDataRole.UserRole).id
+        id = idx.data(Qt.ItemDataRole.UserRole)
         dir_id = get_dir_id(id)
         db_ut.delete_file_dir_link(id, dir_id)
     post_delete_file(row)
@@ -858,7 +863,7 @@ def _export_files(out: QTextStream):
 
     ids = set()
     for idx in ag.file_list.selectionModel().selectedRows(0):
-        ids.add(idx.data(Qt.ItemDataRole.UserRole).id)
+        ids.add(idx.data(Qt.ItemDataRole.UserRole))
 
     notes = {}
     get_notes()
@@ -898,7 +903,7 @@ def _import_files(fp: QTextStream, target: QModelIndex):
         if file_id:
             exist_dir = db_ut.copy_existent(file_id, dir_id)
         else:
-            file_id = db_ut.insert_file(file_)
+            file_id, _ = db_ut.insert_file(file_)
             db_ut.copy_file(file_id, dir_id)
 
         file_ids[fl['id']] = file_id
@@ -972,15 +977,8 @@ def open_manualy(index: QModelIndex):
         if ok:
             f_path = Path(filename)
             path_id = db_ut.get_path_id(f_path.parent.as_posix())
-            id = index.data(Qt.ItemDataRole.UserRole).id
+            id = index.data(Qt.ItemDataRole.UserRole)
             db_ut.update_file_name_path(id, path_id, f_path.name)
-            model = ag.file_list.model()
-            user_data = model.get_user_data()
-            for it in user_data:
-                it: ag.FileData
-                if it.id == id:
-                    it.path = path_id
-                    break
             open_with_url(str(f_path))
 
 def create_child_dir():
@@ -1017,21 +1015,11 @@ def create_dir():
         ag.dir_list.edit(new_idx)
 
 def create_folder(index: QModelIndex):
-    """
-    finishing creation. Create user data and save in DB
-    index: index of created row
-    """
     parent = index.parent()
     parent_id = parent.data(Qt.ItemDataRole.UserRole).id if parent.isValid() else 0
-    folder_name = "New folder"
-    dir_id = db_ut.insert_dir(folder_name, parent_id)
+    dir_id = db_ut.insert_dir("New folder", parent_id)
 
-    user_data = ag.DirData(
-        parent_id=parent_id,
-        id=dir_id,
-        multy=False,
-        hidden=False
-    )
+    user_data = ag.DirData(parent_id=parent_id, id=dir_id)
     item: dirItem = index.internalPointer()
     item.setUserData(user_data)
     item.setData("New folder", Qt.ItemDataRole.EditRole)
@@ -1151,7 +1139,7 @@ def delete_authors(authors: str):
 
 def file_notes_show(file_idx: QModelIndex):
     file_id = (
-        file_idx.data(Qt.ItemDataRole.UserRole).id
+        file_idx.data(Qt.ItemDataRole.UserRole)
         if file_idx.isValid() else 0
     )
     ag.file_data.set_data(file_id)

@@ -11,7 +11,7 @@ class dirItem(object):
     def __init__(self, data: str, user_data: ag.DirData, parent=None):
         self.parentItem: dirItem = parent
         self.itemData = data
-        self.children = []
+        self.children: list[dirItem] = []
 
         self.userData: ag.DirData = user_data
 
@@ -35,15 +35,13 @@ class dirItem(object):
     def user_data(self):
         return self.userData
 
-    def insertChildren(self, position, count, columns):
-        if position < 0 or position > len(self.children):
+    def insertChildren(self, row: int, count: int, columns: int=1):
+        if row < 0 or row > len(self.children):
             return False
 
-        for row in range(count):
-            data = [None for v in range(columns)]
-            item = dirItem(data, None, self)
-            self.children.insert(position, item)
-
+        for _ in range(count):
+            item = dirItem('', None, self)
+            self.children.insert(row, item)
         return True
 
     def appendChild(self, item: 'dirItem'):
@@ -81,8 +79,7 @@ class dirModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.rootItem = dirItem(
-            data='', user_data=ag.DirData(0, 0, False, False))
+        self.rootItem = dirItem(data='', user_data=ag.DirData(0, 0))
 
     def columnCount(self, parent=None):
         return 1
@@ -134,22 +131,21 @@ class dirModel(QAbstractItemModel):
 
         return QModelIndex()
 
-    def insertRows(self, position, rows, parent: QModelIndex):
+    def insertRows(self, row: int, count: int, parent: QModelIndex):
         parentItem = self.getItem(parent)
-        self.beginInsertRows(parent, position, position + rows - 1)
-        success = parentItem.insertChildren(position, rows, 1)
+        self.beginInsertRows(parent, row, row + count - 1)
+        success = parentItem.insertChildren(row, count)
         self.endInsertRows()
-
         return success
 
     def parent(self, index):
         if not index.isValid():
             return QModelIndex()
 
-        childItem = self.getItem(index)
-        parentItem = childItem.parent()
+        item = self.getItem(index)
+        parentItem = item.parent()
 
-        if parentItem == self.rootItem:
+        if parentItem is self.rootItem:
             return QModelIndex()
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
 
@@ -194,12 +190,12 @@ class dirModel(QAbstractItemModel):
 
         for row in dirs:
             u_dat = row[-1]    # ag.DirData
-            it = dirItem(data=row[1], user_data=u_dat)
-            enroll_item(row[0], u_dat.id, it)
+            item = dirItem(data=row[1], user_data=u_dat)
+            enroll_item(row[0], u_dat.id, item)
 
         for key in children:
-            # sort by dir name case insensitive
-            children[key].sort(key=lambda item: item.itemData[0].upper())
+            # set children sorted by dir name case insensitive
+            children[key].sort(key=lambda item: item.itemData[0].lower())
             parents[key].children = children[key]
 
     def restore_index(self, path):

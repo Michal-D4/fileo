@@ -4,7 +4,7 @@ import time
 
 from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-    QResizeEvent, QKeySequence,
+    QResizeEvent, QKeySequence, QShortcut,
 )
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
     QVBoxLayout, QTreeView, QFrame, QWidget,
@@ -87,7 +87,16 @@ class shoWindow(QMainWindow):
             if saved_v < 1339:
                 ag.save_settings(DIR_HISTORY=[[], -1])
 
+        def ver1348():
+            if saved_v < 1348:
+                path = tug.get_app_setting('DEFAULT_FILE_PATH',
+                    str(Path('~/fileo/files').expanduser()))
+                if not Path(path).exists():
+                    tug.create_dir(path)
+                    tug.save_app_setting(DEFAULT_FILE_PATH=path)
+
         ver1339()
+        ver1348()
 
         ag.save_settings(AppVersion=cur_v)
 
@@ -231,6 +240,23 @@ class shoWindow(QMainWindow):
         ag.file_list = self.ui.file_list
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
 
+        self.ui.btn_search.setIcon(tug.get_icon("search"))
+        ag.buttons.append((self.ui.btn_search, "search"))
+        self.ui.btn_search.clicked.connect(bk_ut.search_files)
+        ctrl_f = QShortcut(QKeySequence("Ctrl+F"), ag.file_list)
+        ctrl_f.setContext(Qt.ShortcutContext.WidgetShortcut)
+        ctrl_f.activated.connect(bk_ut.search_files)
+        self.ui.btn_search.setDisabled(True)
+
+        self.ui.recent_files.setIcon(tug.get_icon("history"))
+        ag.buttons.append((self.ui.recent_files, "history"))
+        self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
+        self.ui.recent_files.setShortcut(QKeySequence("Ctrl+H"))
+
+        ctrl_n = QShortcut(QKeySequence("Ctrl+N"), ag.file_list)
+        ctrl_n.setContext(Qt.ShortcutContext.WidgetShortcut)
+        ctrl_n.activated.connect(lambda: ag.signals_.user_signal.emit("Files Create new file"))
+
     def set_button_icons(self):
         m_icons = [
             "btnDir", "btnFilter", "btnFilterSetup", "btnToggleBar",
@@ -240,17 +266,6 @@ class shoWindow(QMainWindow):
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
             ag.buttons.append((btn, icon_name))
-
-        self.ui.btn_search.setIcon(tug.get_icon("search"))
-        ag.buttons.append((self.ui.btn_search, "search"))
-        self.ui.btn_search.clicked.connect(bk_ut.search_files)
-        self.ui.btn_search.setShortcut(QKeySequence("Ctrl+f"))
-        self.ui.btn_search.setDisabled(True)
-
-        self.ui.recent_files.setIcon(tug.get_icon("history"))
-        ag.buttons.append((self.ui.recent_files, "history"))
-        self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
-        self.ui.recent_files.setShortcut(QKeySequence("Ctrl+h"))
 
         self.ui.field_menu.setIcon(tug.get_icon("more"))
         ag.buttons.append((self.ui.field_menu, "more"))
@@ -267,7 +282,7 @@ class shoWindow(QMainWindow):
         self.connect_checkable()
 
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
-        self.ui.btnToggleBar.setShortcut(QKeySequence("Ctrl+b"))
+        self.ui.btnToggleBar.setShortcut(QKeySequence("Ctrl+B"))
         self.ui.btnSetup.clicked.connect(bk_ut.show_main_menu)
 
         self.ui.db_name.mousePressEvent = self.db_list_show
