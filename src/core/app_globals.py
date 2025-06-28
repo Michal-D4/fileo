@@ -31,7 +31,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.48'
+    return '1.3.49'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -52,7 +52,6 @@ note_buttons = []
 history: 'History' = None
 recent_files = []
 recent_files_length = 20
-single_instance = False
 stop_thread = False
 start_thread = None
 
@@ -128,7 +127,7 @@ class DirData():
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
 
-def save_settings(**kwargs):
+def save_db_settings(**kwargs):
     """
     used to save settings on DB level
     """
@@ -140,7 +139,7 @@ def save_settings(**kwargs):
     for key, val in kwargs.items():
         cursor.execute(sql, {"key": key, "value": pickle.dumps(val)})
 
-def get_setting(key: str, default=None):
+def get_db_setting(key: str, default=None):
     """
     used to restore settings on DB level
     """

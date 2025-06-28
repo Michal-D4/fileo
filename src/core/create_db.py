@@ -99,7 +99,7 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 24
+USER_VER = 25
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -136,6 +136,9 @@ def convert_to_new_version(conn, db_v):
 
     if db_v < 24:
         update_to_v24(conn)
+
+    if db_v < 25:
+        update_to_v25()
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 
@@ -177,6 +180,14 @@ def update_to_v24(conn: apsw.Connection):
     curs.execute(sql1)
     curs.execute('DROP TABLE files')
     curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
+
+def update_to_v25():
+    hist = ag.get_db_setting('DIR_HISTORY', [])
+    logger.info(f'{hist=}')
+    if len(hist) == 2:
+        h0,h1 = hist
+        logger.info(f'{h0=}, {h1=}')
+        ag.save_db_settings(DIR_HISTORY=(*h0, h1))
 
 def create_tables(db_name: str):
     conn = apsw.Connection(db_name)

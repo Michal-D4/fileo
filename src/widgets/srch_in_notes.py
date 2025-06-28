@@ -46,7 +46,7 @@ class srchInNotes(QWidget):
         self.word.setIcon(tug.get_icon('match_word'))
         self.word.setToolTip('Match Whole Word')
 
-        name, rex, case, word = ag.get_setting('SEARCH_BY_NOTE', ('',0,0,0))
+        name, rex, case, word = ag.get_db_setting('SEARCH_BY_NOTE', ('',0,0,0))
         self.srch_pattern.setText(name)
         self.srch_pattern.selectAll()
         self.rex.setChecked(rex)
@@ -87,7 +87,7 @@ class srchInNotes(QWidget):
         case = self.case.isChecked()
         word = 0 if rex else int(self.word.isChecked())
 
-        ag.save_settings(SEARCH_BY_NOTE=(txt, rex, case, word))
+        ag.save_db_settings(SEARCH_BY_NOTE=(txt, rex, case, word))
         ag.signals_.user_signal.emit(
             f'srch_files_by_note\\{txt}{int(rex)}{int(case)}{int(word)}'
         )

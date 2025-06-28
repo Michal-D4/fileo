@@ -75,7 +75,7 @@ class Foldable(QWidget):
         """
         self.ui.headerLayout.addWidget(w)
 
-    def get_inner_widget(self) -> QWidget:
+    def get_inner_frame(self) -> QWidget:
         return self.ui.inner
 
     def change_title(self, pos):

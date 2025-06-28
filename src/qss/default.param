@@ -14,6 +14,7 @@ $greenIcon~#68BD44
 $redIcon~#FF0038
 $svgAlt~#6F5699
 $svgFill~#616161
+$svgDisable~#A0A0A0
 $svgFill2~#B3B3B3
 $toolIcon~#808080
 $iconFill~#C6D9AF

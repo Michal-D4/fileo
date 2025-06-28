@@ -3,7 +3,7 @@ from operator import add
 
 from PyQt6.QtCore import QObject, QPoint, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QMouseEvent, QResizeEvent
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QFrame
 
 from ..core import app_globals as ag
 from .foldable import Foldable
@@ -123,8 +123,8 @@ class FoldContainer(QWidget):
 
         self.ui = Ui_Foldings()
         self.ui.setupUi(self)
-        self.widgets: list[foldGrip] = [foldGrip(getattr(self.ui, m))
-            for m in dir(self.ui) if type(getattr(self.ui, m)) is Foldable]
+        self.widgets: list[foldGrip] = [foldGrip(x) for x in (
+            getattr(self.ui, m) for m in dir(self.ui)) if isinstance(x, Foldable)]
         wid = self.widgets[-1].wid
         wid.ui.toFold.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         wid.ui.toFold.customContextMenuRequested.connect(wid.change_title)
@@ -193,8 +193,8 @@ class FoldContainer(QWidget):
     def add_widget(self, w: QWidget, index: int) -> None:
         self.widgets[index].wid.add_widget(w)
 
-    def get_widgets(self) -> list[QWidget]:
-        return [w.wid.get_inner_widget() for w in self.widgets]
+    def get_frames(self) -> list[QFrame]:
+        return [w.wid.get_inner_frame() for w in self.widgets]
 
     def _expand_stretch(self, expand: bool):
         if expand:

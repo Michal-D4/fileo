@@ -45,7 +45,7 @@ def save_bk_settings():
             model: fileProxyModel = ag.file_list.model()
             idx = model.mapToSource(ag.file_list.currentIndex())
             settings["FILTER_FILE_ROW"] = idx.row()
-        ag.save_settings(**settings)
+        ag.save_db_settings(**settings)
         low_bk.save_curr_file_id(ag.dir_list.currentIndex())
         ag.filter_dlg.save_filter_settings()
     except Exception:
@@ -141,7 +141,6 @@ def show_main_menu():
     is_db_opened = bool(ag.db.conn)
     menu = QMenu(self)
     act_new = QAction('New window')
-    act_new.setEnabled(not ag.single_instance)
     menu.addAction(act_new)
     menu.addSeparator()
     menu.addAction('Create/Open DB')
@@ -165,10 +164,7 @@ def show_main_menu():
     menu.addAction('Check for updates')
     menu.addSeparator()
     menu.addAction('About')
-    pos = self.ui.btnSetup.pos()
-    action = menu.exec(ag.app.mapToGlobal(
-        pos + QPoint(53, 26)
-    ))
+    action = menu.exec(ag.app.mapToGlobal(QPoint(54, 26)))
     if action:
         if action.text() == 'Report duplicate files':
             check_duplicates(auto=False)
@@ -215,13 +211,13 @@ def toggle_show_column(state: bool, index: int):
     resize_section_0()
 
 def restore_dirs():
+    restore_history()
     low_bk.set_dir_model()
     low_bk.restore_selected_dirs()
-    restore_history()
     ag.filter_dlg.restore_filter_settings()
     if ag.mode is ag.appMode.FILTER:
         low_bk.filtered_files()
-        row = ag.get_setting("FILTER_FILE_ROW", 0)
+        row = ag.get_db_setting("FILTER_FILE_ROW", 0)
         model: fileProxyModel = ag.file_list.model()
         s_idx = model.sourceModel().index(row, 0)
         if s_idx.isValid():
@@ -279,19 +275,18 @@ def populate_all():
     low_bk.populate_ext_list()
     low_bk.populate_author_list()
 
-    hide_state = ag.get_setting("SHOW_HIDDEN", 0)
+    hide_state = ag.get_db_setting("SHOW_HIDDEN", 0)
     self.show_hidden.setChecked(hide_state)
     self.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
     ag.buttons.append((self.show_hidden, "show_hide"))
 
-    ag.file_data.set_edit_state(
-        ag.get_setting("NOTE_EDIT_STATE", (False,))
-    )
+    ag.file_data.set_edit_state(ag.get_db_setting("NOTE_EDIT_STATE", (False,)))
 
 def restore_history():
-    ag.recent_files = ag.get_setting('RECENT_FILES', [])
-    hist = ag.get_setting('DIR_HISTORY', [[], -1])
-    ag.history.set_history(*hist)
+    ag.recent_files = ag.get_db_setting('RECENT_FILES', [])
+    hist = ag.get_db_setting('DIR_HISTORY', [[], [], -1])
+    ag.history.set_history(hist)
+    low_bk.set_enable_prev_next()
 
 @pyqtSlot(QPoint)
 def dir_menu(pos):

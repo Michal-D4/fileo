@@ -23,6 +23,8 @@ class noteEditor(QWidget):
         self.setAcceptDrops(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
+        self.note_editor.focusOutEvent = self.editor_lost_focus
+
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         mimedata: QMimeData = e.mimeData()
         if ((mimedata.hasFormat(ag.mimeType.files_in.value)
@@ -97,7 +99,7 @@ class noteEditor(QWidget):
             )
         return super().dropEvent(e)
 
-    def focusOutEvent(self, e: QFocusEvent):
+    def editor_lost_focus(self, e: QFocusEvent):
         if e.lostFocus():
             ag.signals_.user_signal.emit('SaveEditState')
         super().focusOutEvent(e)

@@ -276,32 +276,32 @@ class FilterSetup(QWidget):
             "AFTER_DATE": self.ui.after_date.date().toJulianDay(),
             "BEFORE_DATE": self.ui.before_date.date().toJulianDay(),
         }
-        ag.save_settings(**settings)
+        ag.save_db_settings(**settings)
 
     def restore_filter_settings(self):
-        self.ui.selected_dir.setChecked(ag.get_setting("DIR_CHECK", False))
-        self.ui.subDirs.setChecked(ag.get_setting("SUB_DIR_CHECK", False))
-        self.ui.selected_tag.setChecked(ag.get_setting("TAG_CHECK", False))
-        is_all = ag.get_setting("IS_ALL", False)
+        self.ui.selected_dir.setChecked(ag.get_db_setting("DIR_CHECK", False))
+        self.ui.subDirs.setChecked(ag.get_db_setting("SUB_DIR_CHECK", False))
+        self.ui.selected_tag.setChecked(ag.get_db_setting("TAG_CHECK", False))
+        is_all = ag.get_db_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)
         self.ui.any_btn.setChecked(not is_all)
-        self.ui.selected_ext.setChecked(ag.get_setting("EXT_CHECK", False))
-        self.ui.selected_author.setChecked(ag.get_setting("AUTHOR_CHECK", False))
-        self.ui.open_sel.setChecked(ag.get_setting("OPEN_CHECK", False))
-        self.ui.open_cond.setCurrentIndex(ag.get_setting("OPEN_OP", 0))
-        self.ui.open_edit.setText(str(ag.get_setting("OPEN_VAL", "0")))
-        self.ui.rating_sel.setChecked(ag.get_setting("RATING_CHECK", False))
-        self.ui.rating_cond.setCurrentIndex(ag.get_setting("RATING_OP", 0))
-        self.ui.rating_edit.setText(str(ag.get_setting("RATING_VAL", "0")))
-        self.ui.date_type.setCurrentIndex(ag.get_setting("DATE_TYPE", 0))
-        self.ui.note_date_type.setCurrentIndex(ag.get_setting("NOTE_DATE_TYPE", 0))
-        self.ui.after.setChecked(ag.get_setting("AFTER", False))
-        self.ui.before.setChecked(ag.get_setting("BEFORE", False))
+        self.ui.selected_ext.setChecked(ag.get_db_setting("EXT_CHECK", False))
+        self.ui.selected_author.setChecked(ag.get_db_setting("AUTHOR_CHECK", False))
+        self.ui.open_sel.setChecked(ag.get_db_setting("OPEN_CHECK", False))
+        self.ui.open_cond.setCurrentIndex(ag.get_db_setting("OPEN_OP", 0))
+        self.ui.open_edit.setText(str(ag.get_db_setting("OPEN_VAL", "0")))
+        self.ui.rating_sel.setChecked(ag.get_db_setting("RATING_CHECK", False))
+        self.ui.rating_cond.setCurrentIndex(ag.get_db_setting("RATING_OP", 0))
+        self.ui.rating_edit.setText(str(ag.get_db_setting("RATING_VAL", "0")))
+        self.ui.date_type.setCurrentIndex(ag.get_db_setting("DATE_TYPE", 0))
+        self.ui.note_date_type.setCurrentIndex(ag.get_db_setting("NOTE_DATE_TYPE", 0))
+        self.ui.after.setChecked(ag.get_db_setting("AFTER", False))
+        self.ui.before.setChecked(ag.get_db_setting("BEFORE", False))
         cur_date = QDate.currentDate().toJulianDay()
-        after = ag.get_setting("AFTER_DATE", cur_date)
+        after = ag.get_db_setting("AFTER_DATE", cur_date)
         if after == 2361222:        # 'Thu Sep 14 1752'
             after = cur_date
-        before = ag.get_setting("BEFORE_DATE", cur_date)
+        before = ag.get_db_setting("BEFORE_DATE", cur_date)
         if before == 2361222:       # 'Thu Sep 14 1752'
             before = cur_date
         self.ui.after_date.setDate(QDate.fromJulianDay(after))

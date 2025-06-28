@@ -114,8 +114,6 @@ def set_config():
     fileo_toml = frozen_config() if getattr(sys, "frozen", False) else resource_config()
     config = tomllib.loads(fileo_toml)
 
-set_config()
-
 def get_theme_list():
     global themes
     theme_toml_file = cfg_path / "themes.toml"
@@ -178,7 +176,8 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         if extra:
             parse_params(extra)
 
-        with resources.path(qss, qss_params['$ico_app']) as _path:
+        ico_app = f'{qss_params["$ico_app"]}.{"ico" if sys.platform.startswith("win") else "png"}'
+        with resources.path(qss, ico_app) as _path:
             qss_params['$ico_app'] = str(_path)
 
     def parse_params(param: str):

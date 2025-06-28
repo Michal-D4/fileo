@@ -4,7 +4,8 @@ $closeActive~#FFFFFF
 $greenIcon~#68BD44
 $redIcon~#FF0038
 $svgAlt~#2B79D7
-$svgFill~#A0A0A0
+$svgFill~#A8A8A8
+$svgDisable~#919191
 $svgFill2~#A0A0A0
 $toolIcon~#808080
 $iconFill~#C6D9AF

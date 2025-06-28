@@ -195,6 +195,8 @@ def drop_event(e: QDropEvent):
         e.ignore()
 
 def drop_data(data: QMimeData, act: Qt.DropAction, target: QModelIndex) -> bool:
+    if not act & (Qt.DropAction.CopyAction | Qt.DropAction.MoveAction):
+        return False
     target_id = (
         target.data(role=Qt.ItemDataRole.UserRole).id
         if target.isValid() else 0

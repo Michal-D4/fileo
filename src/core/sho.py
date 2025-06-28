@@ -69,36 +69,22 @@ class shoWindow(QMainWindow):
         """
         cur_v = ag.app_version()
         cur_v = int(cur_v.replace('.', ''))
-        saved_v = ag.get_setting("AppVersion", 0)
+        saved_v = ag.get_db_setting("AppVersion", 0)
 
         if saved_v == cur_v:
             return
-
-        # def ver1324():
-        #     if saved_v < 1324:
-        #         ag.save_settings(NOTE_EDIT_STATE=(False,))
-
-        # if cur_v == 1324:
-        #     # never works, current ver. 1327 !
-        #     # remains as an example
-        #     ver1324()  'DIR_HISTORY', [[], -1]
-
-        def ver1339():
-            if saved_v < 1339:
-                ag.save_settings(DIR_HISTORY=[[], -1])
 
         def ver1348():
             if saved_v < 1348:
                 path = tug.get_app_setting('DEFAULT_FILE_PATH',
                     str(Path('~/fileo/files').expanduser()))
                 if not Path(path).exists():
-                    tug.create_dir(path)
+                    tug.create_dir(Path(path))
                     tug.save_app_setting(DEFAULT_FILE_PATH=path)
 
-        ver1339()
         ver1348()
 
-        ag.save_settings(AppVersion=cur_v)
+        ag.save_db_settings(AppVersion=cur_v)
 
     def restore_settings(self, db_name: str):
         ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
@@ -149,7 +135,7 @@ class shoWindow(QMainWindow):
 
     def restore_mode(self):
         mode = ag.appMode(
-            int(ag.get_setting("APP_MODE", ag.appMode.DIR.value))
+            int(ag.get_db_setting("APP_MODE", ag.appMode.DIR.value))
         )
         if mode.value > ag.appMode.RECENT_FILES.value:
             mode = ag.appMode.DIR
@@ -173,11 +159,17 @@ class shoWindow(QMainWindow):
 
     def set_extra_buttons(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Prev folder')
+        self.btn_prev.setPopupMode(QToolButton.ToolButtonPopupMode.DelayedPopup)
         self.btn_prev.clicked.connect(low_bk.to_prev_folder)
+        self.btn_prev.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.btn_prev.customContextMenuRequested.connect(lambda pos, btn=self.btn_prev: low_bk.show_history_menu(pos, btn))
         self.btn_prev.setDisabled(True)
 
         self.btn_next = self._create_button("next_folder", 'btn_next', 'Next folder')
+        self.btn_next.setPopupMode(QToolButton.ToolButtonPopupMode.DelayedPopup)
         self.btn_next.clicked.connect(low_bk.to_next_folder)
+        self.btn_next.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.btn_next.customContextMenuRequested.connect(lambda pos, btn=self.btn_next: low_bk.show_history_menu(pos, btn))
         self.btn_next.setDisabled(True)
 
         self.refresh_tree = self._create_button("refresh", 'refresh', 'Refresh folder list')
@@ -212,7 +204,7 @@ class shoWindow(QMainWindow):
         self.show_hidden.setIcon(tug.get_icon("show_hide", int(state)))
 
     def setup_global_widgets(self):
-        frames = self.container.get_widgets()
+        frames = self.container.get_frames()
 
         ag.dir_list = QTreeView()
         ag.dir_list.setDragEnabled(True)
@@ -478,13 +470,13 @@ class shoWindow(QMainWindow):
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
             "noteHolderHeight": self.ui.noteHolder.height(),
+            "DB_NAME": ag.db.path,
         }
         if ag.filter_dlg and ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
 
         if ag.db.conn:
             low_bk.save_db_list_at_close()
-            settings["DB_NAME"] = ag.db.path
             settings["FILE_LIST_HEADER"] = ag.file_list.header().saveState()
 
         tug.save_app_setting(**settings)

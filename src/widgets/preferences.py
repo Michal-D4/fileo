@@ -47,12 +47,10 @@ class Preferences(QWidget):
         form_layout.addRow(self.check_upd)
         form_layout.addRow(self.check_dup)
 
-        if tug.config.get("all_preferences", 0):
-            form_layout.addRow(self.single_instance)
-            h_lay2 = QHBoxLayout()
-            h_lay2.addWidget(self.use_logging)
-            h_lay2.addWidget(self.log_path)
-            form_layout.addRow(h_lay2)
+        h_lay2 = QHBoxLayout()
+        h_lay2.addWidget(self.use_logging)
+        h_lay2.addWidget(self.log_path)
+        form_layout.addRow(h_lay2)
 
         self.ui.pref_form.setLayout(form_layout)
         self.adjustSize()
@@ -93,11 +91,8 @@ class Preferences(QWidget):
             "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
             "CHECK_UPDATE": int(self.check_upd.isChecked()),
+            "USE_LOGGING": int(self.use_logging.isChecked()),
         }
-        if tug.config.get("all_preferences", 0):
-            settings["SINGLE_INSTANCE"] = int(self.single_instance.isChecked())
-            settings["USE_LOGGING"] = int(self.use_logging.isChecked())
-            ag.single_instance = bool(settings["SINGLE_INSTANCE"])
         tug.save_app_setting(**settings)
         tug.create_dir(Path(self.db_path.text()))
         tug.create_dir(Path(self.export_path.text()))
@@ -140,7 +135,6 @@ class Preferences(QWidget):
         self.folder_history_depth.editingFinished.connect(self.history_depth_changed)
         val = tug.get_app_setting('FOLDER_HISTORY_DEPTH', 15)
         self.folder_history_depth.setText(str(val))
-        ag.history.set_limit(int(val))
 
         self.last_file_list_length = QLineEdit()
         self.last_file_list_length.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -159,22 +153,14 @@ class Preferences(QWidget):
             int(tug.get_app_setting('CHECK_UPDATE', 0))
         )
 
-        if tug.config.get('all_preferences', 0):
-            self.single_instance = QCheckBox("single instance")
-            self.single_instance.setChecked(
-                int(tug.get_app_setting('SINGLE_INSTANCE', 0))
+        self.log_path = QLabel()
+        self.use_logging = QCheckBox("use logging")
+        self.use_logging.checkStateChanged.connect(
+            lambda state: self.log_path.setText(
+                f'log path: {tug.get_log_path()}' if state is Qt.CheckState.Checked else ''
             )
-
-            self.log_path = QLabel()
-            self.use_logging = QCheckBox("use logging")
-            self.use_logging.checkStateChanged.connect(
-                lambda state: self.log_path.setText(
-                    f'log path: {tug.get_log_path()}' if state is Qt.CheckState.Checked else ''
-                )
-            )
-            self.use_logging.setChecked(
-                int(tug.get_app_setting('USE_LOGGING', 0))
-            )
+        )
+        self.use_logging.setChecked(int(tug.get_app_setting('USE_LOGGING', 0)))
 
     def history_depth_changed(self):
         val = int(self.folder_history_depth.text())

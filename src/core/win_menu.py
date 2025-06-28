@@ -24,6 +24,5 @@ def choose_drop_action(e: QDropEvent):
                 e.setDropAction(Qt.DropAction.MoveAction)
         else:
             e.setDropAction(Qt.DropAction.IgnoreAction)
-            e.ignore()
     else:
         e.setDropAction(Qt.DropAction.CopyAction)

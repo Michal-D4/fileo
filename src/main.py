@@ -4,25 +4,13 @@ import sys
 
 from loguru import logger
 
-from PyQt6.QtCore import (Qt, pyqtSlot, QItemSelectionModel,
-    QLockFile, QDir, )
+from PyQt6.QtCore import Qt, pyqtSlot, QItemSelectionModel
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication, QWidget
 
 from . import tug
 from .core import app_globals as ag, sho
 
-
-def run_instance(lock: list) -> bool:
-    ag.single_instance = bool(tug.get_app_setting("SINGLE_INSTANCE", 0))
-    logger.info(f'{ag.single_instance=}')
-    if ag.single_instance:
-        if not lock:
-            lock.append(QLockFile(QDir.tempPath() + '/fileo.lock'))
-        if not lock[0].tryLock():
-            return False
-
-    return True
 
 # @logger.catch           # to have traceback
 def start_app(app: QApplication, db_name: str, first_instance: bool):
@@ -73,6 +61,7 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
     sys.exit(app.exec())
 
 def main(entry_point: str, db_name: str, first_instance: bool):
+    tug.set_config()
     app = QApplication([])
     tug.entry_point = entry_point
     tug.set_logger(first_instance)
@@ -81,8 +70,4 @@ def main(entry_point: str, db_name: str, first_instance: bool):
     logger.info(f'{entry_point=}')
     logger.info(f'{db_name=}')
 
-    lock = []
-    if run_instance(lock):
-        start_app(app, db_name, first_instance)
-        if lock:
-            lock[0].unlock()
+    start_app(app, db_name, first_instance)

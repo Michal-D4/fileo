@@ -6,19 +6,19 @@ from PyQt6.QtWidgets import QMenu
 from . import app_globals as ag
 
 def choose_drop_action(e: QDropEvent):
-    if not has_modifier(e):
-        use_menu(e)
+    if use_action_menu(e):
+        action_menu(e)
 
-def has_modifier(e: QDropEvent) -> bool:
-    if e.modifiers() is Qt.KeyboardModifier.ShiftModifier:
+def use_action_menu(e: QDropEvent) -> bool:
+    if e.modifiers() & Qt.KeyboardModifier.ShiftModifier:
         e.setDropAction(Qt.DropAction.MoveAction)
-        return True
-    if e.modifiers() is Qt.KeyboardModifier.ControlModifier:
+        return False
+    if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
         e.setDropAction(Qt.DropAction.CopyAction)
-        return True
-    return False
+        return False
+    return True
 
-def use_menu(e: QDropEvent):
+def action_menu(e: QDropEvent):
     pos = e.position().toPoint()
     menu = QMenu(ag.app)
     menu.addAction('Move\tShift')
@@ -29,8 +29,8 @@ def use_menu(e: QDropEvent):
     if act:
         if act.text().startswith('Copy'):
             e.setDropAction(Qt.DropAction.CopyAction)
-        elif act.text().startswith('Move'):
+            return
+        if act.text().startswith('Move'):
             e.setDropAction(Qt.DropAction.MoveAction)
-    else:
-        e.setDropAction(Qt.DropAction.IgnoreAction)
-        e.ignore()
+            return
+    e.setDropAction(Qt.DropAction.IgnoreAction)

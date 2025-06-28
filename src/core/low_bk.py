@@ -6,11 +6,11 @@ import re
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
-    QIODeviceBase, QItemSelectionModel
+    QIODeviceBase, QItemSelectionModel, QPoint,
 )
-from PyQt6.QtGui import QDesktopServices, QFocusEvent
+from PyQt6.QtGui import QDesktopServices, QFocusEvent, QAction
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QMenu, QToolButton,
 )
 
 from . import (db_ut, app_globals as ag, reports as rep,
@@ -71,11 +71,12 @@ def set_user_action_handlers():
         "MainMenu Check for updates": upd.check4update,
         "find_files_by_name": find_files_by_name,
         "srch_files_by_note": srch_files_by_note,
-        "enable_next_prev": enable_next_prev,
+        "history_changed": set_enable_prev_next,
+        "curr_history_folder": to_history_folder,
         "Enable_buttons": enable_buttons,
         "file-note: Go to file": goto_file_in_branch,
         "remove_file_from_location": remove_file_from_location,
-        "SaveEditState": save_note_edit_state,
+        "SaveEditState": lambda: ag.save_db_settings(NOTE_EDIT_STATE=ag.file_data.get_edit_state()),
         "show file": single_file,
         "file reveal": reveal_in_explorer,
         "Files Clear file history": clear_recent_files,
@@ -208,7 +209,7 @@ def init_db(db_path: str):
         if db_open.open_existed(db_path):
             return
         db_open.close()
-        ag.app.ui.db_name.setText('Click to select DB')
+    ag.app.ui.db_name.setText('Click to select DB')
 
 def scan_disk():
     """
@@ -222,11 +223,6 @@ def scan_disk():
         (ag.app.width()-ag.take_files.width()) // 4,
         (ag.app.height()-ag.take_files.height()) // 4)
     ag.take_files.show()
-
-def save_note_edit_state():
-    ag.save_settings(
-        NOTE_EDIT_STATE=ag.file_data.get_edit_state()
-    )
 
 def get_branch(dir_id: int) -> list:
     branch = [dir_id]
@@ -315,10 +311,33 @@ def rename_file():
     idx = ag.file_list.model().index(idx.row(), 0)
     ag.file_list.edit(idx)
 
-def enable_next_prev(param: str):
-    nex_, prev = param.split(',')
-    ag.app.btn_next.setDisabled(nex_ == 'no')
-    ag.app.btn_prev.setDisabled(prev == 'no')
+def set_enable_prev_next():
+    foll, prev = ag.history.is_next_prev_enable()
+    ag.app.btn_next.setEnabled(foll)
+    ag.app.btn_prev.setEnabled(prev)
+    if foll or prev:
+        menu = create_history_menu()
+        ag.app.btn_prev.setMenu(menu)
+        ag.app.btn_next.setMenu(menu)
+
+def create_history_menu() -> QMenu:
+    menu = QMenu(ag.app)
+    hist, _, curr = ag.history.get_history()
+    dd = len(hist)
+    for i,it in enumerate(hist[::-1], 1):
+        *_,leaf = it.split(',')
+        if dir_name := db_ut.get_dir_name(leaf):
+            act:QAction = QAction(dir_name, ag.app, checkable=True)
+            act.triggered.connect(lambda state, rr=dd-i: ag.history.set_current(rr))
+            if dd-i == curr:
+                act.setChecked(True)
+            menu.addAction(act)
+    return menu
+
+def show_history_menu(pos: QPoint, btn: QToolButton):
+    btn.menu().exec(btn.mapToGlobal(
+        QPoint(0, btn.y() + btn.height()))
+    )
 
 def srch_files_by_note(param: str):
     row_cnt = srch_files_common(param, db_ut.get_all_notes())
@@ -443,7 +462,7 @@ def set_dir_model():
     ag.dir_list.selectionModel().currentRowChanged.connect(cur_dir_changed)
 
 def restore_selected_dirs():
-    branches = ag.get_setting("SELECTED_DIRS", [])
+    branches = ag.get_db_setting("SELECTED_DIRS", [])
     model = ag.dir_list.selectionModel()
     model.clearSelection()
     idx = QModelIndex()
@@ -467,11 +486,10 @@ def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
     # logger.info(f'prev: {prev_idx.data(Qt.ItemDataRole.DisplayRole)}, curr: {curr_idx.data(Qt.ItemDataRole.DisplayRole)}')
     if curr_idx.isValid():
         ag.app.ui.folder_path.setText('>'.join(get_dir_names_path(curr_idx)))
-    if ag.mode is ag.appMode.DIR:
-        if prev_idx.isValid():
-            ag.history.add_item(ag.define_branch(prev_idx))
+        if ag.mode is ag.appMode.DIR:
+            ag.history.add_item(ag.define_branch(curr_idx))
             save_curr_file_id(prev_idx)
-        show_folder_files()
+            show_folder_files()
 
 def dirlist_get_focus(e: QFocusEvent):
     if e.reason() is Qt.FocusReason.ActiveWindowFocusReason:
@@ -517,7 +535,7 @@ def change_mode(prev_mode: int):
         return
 
     if prev is ag.appMode.FILTER:
-        ag.save_settings(
+        ag.save_db_settings(
             FILTER_FILE_ROW=ag.file_list.currentIndex().row()
         )
     elif prev is ag.appMode.DIR:
@@ -525,7 +543,7 @@ def change_mode(prev_mode: int):
 
     refresh_file_list()
     if ag.mode is ag.appMode.FILTER:
-        row = ag.get_setting("FILTER_FILE_ROW", 0)
+        row = ag.get_db_setting("FILTER_FILE_ROW", 0)
         idx = ag.file_list.model().index(row, 0)
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
@@ -538,15 +556,17 @@ def refresh_file_list():
 
 @pyqtSlot()
 def to_prev_folder():
-    branch = ag.history.prev_dir()
-    go_to_history_folder(branch)
+    ag.history.prev_dir()
+    to_history_folder()
 
 @pyqtSlot()
 def to_next_folder():
-    branch = ag.history.next_dir()
-    go_to_history_folder(branch)
+    ag.history.next_dir()
+    to_history_folder()
 
-def go_to_history_folder(branch: list):
+@pyqtSlot(int)
+def to_history_folder():
+    branch = ag.history.get_current()
     if not branch:
         return
     _history_folder(branch)
@@ -602,9 +622,7 @@ def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
         save_curr_file_id(ag.dir_list.currentIndex())
     elif ag.mode is ag.appMode.FILTER:
-        ag.save_settings(
-            FILTER_FILE_ROW=ag.file_list.currentIndex().row()
-        )
+        ag.save_db_settings(FILTER_FILE_ROW=ag.file_list.currentIndex().row())
     ag.set_mode(ag.appMode.FILE_BY_REF)
     ag.app.ui.files_heading.setText('single_file')
 
@@ -903,7 +921,7 @@ def _import_files(fp: QTextStream, target: QModelIndex):
         if file_id:
             exist_dir = db_ut.copy_existent(file_id, dir_id)
         else:
-            file_id, _ = db_ut.insert_file(file_)
+            file_id = db_ut.insert_file(file_)
             db_ut.copy_file(file_id, dir_id)
 
         file_ids[fl['id']] = file_id
@@ -1043,6 +1061,7 @@ def delete_folders():
             delete_tree(u_dat.id)
     dirs_changed(to_idx)
     ag.history.check_remove()
+    set_enable_prev_next()
 
 def delete_tree(dirid: int):
     for parent, dir_id in db_ut.dir_children(dirid):
@@ -1080,7 +1099,7 @@ def toggle_hidden_state():
 #region  Tags
 def populate_tag_list():
     ag.tag_list.set_list(db_ut.get_tags())
-    sel = ag.get_setting("TAG_SEL_LIST", [])
+    sel = ag.get_db_setting("TAG_SEL_LIST", [])
     ag.tag_list.set_selection(sel)
 
 def tag_selection() -> list:
@@ -1105,7 +1124,7 @@ def delete_tags(tags: str):
 
 def populate_ext_list():
     ag.ext_list.set_list(db_ut.get_ext_list())
-    sel = ag.get_setting("EXT_SEL_LIST", [])
+    sel = ag.get_db_setting("EXT_SEL_LIST", [])
     ag.ext_list.set_selection(sel)
 
 def ext_selection() -> list:
@@ -1114,7 +1133,7 @@ def ext_selection() -> list:
 #region  Authors
 def populate_author_list():
     ag.author_list.set_list(db_ut.get_authors())
-    sel = ag.get_setting("AUTHOR_SEL_LIST", [])
+    sel = ag.get_db_setting("AUTHOR_SEL_LIST", [])
     ag.author_list.set_selection(sel)
 
 def author_selection() -> list:

@@ -8,8 +8,16 @@ class History(object):
         self.limit: int = limit
         self.branches = []
         self.flags = []
-        self.curr: str = ''
+        self.curr: int = -1
         self.is_hist = False
+
+    def set_current(self, curr: int) -> tuple:
+        self.curr = curr
+        self.is_hist = True
+        ag.signals_.user_signal.emit('curr_history_folder')
+
+    def history_changed(self):
+        ag.signals_.user_signal.emit('history_changed')
 
     def check_remove(self):
         kk = []
@@ -20,22 +28,25 @@ class History(object):
                     kk.append(k)
                     break
 
-        for k in kk:
-            self.branches.pop(k)
-            self.flags.pop(k)
+        if kk:
+            for k in kk[::-1]:
+                self.branches.pop(k)
+                self.flags.pop(k)
 
-    def set_history(self, hist: list, curr: int):
-        self.branches, self.flags = hist if hist else ([],[])
-        self.curr = curr
+            corr = sum((k <= self.curr) for k in kk)
+            self.curr -= corr
 
-        ag.signals_.user_signal.emit(
-            f'enable_next_prev\\{self.enable_next_prev()}'
-        )
+    def set_history(self, hist: list|None):
+        if not hist:
+            return
+        self.branches, self.flags, self.curr = hist
+        self.is_hist = True
 
     def set_limit(self, limit: int):
         self.limit: int = limit
         if len(self.branches) > limit:
             self.trim_to_limit()
+            self.history_changed()
 
     def trim_to_limit(self):
         def trim(x: list):
@@ -44,36 +55,26 @@ class History(object):
             x.extend(tmp)
 
         to_trim = len(self.branches) - self.limit
+        self.curr = max(0, self.curr-to_trim)
         trim(self.branches)
         trim(self.flags)
 
     def get_current(self):
-        if not self.branches:
-            return []
         self.is_hist = True
         return (*(int(x) for x in self.branches[self.curr].split(',')), self.flags[self.curr])
 
-    def next_dir(self) -> list:
+    def next_dir(self):
         if self.curr < len(self.branches)-1:
             self.curr += 1
-        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
-        return self.get_current()
 
-    def prev_dir(self) -> list:
+    def prev_dir(self):
         if self.curr > 0:
             self.curr -= 1
-        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
-        return self.get_current()
 
-    def enable_next_prev(self) -> str:
-        res = ('no', 'yes')
-
-        if len(self.branches) == 0:
-            return 'no,no'
-        if len(self.branches) == 1:
-            self.curr = 0
-            return "no,yes"
-        return f'{res[self.curr < len(self.branches)-1]},{res[self.curr > 0]}'
+    def is_next_prev_enable(self) -> tuple:
+        if len(self.branches) <= 1:
+            return False, False
+        return self.curr < len(self.branches)-1, self.curr > 0
 
     def add_item(self, branch: list):
         if not branch[:-1]:
@@ -82,11 +83,13 @@ class History(object):
         def find_key() -> int:
             if val in self.branches:
                 return self.branches.index(val)
+            self.branches = self.branches[:self.curr+1]
+            self.flags = self.flags[:self.curr+1]
             return -1
 
         def set_curr_history_item():
             if old_idx < 0:      # new history item
-                if len(self.branches) == self.limit:
+                if len(self.branches) >= self.limit:
                     self.branches.pop(0)
                     self.flags.pop(0)
             else:                # change order of history item
@@ -96,7 +99,7 @@ class History(object):
                 self.flags.pop(old_idx)
 
             self.curr = len(self.branches)
-            self.branches.append(val),
+            self.branches.append(val)
             self.flags.append(branch[-1])
 
         val = ','.join((str(x) for x in branch[:-1]))
@@ -105,7 +108,7 @@ class History(object):
 
         self.is_hist = False
 
-        ag.signals_.user_signal.emit(f'enable_next_prev\\{self.enable_next_prev()}')
+        self.history_changed()
 
     def get_history(self) -> list:
-        return (self.branches, self.flags), self.curr
+        return self.branches, self.flags, self.curr

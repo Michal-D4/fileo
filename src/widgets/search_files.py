@@ -43,7 +43,7 @@ class srchFiles(QWidget):
         self.word.setIcon(tug.get_icon('match_word'))
         self.word.setToolTip('Match Whole Word')
 
-        name, case, word = ag.get_setting('SEARCH_FILE', ('',0,0))
+        name, case, word = ag.get_db_setting('SEARCH_FILE', ('',0,0))
         self.srch_pattern.setText(name)
         self.srch_pattern.selectAll()
         self.case.setChecked(case)
@@ -77,7 +77,7 @@ class srchFiles(QWidget):
             self.search_err_msg('Please enter file name')
             return
 
-        ag.save_settings(SEARCH_FILE=(name, case, word))
+        ag.save_db_settings(SEARCH_FILE=(name, case, word))
         ag.signals_.user_signal.emit(
             f'find_files_by_name\\{name}0{int(case)}{int(word)}'
         )

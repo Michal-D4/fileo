@@ -37,7 +37,7 @@ class OpenDB(QWidget, Ui_openDB):
         )
 
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
-        return_key.activated.connect(self.keystroke)
+        return_key.activated.connect(lambda: self.item_click(self.listDB.currentItem()))
 
         escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         escape.activated.connect(self.close)
@@ -73,9 +73,8 @@ class OpenDB(QWidget, Ui_openDB):
         menu = QMenu(self)
         menu.addAction(f'Open DB "{db_name}"')
         menu.addSeparator()
-        if not ag.single_instance:
-            menu.addAction(f'Open DB "{db_name}" in new window')
-            menu.addSeparator()
+        menu.addAction(f'Open DB "{db_name}" in new window')
+        menu.addSeparator()
         menu.addAction(f'Reveal "{db_name}" in explorer')
         menu.addSeparator()
         menu.addAction(f'Delete DB "{db_name}" from list')
@@ -87,12 +86,10 @@ class OpenDB(QWidget, Ui_openDB):
     def restore_db_list(self):
         db_list = tug.get_app_setting("DB_List", [])
 
-        row = 0
-        for path, used, last_dt in db_list:
-            self.set_cell_0(path, used, last_dt, row)
-            dt = 'Now' if used else last_dt
-            self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
-            row += 1
+        for ii, row in enumerate(db_list):
+            path, used, last_dt = row
+            self.set_cell_0(path, used, last_dt, ii)
+            self.listDB.setItem(ii, 1, QTableWidgetItem(f'{('Now' if used else last_dt)!s}'))
 
     def set_cell_0(self, path: str, used: bool, dt: str, row: int=0):
         self.listDB.insertRow(row)
@@ -165,10 +162,6 @@ class OpenDB(QWidget, Ui_openDB):
         else:
             self.msg = f"bad path: {file_name}"
             return False
-
-    @pyqtSlot()
-    def keystroke(self):
-        self.item_click(self.listDB.currentItem())
 
     @pyqtSlot(QTableWidgetItem)
     def item_click(self, item: QTableWidgetItem):
