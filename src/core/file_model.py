@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
     QSortFilterProxyModel, QDateTime,
 )
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QStyle
 
 from . import db_ut, app_globals as ag
 from .. import tug
@@ -157,8 +157,7 @@ class fileModel(QAbstractTableModel):
                 except (FileExistsError, OSError) as e:
                     ag.show_message_box(
                         'File already exists',
-                        f'{e}',
-                        icon=QMessageBox.Icon.Information
+                        f'{e}'
                     )
                     return
 
@@ -179,12 +178,12 @@ class fileModel(QAbstractTableModel):
 
             def old_file() -> bool:
                 try:
-                    path.rename(new_path)
+                    Path(path).rename(new_path)
                 except (FileExistsError, FileNotFoundError, PermissionError) as e:
                     ag.show_message_box(
                         'Error renaming file',
                         f'{e}',
-                        icon=QMessageBox.Icon.Critical
+                        icon=QStyle.StandardPixmap.SP_MessageBoxCritical
                     )
                     return False
                 return True

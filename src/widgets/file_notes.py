@@ -3,7 +3,7 @@
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
-    QVBoxLayout, QScrollArea, QAbstractScrollArea,
+    QVBoxLayout, QScrollArea, QAbstractScrollArea, QStyle,
 )
 
 from ..core import app_globals as ag, db_ut
@@ -166,21 +166,24 @@ class notesContainer(QScrollArea):
             ag.show_message_box(
                 'Note is editing now',
                 "The note can't be deleted right now.",
-                icon=QMessageBox.Icon.Warning,
+                icon=QStyle.StandardPixmap.SP_MessageBoxWarning,
                 details="It is editing!"
             )
             return
 
-        if ag.show_message_box(
+        def msg_callback(res: int):
+            if res == 1:
+                self.scroll_layout.removeWidget(note)
+                note.deleteLater()
+                db_ut.delete_note(file_id, note_id)
+
+        ag.show_message_box(
             'delete file note',
             'confirm deletion of note',
-            btn=QMessageBox.StandardButton.Ok |
-            QMessageBox.StandardButton.Cancel,
-            icon=QMessageBox.Icon.Question
-        ) == QMessageBox.StandardButton.Ok:
-            self.scroll_layout.removeWidget(note)
-            note.deleteLater()
-            db_ut.delete_note(file_id, note_id)
+            btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+            icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
+            callback=msg_callback
+        )
 
     def collapse(self):
         if self.scroll_layout.count() <= 1:

@@ -3,7 +3,7 @@ import apsw
 from collections import deque, abc
 from pathlib import PurePath
 
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QStyle
 
 from . import app_globals as ag, create_db
 
@@ -348,7 +348,7 @@ def filter_files(checks: dict) -> apsw.Cursor:
         }[key]
 
     def filter_subsqls():
-        if checks['dir'] or checks['no_dir']:
+        if checks['dir'] or checks['no_dir'] or checks['created_here']:
             sqlist.append(filter_sqls('dir_sql'))
         if checks['tag']:
             sqlist.append(filter_sqls('tag_sql'))
@@ -537,6 +537,13 @@ def temp_files_no_dir():
     sql = (
         "insert into aux (key, val) select 'files_dir', id from "
         "files where id not in (select distinct file from filedir)"
+    )
+    ag.db.conn.cursor().execute(sql)
+
+def temp_files_created_here():
+    sql = (
+        "insert into aux (key, val) select 'files_dir', id from "
+        "files where added = created"
     )
     ag.db.conn.cursor().execute(sql)
 
@@ -987,7 +994,7 @@ def create_connection(path: str) -> bool:
         ag.show_message_box(
             'Error open DB',
             f'{e.args}, DB file: {path}',
-            icon=QMessageBox.Icon.Critical
+            icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
         return False
 

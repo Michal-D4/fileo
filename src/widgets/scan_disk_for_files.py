@@ -23,13 +23,13 @@ class diskScanner(QWidget):
         self.ui.open_btn.clicked.connect(self.get_root_path)
 
         self.ui.btnCancel.clicked.connect(self.close)
-        self.ui.btnCancel.setShortcut(QKeySequence(Qt.Key.Key_Escape))
         self.ui.btnGo.clicked.connect(self.go)
         self.ui.btnGo.setShortcut(QKeySequence(Qt.Key.Key_Return))
         self.start_pos = QPoint()
         self.mouseMoveEvent = self.move_self
 
         self.set_exts()
+        ag.popups["diskScanner"] = self
 
     @pyqtSlot()
     def go(self):
@@ -69,6 +69,7 @@ class diskScanner(QWidget):
                 e.accept()
             self.start_pos = pos_
 
+    @pyqtSlot()
     def close(self) -> bool:
-        ag.take_files = None
+        ag.popups.pop("diskScanner")
         return super().close()

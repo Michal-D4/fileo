@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+from datetime import datetime
 from collections import defaultdict
 import tempfile
 import tomllib
@@ -13,6 +14,12 @@ from PyQt6.QtCore import QSettings, QVariant
 from PyQt6.QtGui import QIcon, QPixmap
 
 from .. import qss
+FONT_SIZE = {
+    '8pt': ('8pt', '10pt'),
+    '10pt': ('10pt', '12pt'),
+    '12pt': ('12pt', '14pt'),
+    '14pt': ('14pt', '16pt'),
+}
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -38,7 +45,6 @@ APP_NAME = "fileo"
 MAKER = 'miha'
 
 entry_point: str = None
-open_db = None  # keep OpenDB instance, need !!!
 cfg_path = Path()
 config = {}
 qss_params = {}
@@ -130,8 +136,10 @@ def save_to_file(filename: str, msg: str):
     pp = Path('~/fileo/report').expanduser()
     path = get_app_setting('DEFAULT_REPORT_PATH', str(pp))
     path = Path(path) / filename
-    # logger.info(path)
-    path.write_text(msg)
+    path.write_text(
+        '\n'.join((f'Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
+            f'File: {filename}',
+            "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", msg)))
 
 def save_app_setting(**kwargs):
     """
@@ -223,10 +231,12 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
                 key, val = line[2:].split('~')
                 dyn_qss[key].append(val)
 
-    styles = read_file(theme.get('qss', '') or files['qss'])
-    icons_txt = read_file(theme.get('ico', '') or files['ico'])
+    styles = read_file(theme.get('qss', files['qss']))
+    icons_txt = read_file(theme.get('ico', files['ico']))
     read_params()
     qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'])
+    font_size_key = get_app_setting('FONT_SIZE', '10pt')
+    qss_params['$normalSize'], qss_params['$bigSize'] = FONT_SIZE[font_size_key]
 
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)
@@ -294,7 +304,7 @@ def collect_all_icons(icons_res: dict) -> dict:
         'ico_app': ('app_ico',),
         'svg_files': (
             'check_box_off', 'check_box_on',
-            'radio_btn',
+            'radio_btn', 'radio_btn_active',
             'vline3', 'angle_down3', 'angle_right3',
             'angle_down2',
         ),
@@ -355,7 +365,7 @@ def set_icons(keys: dict, icons_res: dict) -> dict:
 
             colors = get_colors()
             pics = []
-            if not colors:
+            if not colors:  # [app_ico] only
                 create_pix('normal', svg)
                 return pics
 

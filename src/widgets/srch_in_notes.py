@@ -18,8 +18,7 @@ class srchInNotes(QWidget):
         self.setup_ui()
         self.srch_pattern.returnPressed.connect(self.search_files)
 
-        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.close)
+        ag.popups['srchInNotes'] = self
 
     def setup_ui(self):
         self.srch_pattern = QLineEdit()
@@ -80,7 +79,7 @@ class srchInNotes(QWidget):
         txt = self.srch_pattern.text()
 
         if not txt:
-            self.search_err_msg('Please enter text to search')
+            ag.show_message_box("File not found", "Please enter text to search")
             return
 
         rex = self.rex.isChecked()
@@ -93,11 +92,6 @@ class srchInNotes(QWidget):
         )
         self.close()
 
-    def search_err_msg(self, msg):
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('File not found')
-        dlg.setText(msg)
-        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-        dlg.setIcon(QMessageBox.Icon.Warning)
-        dlg.exec()
-        self.srch_pattern.setFocus()
+    def close(self) -> bool:
+        ag.popups.pop('srchInNotes')
+        return super().close()

@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\foldable.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\foldable.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -36,7 +36,7 @@ class Ui_foldable(object):
         self.decorator.setMaximumSize(QtCore.QSize(16777215, 3))
         self.decorator.setStyleSheet("")
         self.decorator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-        self.decorator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.decorator.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         self.decorator.setLineWidth(0)
         self.decorator.setMidLineWidth(3)
         self.decorator.setObjectName("decorator")

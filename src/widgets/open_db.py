@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSlot, QPoint
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QFileDialog, QMenu,
     QTableWidgetItem, QWidget, QMessageBox,
-    QHeaderView,
+    QHeaderView, QStyle,
 )
 
 from ..core import create_db, app_globals as ag
@@ -39,8 +39,7 @@ class OpenDB(QWidget, Ui_openDB):
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
         return_key.activated.connect(lambda: self.item_click(self.listDB.currentItem()))
 
-        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.close)
+        ag.popups["OpenDB"] = self
 
     @pyqtSlot(QTableWidgetItem)
     def item_enter(self, item: QTableWidgetItem):
@@ -119,7 +118,7 @@ class OpenDB(QWidget, Ui_openDB):
         ag.show_message_box(
             'Error open DB',
             self.msg,
-            icon=QMessageBox.Icon.Critical
+            icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
 
     def open_existed(self, db_path: str) -> bool:
@@ -188,7 +187,7 @@ class OpenDB(QWidget, Ui_openDB):
         ag.show_message_box(
             'Error open DB',
             f'Database "{ag.db.path}" is corrupted',
-            icon=QMessageBox.Icon.Critical
+            icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
         return False
 
@@ -208,19 +207,24 @@ class OpenDB(QWidget, Ui_openDB):
         return sorted([(k,*v) for k,v in rows.items()], key=lambda x: x[2], reverse=True)
 
     def mark_not_used(self, row: int):
+        def msg_callback(res: int):
+            logger.info(f'{res=}')
+            if res == 1:
+                item.setData(Qt.ItemDataRole.UserRole, (path, False, dt))
+                self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
+                self.save_db_list(path)
+
         item = self.listDB.item(row, 0)
         path, _, dt = item.data(Qt.ItemDataRole.UserRole)
         name = Path(path).name
-        res = ag.show_message_box(
-            f'Mark DB {name} as currently unused',
-            f'Are you sure that DB {name} is not used in other instance of {ag.app_name()}',
+        ag.show_message_box(
+            f'DB "{name}" marked as in use',
+            'Do you want to mark it as not in use?',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-            icon=QMessageBox.Icon.Question
+            icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
+            details=f'Be sure that DB "{name}" is not in use by other instance of {ag.app_name()}',
+            callback=msg_callback
         )
-        if res == QMessageBox.StandardButton.Ok:
-            item.setData(Qt.ItemDataRole.UserRole, (path, False, dt))
-            self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))
-            self.save_db_list(path)
 
     def save_db_list(self, db_close:str='', db_open: str='', dblist: list=[]):
         now = str(datetime.now().replace(microsecond=0))
@@ -233,6 +237,7 @@ class OpenDB(QWidget, Ui_openDB):
 
         tug.save_app_setting(DB_List=db_list)
 
-    def close(self):
-        tug.open_db = None
-        super().close()
+    @pyqtSlot()
+    def close(self) -> bool:
+        ag.popups.pop("OpenDB")
+        return super().close()

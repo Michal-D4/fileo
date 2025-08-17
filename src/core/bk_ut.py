@@ -60,6 +60,8 @@ def selected_dirs() -> list:
 
 @pyqtSlot()
 def search_files():
+    if "srchFiles" in ag.popups:
+        return
     ff = sf.srchFiles(ag.app)
     ff.move(ag.app.width() - ff.width() - 40, 40)
     ff.show()
@@ -135,6 +137,13 @@ def bk_setup():
     del_key.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Delete folder(s)"))
     act_pref = QShortcut(QKeySequence("Ctrl+,"), ag.app)
     act_pref.activated.connect(lambda: ag.signals_.user_signal.emit("MainMenu Preferences"))
+    esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+    esc.activated.connect(close_last_popup)
+
+def close_last_popup():
+    if len(ag.popups) > 0:
+        last_key =  next(reversed(ag.popups))
+        ag.popups[last_key].close()
 
 @pyqtSlot()
 def show_main_menu():
@@ -391,19 +400,19 @@ def checks():
 
 @pyqtSlot()
 def check_duplicates(auto: bool=True):
-    if ag.dup_dialog:
+    if "dlgDup" in ag.popups:
         return
     if auto and not int(tug.get_app_setting("CHECK_DUPLICATES", 1)):
         return
     rep = workers.report_duplicates()
     if rep:
-        ag.dup_dialog = dup.dlgDup(rep, ag.app)
-        ag.dup_dialog.move(
-            (ag.app.width()-ag.dup_dialog.width()) // 3,
-            (ag.app.height()-ag.dup_dialog.height()) // 3
+        dup_dialog = dup.dlgDup(rep, ag.app)
+        dup_dialog.move(
+            (ag.app.width()-dup_dialog.width()) // 3,
+            (ag.app.height()-dup_dialog.height()) // 3
         )
-        ag.dup_dialog.asked_by_user(not auto)
-        ag.dup_dialog.show()
+        dup_dialog.asked_by_user(not auto)
+        dup_dialog.show()
     elif not auto:
         ag.show_message_box(
             "No duplicates found",

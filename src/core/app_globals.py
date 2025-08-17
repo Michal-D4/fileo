@@ -5,10 +5,10 @@ from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QTimer, pyqtSlot, QModelIndex
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtCore import QModelIndex
+from PyQt6.QtWidgets import QMessageBox, QStyle
 
-from .. import tug
+from ..widgets.cust_msgbox import CustomMessageBox
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QTreeView
@@ -18,10 +18,6 @@ if TYPE_CHECKING:
     from ..widgets.filter_setup import FilterSetup
     from .history import History
     from ..widgets.fold_container import foldGrip
-    from ..widgets.about import AboutDialog
-    from ..widgets.dup import dlgDup
-    from ..widgets.preferences import Preferences
-    from ..widgets.scan_disk_for_files import diskScanner
 
 
 def app_name() -> str:
@@ -31,7 +27,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.49'
+    return '1.3.50'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -42,10 +38,7 @@ author_list: 'aBrowser' = None
 file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
 fold_grips: 'list[foldGrip]' = None
-about_dialog: 'AboutDialog' = None
-dup_dialog: 'dlgDup' = None
-prefs: 'Preferences' = None
-take_files: 'diskScanner' = None
+popups = {}
 
 buttons = []
 note_buttons = []
@@ -203,28 +196,18 @@ def add_recent_file(id_: int):
 def show_message_box(
         title: str, msg: str,
         btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
-        icon: QMessageBox.Icon = QMessageBox.Icon.Information,
-        details: str = '') -> int:
-    dlg = QMessageBox(app)
-    dlg.setWindowTitle(title)
-    dlg.setText(msg)
-    dlg.setDetailedText(details)
-
-    dlg.setStandardButtons(btn)
-    dlg.setIcon(icon)
-
-    return dlg.exec()
-
-def message_in_status(msg: str):
-    @pyqtSlot()
-    def restore_file_edited():
-        app.ui.edited_file.setText(file_edited)
-        app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message', 1))
-
-    file_edited = app.ui.edited_file.text()
-    app.ui.edited_file.setStyleSheet(tug.get_dyn_qss('edit_message'))
-    app.ui.edited_file.setText(msg)
-    QTimer.singleShot(3000, restore_file_edited)
+        icon = QStyle.StandardPixmap.SP_MessageBoxInformation,
+        details: str = '',
+        callback=None):
+    dlg = CustomMessageBox(msg, app)
+    if callback:
+        dlg.finished.connect(callback)
+    dlg.set_title(title)
+    dlg.set_buttons(btn)
+    dlg.set_msg_icon(icon)
+    dlg.set_details(details)
+    dlg.open()
+    return dlg
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals  # noqa: E402

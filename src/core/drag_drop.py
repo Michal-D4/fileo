@@ -8,7 +8,7 @@ from PyQt6.QtCore import (Qt, pyqtSlot, QMimeData, QByteArray,
 )
 from PyQt6.QtGui import (QDrag, QDragMoveEvent, QDropEvent, QDragEnterEvent,
 )
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QStyle
 
 from . import app_globals as ag, low_bk, load_files, db_ut
 from .dir_model import dirModel
@@ -228,7 +228,7 @@ def update_file_list(target: QModelIndex):
             ag.show_message_box(
                 'Drop files',
                 'Application is in Filter mode, so you may not see the dropped files.',
-                icon=QMessageBox.Icon.Warning
+                icon=QStyle.StandardPixmap.SP_MessageBoxWarning
             )
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:

@@ -115,7 +115,7 @@ height="6.035" x="8.112" y="28.708" ry="1.464"/><rect \
 width="48.279" height="6.035" x="8.112" y="15.225" \
 ry="1.464"/></svg>\
 """
-colors = [" fill=\"$toolIcon\"", "active| fill=\"$closeActive\""]
+colors = [" fill=\"$toolIcon\"", "active| fill=\"$activeIcon\""]
 
 [folders]
 ico = """\
@@ -232,11 +232,18 @@ colors = [" style=\"fill:none;stroke:$branchColor;stroke-width:5\""]
 [radio_btn]
 save_in_file = "radio_btn"
 ico = """\
-<svg viewBox="0 0 64 64"|><circle cx="32" cy="32" r="26"|/>\
-<circle cx="32" cy="32" r="14"|/></svg>\
+<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 19.5a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15\
+m0 1.5a9 9 0 1 0 0-18 9 9 0 0 0 0 18"|/></svg>\
 """
-colors = [" fill=\"$svgFill2\"", "`", " stroke=\"$svgFill\" stroke-width=\"7\"",
-"active|`", "active| fill=\"$svgFill2\"", "active| fill=\"$svgAlt\""]
+colors = [" fill=\"$svgAlt\""]
+
+[radio_btn_active]
+save_in_file = "radio_btn_active"
+ico = """\
+<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 19.5a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15\
+m0 1.5a9 9 0 1 0 0-18 9 9 0 0 0 0 18"|/><circle cx="12" cy="12" r="5.25"|/></svg>\
+"""
+colors = [" fill=\"$svgAlt\"", " fill=\"$svgAlt\""]
 
 [filter_setup]
 ico = """\

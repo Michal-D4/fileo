@@ -1,9 +1,10 @@
 # from loguru import logger
 import os
 from pathlib import Path
+from datetime import datetime
 
 from PyQt6.QtCore import pyqtSlot, QSize, QPoint, Qt
-from PyQt6.QtGui import QPixmap, QMouseEvent, QKeySequence
+from PyQt6.QtGui import QPixmap, QMouseEvent
 from PyQt6.QtWidgets import QStyle, QWidget
 
 from ..core import app_globals as ag, db_ut
@@ -22,10 +23,11 @@ class dlgDup(QWidget, Ui_DlgDup):
         self.is_user_request = False
 
         self.close_btn.clicked.connect(self.close)
-        self.close_btn.setShortcut(QKeySequence(Qt.Key.Key_Escape))
+        self.close_btn.setToolTip("Escape")
         self.del_btn.clicked.connect(self.delete_duplicates)
         self.show_btn.clicked.connect(self.show_duplicates)
         self.mouseMoveEvent = self.move_self
+        ag.popups["dlgDup"] = self
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -74,6 +76,7 @@ class dlgDup(QWidget, Ui_DlgDup):
 
     def save_dup_report(self, path: Path):
         with open(path, "w") as out:
+            out.write(f'Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
             out.write(f'DB path: {ag.db.path}\n')
             for rr in self.report.values():
                 out.write(f"{'-='*20}-\n")
@@ -87,8 +90,9 @@ class dlgDup(QWidget, Ui_DlgDup):
         )
         return ico.pixmap(QSize(32, 32))
 
+    @pyqtSlot()
     def close(self) -> bool:
         if not self.is_user_request:
             tug.save_app_setting(CHECK_DUPLICATES = int(not self.checkBox.isChecked()))
-        ag.dup_dialog = None
+        ag.popups.pop("dlgDup")
         return super().close()

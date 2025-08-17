@@ -10,6 +10,7 @@ QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, 
    outline: 0;
 }
 QLabel {
+   background-color: transparent;
    color: $textColor;
 }
 QToolButton {
@@ -19,7 +20,7 @@ QAbstractButton::menu-indicator {
    image: none;
 }
 QFrame#toolBar {
-   border-left: $shapeBorder1 $toolIcon;
+   border-left: none;
    border-top: none;
    border-right: $shapeBorder2 $toolBorder;
    border-bottom: none;
@@ -81,7 +82,6 @@ QFrame#status QLabel {
    padding-right: 4px;
    padding-left: 4px;
    background-clip: padding;
-   background-color: transparent;
    color: $statusText;
 }
 QFrame#status QLabel:hover {
@@ -102,14 +102,21 @@ QFrame#dlg_frame {
    border: $shapeBorder2 $innerBorder;
    background-color: $leftPaneBG;
 }
+QFrame#det_frame {
+   padding-right: 6px;
+   padding-left: 6px;
+   border-top: $shapeBorder2 $innerBorder;
+}
 QPushButton {
    border: $shapeBorder1 $innerBorder;
    font-family: $fontFamily;
    font-size: $normalSize;
    background-color: transparent;
    color: $textColor;
-   padding-left: 8px;
-   padding-right: 8px;
+   min-width: $min_width;
+   min-height: $min_height;
+   padding-right: 6px;
+   padding-left: 6px;
 }
 QPushButton:hover {
    background-color: $hoverBG;
@@ -157,7 +164,7 @@ QScrollBar:vertical {
    margin: 0px;
 }
 QScrollBar::handle:vertical {
-   background-color: $scrollHadle;
+   background-color: $scrollHandle;
    min-height: 20px;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
@@ -175,7 +182,7 @@ QScrollBar:horizontal {
    margin: 0px;
 }
 QScrollBar::handle:horizontal {
-   background-color: $scrollHadle;
+   background-color: $scrollHandle;
    min-width: 20px;
 }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
@@ -187,7 +194,7 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
    background-color: transparent;
 }
 QFrame#note_header {
-   background-color: $headerBG;
+   background-color: $noteHeadBG;
 }
 QFrame#note_header > QWidget {
    background-color: transparent;
@@ -203,10 +210,10 @@ QTreeView#dir_list {
    padding-left: 8px;
 }
 QTreeView::item:hover, QTableWidget::item:hover {
-   background-color: $hoverBG;
+   background-color: $itemHoverBG;
 }
 QTreeView::item:focus, QTableWidget::item:focus {
-   background-color: $selectedBG;
+   background-color: $notActiveItemBG;
 }
 QTreeView::item:selected:active, QTableWidget::item:selected:active {
    background-color: $selectedBG;
@@ -244,23 +251,20 @@ QHeaderView::section {
    background-color: transparent;
    color: $altTextColor;
    border: 1px solid $fileFrameBG;
-   border-bottom: 0px;
-   border-top: 0px;
-   border-left: 0px;
+   border-bottom: none;
+   border-top: none;
+   border-left: none;
 }
 /* ------------------------- */
 QFrame#head {
-   border-bottom: 2px solid $innerBorder;
-   background-color: $headerBG2;
-}
-QFrame#head QToolButton {
-   background-color: transparent;
+   border-bottom: shapeBorder1 $innerBorder;
+   background-color: $headerBG;
 }
 QFrame#noteHolder QToolButton:hover {
    background-color: $hoverBG;
 }
 QFrame#labels {
-   background-color: $headerBG3;
+   background-color: $pagesHeadBG;
 }
 QFrame#labels QLabel {
    padding-right: 2px;
@@ -273,9 +277,11 @@ QFrame#btns QToolButton {
    background-color: transparent;
 }
 /* ------------------------- */
-QFrame#inner QTextBrowser {
+QFrame#inner {
    border: none;
-   background-color: $leftPaneBG;
+   background-color: transparent;
+}
+QFrame#inner QTextBrowser {
    color: $textColor;
 }
 QWidget#scrollWidget {
@@ -292,13 +298,17 @@ QFrame#srchFrame QToolButton {
    border: none;
    background-color: transparent;
 }
-QFrame#srchFrame QToolButton:hover {
-   background-color: $hoverBtnBG;
-}
-QFrame#srchFrame QToolButton:checked {
-   background-color: $hoverBG2;
+QFrame#srchFrame QToolButton:hover, QFrame#srchFrame QToolButton:checked {
+   background-color: $hoverBG;
 }
 /* ------- filter setup ----- */
+QFrame#fileref {
+   $bottomBorder $shapeBorder1 $innerBorder;
+}
+QFrame#buttons {
+   padding-top: 9px;
+   border-top: $shapeBorder1 $innerBorder;
+}
 QFrame#form QPlainTextEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
@@ -313,10 +323,6 @@ QDateEdit {
    background-color: $inputBG;
    color: $textColor;
 }
-QDateEdit::drop-down {
-   border: none;
-   background-color: transparent;
-}
 QDateEdit::down-arrow {
    border: none;
    image: url('$angle_down2');
@@ -326,7 +332,7 @@ QCalendarWidget QWidget#qt_calendar_navigationbar {
 }
 #qt_calendar_prevmonth, #qt_calendar_nextmonth {
    border: none;
-   color: $svgFill;
+   color: $textColor;
    font-weight: bold;
    qproperty-icon: none;
    background-color: transparent;
@@ -337,48 +343,43 @@ QCalendarWidget QWidget#qt_calendar_navigationbar {
 #qt_calendar_nextmonth {
    qproperty-text: ">";
 }
-#qt_calendar_prevmonth:hover, #qt_calendar_nextmonth:hover {
+#qt_calendar_prevmonth:hover, #qt_calendar_nextmonth:hover, #qt_calendar_prevmonth:pressed, #qt_calendar_nextmonth:pressed {
    background-color: $hoverBG;
 }
-#qt_calendar_prevmonth:pressed, #qt_calendar_nextmonth:pressed {
-   background-color: $hoverBG;
+#qt_calendar_yearbutton, #qt_calendar_monthbutton {
+   min-width: 60px;
+   color: $textColor;
 }
-#qt_calendar_yearbutton {
-   min-width: 50px;
-}
-#qt_calendar_yearbutton:hover, #qt_calendar_monthbutton:hover {
+#qt_calendar_yearbutton:hover, #qt_calendar_monthbutton:hover, #qt_calendar_yearbutton:pressed, #qt_calendar_monthbutton:pressed {
    background-color: $hoverBG;
-   color: $svgFill;
-}
-#qt_calendar_yearbutton:pressed, #qt_calendar_monthbutton:pressed {
-   background-color: $hoverBG;
-   color: $svgFill;
+   color: $textColor;
 }
 #qt_calendar_yearedit {
-   min-width: 50px;
-   color: $svgFill;
+   min-width: 60px;
+   color: $textColor;
    background-color: transparent;
 }
 #qt_calendar_yearedit::up-button {
-   width: 20px;
+   min-width: 20px;
    subcontrol-position: right;
 }
 #qt_calendar_yearedit::down-button {
-   width: 20px;
+   min-width: 20px;
    subcontrol-position: left;
 }
 #qt_calendar_calendarview {
    outline: none;
-   background-color: $topFrameBG;
-   color: $svgFill;
+   background-color: $leftPaneBG;
+   color: $textColor;
    selection-background-color: $selectedBG;
    selection-color: $selectedText;
 }
+/* alternate-background-color used for line of day names */
 QCalendarWidget QTableView {
-   alternate-background-color: $headerBG2;
+   alternate-background-color: $topBarBG;
 }
 QCalendarWidget QTableView QLabel {
-   color: $svgFill;
+   color: $textColor;
 }
 /* ----- QComboBox ----- */
 QComboBox {
@@ -388,7 +389,7 @@ QComboBox {
 }
 QComboBox QAbstractItemView {
    color: $textColor;
-   background-color: $inputBG;
+   background-color: $fileFrameBG;
 }
 QComboBox::drop-down {
    border: none;
@@ -404,27 +405,27 @@ QCheckBox {
    color: $textColor;
 }
 QCheckBox::indicator {
-   width: 20;
-   height: 20;
+   min-width: 20;
+   min-height: 20;
    border-image: url('$check_box_off');
 }
 QCheckBox::indicator:checked {
    border-image: url('$check_box_on');
 }
 /* ----- QRadioButton ----- */
-QFrame#frame_tag QRadioButton {
+QRadioButton {
    background-color: transparent;
    color: $textColor;
 }
-QFrame#frame_tag QRadioButton::indicator {
-   width: 20;
-   height: 20;
+QRadioButton::indicator {
+   min-width: 20;
+   min-height: 20;
    background-color: transparent;
 }
-QFrame#frame_tag QRadioButton::indicator::unchecked  {
+QRadioButton::indicator::unchecked  {
    image: url('$radio_btn');
 }
-QFrame#frame_tag QRadioButton::indicator::checked {
+QRadioButton::indicator::checked {
    image: url('$radio_btn_active');
 }
 /* ---------- Menu ----------- */
@@ -437,15 +438,15 @@ QMenu::item {
    color: $textColor;
 }
 QMenu::item:disabled, QMenu::item:selected:disabled {
-   background-color: $headerBG3;
-   color: $textColor2;
+   background-color: $itemDisabled;
+   color: $selectorPassive;
 }
 QMenu::item:selected {
-   background-color: $hoverBG;
+   background-color: $itemHoverBG;
 }
 QMenu::separator {
    height: 2px;
-   background-color: $headerBG;
+   background-color: $innerBorder;
 }
 /* ---- fileInfo ---- */
 QScrollArea#scrollFileInfo {
@@ -468,8 +469,9 @@ QTableWidget {
 ##browser_style~<style type="text/css"> :link{ color: $altTextColor; text-decoration: none;} .s {background-color: $selectedBG; color: $selectedText;}</style>
 ##link_style~<style type="text/css"> :link{color: $linkText; text-decoration: underline;}</style>
 ##active_selector~$bottomBorder 1px solid $selectorMark; color: $selectorActive
-##passive_selector~QLabel {border: none; color: $textColor2} QLabel:hover {color: $selectorActive}
+##passive_selector~QLabel {border: none; color: $selectorPassive} QLabel:hover {color: $selectorActive}
 ##line_edit~QLineEdit#tagEdit {background-color: $inputBG}
-##line_edit_ro~QLineEdit {background-color: $headerBG2}
+##line_edit_ro~QLineEdit {background-color: $headerBG}
 ##edit_message~font-size: $bigSize
 ##edit_message~font-size: $normalSize
+##note_menu~QMenu {padding: 0; background-color: $leftPaneBG; border: $shapeBorder2 $borderColor;} QMenu::item {background-color: transparent; color: $textColor;} QMenu::item:disabled, QMenu::item:selected:disabled {background-color: $itemDisabled; color: $selectorPassive;} QMenu::item:selected {background-color: $itemHoverBG;} QMenu::separator {height: 2px; background-color: $innerBorder;}

@@ -1,7 +1,7 @@
 # from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QCoreApplication, QPoint
+from PyQt6.QtCore import Qt, QCoreApplication, QPoint, pyqtSlot, QSize
 from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QFormLayout,
     QLineEdit, QCheckBox, QComboBox, QHBoxLayout,
@@ -13,6 +13,15 @@ from ..core import app_globals as ag
 from .foldable import Foldable
 from .ui_pref import Ui_prefForm
 
+DLG_SIZE = QSize(385, 391)
+
+SIZE_RATIO = {
+    '8pt': 0.90,
+    '10pt': 1.00,
+    '12pt': 1.10,
+    '14pt': 1.20,
+}
+
 class Preferences(QWidget):
 
     def __init__(self, parent=None):
@@ -23,12 +32,16 @@ class Preferences(QWidget):
 
         self.start_pos = QPoint()
         self.cur_theme = ''
+        self.cur_font_size = ''
+        self.rejected = True
+        self.cur_size = QSize()
 
         self.set_inputs()
 
         form_layout = QFormLayout()
 
         form_layout.addRow('Color theme:', self.themes)
+        form_layout.addRow('Font size:', self.fontsize)
         form_layout.addRow('Path to DBs:', self.db_path)
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
@@ -58,8 +71,11 @@ class Preferences(QWidget):
         self.mouseMoveEvent = self.move_self
         self.ui.accept_pref.clicked.connect(self.accept)
         self.ui.accept_pref.setShortcut(QKeySequence(Qt.Key.Key_Return))
-        self.ui.cancel.clicked.connect(self.reject)
-        self.ui.cancel.setShortcut(QKeySequence(Qt.Key.Key_Escape))
+        self.ui.cancel.clicked.connect(self.close)
+        ag.popups["Preferences"] = self
+
+    def sizeHint(self):
+        return self.cur_size
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -72,10 +88,12 @@ class Preferences(QWidget):
 
     def reject(self):
         theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
+        if self.cur_font_size != self.fontsize.currentText():
+            tug.save_app_setting(FONT_SIZE=self.cur_font_size)
+            self.set_theme(self.cur_theme)
+            return
         if theme_key != self.cur_theme:
             self.set_theme(self.cur_theme)
-        ag.prefs = None
-        super().close()
 
     def accept(self):
         settings = {
@@ -99,8 +117,8 @@ class Preferences(QWidget):
         tug.create_dir(Path(self.report_path.text()))
         tug.create_dir(Path(self.file_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
-        ag.prefs = None
-        super().close()
+        self.rejected = False
+        self.close()
 
     def set_inputs(self):
         self.themes = QComboBox()
@@ -111,6 +129,14 @@ class Preferences(QWidget):
         )
         self.themes.setCurrentText(_theme)
         self.themes.currentIndexChanged.connect(self.change_theme)
+
+        self.fontsize = QComboBox()
+        for key in tug.FONT_SIZE:
+            self.fontsize.addItem(key)
+        self.cur_font_size = tug.get_app_setting('FONT_SIZE', '10pt')
+        self.fontsize.setCurrentText(self.cur_font_size)
+        self.cur_size = DLG_SIZE * SIZE_RATIO[self.cur_font_size]
+        self.fontsize.currentIndexChanged.connect(self.change_font_size)
 
         pp = Path('~/fileo').expanduser()
         self.db_path = QLineEdit()
@@ -178,12 +204,19 @@ class Preferences(QWidget):
         elif x_val < val:
             self.last_file_list_length.setText(str(x_val))
 
-    def change_theme(self, idx: int):
-        theme_key = self.themes.currentData(Qt.ItemDataRole.UserRole)
+    def change_font_size(self, idx: int):
+        f_size = self.fontsize.currentText()
+        tug.save_app_setting(FONT_SIZE=f_size)
+        self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
+        self.cur_size = DLG_SIZE * SIZE_RATIO[f_size]
         self.adjustSize()
-        self.set_theme(theme_key)
+        ag.app.adjustSize()
+        ag.signals_.font_size_changed.emit(f_size)
 
-    def set_theme(self, theme_key: str):
+    def change_theme(self, idx: int):
+        self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
+
+    def set_theme(self, theme_key):
         log_qss = tug.config.get("save_prepared_qss", False)
         styles = tug.prepare_styles(theme_key, to_save=log_qss)
         QCoreApplication.instance().setStyleSheet(styles)
@@ -212,8 +245,29 @@ class Preferences(QWidget):
                 else:
                     btn.setIcon(tug.get_icon(icons[0]))
 
+        def set_checked_tool_btn():
+            checkable_btn = {
+                ag.appMode.DIR: ag.app.ui.btnDir,
+                ag.appMode.FILTER: ag.app.ui.btnFilter,
+                ag.appMode.FILTER_SETUP: ag.app.ui.btnFilterSetup,
+            }
+            mode = (ag.mode if ag.mode in
+                    (ag.appMode.DIR, ag.appMode.FILTER, ag.appMode.FILTER_SETUP)
+                    else ag.prev_mode)
+            btn = checkable_btn.get(mode, ag.app.ui.btnDir)
+            btn.setIcon(tug.get_icon(btn.objectName(), 1))
+            btn.setChecked(True)
+
         set_icons_from_list(ag.buttons)
         set_icons_from_list(ag.note_buttons)
 
         pix = tug.get_icon("busy", 0)
         ag.app.ui.busy.setPixmap(pix.pixmap(16, 16))
+        set_checked_tool_btn()
+
+    @pyqtSlot()
+    def close(self) -> bool:
+        ag.popups.pop("Preferences")
+        if self.rejected:
+            self.reject()
+        return super().close()

@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, QPoint, pyqtSlot
 from PyQt6.QtGui import (QMouseEvent, QTextCursor, QAction,
     QKeySequence,
 )
-from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox
+from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox, QStyle
 
 from ..core import app_globals as ag, db_ut
 
@@ -118,25 +118,28 @@ class Locations(QTextBrowser):
                     return bb[1]
             return 0
 
+        def msg_callback(res: int):
+            if res == 1:
+                other_fileid = get_other_branch()
+                # logger.info(f'{file_id=}, {path}')
+                try:
+                    os.remove(str(Path(path)))  # in DB path saved in posix format, str(Path) -> native to os
+                except FileNotFoundError:
+                    pass
+                finally:   # delete from DB independent on os.remove result
+                    # logger.info(f'{file_id=} - {other_fileid=}')
+                    db_ut.delete_file(file_id)
+                    ag.file_data.set_data(other_fileid)
+
         file_id = self.branch[1]
         path = db_ut.get_file_path(file_id)
-        res = ag.show_message_box(
+        ag.show_message_box(
             'Removing duplicate file',
             'A file will be deleted to the trash. Please confirm',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-            icon=QMessageBox.Icon.Question
+            icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
+            callback=msg_callback
         )
-        if res == QMessageBox.StandardButton.Ok:
-            other_fileid = get_other_branch()
-            # logger.info(f'{file_id=}, {path}')
-            try:
-                os.remove(str(Path(path)))  # in DB path saved in posix format, str(Path) -> native to os
-            except FileNotFoundError:
-                pass
-            finally:   # delete from DB independent on os.remove result
-                # logger.info(f'{file_id=} - {other_fileid=}')
-                db_ut.delete_file(file_id)
-                ag.file_data.set_data(other_fileid)
 
     def select_line_under_mouse(self) -> QTextCursor:
         txt_cursor = self.cursorForPosition(self.cur_pos)

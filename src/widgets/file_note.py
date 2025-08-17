@@ -5,8 +5,8 @@ from pathlib import Path
 import re
 
 from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
-from PyQt6.QtGui import QDesktopServices, QResizeEvent, QAction
-from PyQt6.QtWidgets import QWidget, QApplication
+from PyQt6.QtGui import QDesktopServices, QResizeEvent, QAction, QKeySequence
+from PyQt6.QtWidgets import QWidget, QApplication, QMenu
 
 from ..core import app_globals as ag, db_ut
 from .ui_file_note import Ui_fileNote
@@ -119,14 +119,22 @@ class fileNote(QWidget):
             delete_notes_from_db()
 
         filepath = Path(db_ut.get_file_path(self.file_id))
-        menu = self.ui.textBrowser.createStandardContextMenu()
-        acts = menu.actions()
-        acts[1].setEnabled(bool(self.ui.textBrowser.anchorAt(pos)))
+        menu = QMenu(self)
+        menu.setStyleSheet(tug.get_dyn_qss('note_menu'))
+        if self.ui.textBrowser.textCursor().selectedText():
+            act_copy = QAction("Copy\tCtrl+C")
+            act_copy.setShortcut(QKeySequence.StandardKey.Copy)
+            menu.addAction(act_copy)
+            menu.addSeparator()
+        anch = self.ui.textBrowser.anchorAt(pos)
+        if anch:
+            menu.addAction("Copy Link Location")
+            menu.addSeparator()
+        menu.addAction("Select All\tCtrl+A")
         menu.addSeparator()
-        act_open = QAction('Open file')
-        act_open.setEnabled(self.ui.textBrowser.anchorAt(pos).startswith('fileid:'))
-        menu.addAction(act_open)
-        menu.addSeparator()
+        if anch.startswith('fileid:'):
+            menu.addAction("Open file")
+            menu.addSeparator()
         menu.addAction('Copy HTML')
         menu.addAction(f'Save "{filepath.name}" notes')
         act = menu.exec(self.ui.textBrowser.mapToGlobal(pos))
@@ -135,6 +143,10 @@ class fileNote(QWidget):
                 save_notes_to_file()
             elif 'Link' in act.text():
                 copy_link()
+            elif 'All' in  act.text():
+                self.ui.textBrowser.selectAll()
+            elif act.text().startswith('Copy\t'):
+                self.ui.textBrowser.copy()
             elif act.text() == 'Copy HTML':
                 copy_html()
             elif act.text() == 'Open file':

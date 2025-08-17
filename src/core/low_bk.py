@@ -1,6 +1,7 @@
 # from loguru import logger
 import json
 from pathlib import Path
+from datetime import datetime
 import pickle
 import re
 
@@ -10,7 +11,7 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
 )
 from PyQt6.QtGui import QDesktopServices, QFocusEvent, QAction
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QMenu, QToolButton,
+    QFileDialog, QMessageBox, QMenu, QToolButton, QStyle,
 )
 
 from . import (db_ut, app_globals as ag, reports as rep,
@@ -97,7 +98,7 @@ def set_user_action_handlers():
             ag.show_message_box(
                 'Action not implemented',
                 f'Action name "{err}" not implemented',
-                icon=QMessageBox.Icon.Warning
+                icon=QStyle.StandardPixmap.SP_MessageBoxWarning
             )
 
     return execute_action
@@ -179,7 +180,7 @@ def remove_files_from_recent():
     show_recent_files()
 
 def save_db_list_at_close():
-    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
+    db_open = ag.popups["OpenDB"] if "OpenDB" in ag.popups else OpenDB(ag.app)
     db_open.save_db_list(ag.db.path)
 
 def show_db_list():
@@ -187,20 +188,20 @@ def show_db_list():
     manage the list of db files,
     select DB to open
     """
-    if tug.open_db:
-        tug.open_db.close()
+    if "OpenDB" in ag.popups:
+        ag.popups["OpenDB"].close()
         return
 
-    tug.open_db = OpenDB(ag.app)
-    tug.open_db.move(48, 20)
-    tug.open_db.resize(
+    open_db = OpenDB(ag.app)
+    open_db.move(48, 20)
+    open_db.resize(
         min(ag.app.width() // 2, MAX_WIDTH_DB_DIALOG),
         ag.app.height() - 60)
-    tug.open_db.show()
-    tug.open_db.listDB.setFocus()
+    open_db.show()
+    open_db.listDB.setFocus()
 
 def create_open_db():
-    db_open = tug.open_db if tug.open_db else OpenDB(ag.app)
+    db_open = ag.popups["OpenDB"] if "OpenDB" in ag.popups else OpenDB(ag.app)
     db_open.add_db()
 
 def init_db(db_path: str):
@@ -216,13 +217,13 @@ def scan_disk():
     search for files with a given extension
     in the selected folder and its subfolders
     """
-    if not ag.db.conn or ag.take_files:
+    if not ag.db.conn or "diskScanner" in ag.popups:
         return
-    ag.take_files = diskScanner(ag.app)
-    ag.take_files.move(
-        (ag.app.width()-ag.take_files.width()) // 4,
-        (ag.app.height()-ag.take_files.height()) // 4)
-    ag.take_files.show()
+    take_files = diskScanner(ag.app)
+    take_files.move(
+        (ag.app.width()-take_files.width()) // 4,
+        (ag.app.height()-take_files.height()) // 4)
+    take_files.show()
 
 def get_branch(dir_id: int) -> list:
     branch = [dir_id]
@@ -286,6 +287,7 @@ def save_same_names_report(rep: list):
         tug.get_app_setting('DEFAULT_REPORT_PATH', str(pp))
     ) / f"same_names.{ag.app.ui.db_name.text()}.log"
     with open(path, "w") as out:
+        out.write(f'Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
         out.write(f'DB path: {ag.db.path}\n')
         out.write(
             'each line contains:\n    '
@@ -348,7 +350,7 @@ def srch_files_by_note(param: str):
     else:
         ag.show_message_box('Search in notes',
             f'Text "{param[:-3]}" not found in notes!',
-            icon=QMessageBox.Icon.Warning)
+            icon=QStyle.StandardPixmap.SP_MessageBoxWarning)
 
 def srch_files_common(param: str, search_in) -> int:
     srch, key = param[:-3],param[-3:]
@@ -372,9 +374,7 @@ def srch_files_common(param: str, search_in) -> int:
             db_ut.save_to_temp('file_srch', fid)
             last_id = fid
 
-    show_files(db_ut.get_found_files())
-    model = ag.file_list.model()
-    return model.rowCount()
+    return show_files(db_ut.get_found_files(), 0, False)
 
 def find_files_by_name(param: str):
     row_cnt = srch_files_common(param, db_ut.get_file_names())
@@ -385,27 +385,27 @@ def find_files_by_name(param: str):
     else:
         ag.show_message_box('Search files',
             f'File "{param[:-3]}" not found!',
-            icon=QMessageBox.Icon.Warning)
+            icon=QStyle.StandardPixmap.SP_MessageBoxWarning)
 
 def set_preferences():
-    if ag.prefs:
+    if "Preferences" in ag.popups:
         return
-    ag.prefs = preferences.Preferences(ag.app)
-    ag.prefs.move(
-        (ag.app.width()-ag.prefs.width()) // 3,
-        (ag.app.height()-ag.prefs.height()) // 3
+    prefs = preferences.Preferences(ag.app)
+    prefs.move(
+        (ag.app.width()-prefs.width()) // 3,
+        (ag.app.height()-prefs.height()) // 3
     )
-    ag.prefs.show()
+    prefs.show()
 
 def show_about():
-    if ag.about_dialog:
+    if "AboutDialog" in ag.popups:
         return
-    ag.about_dialog = about.AboutDialog(ag.app)
-    ag.about_dialog.move(
-        (ag.app.width()-ag.about_dialog.width()) // 3,
-        (ag.app.height()-ag.about_dialog.height()) // 3
+    about_dialog = about.AboutDialog(ag.app)
+    about_dialog.move(
+        (ag.app.width()-about_dialog.width()) // 3,
+        (ag.app.height()-about_dialog.height()) // 3
     )
-    ag.about_dialog.show()
+    about_dialog.show()
 
 #region Common
 def save_branch(index: QModelIndex):
@@ -603,7 +603,7 @@ def get_recent_files() -> list:
     ag.set_mode(ag.appMode.RECENT_FILES)
     return (db_ut.get_file(id_) for id_ in ag.recent_files[::-1])
 
-def show_files(files, cur_file: int = 0):
+def show_files(files, cur_file: int = 0, show_empty: bool = True) -> int:
     """
     populate file's model
     :@param files - list of file
@@ -613,10 +613,12 @@ def show_files(files, cur_file: int = 0):
         ag.mode is not ag.appMode.RECENT_FILES
     )
     model = fill_file_model(files)
-    set_file_model(model)
-    ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
-
-    set_current_file(cur_file)
+    files = model.rowCount()
+    if files or show_empty:
+        set_file_model(model)
+        ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
+        set_current_file(cur_file)
+    return files
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
@@ -746,7 +748,7 @@ def open_file_by_model_index(index: QModelIndex):
             (f"There are {cnt} files with the same context\n"
              "It is highly recommended to remove duplicate files;\n"
              "the file will not be opened."),
-             icon=QMessageBox.Icon.Warning
+             icon=QStyle.StandardPixmap.SP_MessageBoxWarning
         )
         return
     if open_with_url(full_file_name(index)):
@@ -768,34 +770,36 @@ def delete_files():
     """
     delete file from DB
     """
+    def msg_callback(res: int):
+        if res == 1:
+            edit_state = ag.file_data.get_edit_state()
+            ed_file_id = edit_state[1] if edit_state[0] else 0
+            row = ag.file_list.model().rowCount()
+            skip_edited = False
+            for idx in ag.file_list.selectionModel().selectedRows(0):
+                del_file_id = idx.data(Qt.ItemDataRole.UserRole)
+                if del_file_id == ed_file_id:
+                    skip_edited = True
+                    continue
+                row = min(row, idx.row())
+                db_ut.delete_file(del_file_id)
+            if skip_edited:
+                ag.show_message_box(
+                    'Not deleted',
+                    f'File "{db_ut.get_file_name(ed_file_id)}", '
+                    'a note is editing')
+            post_delete_file(row)
+
     if not ag.file_list.selectionModel().hasSelection():
         return
 
-    res = ag.show_message_box(
+    ag.show_message_box(
         'delete file from DB',
         'Selected files will be deleted. Please confirm',
         btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
-        icon=QMessageBox.Icon.Question
+        icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
+        callback=msg_callback
     )
-
-    if res == QMessageBox.StandardButton.Ok:
-        edit_state = ag.file_data.get_edit_state()
-        ed_file_id = edit_state[1] if edit_state[0] else 0
-        row = ag.file_list.model().rowCount()
-        skip_edited = False
-        for idx in ag.file_list.selectionModel().selectedRows(0):
-            del_file_id = idx.data(Qt.ItemDataRole.UserRole)
-            if del_file_id == ed_file_id:
-                skip_edited = True
-                continue
-            row = min(row, idx.row())
-            db_ut.delete_file(del_file_id)
-        if skip_edited:
-            ag.show_message_box(
-                'Not deleted',
-                f'File "{db_ut.get_file_name(ed_file_id)}", '
-                'a note is editing')
-        post_delete_file(row)
 
 def remove_files():
     '''
@@ -972,32 +976,31 @@ def _import_files(fp: QTextStream, target: QModelIndex):
 
 #region  Files - Dirs
 def open_manualy(index: QModelIndex):
-    btn = ag.show_message_box(
+    def msg_callback(res: int):
+        if res == 1:
+            path = full_file_name(index)
+            i_path = Path(path)
+            d_path = i_path.parent
+            while not d_path.exists():
+                d_path = d_path.parent
+            filename, ok = QFileDialog.getOpenFileName(ag.app,
+                directory=str(d_path)
+            )
+
+            if ok:
+                f_path = Path(filename)
+                path_id = db_ut.get_path_id(f_path.parent.as_posix())
+                id = index.data(Qt.ItemDataRole.UserRole)
+                db_ut.update_file_name_path(id, path_id, f_path.name)
+                open_with_url(str(f_path))
+
+    ag.show_message_box(
         'File cannot be opened',
         'Please, select file',
-        btn=QMessageBox.StandardButton.Open |
-        QMessageBox.StandardButton.Cancel,
-        icon=QMessageBox.Icon.Question
+        btn=QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Cancel,
+        icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
+        callback=msg_callback
     )
-
-    if btn == QMessageBox.StandardButton.Cancel:
-        return False
-    if btn == QMessageBox.StandardButton.Open:
-        path = full_file_name(index)
-        i_path = Path(path)
-        d_path = i_path.parent
-        while not d_path.exists():
-            d_path = d_path.parent
-        filename, ok = QFileDialog.getOpenFileName(ag.app,
-            directory=str(d_path)
-        )
-
-        if ok:
-            f_path = Path(filename)
-            path_id = db_ut.get_path_id(f_path.parent.as_posix())
-            id = index.data(Qt.ItemDataRole.UserRole)
-            db_ut.update_file_name_path(id, path_id, f_path.name)
-            open_with_url(str(f_path))
 
 def create_child_dir():
     if ag.app.focusWidget() is not ag.dir_list:

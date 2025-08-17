@@ -6,7 +6,7 @@ from PyQt6.QtNetwork import (QNetworkRequest,
     QNetworkAccessManager, QSslConfiguration, QSsl,
     QNetworkReply,
 )
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QStyle
 
 from . import app_globals as ag
 
@@ -39,7 +39,7 @@ def installer_update_replay(replay: QNetworkReply, silently: bool):
                     'Fileo',
                     "Something went wrong, can't find any app.version in the repository. "
                     'Please try again later.',
-                    icon=QMessageBox.Icon.Critical
+                    icon=QStyle.StandardPixmap.SP_MessageBoxCritical
                 )
             return
         ver = filename[filename.find('.')+1:filename.rfind('.')]
@@ -61,14 +61,14 @@ def installer_update_replay(replay: QNetworkReply, silently: bool):
             )
 
 def open_sourceforge(ver: str):
-    msgbox = QMessageBox(ag.app)
-    msgbox.setWindowTitle('Fileo')
-    msgbox.setText(f'New version "{ver}" available.',)
-    go_btn = msgbox.addButton('Go to download', QMessageBox.ButtonRole.YesRole)
-    msgbox.addButton('Cancel', QMessageBox.ButtonRole.YesRole)
-    msgbox.setIcon(QMessageBox.Icon.Information)
+    def msg_callback(res: int):
+        if res == 1:
+            QDesktopServices.openUrl(QUrl(URL))
 
-    msgbox.exec()
-
-    if msgbox.clickedButton() is go_btn:
-        QDesktopServices.openUrl(QUrl(URL))
+    ag.show_message_box(
+        "Fileo",
+        f'New version "{ver}" available.',
+        btn=QMessageBox.StandardButton.Apply | QMessageBox.StandardButton.Cancel,
+        icon=QStyle.StandardPixmap.SP_MessageBoxInformation,
+        callback=msg_callback
+    )

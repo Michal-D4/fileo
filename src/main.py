@@ -6,17 +6,17 @@ from loguru import logger
 
 from PyQt6.QtCore import Qt, pyqtSlot, QItemSelectionModel
 from PyQt6.QtGui import QKeySequence, QShortcut
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication
 
 from . import tug
-from .core import app_globals as ag, sho
-
+from .core import app_globals as ag
+from .core.sho import shoWindow
 
 # @logger.catch           # to have traceback
 def start_app(app: QApplication, db_name: str, first_instance: bool):
     from .core.win_win import set_app_icon
 
-    @pyqtSlot(QWidget, QWidget)
+    @pyqtSlot()
     def tab_toggle_focus():
         def reset_dir_selection():
             selection = sel_model.selection()
@@ -51,7 +51,7 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
         logger.exception(f"styleSheet Error?: {e.args};", exc_info=True)
         return
 
-    main_window = sho.shoWindow(db_name, first_instance)
+    main_window = shoWindow(db_name, first_instance)
 
     main_window.show()
 

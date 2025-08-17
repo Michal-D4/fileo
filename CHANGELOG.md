@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.50 - 2025, 17 August
+* Created four new color themes: "Brown", "Sand Brown", "Dark Green", "Deep Blue"
+* The choice of color theme is separated from the choice of font size
+* Many other small enhancement
+
 ## 1.3.49 - 2025, 28 June
 * Folder History: Now you can select a folder from the history list.
 * Removed instance control. I don't see the need for it.

@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QSize, QPoint
+from PyQt6.QtCore import Qt, QSize, QPoint, pyqtSlot
 from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut, QMouseEvent
 from PyQt6.QtWidgets import QWidget, QStyle
 
@@ -30,13 +30,13 @@ class AboutDialog(QWidget, Ui_aboutForm):
 
         f11 = QShortcut(QKeySequence(Qt.Key.Key_F11), self)
         f11.activated.connect(self.get_py_db_versions)
-        esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        esc.activated.connect(self.close)
+        ag.popups["AboutDialog"] = self
 
         self.ok_btn.clicked.connect(self.close)
         self.ok_btn.setShortcut(QKeySequence(Qt.Key.Key_Return))
 
         self.mouseMoveEvent = self.move_self
+        ag.signals_.font_size_changed.connect(lambda: self.adjustSize())
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -65,7 +65,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
         else:
             db_ver = ''
 
-        mode = 'frozen' if getattr(sys, 'frozen', False) else 'packaged'
+        mode = 'frozen' if getattr(sys, 'frozen', False) else 'python'
 
         self.set_title((py_ver, db_ver, mode))
 
@@ -75,6 +75,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
         else:
             self.ttl_label.setText('About Fileo')
 
+    @pyqtSlot()
     def close(self) -> bool:
-        ag.about_dialog = None
+        ag.popups.pop("AboutDialog")
         return super().close()

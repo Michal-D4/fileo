@@ -2,7 +2,7 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject, QSize
 from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
     QResizeEvent, QKeySequence, QShortcut,
 )
@@ -149,13 +149,16 @@ class shoWindow(QMainWindow):
         self.ui.noteHolder.setMaximumHeight(int(hh))
 
     def restore_geometry(self):
-        geometry = tug.get_app_setting("MainWindowGeometry")
-        if isinstance(geometry, QRect):
-            self.setGeometry(geometry)
+        self.rect = tug.get_app_setting("MainWindowGeometry")
+        if isinstance(self.rect, QRect):
+            self.setGeometry(self.rect)
             if not self.first_instance:
                 self.move(self.x() + 40, self.y() + 40)
 
         setup_ui(self)
+
+    def sizeHint(self):
+        return QSize(self.rect.width(), self.rect.height())
 
     def set_extra_buttons(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Prev folder')

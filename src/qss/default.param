@@ -15,7 +15,6 @@ $redIcon~#FF0038
 $svgAlt~#6F5699
 $svgFill~#616161
 $svgDisable~#A0A0A0
-$svgFill2~#B3B3B3
 $toolIcon~#808080
 $iconFill~#C6D9AF
 $iconStroke~#538CAA
@@ -25,18 +24,17 @@ $borderColor~#A0A0A0
 $closeHoverBG~#DE1B2E
 $fileFrameBG~#FAFAFA
 $headerBG~#E3E3E3
-$headerBG2~#EAEAEA
-$headerBG3~#DDDDDD
+$noteHeadBG~#EAEAEA
+$pagesHeadBG~#DDDDDD
+$itemDisabled~#DDDDDD
 $hoverBG~#99CCCC
-*
-$hoverBtnBG~#B2D6DD
-$hoverBG2~#C6C6C6
+$itemHoverBG~#99CCCC
 *
 $innerBorder~#E3E3E3
 $inputBG~#FFFFFF
 $leftPaneBG~#F3F3F3
-$notActiveItemBG~#E4E6F1
-$scrollHadle~#888888
+$notActiveItemBG~#A0A0A0
+$scrollHandle~#888888
 $selectedBG~#2261C3
 $selectorActive~#424242
 $selectorMark~#424242
@@ -46,7 +44,7 @@ $statusBG~#6F5699
 $statusBorder~#6F5699
 $statusHoverBG~#806AA4
 $statusText~#FFFFFF
-$textColor2~#919191
+$selectorPassive~#717171
 $linkText~#2B79D7
 $textColor~#616161
 $selectedText~#FFFFFF
@@ -54,7 +52,3 @@ $toolBarBG~#2C2C2C
 $toolBorder~#2C2C2C
 $toolCheckMark~#FFFFFF
 $topBarBG~#B3B3B3
-$topFrameBG~#E3E3E3
-* ----------------------------------
-$normalSize~10pt
-$bigSize~12pt

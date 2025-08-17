@@ -24,5 +24,6 @@ class AppSignals(QObject):
     refresh_note_list = pyqtSignal()
 
     color_theme_changed = pyqtSignal()
+    font_size_changed = pyqtSignal(str)
 
     author_widget_title = pyqtSignal(str)

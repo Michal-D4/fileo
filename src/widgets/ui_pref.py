@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\widgets\pref.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\pref.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -53,11 +53,21 @@ class Ui_prefForm(object):
         spacerItem = QtWidgets.QSpacerItem(167, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.accept_pref = QtWidgets.QPushButton(parent=self.pref_btns)
-        self.accept_pref.setMinimumSize(QtCore.QSize(95, 28))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.accept_pref.sizePolicy().hasHeightForWidth())
+        self.accept_pref.setSizePolicy(sizePolicy)
+        self.accept_pref.setMinimumSize(QtCore.QSize(0, 0))
         self.accept_pref.setObjectName("accept_pref")
         self.horizontalLayout_2.addWidget(self.accept_pref)
         self.cancel = QtWidgets.QPushButton(parent=self.pref_btns)
-        self.cancel.setMinimumSize(QtCore.QSize(95, 28))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.cancel.sizePolicy().hasHeightForWidth())
+        self.cancel.setSizePolicy(sizePolicy)
+        self.cancel.setMinimumSize(QtCore.QSize(0, 0))
         self.cancel.setObjectName("cancel")
         self.horizontalLayout_2.addWidget(self.cancel)
         self.verticalLayout_2.addWidget(self.pref_btns)

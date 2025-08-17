@@ -1,5 +1,5 @@
 # from loguru import logger
-from PyQt6.QtCore import Qt, QDate, QPoint
+from PyQt6.QtCore import Qt, QDate, QPoint, QSize
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget
 
@@ -8,6 +8,14 @@ from .ui_set_filter import Ui_filterSetup
 from .. import tug
 
 UNIX_EPOCH = 2440588   # julian date of 1970-01-01
+DLG_SIZE = QSize(479, 546)
+
+SIZE_RATIO = {
+    '8pt': 1.00,
+    '10pt': 1.00,
+    '12pt': 1.05,
+    '14pt': 1.10,
+}
 
 def unix_date(ts: float) -> int:
     return int((ts - UNIX_EPOCH) * 86400)
@@ -19,6 +27,7 @@ class FilterSetup(QWidget):
 
         self.single_folder = False
         self.start_pos = QPoint()
+        self.checked_btn = -1
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
@@ -37,8 +46,7 @@ class FilterSetup(QWidget):
         self.ui.after_date.setDisplayFormat("yyyy-MM-dd")
         self.ui.before_date.setDisplayFormat("yyyy-MM-dd")
 
-        self.ui.selected_dir.checkStateChanged.connect(self.dir_check)
-        self.ui.no_folder.checkStateChanged.connect(self.no_dir_check)
+        self.ui.file_buttons.idClicked.connect(self.file_button_clicked)
         self.ui.selected_tag.checkStateChanged.connect(self.toggle_tag_check)
         self.ui.after.clicked.connect(self.after_clicked)
         self.ui.before.clicked.connect(self.before_clicked)
@@ -55,6 +63,21 @@ class FilterSetup(QWidget):
         self.ui.btnApply.clicked.connect(self.apply_clicked)
 
         self.mouseMoveEvent = self.move_self
+        f_size = tug.get_app_setting('FONT_SIZE', '10pt')
+        self.cur_size = DLG_SIZE * SIZE_RATIO[f_size]
+        ag.signals_.font_size_changed.connect(self.font_changed)
+
+    def file_button_clicked(self, id: int):
+        if self.checked_btn != -1:
+            self.ui.file_buttons.button(self.checked_btn).setChecked(False)
+        self.checked_btn = -1 if self.checked_btn == id else id
+
+    def sizeHint(self):
+        return self.cur_size
+
+    def font_changed(self, font_size: str):
+        self.cur_size = DLG_SIZE * SIZE_RATIO[font_size]
+        self.adjustSize()
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -64,14 +87,6 @@ class FilterSetup(QWidget):
                 self.move(self.pos() + dist)
                 e.accept()
             self.start_pos = pos_
-
-    def dir_check(self, state: Qt.CheckState):
-        if state is Qt.CheckState.Checked:
-            self.ui.no_folder.setCheckState(Qt.CheckState.Unchecked)
-
-    def no_dir_check(self, state: Qt.CheckState):
-        if state is Qt.CheckState.Checked:
-            self.ui.selected_dir.setCheckState(Qt.CheckState.Unchecked)
 
     def toggle_tag_check(self, state: Qt.CheckState):
         self.ui.all_btn.setEnabled(state is Qt.CheckState.Checked)
@@ -118,9 +133,9 @@ class FilterSetup(QWidget):
     def rating_clicked(self, st: bool):
         self.ui.rating_edit.setEnabled(st)
 
-    def done_clicked(self) -> bool:
+    def done_clicked(self):
         ag.signals_.filter_setup_closed.emit()
-        return self.close()
+        self.close()
 
     def apply_clicked(self):
         ag.signals_.user_signal.emit("filter_changed")
@@ -139,6 +154,7 @@ class FilterSetup(QWidget):
         self.checks = {
             'dir': self.ui.selected_dir.isChecked(),
             'no_dir': self.ui.no_folder.isChecked(),
+            'created_here': self.ui.createdHere.isChecked(),
             'tag': self.ui.selected_tag.isChecked(),
             'ext': self.ui.selected_ext.isChecked(),
             'author': self.ui.selected_author.isChecked(),
@@ -164,7 +180,10 @@ class FilterSetup(QWidget):
             self.single_folder = False
             if self.checks['no_dir']:
                 db_ut.temp_files_no_dir()
-            return
+                return
+            if self.checks['created_here']:
+                db_ut.temp_files_created_here()
+                return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.single_folder = (len(idxs) == 1)
         dirs = []
@@ -259,6 +278,7 @@ class FilterSetup(QWidget):
         settings = {
             "DIR_CHECK": self.ui.selected_dir.isChecked(),
             "SUB_DIR_CHECK": self.ui.subDirs.isChecked(),
+            "CREATED_HERE": self.ui.createdHere.isChecked(),
             "TAG_CHECK": self.ui.selected_tag.isChecked(),
             "IS_ALL": self.ui.all_btn.isChecked(),
             "EXT_CHECK": self.ui.selected_ext.isChecked(),
@@ -281,6 +301,7 @@ class FilterSetup(QWidget):
     def restore_filter_settings(self):
         self.ui.selected_dir.setChecked(ag.get_db_setting("DIR_CHECK", False))
         self.ui.subDirs.setChecked(ag.get_db_setting("SUB_DIR_CHECK", False))
+        self.ui.createdHere.setChecked(ag.get_db_setting("CREATED_HERE", False))
         self.ui.selected_tag.setChecked(ag.get_db_setting("TAG_CHECK", False))
         is_all = ag.get_db_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)

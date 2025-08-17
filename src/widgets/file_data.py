@@ -243,6 +243,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             ag.file_list.show()
 
     def srch_notes(self):
+        if "srchInNotes" in ag.popups:
+            return
         sn = srchInNotes(self)
         sn.move(self.srch_in_notes.pos() - QPoint(sn.width(), -10))
         sn.show()
@@ -277,11 +279,16 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.start_edit(fileNote(file_id, 0))
 
     def start_edit(self, note: fileNote):
-        # logger.info(f'editing: {self.notes.is_editing()}')
-        if self.notes.is_editing():
-            ag.message_in_status("Only one note editor can be opened at a time")
+        def call_back():
             self.edit_btns.show()
             self.switch_page(Page.EDIT)
+
+        if self.notes.is_editing():
+            ag.show_message_box(
+                "There is an active editor",
+                "Only one note editor can be opened at a time",
+                callback=call_back
+            )
             return
         self.editor.start_edit(note)
         self.show_editor()

@@ -22,8 +22,7 @@ class srchFiles(QWidget):
         self.setup_ui()
         self.srch_pattern.returnPressed.connect(self.search_files)
 
-        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.close)
+        ag.popups['srchFiles'] = self
 
     def setup_ui(self):
         self.srch_pattern = QLineEdit()
@@ -74,7 +73,7 @@ class srchFiles(QWidget):
             self.word.isChecked()
         )
         if not name:
-            self.search_err_msg('Please enter file name')
+            ag.show_message_box("File not found", "Please enter file name or its part")
             return
 
         ag.save_db_settings(SEARCH_FILE=(name, case, word))
@@ -83,11 +82,6 @@ class srchFiles(QWidget):
         )
         self.close()
 
-    def search_err_msg(self, msg):
-        dlg = QMessageBox(ag.app)
-        dlg.setWindowTitle('File not found')
-        dlg.setText(msg)
-        dlg.setStandardButtons(QMessageBox.StandardButton.Close)
-        dlg.setIcon(QMessageBox.Icon.Warning)
-        dlg.exec()
-        self.srch_pattern.setFocus()
+    def close(self) -> bool:
+        ag.popups.pop('srchFiles')
+        return super().close()

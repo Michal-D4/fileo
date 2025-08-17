@@ -4,25 +4,26 @@ ico = "icons.toml"
 qss = "default.qss"
 param = "default.param"
 
-[Dark_Theme_1]
-name = "Dark Theme 1"
+[dark_1]
+name = "Dark 1"
 param = "dark1.param"
 
-[Dark_Theme_2]
-name = "Dark Theme 2"
+[dark_2]
+name = "Dark 2"
 param = "dark2.param"
 
-[Default_Theme_Big]
-name = "Default Theme-Big"
-param = "default.param"
-extra = "big.param"
+[sand_brown]
+name = "Sand Brown"
+param = "sand_brown.param"
 
-[Dark_Theme_1_Big]
-name = "Dark Theme 1-Big"
-param = "dark1.param"
-extra = "big.param"
+[brown]
+name = "Brown"
+param = "brown.param"
 
-[Dark_Theme_2_Big]
-name = "Dark Theme 2-Big"
-param = "dark2.param"
-extra = "big.param"
+[deep_blue]
+name = "Deep Blue"
+param = "deep_blue.param"
+
+[dark_green]
+name = "Dark Green"
+param = "dark_green.param"

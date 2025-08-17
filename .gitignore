@@ -7,8 +7,12 @@ wheels/
 EXE/
 *.egg-info
 .history
+.vscode
 *.code-workspace
 
 # Virtual environments
 .venv
 .python-version
+.ignore
+.pijul
+labor

@@ -27,9 +27,7 @@ class editTag(QWidget):
 
         self.adjustSize()
         self.editor.editingFinished.connect(self.finish_edit)
-
-        escape = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
-        escape.activated.connect(self.cancel)
+        ag.popups["editTag"] = self
 
     @pyqtSlot()
     def finish_edit(self):
@@ -40,9 +38,10 @@ class editTag(QWidget):
         self.close()
 
     @pyqtSlot()
-    def cancel(self):
+    def close(self) -> bool:
+        ag.popups.pop("editTag")
         self.parent().browser.setFocus()
-        self.close()
+        return super().close()
 
 class aBrowser(QWidget):
     edit_item = pyqtSignal(str)
@@ -55,6 +54,8 @@ class aBrowser(QWidget):
         super().__init__(parent)
         self.read_only = read_only
         self.brackets = brackets
+        self.all_selected = False
+        self.save_sel_tags = []
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -181,6 +182,9 @@ class aBrowser(QWidget):
         self.show_in_bpowser()
 
     def select_all(self):
+        if not self.all_selected:
+            self.save_sel_tags = self.sel_tags
+        self.all_selected = True
         self.sel_tags = list(self.tags.keys())
         self.show_in_bpowser()
 
@@ -195,7 +199,9 @@ class aBrowser(QWidget):
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
         self.update_selected(href, mod)
-        self.change_selection.emit(self.sel_tags)
+        if not self.all_selected:
+            self.change_selection.emit(self.sel_tags)
+            self.all_selected = False
         self.show_in_bpowser()
 
     def item_to_edit(self, pos: QPoint):
@@ -218,6 +224,10 @@ class aBrowser(QWidget):
         return self.tags.get(self._to_edit, 0)
 
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
+        if self.all_selected:
+            self.sel_tags = self.save_sel_tags
+            self.show_in_bpowser()
+            return
         tref = href.toString()[1:]
         if mod is Qt.KeyboardModifier.ControlModifier:
             if tref in self.sel_tags:
