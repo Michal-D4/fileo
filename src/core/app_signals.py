@@ -15,8 +15,6 @@ class AppSignals(QObject):
 
     user_signal = pyqtSignal(str, name="user_signal")
 
-    app_mode_changed = pyqtSignal(int)
-
     delete_note = pyqtSignal(QWidget)
 
     start_edit_note = pyqtSignal(QWidget)

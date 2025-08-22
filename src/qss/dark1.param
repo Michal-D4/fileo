@@ -23,9 +23,10 @@ $itemHoverBG~#474747
 *
 $innerBorder~#414141
 $inputBG~#2A2D2E
+$inputText~#FFFFFF
 $leftPaneBG~#252526
 $notActiveItemBG~#37373D
-$scrollHandle~#919191
+$scrollHandle~#314848
 $selectedBG~#12395F
 $selectorActive~#E7E7E7
 $selectorMark~#E7E7E7
@@ -43,3 +44,5 @@ $toolBarBG~#333333
 $toolBorder~#333333
 $toolCheckMark~#FFFFFF
 $topBarBG~#2D2D2D
+$topBorder~#414141
+

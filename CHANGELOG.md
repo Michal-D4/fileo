@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.51 - 2025, 22 August
+* search duplicates only in non-empty files
+* some color themes enhancement
+* some other changes, improvements
+
 ## 1.3.50 - 2025, 17 August
 * Created four new color themes: "Brown", "Sand Brown", "Dark Green", "Deep Blue"
 * The choice of color theme is separated from the choice of font size

@@ -79,7 +79,7 @@ def file_duplicates():
         'y(hash, path, filename, id) as ('
             'select f.hash, p.path, f.filename, f.id '
             'from files f '
-            'join paths p on p.id = f.path) '
+            'join paths p on p.id = f.path where f.size > 0) '
         'select y.hash, y.path, y.filename, y.id from y '
         'join x on x.hash = y.hash '
         'where x.cnt > 1 order by y.hash'
@@ -89,7 +89,7 @@ def file_duplicates():
 def duplicate_count(file_id: int) -> int:
     sql = (
         'select count(*) from files where hash = '
-        '(select hash from files where id = ? and hash != "")'
+        '(select hash from files where id = ? and size > 0 and hash != "")'
     )
     return ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
 

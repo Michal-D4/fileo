@@ -9,6 +9,7 @@ from PyQt6.QtCore import QModelIndex
 from PyQt6.QtWidgets import QMessageBox, QStyle
 
 from ..widgets.cust_msgbox import CustomMessageBox
+from .. import tug
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QTreeView
@@ -27,7 +28,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.50'
+    return '1.3.51'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -60,29 +61,35 @@ class appMode(Enum):
     def __repr__(self) -> str:
         return f'{self.name}:{self.value}'
 
-prev_mode = appMode.DIR
 mode = appMode.DIR
+curr_btn_id: int = mode.value
+
+def set_checked_btn_icon():
+    if curr_btn_id == -1:
+        return
+    btn = app.ui.toolbar_btns.button(curr_btn_id)
+    btn.setIcon(tug.get_icon(btn.objectName(), int(btn.isChecked())))
 
 def set_mode(new_mode: appMode):
-    global mode, prev_mode
+    global mode, curr_btn_id
     if new_mode is mode:
         return
-    if mode.value <= appMode.RECENT_FILES.value:
-        prev_mode = mode
 
+    if mode is appMode.FILTER and new_mode.value > appMode.FILTER_SETUP.value:
+        dir_list.selectionModel().selectionChanged.disconnect(filter_dlg.dir_selection_changed)
     mode = new_mode
-    if prev_mode is mode:
-        prev_mode = appMode.DIR
-
     app.ui.app_mode.setText(mode.name)
+    new_check = new_mode.value
+    if new_check != curr_btn_id and new_check < appMode.RECENT_FILES.value:
+        set_checked_btn_icon()
+        curr_btn_id = new_check
+        set_checked_btn_icon()
 
 def switch_to_prev_mode():
-    global mode, prev_mode
     if mode.value >= appMode.RECENT_FILES.value:
-        old_mode, mode = mode, prev_mode
-        app.ui.app_mode.setText(mode.name)
-
-        signals_.app_mode_changed.emit(old_mode.value)
+        if curr_btn_id == appMode.FILTER.value:
+            dir_list.selectionModel().selectionChanged.connect(filter_dlg.dir_selection_changed)
+        set_mode(appMode(curr_btn_id))
 
 @dataclass(slots=True)
 class DB():

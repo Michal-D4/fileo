@@ -40,17 +40,18 @@ class shoWindow(QMainWindow):
         self.loader: QObject = None
 
         self.ui = Ui_Sho()
-
         self.ui.setupUi(self)
+        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
+
         self.create_fold_container()
 
         self.start_pos: QPoint = QPoint()
 
-        self.set_button_icons()
         self.connect_slots()
         self.set_extra_buttons()
 
         self.setup_global_widgets()
+        self.set_button_icons()
         self.restore_settings(db_name)
         bk_ut.bk_setup()
         self.set_busy(False)
@@ -125,6 +126,10 @@ class shoWindow(QMainWindow):
         return False
 
     def restore_container(self):
+        self.ui.field_menu.setIcon(tug.get_icon("more"))
+        ag.buttons.append((self.ui.field_menu, "more"))
+        bk_ut.set_menu_more(self)
+
         state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
@@ -139,8 +144,9 @@ class shoWindow(QMainWindow):
         )
         if mode.value > ag.appMode.RECENT_FILES.value:
             mode = ag.appMode.DIR
-        self.ui.app_mode.setText(mode.name)
-        low_bk.set_check_btn(mode)
+        btn = self.ui.toolbar_btns.button(mode.value)
+        btn.setChecked(True)
+        ag.set_mode(mode)
         self.toggle_filter_show()
 
     def restore_note_height(self):
@@ -254,19 +260,16 @@ class shoWindow(QMainWindow):
 
     def set_button_icons(self):
         m_icons = [
-            "btnDir", "btnFilter", "btnFilterSetup", "btnToggleBar",
-            "btnSetup", 'minimize', 'maximize', 'close'
+            "btnDir", "btnFilter", "btnFilterSetup",
+            "btnToggleBar", "btnSetup", 'minimize', 'maximize', 'close'
         ]
+        self.ui.toolbar_btns.setId(self.ui.btnDir, ag.appMode.DIR.value)
+        self.ui.toolbar_btns.setId(self.ui.btnFilter, ag.appMode.FILTER.value)
+        self.ui.toolbar_btns.setId(self.ui.btnFilterSetup, ag.appMode.FILTER_SETUP.value)
         for icon_name in m_icons:
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
             ag.buttons.append((btn, icon_name))
-
-        self.ui.field_menu.setIcon(tug.get_icon("more"))
-        ag.buttons.append((self.ui.field_menu, "more"))
-
-        self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
-        bk_ut.set_menu_more(self)
 
     def change_menu_more(self, new_ttl: str):
         menu = self.ui.more.menu()
@@ -274,7 +277,7 @@ class shoWindow(QMainWindow):
 
     def connect_slots(self):
         ag.app = bk_ut.self = self
-        self.connect_checkable()
+        self.ui.toolbar_btns.idClicked.connect(self.toggle_btn)
 
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
         self.ui.btnToggleBar.setShortcut(QKeySequence("Ctrl+B"))
@@ -295,14 +298,22 @@ class shoWindow(QMainWindow):
         ag.signals_.open_db_signal.connect(self.switch_db)
         ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
 
+    def toggle_btn(self, id: int):
+        logger.info(f'{id=}, {ag.appMode(id).name=}')
+        if id == ag.curr_btn_id:
+            return
+        ag.set_mode(ag.appMode(id))
+        self.toggle_filter_show()
+        low_bk.refresh_file_list()
+
     def db_list_show(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
             ag.signals_.user_signal.emit("MainMenu DB selector")
 
     @pyqtSlot()
     def close_filter_setup(self):
+        self.ui.btnFilter.setChecked(True)
         ag.set_mode(ag.appMode.FILTER)
-        self.click_checkable_button(ag.appMode.FILTER)
         low_bk.filtered_files()
 
     @pyqtSlot(str)
@@ -399,27 +410,11 @@ class shoWindow(QMainWindow):
         self.unsetCursor()
         self.start_pos = QPoint()
 
-    def connect_checkable(self):
-        checkable_btn = {
-            ag.appMode.DIR: self.ui.btnDir,
-            ag.appMode.FILTER: self.ui.btnFilter,
-            ag.appMode.FILTER_SETUP: self.ui.btnFilterSetup,
-        }
-        for key, btn in checkable_btn.items():
-            btn.clicked.connect(lambda state, bc=key:
-                self.click_checkable_button(bt_key=bc))
-
     def close_app(self):
         if self.is_busy:
             ag.stop_thread = True
             time.sleep(0.1)
         self.close()
-
-    def click_checkable_button(self, bt_key: ag.appMode):
-        low_bk.set_check_btn(bt_key)
-        ag.signals_.app_mode_changed.emit(ag.prev_mode.value)
-
-        self.toggle_filter_show()
 
     def toggle_filter_show(self):
         if not ag.db.conn:
@@ -432,10 +427,10 @@ class shoWindow(QMainWindow):
                 pos_.setX(15)
             if pos_.y() < 0:
                 pos_.setY(15)
-            if pos_.x() > self.width() - 30:
-                pos_.setX(self.width() - ag.filter_dlg.width())
-            if pos_.y() > self.height() - 30:
-                pos_.setY(self.height() - ag.filter_dlg.height())
+            if pos_.x() > self.width() - ag.filter_dlg.width() + 30:
+                pos_.setX(self.width() - ag.filter_dlg.width() - 15)
+            if pos_.y() > self.height() - ag.filter_dlg.height() + 30:
+                pos_.setY(self.height() - ag.filter_dlg.height() - 15)
 
             ag.filter_dlg.move(pos_)
             ag.filter_dlg.show()

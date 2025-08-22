@@ -213,7 +213,7 @@ colors = [" style=\"stroke:$branchColor;stroke-width:2\""]
 [angle_down2]
 save_in_file = "angle_down2"
 ico_subst = "angle_down"
-colors = [" width=\"12\" height=\"12\" fill=\"$svgFill\""]
+colors = [" width=\"12\" height=\"14\" fill=\"$inputText\""]
 
 [angle_down3]
 save_in_file = "angle_down"

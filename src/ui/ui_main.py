@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\ui\main.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\ui\main.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -126,9 +126,9 @@ class Ui_Sho(object):
         self.btnDir.setAutoExclusive(True)
         self.btnDir.setAutoRaise(True)
         self.btnDir.setObjectName("btnDir")
-        self.buttons = QtWidgets.QButtonGroup(Sho)
-        self.buttons.setObjectName("buttons")
-        self.buttons.addButton(self.btnDir)
+        self.toolbar_btns = QtWidgets.QButtonGroup(Sho)
+        self.toolbar_btns.setObjectName("toolbar_btns")
+        self.toolbar_btns.addButton(self.btnDir)
         self.verticalLayout_2.addWidget(self.btnDir)
         self.btnFilter = QtWidgets.QToolButton(parent=self.toolBar)
         self.btnFilter.setMinimumSize(QtCore.QSize(48, 48))
@@ -141,7 +141,7 @@ class Ui_Sho(object):
         self.btnFilter.setAutoExclusive(True)
         self.btnFilter.setAutoRaise(True)
         self.btnFilter.setObjectName("btnFilter")
-        self.buttons.addButton(self.btnFilter)
+        self.toolbar_btns.addButton(self.btnFilter)
         self.verticalLayout_2.addWidget(self.btnFilter)
         self.btnFilterSetup = QtWidgets.QToolButton(parent=self.toolBar)
         self.btnFilterSetup.setMinimumSize(QtCore.QSize(48, 48))
@@ -151,7 +151,7 @@ class Ui_Sho(object):
         self.btnFilterSetup.setCheckable(True)
         self.btnFilterSetup.setAutoRaise(True)
         self.btnFilterSetup.setObjectName("btnFilterSetup")
-        self.buttons.addButton(self.btnFilterSetup)
+        self.toolbar_btns.addButton(self.btnFilterSetup)
         self.verticalLayout_2.addWidget(self.btnFilterSetup)
         spacerItem1 = QtWidgets.QSpacerItem(20, 286, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
         self.verticalLayout_2.addItem(spacerItem1)

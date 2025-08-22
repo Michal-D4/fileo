@@ -253,7 +253,7 @@ class Preferences(QWidget):
             }
             mode = (ag.mode if ag.mode in
                     (ag.appMode.DIR, ag.appMode.FILTER, ag.appMode.FILTER_SETUP)
-                    else ag.prev_mode)
+                    else ag.appMode(ag.curr_btn_id))
             btn = checkable_btn.get(mode, ag.app.ui.btnDir)
             btn.setIcon(tug.get_icon(btn.objectName(), 1))
             btn.setChecked(True)

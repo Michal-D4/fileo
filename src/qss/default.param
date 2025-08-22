@@ -32,6 +32,7 @@ $itemHoverBG~#99CCCC
 *
 $innerBorder~#E3E3E3
 $inputBG~#FFFFFF
+$inputText~#2C2C2C
 $leftPaneBG~#F3F3F3
 $notActiveItemBG~#A0A0A0
 $scrollHandle~#888888
@@ -52,3 +53,4 @@ $toolBarBG~#2C2C2C
 $toolBorder~#2C2C2C
 $toolCheckMark~#FFFFFF
 $topBarBG~#B3B3B3
+$topBorder~#B3B3B3

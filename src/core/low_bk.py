@@ -8,6 +8,7 @@ import re
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
     QIODeviceBase, QItemSelectionModel, QPoint,
+    QItemSelection,
 )
 from PyQt6.QtGui import QDesktopServices, QFocusEvent, QAction
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
@@ -75,7 +76,7 @@ def set_user_action_handlers():
         "history_changed": set_enable_prev_next,
         "curr_history_folder": to_history_folder,
         "Enable_buttons": enable_buttons,
-        "file-note: Go to file": goto_file_in_branch,
+        "file-note: Go to file": to_file_by_link,
         "remove_file_from_location": remove_file_from_location,
         "SaveEditState": lambda: ag.save_db_settings(NOTE_EDIT_STATE=ag.file_data.get_edit_state()),
         "show file": single_file,
@@ -173,6 +174,7 @@ def new_window(db_name: str=''):
 def clear_recent_files():
     ag.recent_files.clear()
     ag.switch_to_prev_mode()
+    change_mode()
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
@@ -234,41 +236,25 @@ def get_branch(dir_id: int) -> list:
     branch.reverse()
     return branch
 
-def goto_file_in_branch(param: str):
+def to_file_by_link(param: str):
     file_id, *branch = param.split('-')
     if not branch:
         dir_id = db_ut.get_dir_id_for_file(file_id)
         brnch = get_branch(dir_id)
     else:
         brnch = [int(it) for it in branch[0].split(',')]
-    brnch.append(False)
+    brnch.append(False)           # expand branch
     idx = expand_branch(brnch)
 
     if idx.isValid():
         if ag.mode is not ag.appMode.DIR:
-            prev = ag.mode.value
+            btn = ag.app.ui.toolbar_btns.button(ag.appMode.DIR.value)
+            btn.setChecked(True)
             ag.set_mode(ag.appMode.DIR)
-            set_check_btn(ag.appMode.DIR)
-            change_mode(prev)
+            change_mode()
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
-
         set_current_file(int(file_id))
-
-def set_check_btn(new_mode: ag.appMode):
-    checkable_btn = {
-        ag.appMode.DIR: ag.app.ui.btnDir,
-        ag.appMode.FILTER: ag.app.ui.btnFilter,
-        ag.appMode.FILTER_SETUP: ag.app.ui.btnFilterSetup,
-    }
-
-    # need loop to find button to uncheck
-    for key, btn in checkable_btn.items():
-        btn.setIcon(tug.get_icon(btn.objectName(), int(key is new_mode)))
-
-    if new_mode.value < ag.appMode.RECENT_FILES.value:
-        checkable_btn[new_mode].setChecked(True)
-    ag.set_mode(new_mode)
 
 def report_same_names():
     rep_creator = rep.sameFileNames()
@@ -345,7 +331,6 @@ def srch_files_by_note(param: str):
     row_cnt = srch_files_common(param, db_ut.get_all_notes())
     if row_cnt:
         ag.app.ui.files_heading.setText(f'Found files, text in notes "{param[:-3]}"')
-        ag.set_mode(ag.appMode.FOUND_FILES)
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search in notes',
@@ -374,13 +359,13 @@ def srch_files_common(param: str, search_in) -> int:
             db_ut.save_to_temp('file_srch', fid)
             last_id = fid
 
+    ag.set_mode(ag.appMode.FOUND_FILES)
     return show_files(db_ut.get_found_files(), 0, False)
 
 def find_files_by_name(param: str):
     row_cnt = srch_files_common(param, db_ut.get_file_names())
     if row_cnt:
         ag.app.ui.files_heading.setText(f'Found files "{param[:-3]}"')
-        ag.set_mode(ag.appMode.FOUND_FILES)
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search files',
@@ -463,23 +448,24 @@ def set_dir_model():
 
 def restore_selected_dirs():
     branches = ag.get_db_setting("SELECTED_DIRS", [])
-    model = ag.dir_list.selectionModel()
-    model.clearSelection()
-    idx = QModelIndex()
-    first = True
+    first = QModelIndex()
+    selection = QItemSelection()
     for br in branches:
         idx = expand_branch(branch=br)
-        if first:
-            ag.dir_list.setCurrentIndex(idx)
-            first = False
-        model.select(idx, QItemSelectionModel.SelectionFlag.Select)
-    curr = ag.dir_list.currentIndex()
-    if not curr.isValid():
+        if not first.isValid():
+            first = idx
+        selection.select(idx, idx)
+
+    if not first.isValid():
         model = ag.dir_list.model()
-        curr = model.index(0, 0, QModelIndex())
-        if not curr.isValid():
+        first = model.index(0, 0, QModelIndex())
+        if not first.isValid():
             show_files([])
-        ag.dir_list.setCurrentIndex(curr)
+    else:
+        ag.dir_list.setCurrentIndex(first)
+    model = ag.dir_list.selectionModel()
+    model.clearSelection()
+    model.select(selection, QItemSelectionModel.SelectionFlag.Select)
 
 @pyqtSlot(QModelIndex, QModelIndex)
 def cur_dir_changed(curr_idx: QModelIndex, prev_idx: QModelIndex):
@@ -497,6 +483,7 @@ def dirlist_get_focus(e: QFocusEvent):
     if ag.mode.value < ag.appMode.RECENT_FILES.value:
         return
     ag.switch_to_prev_mode()
+    change_mode()
 
 def save_curr_file_id(dir_idx: QModelIndex):
     """ save id of current file in dir (folder) """
@@ -524,23 +511,7 @@ def dir_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-@pyqtSlot(int)
-def change_mode(prev_mode: int):
-    prev = ag.appMode(prev_mode)
-
-    if not ag.db.conn:
-        return
-    if (ag.mode is ag.appMode.FILTER_SETUP
-        or ag.mode is prev):
-        return
-
-    if prev is ag.appMode.FILTER:
-        ag.save_db_settings(
-            FILTER_FILE_ROW=ag.file_list.currentIndex().row()
-        )
-    elif prev is ag.appMode.DIR:
-        save_curr_file_id(ag.dir_list.currentIndex())
-
+def change_mode():
     refresh_file_list()
     if ag.mode is ag.appMode.FILTER:
         row = ag.get_db_setting("FILTER_FILE_ROW", 0)
@@ -669,7 +640,7 @@ def set_current_file(file_id: int):
         ag.file_list.setCurrentIndex(model.index(0, 0))
         return
 
-    idx = model.get_index_by_id(int(file_id))
+    idx = model.get_index_by_id(file_id)
     if idx.isValid():
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)

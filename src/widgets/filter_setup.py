@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 from PyQt6.QtCore import Qt, QDate, QPoint, QSize
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget
@@ -68,7 +68,10 @@ class FilterSetup(QWidget):
         ag.signals_.font_size_changed.connect(self.font_changed)
 
     def file_button_clicked(self, id: int):
+        logger.info(f'{id=}, {self.checked_btn}')
         if self.checked_btn != -1:
+            obj = self.ui.file_buttons.button(self.checked_btn)
+            logger.info(f'button: {obj.objectName()}')
             self.ui.file_buttons.button(self.checked_btn).setChecked(False)
         self.checked_btn = -1 if self.checked_btn == id else id
 
@@ -278,6 +281,7 @@ class FilterSetup(QWidget):
         settings = {
             "DIR_CHECK": self.ui.selected_dir.isChecked(),
             "SUB_DIR_CHECK": self.ui.subDirs.isChecked(),
+            "NO_FOLDER": self.ui.no_folder.isChecked(),
             "CREATED_HERE": self.ui.createdHere.isChecked(),
             "TAG_CHECK": self.ui.selected_tag.isChecked(),
             "IS_ALL": self.ui.all_btn.isChecked(),
@@ -300,8 +304,15 @@ class FilterSetup(QWidget):
 
     def restore_filter_settings(self):
         self.ui.selected_dir.setChecked(ag.get_db_setting("DIR_CHECK", False))
+        if self.ui.selected_dir.isChecked():
+            self.checked_btn = self.ui.file_buttons.id(self.ui.selected_dir)
         self.ui.subDirs.setChecked(ag.get_db_setting("SUB_DIR_CHECK", False))
+        self.ui.no_folder.setChecked(ag.get_db_setting("NO_FOLDER", False))
+        if self.ui.no_folder.isChecked():
+            self.checked_btn = self.ui.file_buttons.id(self.ui.no_folder)
         self.ui.createdHere.setChecked(ag.get_db_setting("CREATED_HERE", False))
+        if self.ui.createdHere.isChecked():
+            self.checked_btn = self.ui.file_buttons.id(self.ui.createdHere)
         self.ui.selected_tag.setChecked(ag.get_db_setting("TAG_CHECK", False))
         is_all = ag.get_db_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)
@@ -331,4 +342,3 @@ class FilterSetup(QWidget):
         self.set_tag_list(ag.tag_list.get_selected())
         self.set_ext_list(ag.ext_list.get_selected())
         self.set_author_list(ag.author_list.get_selected())
-        self.set_dir_list()

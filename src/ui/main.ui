@@ -364,7 +364,7 @@
                   <bool>true</bool>
                  </property>
                  <attribute name="buttonGroup">
-                  <string notr="true">buttons</string>
+                  <string notr="true">toolbar_btns</string>
                  </attribute>
                 </widget>
                </item>
@@ -410,7 +410,7 @@
                   <bool>true</bool>
                  </property>
                  <attribute name="buttonGroup">
-                  <string notr="true">buttons</string>
+                  <string notr="true">toolbar_btns</string>
                  </attribute>
                 </widget>
                </item>
@@ -447,7 +447,7 @@
                   <bool>true</bool>
                  </property>
                  <attribute name="buttonGroup">
-                  <string notr="true">buttons</string>
+                  <string notr="true">toolbar_btns</string>
                  </attribute>
                 </widget>
                </item>
@@ -1180,6 +1180,6 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttons"/>
+  <buttongroup name="toolbar_btns"/>
  </buttongroups>
 </ui>

@@ -7,6 +7,7 @@ $hoverBG~#89521A
 $iconFill~#F2ECE6
 $iconStroke~#F2ECE6
 $inputBG~#4A2600
+$inputText~#FFFFFF
 $itemHoverBG~#89521A
 $leftPaneBG~#321900
 $linkText~#E6C02E
@@ -30,9 +31,10 @@ $textColor~#F2ECE6
 $toolBarBG~#251300
 $toolIcon~#8D8D88
 $topBarBG~#572C00
+$topBorder~#606048
 $innerBorder~#606048
 $itemDisabled~#b08c66
-$scrollHandle~#703900
+$scrollHandle~#573800
 $splitHover~#A3794D
 $statusBorder~#572C00
 $toolBorder~#2C2C2C

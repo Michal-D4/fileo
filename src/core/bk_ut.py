@@ -27,7 +27,7 @@ def save_bk_settings():
     mode = (
         ag.mode.value
         if ag.mode.value <= ag.appMode.RECENT_FILES.value
-        else ag.prev_mode.value
+        else ag.curr_btn_id
     )
     try:
         settings = {
@@ -46,7 +46,8 @@ def save_bk_settings():
             idx = model.mapToSource(ag.file_list.currentIndex())
             settings["FILTER_FILE_ROW"] = idx.row()
         ag.save_db_settings(**settings)
-        low_bk.save_curr_file_id(ag.dir_list.currentIndex())
+        if ag.mode is ag.appMode.DIR:
+            low_bk.save_curr_file_id(ag.dir_list.currentIndex())
         ag.filter_dlg.save_filter_settings()
     except Exception:
         pass
@@ -119,7 +120,6 @@ def bk_setup():
     dd.set_drag_drop_handlers()
 
     ag.signals_.start_disk_scanning.connect(file_loading)
-    ag.signals_.app_mode_changed.connect(low_bk.change_mode)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
     ag.author_list.edit_item.connect(low_bk.author_changed)

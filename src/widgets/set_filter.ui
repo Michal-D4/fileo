@@ -127,7 +127,7 @@
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QRadioButton" name="selected_dir">
+                  <widget class="QCheckBox" name="selected_dir">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                      <horstretch>0</horstretch>
@@ -212,7 +212,7 @@
              </layout>
             </item>
             <item>
-             <widget class="QRadioButton" name="no_folder">
+             <widget class="QCheckBox" name="no_folder">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -228,7 +228,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="createdHere">
+             <widget class="QCheckBox" name="createdHere">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -981,7 +981,7 @@
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>36</height>
+                      <height>0</height>
                      </size>
                     </property>
                     <property name="maximumSize">
@@ -1032,7 +1032,7 @@
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>36</height>
+                      <height>0</height>
                      </size>
                     </property>
                     <property name="maximumSize">

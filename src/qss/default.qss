@@ -4,10 +4,10 @@ QFrame {
 QStackedWidget QWidget {
    background-color: $fileFrameBG;
 }
-QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit {
+QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit, QTextEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
-   outline: 0;
+   outline: none;
 }
 QLabel {
    background-color: transparent;
@@ -66,6 +66,7 @@ QFrame#left_top #app_mode {
 }
 QFrame#left_top, QFrame#topBar {
    background-color: $topBarBG;
+   border-bottom: $shapeBorder1 $topBorder;
 }
 QFrame#topBar QToolButton#close:hover {
    border: none;
@@ -125,13 +126,11 @@ QLineEdit {
    border: none;
    margin: 0px;
    background-color: $inputBG;
-   color: $textColor;
+   color: $inputText;
    selection-color: $selectedText;
    selection-background-color: $selectedBG;
 }
 QTextEdit {
-   font-family: $fontFamily;
-   font-size: $normalSize;
    border: none;
    background-color: transparent;
    color: $textColor;
@@ -257,7 +256,6 @@ QHeaderView::section {
 }
 /* ------------------------- */
 QFrame#head {
-   border-bottom: shapeBorder1 $innerBorder;
    background-color: $headerBG;
 }
 QFrame#noteHolder QToolButton:hover {
@@ -309,19 +307,19 @@ QFrame#buttons {
    padding-top: 9px;
    border-top: $shapeBorder1 $innerBorder;
 }
-QFrame#form QPlainTextEdit {
+QPlainTextEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
    background-color: $inputBG;
-   color: $textColor;
+   color: $inputText;
    selection-color: $selectedText;
    selection-background-color: $selectedBG;
 }
 /* ----- QDateEdit ----- */
 QDateEdit {
-   border: none;
+   border: $shapeBorder1 $innerBorder;
    background-color: $inputBG;
-   color: $textColor;
+   color: $inputText;
 }
 QDateEdit::down-arrow {
    border: none;
@@ -368,7 +366,6 @@ QCalendarWidget QWidget#qt_calendar_navigationbar {
    subcontrol-position: left;
 }
 #qt_calendar_calendarview {
-   outline: none;
    background-color: $leftPaneBG;
    color: $textColor;
    selection-background-color: $selectedBG;
@@ -383,11 +380,12 @@ QCalendarWidget QTableView QLabel {
 }
 /* ----- QComboBox ----- */
 QComboBox {
-   border: none;
+   border: $shapeBorder1 $innerBorder;
    background-color: $inputBG;
-   color: $textColor;
+   color: $inputText;
 }
 QComboBox QAbstractItemView {
+   border: $shapeBorder1 $innerBorder;
    color: $textColor;
    background-color: $fileFrameBG;
 }
@@ -431,7 +429,7 @@ QRadioButton::indicator::checked {
 /* ---------- Menu ----------- */
 QMenu {
    background-color: $leftPaneBG;
-   border: $shapeBorder2 $borderColor;
+   border: $shapeBorder1 $innerBorder;
 }
 QMenu::item {
    background-color: transparent;
@@ -445,7 +443,7 @@ QMenu::item:selected {
    background-color: $itemHoverBG;
 }
 QMenu::separator {
-   height: 2px;
+   height: 1px;
    background-color: $innerBorder;
 }
 /* ---- fileInfo ---- */
@@ -470,8 +468,8 @@ QTableWidget {
 ##link_style~<style type="text/css"> :link{color: $linkText; text-decoration: underline;}</style>
 ##active_selector~$bottomBorder 1px solid $selectorMark; color: $selectorActive
 ##passive_selector~QLabel {border: none; color: $selectorPassive} QLabel:hover {color: $selectorActive}
-##line_edit~QLineEdit#tagEdit {background-color: $inputBG}
-##line_edit_ro~QLineEdit {background-color: $headerBG}
+##line_edit~QLineEdit#tagEdit {background-color: $inputBG; color: $inputText}
+##line_edit_ro~QLineEdit {background-color: $headerBG; color: $textColor}
 ##edit_message~font-size: $bigSize
 ##edit_message~font-size: $normalSize
-##note_menu~QMenu {padding: 0; background-color: $leftPaneBG; border: $shapeBorder2 $borderColor;} QMenu::item {background-color: transparent; color: $textColor;} QMenu::item:disabled, QMenu::item:selected:disabled {background-color: $itemDisabled; color: $selectorPassive;} QMenu::item:selected {background-color: $itemHoverBG;} QMenu::separator {height: 2px; background-color: $innerBorder;}
+##note_menu~QMenu {padding: 0; background-color: $leftPaneBG; border: $shapeBorder1 $innerBorder;} QMenu::item {background-color: transparent; color: $textColor;} QMenu::item:disabled, QMenu::item:selected:disabled {background-color: $itemDisabled; color: $selectorPassive;} QMenu::item:selected {background-color: $itemHoverBG;} QMenu::separator {height: 1px; background-color: $innerBorder;}
