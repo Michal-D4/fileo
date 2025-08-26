@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.52 - 2025, 26 August
+* fixed issues with input caret visibility
+* fixed issue with selected dirs color when dir-list get focus
+
 ## 1.3.51 - 2025, 22 August
 * search duplicates only in non-empty files
 * some color themes enhancement

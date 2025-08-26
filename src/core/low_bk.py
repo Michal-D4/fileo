@@ -448,21 +448,12 @@ def set_dir_model():
 
 def restore_selected_dirs():
     branches = ag.get_db_setting("SELECTED_DIRS", [])
-    first = QModelIndex()
     selection = QItemSelection()
     for br in branches:
         idx = expand_branch(branch=br)
-        if not first.isValid():
-            first = idx
         selection.select(idx, idx)
 
-    if not first.isValid():
-        model = ag.dir_list.model()
-        first = model.index(0, 0, QModelIndex())
-        if not first.isValid():
-            show_files([])
-    else:
-        ag.dir_list.setCurrentIndex(first)
+    to_history_folder()
     model = ag.dir_list.selectionModel()
     model.clearSelection()
     model.select(selection, QItemSelectionModel.SelectionFlag.Select)

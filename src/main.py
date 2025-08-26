@@ -19,9 +19,10 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
     @pyqtSlot()
     def tab_toggle_focus():
         if app.focusWidget() is ag.dir_list:
-            ag.file_list.setFocus()
+            ag.file_list.setFocus(Qt.FocusReason.TabFocusReason)
         else:
-            ag.dir_list.setFocus()
+            ag.dir_list.setFocus(Qt.FocusReason.TabFocusReason)
+            ag.dir_list.update()
 
     def set_style():
         styles = tug.prepare_styles(theme_key, to_save=log_qss)

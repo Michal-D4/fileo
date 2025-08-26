@@ -16,3 +16,4 @@ EXE/
 .ignore
 .pijul
 labor
+uv.lock

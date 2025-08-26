@@ -36,10 +36,10 @@ def save_bk_settings():
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
             "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
             "DIR_HISTORY": ag.history.get_history(),
+            "SELECTED_DIRS" : selected_dirs(),
             "RECENT_FILES": ag.recent_files,
             "APP_MODE": mode,
             "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
-            "SELECTED_DIRS" : selected_dirs(),
         }
         if ag.mode is ag.appMode.FILTER:
             model: fileProxyModel = ag.file_list.model()
