@@ -1,6 +1,6 @@
 [project]
 name = "md2fileo"
-version = "1.3.52"
+version = "1.3.53"
 description = "Yet another file organizer"
 readme = "README.md"
 

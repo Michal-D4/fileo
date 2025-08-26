@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.3.53 - 2025, 26 August
+* Fixed a bug that caused the application to crash when using new themes
+
 ## 1.3.52 - 2025, 26 August
 * fixed issues with input caret visibility
 * fixed issue with selected dirs color when dir-list get focus

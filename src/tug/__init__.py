@@ -159,7 +159,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     get_theme_list()
     logger.info(f'{theme_key=}')
-    theme = themes.get(theme_key, {})
+    theme = themes.get(theme_key if theme_key in themes else next(iter(themes)), {})
 
     def translate_qss(styles: str) -> str:
         keys = list(qss_params.keys())
