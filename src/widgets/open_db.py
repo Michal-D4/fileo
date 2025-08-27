@@ -88,7 +88,7 @@ class OpenDB(QWidget, Ui_openDB):
         for ii, row in enumerate(db_list):
             path, used, last_dt = row
             self.set_cell_0(path, used, last_dt, ii)
-            self.listDB.setItem(ii, 1, QTableWidgetItem(f'{('Now' if used else last_dt)!s}'))
+            self.listDB.setItem(ii, 1, QTableWidgetItem(f'{("Now" if used else last_dt)!s}'))
 
     def set_cell_0(self, path: str, used: bool, dt: str, row: int=0):
         self.listDB.insertRow(row)

@@ -124,6 +124,56 @@ def tune_new_version() -> bool:
 
 def convert_to_new_version(conn, db_v):
     logger.info(f'<<<  {db_v=}, {USER_VER=}')
+    def update_to_v21(conn: apsw.Connection):
+        try:
+            conn.cursor().execute(
+                'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
+            )
+        except apsw.SQLError:
+            pass
+
+    def update_to_v22(conn: apsw.Connection):
+        sql = (
+            "update dirs set multy = 1 where id in ("
+            "select id from parentdir p group by id having count(*) > 1)"
+        )
+        curs = conn.cursor()
+        try:
+            curs.execute('ALTER TABLE parentdir DROP multy;')
+            curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
+            curs.execute(sql)
+        except apsw.SQLError:
+            pass
+
+    def update_to_v23(conn: apsw.Connection):
+        sql = 'delete from settings where key = ?'
+        conn.cursor().execute(sql, ('DIR_HISTORY',))
+
+    def update_to_v24(conn: apsw.Connection):
+        sql1 = (
+            'INSERT or ignore into COPY_FILES select id, extid, '
+            'path, filename, -62135596800, modified, opened, created, '
+            'rating, nopen, hash, size, pages, published FROM files'
+        )
+
+        tbl_def = TABLES[1].replace("files", "COPY_FILES")
+        curs = conn.cursor()
+        curs.execute(tbl_def)
+        curs.execute(sql1)
+        curs.execute('DROP TABLE files')
+        curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
+
+    def update_to_v25():
+        """
+        old format of history: (branches: list, flags: list), curr: int
+        new format of history: branches: list, flags: list, curr: int
+        """
+        hist = ag.get_db_setting('DIR_HISTORY', [])
+        logger.info(f'{hist=}')
+        if len(hist) == 2:
+            h0,h1 = hist
+            logger.info(f'{h0=}, {h1=}')
+            ag.save_db_settings(DIR_HISTORY=(*h0, h1))
 
     if db_v < 21:
         update_to_v21(conn)
@@ -141,53 +191,6 @@ def convert_to_new_version(conn, db_v):
         update_to_v25()
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
-
-def update_to_v21(conn: apsw.Connection):
-    try:
-        conn.cursor().execute(
-            'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
-        )
-    except apsw.SQLError:
-        pass
-
-def update_to_v22(conn: apsw.Connection):
-    sql = (
-        "update dirs set multy = 1 where id in ("
-        "select id from parentdir p group by id having count(*) > 1)"
-    )
-    curs = conn.cursor()
-    try:
-        curs.execute('ALTER TABLE parentdir DROP multy;')
-        curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
-        curs.execute(sql)
-    except apsw.SQLError:
-        pass
-
-def update_to_v23(conn: apsw.Connection):
-    sql = 'delete from settings where key = ?'
-    conn.cursor().execute(sql, ('DIR_HISTORY',))
-
-def update_to_v24(conn: apsw.Connection):
-    sql1 = (
-        'INSERT or ignore into COPY_FILES select id, extid, '
-        'path, filename, -62135596800, modified, opened, created, '
-        'rating, nopen, hash, size, pages, published FROM files'
-    )
-
-    tbl_def = TABLES[1].replace("files", "COPY_FILES")
-    curs = conn.cursor()
-    curs.execute(tbl_def)
-    curs.execute(sql1)
-    curs.execute('DROP TABLE files')
-    curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
-
-def update_to_v25():
-    hist = ag.get_db_setting('DIR_HISTORY', [])
-    logger.info(f'{hist=}')
-    if len(hist) == 2:
-        h0,h1 = hist
-        logger.info(f'{h0=}, {h1=}')
-        ag.save_db_settings(DIR_HISTORY=(*h0, h1))
 
 def create_tables(db_name: str):
     conn = apsw.Connection(db_name)

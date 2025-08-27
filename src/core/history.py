@@ -60,6 +60,8 @@ class History(object):
         trim(self.flags)
 
     def get_current(self):
+        if self.curr == -1:
+            return []
         self.is_hist = True
         return (*(int(x) for x in self.branches[self.curr].split(',')), self.flags[self.curr])
 

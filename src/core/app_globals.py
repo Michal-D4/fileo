@@ -28,7 +28,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.53'
+    return '1.3.54'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -63,6 +63,7 @@ class appMode(Enum):
 
 mode = appMode.DIR
 curr_btn_id: int = mode.value
+disconnected: bool = False
 
 def set_checked_btn_icon():
     if curr_btn_id == -1:
@@ -71,12 +72,17 @@ def set_checked_btn_icon():
     btn.setIcon(tug.get_icon(btn.objectName(), int(btn.isChecked())))
 
 def set_mode(new_mode: appMode):
-    global mode, curr_btn_id
+    global mode, curr_btn_id, disconnected
     if new_mode is mode:
         return
 
     if mode is appMode.FILTER and new_mode.value > appMode.FILTER_SETUP.value:
         dir_list.selectionModel().selectionChanged.disconnect(filter_dlg.dir_selection_changed)
+        disconnected = True
+    elif disconnected:
+        dir_list.selectionModel().selectionChanged.connect(filter_dlg.dir_selection_changed)
+        disconnected = False
+
     mode = new_mode
     app.ui.app_mode.setText(mode.name)
     new_check = new_mode.value
@@ -87,8 +93,6 @@ def set_mode(new_mode: appMode):
 
 def switch_to_prev_mode():
     if mode.value >= appMode.RECENT_FILES.value:
-        if curr_btn_id == appMode.FILTER.value:
-            dir_list.selectionModel().selectionChanged.connect(filter_dlg.dir_selection_changed)
         set_mode(appMode(curr_btn_id))
 
 @dataclass(slots=True)

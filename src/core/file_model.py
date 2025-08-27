@@ -174,7 +174,7 @@ class fileModel(QAbstractTableModel):
                 self.user_data[index.row()] = file_id
                 dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
                 db_ut.copy_file(file_id, dir_id)
-                ag.signals_.user_signal.emit("Files Open file")
+                ag.signals_.user_signal.emit(f"New file created\\{file_id}")
 
             def old_file() -> bool:
                 try:

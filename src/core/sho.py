@@ -142,7 +142,7 @@ class shoWindow(QMainWindow):
         mode = ag.appMode(
             int(ag.get_db_setting("APP_MODE", ag.appMode.DIR.value))
         )
-        if mode.value > ag.appMode.RECENT_FILES.value:
+        if mode.value > ag.appMode.FILTER_SETUP.value:
             mode = ag.appMode.DIR
         btn = self.ui.toolbar_btns.button(mode.value)
         btn.setChecked(True)

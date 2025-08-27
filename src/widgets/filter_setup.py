@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 from PyQt6.QtCore import Qt, QDate, QPoint, QSize
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget
@@ -68,10 +68,7 @@ class FilterSetup(QWidget):
         ag.signals_.font_size_changed.connect(self.font_changed)
 
     def file_button_clicked(self, id: int):
-        logger.info(f'{id=}, {self.checked_btn}')
         if self.checked_btn != -1:
-            obj = self.ui.file_buttons.button(self.checked_btn)
-            logger.info(f'button: {obj.objectName()}')
             self.ui.file_buttons.button(self.checked_btn).setChecked(False)
         self.checked_btn = -1 if self.checked_btn == id else id
 

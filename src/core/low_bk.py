@@ -54,6 +54,7 @@ def set_user_action_handlers():
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_current_file,
+        "New file created": new_file_created,
         "Open file by path": open_with_url,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
@@ -701,6 +702,12 @@ def open_current_file():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
         open_file_by_model_index(idx)
+
+def new_file_created(id: int):
+    ag.file_list.clearSelection()
+    set_current_file(id)
+    open_current_file()
+    file_notes_show(ag.file_list.currentIndex())
 
 def open_file_by_model_index(index: QModelIndex):
     cnt = db_ut.duplicate_count(index.data(Qt.ItemDataRole.UserRole))

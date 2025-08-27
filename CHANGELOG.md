@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.54 - 2025, 29 August
+* Fixed two more bugs that occurred due to changing the format of some saved settings.
+* Fixed some minor issues when creating a new file.
+
 ## 1.3.53 - 2025, 26 August
 * Fixed a bug that caused the application to crash when using new themes
 

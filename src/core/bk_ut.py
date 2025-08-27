@@ -26,7 +26,7 @@ def save_bk_settings():
         return
     mode = (
         ag.mode.value
-        if ag.mode.value <= ag.appMode.RECENT_FILES.value
+        if ag.mode.value < ag.appMode.RECENT_FILES.value
         else ag.curr_btn_id
     )
     try:
@@ -294,6 +294,8 @@ def populate_all():
 def restore_history():
     ag.recent_files = ag.get_db_setting('RECENT_FILES', [])
     hist = ag.get_db_setting('DIR_HISTORY', [[], [], -1])
+    if len(hist) == 2:
+        hist = [[], [], -1]
     ag.history.set_history(hist)
     low_bk.set_enable_prev_next()
 
