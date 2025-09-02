@@ -161,7 +161,10 @@ class fileModel(QAbstractTableModel):
                     )
                     return
 
-                cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_birthtime))
+                try:
+                    cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_birthtime))
+                except AttributeError:
+                    cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_ctime))
                 line[1] = line[5] = line[10] = cre_time
                 file_id = db_ut.insert_file(
                     ('', new_name, *(

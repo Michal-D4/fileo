@@ -17,9 +17,11 @@ DLG_SIZE = QSize(385, 391)
 
 SIZE_RATIO = {
     '8pt': 0.90,
+    '9pt': 0.95,
     '10pt': 1.00,
+    '11pt': 1.05,
     '12pt': 1.10,
-    '14pt': 1.20,
+    '14pt': 1.15,
 }
 
 class Preferences(QWidget):

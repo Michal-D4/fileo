@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.3.55 - 2025, 01 September
+* os.stat st_birthtime attribute is not always defined, resulting in AttributeError exception. Fixed this exception.
+* fixed issue with opening newly created file.
+
 ## 1.3.54 - 2025, 29 August
 * Fixed two more bugs that occurred due to changing the format of some saved settings.
 * Fixed some minor issues when creating a new file.

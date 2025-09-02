@@ -703,9 +703,9 @@ def open_current_file():
     if idx.isValid():
         open_file_by_model_index(idx)
 
-def new_file_created(id: int):
+def new_file_created(id: str):
     ag.file_list.clearSelection()
-    set_current_file(id)
+    set_current_file(int(id))
     open_current_file()
     file_notes_show(ag.file_list.currentIndex())
 

@@ -99,7 +99,7 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 25
+USER_VER = 26
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -123,7 +123,7 @@ def tune_new_version() -> bool:
     return True
 
 def convert_to_new_version(conn, db_v):
-    logger.info(f'<<<  {db_v=}, {USER_VER=}')
+    logger.info(f'<<<  {db_v=}, {USER_VER=}, {ag.db.path=}')
     def update_to_v21(conn: apsw.Connection):
         try:
             conn.cursor().execute(
@@ -175,6 +175,14 @@ def convert_to_new_version(conn, db_v):
             logger.info(f'{h0=}, {h1=}')
             ag.save_db_settings(DIR_HISTORY=(*h0, h1))
 
+    def update_to_v26(conn: apsw.Connection):
+        """
+        different path delimiters, "\" and "/" in table "paths"
+        change "\" to "/"
+        """
+        sql = 'update paths set path = REPLACE(path, "\\", "/") where instr(path, "\") > 0'
+        conn.cursor().execute(sql).fetchall()
+
     if db_v < 21:
         update_to_v21(conn)
 
@@ -189,6 +197,9 @@ def convert_to_new_version(conn, db_v):
 
     if db_v < 25:
         update_to_v25()
+
+    if db_v < 26:
+        update_to_v26(conn)
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 

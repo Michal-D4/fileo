@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout
 
 from .file_note import fileNote
 from ..core import app_globals as ag, db_ut
+from .. import tug
 
 
 class noteEditor(QWidget):
@@ -24,6 +25,7 @@ class noteEditor(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         self.note_editor.focusOutEvent = self.editor_lost_focus
+        self.note_editor.setStyleSheet(tug.get_dyn_qss("note_edit"))
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         mimedata: QMimeData = e.mimeData()

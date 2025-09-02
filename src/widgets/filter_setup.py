@@ -11,10 +11,12 @@ UNIX_EPOCH = 2440588   # julian date of 1970-01-01
 DLG_SIZE = QSize(479, 546)
 
 SIZE_RATIO = {
-    '8pt': 1.00,
+    '8pt': 0.90,
+    '9pt': 0.95,
     '10pt': 1.00,
-    '12pt': 1.05,
-    '14pt': 1.10,
+    '11pt': 1.05,
+    '12pt': 1.10,
+    '14pt': 1.15,
 }
 
 def unix_date(ts: float) -> int:

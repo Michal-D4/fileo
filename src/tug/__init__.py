@@ -15,26 +15,21 @@ from PyQt6.QtGui import QIcon, QPixmap
 
 from .. import qss
 FONT_SIZE = {
-    '8pt': ('8pt', '10pt'),
-    '10pt': ('10pt', '12pt'),
+    '8pt': ('8pt', '9pt'),
+    '9pt': ('9pt', '10pt'),
+    '10pt': ('10pt', '11pt'),
+    '11pt': ('11pt', '12pt'),
     '12pt': ('12pt', '14pt'),
     '14pt': ('14pt', '16pt'),
 }
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
-        pp = Path(path)
-        subprocess.run(['explorer.exe', '/select,', str(pp)])
+        subprocess.Popen(['explorer.exe', '/select,', str(Path(path))])
 
 elif sys.platform.startswith("linux"):
     def reveal_file(path: str):
-        cmd = [
-            'dbus-send', '--session', '--dest=org.freedesktop.FileManager1',
-            '--type=method_call', '/org/freedesktop/FileManager1',
-            'org.freedesktop.FileManager1.ShowItems',
-            f'array:string:file:////{path}', 'string:',
-        ]
-        subprocess.run(cmd)
+        subprocess.Popen(["xdg-open", path])
 
 else:
     def reveal_file(path: str):
