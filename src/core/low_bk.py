@@ -175,7 +175,7 @@ def new_window(db_name: str=''):
 def clear_recent_files():
     ag.recent_files.clear()
     ag.switch_to_prev_mode()
-    change_mode()
+    mode_changed()
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
@@ -252,7 +252,7 @@ def to_file_by_link(param: str):
             btn = ag.app.ui.toolbar_btns.button(ag.appMode.DIR.value)
             btn.setChecked(True)
             ag.set_mode(ag.appMode.DIR)
-            change_mode()
+            mode_changed()
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
         set_current_file(int(file_id))
@@ -475,7 +475,7 @@ def dirlist_get_focus(e: QFocusEvent):
     if ag.mode.value < ag.appMode.RECENT_FILES.value:
         return
     ag.switch_to_prev_mode()
-    change_mode()
+    mode_changed()
 
 def save_curr_file_id(dir_idx: QModelIndex):
     """ save id of current file in dir (folder) """
@@ -503,7 +503,7 @@ def dir_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-def change_mode():
+def mode_changed():
     refresh_file_list()
     if ag.mode is ag.appMode.FILTER:
         row = ag.get_db_setting("FILTER_FILE_ROW", 0)

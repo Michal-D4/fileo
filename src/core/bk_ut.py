@@ -251,6 +251,8 @@ def header_restore():
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
+    ag.app.ui.field_menu.setIcon(tug.get_icon("more"))
+    ag.buttons.append((ag.app.ui.field_menu, "more"))
     set_field_menu()
     hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     hdr.customContextMenuRequested.connect(header_menu)

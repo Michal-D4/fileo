@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_prefForm(object):
     def setupUi(self, prefForm):
         prefForm.setObjectName("prefForm")
-        prefForm.resize(465, 376)
+        prefForm.resize(444, 444)
         self.verticalLayout = QtWidgets.QVBoxLayout(prefForm)
         self.verticalLayout.setObjectName("verticalLayout")
         self.dlg_frame = QtWidgets.QFrame(parent=prefForm)

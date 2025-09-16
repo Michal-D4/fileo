@@ -34,12 +34,12 @@ class editTag(QWidget):
         txt = self.editor.text().strip()
         if txt:
             self.parent().edit_item.emit(txt)
-        self.parent().browser.setFocus()
         self.close()
 
     @pyqtSlot()
     def close(self) -> bool:
-        ag.popups.pop("editTag")
+        if "editTag" in ag.popups:
+            ag.popups.pop("editTag")
         self.parent().browser.setFocus()
         return super().close()
 

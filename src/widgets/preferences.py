@@ -5,15 +5,12 @@ from PyQt6.QtCore import Qt, QCoreApplication, QPoint, pyqtSlot, QSize
 from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QFormLayout,
     QLineEdit, QCheckBox, QComboBox, QHBoxLayout,
-    QLabel,
 )
 
 from .. import tug
 from ..core import app_globals as ag
 from .foldable import Foldable
 from .ui_pref import Ui_prefForm
-
-DLG_SIZE = QSize(385, 391)
 
 SIZE_RATIO = {
     '8pt': 0.90,
@@ -30,13 +27,13 @@ class Preferences(QWidget):
         super().__init__(parent)
         self.ui = Ui_prefForm()
         self.ui.setupUi(self)
+        self.cur_size = self.init_size = self.size()
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
 
         self.start_pos = QPoint()
         self.cur_theme = ''
         self.cur_font_size = ''
         self.rejected = True
-        self.cur_size = QSize()
 
         self.set_inputs()
 
@@ -48,6 +45,7 @@ class Preferences(QWidget):
         form_layout.addRow('Export path:', self.export_path)
         form_layout.addRow('Report path:', self.report_path)
         form_layout.addRow('Files path:', self.file_path)
+        form_layout.addRow('Log path:', self.log_path)
 
         h_lay0 = QHBoxLayout()
         h_lay0.addWidget(self.folder_history_depth, 1)
@@ -57,15 +55,12 @@ class Preferences(QWidget):
         h_lay1 = QHBoxLayout()
         h_lay1.addWidget(self.last_file_list_length, 1)
         h_lay1.addStretch(5)
-
         form_layout.addRow('Recent file list length:', h_lay1)
+
         form_layout.addRow(self.check_upd)
         form_layout.addRow(self.check_dup)
-
-        h_lay2 = QHBoxLayout()
-        h_lay2.addWidget(self.use_logging)
-        h_lay2.addWidget(self.log_path)
-        form_layout.addRow(h_lay2)
+        form_layout.addRow(self.use_logging)
+        form_layout.addRow(self.save_theme)
 
         self.ui.pref_form.setLayout(form_layout)
         self.adjustSize()
@@ -107,17 +102,20 @@ class Preferences(QWidget):
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
             "DEFAULT_FILE_PATH": self.file_path.text(),
+            "DEFAULT_LOG_PATH": self.log_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
             "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
             "CHECK_DUPLICATES": int(self.check_dup.isChecked()),
             "CHECK_UPDATE": int(self.check_upd.isChecked()),
             "USE_LOGGING": int(self.use_logging.isChecked()),
+            "SAVE_THEME": int(self.save_theme.isChecked()),
         }
         tug.save_app_setting(**settings)
         tug.create_dir(Path(self.db_path.text()))
         tug.create_dir(Path(self.export_path.text()))
         tug.create_dir(Path(self.report_path.text()))
         tug.create_dir(Path(self.file_path.text()))
+        tug.create_dir(Path(self.log_path.text()))
         ag.history.set_limit(int(settings["FOLDER_HISTORY_DEPTH"]))
         self.rejected = False
         self.close()
@@ -137,7 +135,7 @@ class Preferences(QWidget):
             self.fontsize.addItem(key)
         self.cur_font_size = tug.get_app_setting('FONT_SIZE', '10pt')
         self.fontsize.setCurrentText(self.cur_font_size)
-        self.cur_size = DLG_SIZE * SIZE_RATIO[self.cur_font_size]
+        self.cur_size = self.init_size * SIZE_RATIO[self.cur_font_size]
         self.fontsize.currentIndexChanged.connect(self.change_font_size)
 
         pp = Path('~/fileo').expanduser()
@@ -156,6 +154,11 @@ class Preferences(QWidget):
         self.file_path = QLineEdit()
         self.file_path.setText(
             tug.get_app_setting('DEFAULT_FILE_PATH', str(pp / 'files'))
+        )
+
+        self.log_path = QLineEdit()
+        self.log_path.setText(
+            tug.get_app_setting('DEFAULT_LOG_PATH', str(pp / 'log'))
         )
 
         self.folder_history_depth = QLineEdit()
@@ -181,18 +184,15 @@ class Preferences(QWidget):
             int(tug.get_app_setting('CHECK_UPDATE', 0))
         )
 
-        self.log_path = QLabel()
         self.use_logging = QCheckBox("use logging")
-        self.use_logging.checkStateChanged.connect(
-            lambda state: self.log_path.setText(
-                f'log path: {tug.get_log_path()}' if state is Qt.CheckState.Checked else ''
-            )
-        )
         self.use_logging.setChecked(int(tug.get_app_setting('USE_LOGGING', 0)))
+
+        self.save_theme = QCheckBox("save color theme")
+        self.save_theme.setChecked(int(tug.get_app_setting('SAVE_THEME', 0)))
 
     def history_depth_changed(self):
         val = int(self.folder_history_depth.text())
-        n_val, x_val = tug.config.get('history_min', 2), tug.config.get('history_max', 50)
+        n_val, x_val = 2, tug.qss_params.get('history_max', 50)
         if n_val > val:
             self.folder_history_depth.setText(str(n_val))
         elif x_val < val:
@@ -200,7 +200,7 @@ class Preferences(QWidget):
 
     def file_list_length_changed(self):
         val = int(self.last_file_list_length.text())
-        n_val, x_val = tug.config.get('history_min', 2), 2 * tug.config.get('history_max', 50)
+        n_val, x_val = 2, 2 * tug.qss_params.get('history_max', 50)
         if n_val > val:
             self.last_file_list_length.setText(str(n_val))
         elif x_val < val:
@@ -210,7 +210,7 @@ class Preferences(QWidget):
         f_size = self.fontsize.currentText()
         tug.save_app_setting(FONT_SIZE=f_size)
         self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
-        self.cur_size = DLG_SIZE * SIZE_RATIO[f_size]
+        self.cur_size = self.init_size * SIZE_RATIO[f_size]
         self.adjustSize()
         ag.app.adjustSize()
         ag.signals_.font_size_changed.emit(f_size)
@@ -219,11 +219,11 @@ class Preferences(QWidget):
         self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
 
     def set_theme(self, theme_key):
-        log_qss = tug.config.get("save_prepared_qss", False)
-        styles = tug.prepare_styles(theme_key, to_save=log_qss)
+        styles = tug.prepare_styles(theme_key, to_save=self.save_theme.isChecked())
         QCoreApplication.instance().setStyleSheet(styles)
         self.apply_dyn_qss()
         self.set_icons()
+        self.save_theme.setChecked(False)
 
     def apply_dyn_qss(self):
         Foldable.set_decorator_qss(tug.get_dyn_qss('decorator', -1))

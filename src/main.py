@@ -29,7 +29,7 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
         app.setStyleSheet(styles)
         set_app_icon(app)
 
-    log_qss = tug.config.get("save_prepared_qss", False)
+    log_qss = tug.get_app_setting("SAVE_THEME", False)
     _, theme_key = tug.get_app_setting(
         "Current Theme", ("Default Theme", "Default_Theme")
     )
@@ -50,7 +50,6 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
     sys.exit(app.exec())
 
 def main(entry_point: str, db_name: str, first_instance: bool):
-    tug.set_config()
     app = QApplication([])
     tug.entry_point = entry_point
     tug.set_logger(first_instance)

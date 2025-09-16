@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo2\src\widgets\notes.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\notes.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -38,8 +38,13 @@ class Ui_FileNotes(object):
         self.srch_in_notes.setAutoRaise(True)
         self.srch_in_notes.setObjectName("srch_in_notes")
         self.horizontalLayout.addWidget(self.srch_in_notes)
+        self.collapse = QtWidgets.QToolButton(parent=self.head)
+        self.collapse.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.collapse.setAutoRaise(True)
+        self.collapse.setObjectName("collapse")
+        self.horizontalLayout.addWidget(self.collapse)
         self.expand = QtWidgets.QToolButton(parent=self.head)
-        self.expand.setCheckable(True)
+        self.expand.setCheckable(False)
         self.expand.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.expand.setAutoRaise(True)
         self.expand.setObjectName("expand")
@@ -133,7 +138,9 @@ class Ui_FileNotes(object):
         self.tagEdit.setPlaceholderText(_translate("FileNotes", "Enter a list of tags separated by commas or select from the \"Tag selector\""))
         self.srch_in_notes.setToolTip(_translate("FileNotes", "search files by notes context, Ctrl+F"))
         self.srch_in_notes.setText(_translate("FileNotes", "..."))
-        self.expand.setToolTip(_translate("FileNotes", "Maximize panel"))
+        self.collapse.setToolTip(_translate("FileNotes", "Minimize pane"))
+        self.collapse.setText(_translate("FileNotes", "..."))
+        self.expand.setToolTip(_translate("FileNotes", "Maximize pane"))
         self.expand.setText(_translate("FileNotes", "..."))
         self.l_tags.setText(_translate("FileNotes", "Tag selector"))
         self.l_authors.setText(_translate("FileNotes", "Author selector"))

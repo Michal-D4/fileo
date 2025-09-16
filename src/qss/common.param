@@ -1,5 +1,10 @@
+# QPushButton:
 $min_width~75px
 $min_height~24px
+# ---------------------------
+$note_title_width~40
+$history_max~50
+# ---------------------------
 $shapeBorder1~1px solid
 $shapeBorder2~2px solid
 $bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:

@@ -1,5 +1,4 @@
 from loguru import logger
-import os
 import sys
 import subprocess
 from pathlib import Path
@@ -41,7 +40,6 @@ MAKER = 'miha'
 
 entry_point: str = None
 cfg_path = Path()
-config = {}
 qss_params = {}
 dyn_qss = defaultdict(list)
 m_icons = defaultdict(list)
@@ -71,57 +69,19 @@ def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
         to_set = default
     return to_set
 
-def get_log_path() -> str:
-    report_path = get_app_setting("DEFAULT_REPORT_PATH", "")
-    parent = Path(report_path).parent if report_path else Path()
-    return config.get('log_path', parent / 'log')
-
 def set_logger(first_instance: bool):
     logger.remove()
-    use_logging = get_app_setting('USE_LOGGING', config.get('logging', False))
+    use_logging = get_app_setting('USE_LOGGING', False)
     if not use_logging:
         return
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
 
-    log_path = get_log_path() / ('fileo.log' if first_instance else 'second.log')
+    log_path = Path(get_app_setting("DEFAULT_LOG_PATH")) / ('fileo.log' if first_instance else 'second.log')
     logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr, format='"{file.path}({line})", {function} - {message}')
     logger.info(f"START =================> {log_path.as_posix()}")
-    logger.info(f'cfg_path={cfg_path.as_posix()}')
     logger.info(f'{entry_point=}')
-
-def set_config():
-    global config
-
-    def frozen_config() -> str:
-        global cfg_path
-        if sys.platform.startswith("win"):
-            _path = Path(os.getenv('LOCALAPPDATA')) / 'fileo/config.toml'
-        elif sys.platform.startswith("linux"):
-            _path = Path(os.getenv('HOME')) / '.local/share/fileo/config.toml'
-
-        if _path.is_file():
-            cfg_path = _path.parent
-            with open(_path, "r") as ft:
-                return ft.read()
-        return resource_config()
-
-    def resource_config() -> str:
-        global cfg_path
-        cfg_path = resources.files(qss)
-        return resources.read_text(qss, "fileo.toml")
-
-    fileo_toml = frozen_config() if getattr(sys, "frozen", False) else resource_config()
-    config = tomllib.loads(fileo_toml)
-
-def get_theme_list():
-    global themes
-    theme_toml_file = cfg_path / "themes.toml"
-    if theme_toml_file.exists():
-        with open(theme_toml_file, "rb") as f:
-            themes = tomllib.load(f)
-            # logger.info(f'{themes=}')
 
 def create_dir(dir: Path):
     dir.mkdir(parents=True, exist_ok=True)
@@ -151,6 +111,15 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     files = {'qss': "default.qss", 'ico': "icons.toml", 'param': "default.param"}
     dyn_qss.clear()
     qss_params.clear()
+    theme_path = resources.files(qss)
+
+    def get_theme_list():
+        global themes
+        theme_toml_file = theme_path / "themes.toml"
+        if theme_toml_file.exists():
+            with open(theme_toml_file, "rb") as f:
+                themes = tomllib.load(f)
+                # logger.info(f'{themes=}')
 
     get_theme_list()
     logger.info(f'{theme_key=}')
@@ -164,7 +133,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         return styles
 
     def read_file(name: str) -> str:
-        res_file = cfg_path / name
+        res_file = theme_path / name
         if res_file.exists():
             with open(res_file, "r") as ft:
                 return ft.read()
@@ -242,13 +211,16 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     start_dyn = extract_dyn_qss()
 
     if to_save:
-        save_to_file(f'{theme_key}_QSS.log', tr_styles)
-        save_to_file(f'{theme_key}_qss-params.log',
-            '\n'.join([f'{key}: {val}' for key, val in qss_params.items()])
+        ttls = (" style parameters ", " style sheets ", " icons.toml ", " SVGs ")
+        logs = (
+            '\n'.join([f'{key}: {val}' for key, val in qss_params.items()]),
+            tr_styles, tr_icons,
+            '\n'.join([f'{key}:{val}' for key, val in svgs.items()])
         )
-        save_to_file(f'{theme_key}_icons.toml.log', tr_icons)
-        svgs_str = '\n'.join([f'{key}:{val}' for key, val in svgs.items()])
-        save_to_file(f'{theme_key}_svgs.log', svgs_str)
+        b="-=-=-=-=-=-=-=-=-=-"
+        save_to_file(f'theme {theme_key}.log',
+            '\n'.join([''.join((b,x,b,'\n',y)) for x,y in zip(ttls, logs)])
+        )
 
     return tr_styles[:start_dyn]
 

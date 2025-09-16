@@ -18,6 +18,10 @@ from .note_editor import noteEditor
 from .srch_in_notes import srchInNotes
 from .. import tug
 
+def set_note_holder_height(hh: int):
+    ag.app.ui.noteHolder.setMinimumHeight(hh)
+    ag.app.ui.noteHolder.setMaximumHeight(hh)
+
 @unique
 class Page(Enum):
     TAGS = 0
@@ -69,6 +73,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
 
+    def set_height(self, hh: int):
+        self.s_height = hh
+        set_note_holder_height(hh)
+
     def set_author_title(self, ttl: str):
         self.l_authors.setText(f"{ttl[:-1]} selector")
         self.authorEdit.setToolTip(f"File\'s {ttl.lower()}")
@@ -77,9 +85,11 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         )
 
     def set_buttons(self):
-
         self.expand.setIcon(tug.get_icon("up"))
-        self.expand.clicked.connect(self.toggle_collapse)
+        self.expand.clicked.connect(self.maximize_pane)
+
+        self.collapse.setIcon(tug.get_icon("down3"))
+        self.collapse.clicked.connect(self.minimize_pane)
 
         self.srch_in_notes.setIcon(tug.get_icon("search"))
         self.srch_in_notes.clicked.connect(self.srch_notes)
@@ -105,7 +115,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.cancel.setShortcut("Ctrl+Q")
 
         self.edit_btns.hide()
-        ag.buttons.append((self.expand, "up", "down3"))
+        ag.buttons.append((self.expand, "up"))
+        ag.buttons.append((self.collapse, "down3"))
         ag.buttons.append((self.srch_in_notes, "search"))
         ag.buttons.append((self.plus, "plus"))
         ag.buttons.append((self.collapse_notes, "collapse_notes"))
@@ -228,18 +239,26 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.cur_page = new_page
         self.pages.setCurrentIndex(new_page.value)
 
-    def toggle_collapse(self):
-        if self.expand.isChecked():
-            self.s_height = self.height()
-            self.expand.setIcon(tug.get_icon("down3"))
-            hh = ag.file_list.height() + self.s_height
-            ag.app.ui.noteHolder.setMinimumHeight(hh)
-            ag.app.ui.noteHolder.setMaximumHeight(hh)
+    def maximize_pane(self):
+        if ag.app.ui.noteHolder.height() == self.s_height:
+            set_note_holder_height(ag.file_list.height() + self.s_height)
             ag.file_list.hide()
+            self.expand.setEnabled(False)
         else:
-            self.expand.setIcon(tug.get_icon("up"))
-            ag.app.ui.noteHolder.setMinimumHeight(self.s_height)
-            ag.app.ui.noteHolder.setMaximumHeight(self.s_height)
+            self.labels.show()
+            self.pages.show()
+            self.collapse.setEnabled(True)
+            set_note_holder_height(self.s_height)
+
+    def minimize_pane(self):
+        if ag.app.ui.noteHolder.height() == self.s_height:
+            set_note_holder_height(self.head.height())
+            self.pages.hide()
+            self.labels.hide()
+            self.collapse.setEnabled(False)
+        else:
+            self.expand.setEnabled(True)
+            set_note_holder_height(self.s_height)
             ag.file_list.show()
 
     def srch_notes(self):

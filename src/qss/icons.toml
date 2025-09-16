@@ -50,13 +50,11 @@ ico = """\
 d="M5.333 6.667h8a.667.667 0 0 1 .667.666v6a.667.667 0 0 1-.667.667h-8a.667.667 \
 0 0 1-.666-.667v-6a.667.667 0 0 1 .666-.666z"/></svg>\
 """
-colors = [" style=\"fill:none\"", " style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\"",
-" style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
+colors = [" style=\"fill:none\"", " style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\"", " style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [mult_folder_hide]
 ico_subst = "mult_folder"
-colors = [" style=\"fill:$iconFill\"", " style=\"fill:$iconFill;stroke:$iconStroke;stroke-width:1.5\"",
-" style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
+colors = [" style=\"fill:$iconFill\"", " style=\"fill:$iconFill;stroke:$iconStroke;stroke-width:1.5\"", " style=\"fill:none;stroke:$iconStroke;stroke-width:1.5\""]
 
 [arrow_forward]
 ico = """\
@@ -324,7 +322,7 @@ ico = """\
 <svg viewBox="0 0 384 384"|><path d=\
 "M27 258 192 93l165 165-32 32-133-133L59 290Z"/></svg>\
 """
-colors = [" fill=\"$svgFill\""]
+colors = [" fill=\"$svgFill\"", "disabled| fill=\"$svgDisable\""]
 
 [angle_left]
 ico = """\
@@ -349,7 +347,7 @@ colors = [" fill=\"$svgFill\""]
 
 [angle_down_3]
 ico_subst = "angle_down"
-colors = [" fill=\"$svgFill\""]
+colors = [" fill=\"$svgFill\"", "disabled| fill=\"$svgDisable\""]
 
 [angle_right_2]
 ico_subst = "angle_right"

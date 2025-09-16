@@ -93,11 +93,12 @@ class shoWindow(QMainWindow):
 
         self.restore_geometry()
         self.restore_container()
-        self.restore_note_height()
 
         ag.file_data = fileDataHolder()
         ag.file_data.setObjectName("file_data_holder")
         set_widget_to_frame(self.ui.noteHolder, ag.file_data)
+        self.restore_note_height()
+
         ag.history = history.History(
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
@@ -126,8 +127,6 @@ class shoWindow(QMainWindow):
         return False
 
     def restore_container(self):
-        self.ui.field_menu.setIcon(tug.get_icon("more"))
-        ag.buttons.append((self.ui.field_menu, "more"))
         bk_ut.set_menu_more(self)
 
         state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
@@ -147,12 +146,12 @@ class shoWindow(QMainWindow):
         btn = self.ui.toolbar_btns.button(mode.value)
         btn.setChecked(True)
         ag.set_mode(mode)
+        ag.app.ui.app_mode.setText(mode.name)
         self.toggle_filter_show()
 
     def restore_note_height(self):
         hh = tug.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
-        self.ui.noteHolder.setMinimumHeight(int(hh))
-        self.ui.noteHolder.setMaximumHeight(int(hh))
+        ag.file_data.set_height(hh)
 
     def restore_geometry(self):
         self.rect = tug.get_app_setting("MainWindowGeometry")
@@ -330,8 +329,9 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
-        self.setCursor(Qt.CursorShape.SizeVerCursor)
-        e.accept()
+        if ag.file_data.height() == ag.file_data.s_height:
+            self.setCursor(Qt.CursorShape.SizeVerCursor)
+            e.accept()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_press_event(self, e: QMouseEvent):
@@ -361,8 +361,7 @@ class shoWindow(QMainWindow):
         cur_height = self.ui.noteHolder.height()
         h = max(cur_height + delta, MIN_NOTE_HEIGHT)
         h = min(h, self.ui.main_pane.height() - MIN_NOTE_HEIGHT - 35)
-        self.ui.noteHolder.setMinimumHeight(h)
-        self.ui.noteHolder.setMaximumHeight(h)
+        ag.file_data.set_height(h)
 
         self.start_pos.setY(y0 - h + cur_height)
         return self.start_pos.y()
@@ -452,8 +451,7 @@ class shoWindow(QMainWindow):
     def click_toggle_bar(self):
         visible = self.ui.left_pane.isVisible()
         self.ui.left_pane.setVisible(not visible)
-        self.ui.app_mode.setVisible(not visible)
-        self.ui.more.setVisible(not visible)
+        self.ui.left_top.setVisible(not visible)
         self.ui.btnToggleBar.setIcon(
             tug.get_icon("btnToggleBar", int(visible))
         )
@@ -467,7 +465,7 @@ class shoWindow(QMainWindow):
             "maximizedWindow": int(self.isMaximized()),
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
-            "noteHolderHeight": self.ui.noteHolder.height(),
+            "noteHolderHeight": ag.file_data.s_height,
             "DB_NAME": ag.db.path,
         }
         if ag.filter_dlg and ag.filter_dlg.isVisible():

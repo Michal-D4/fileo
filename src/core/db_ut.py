@@ -270,7 +270,7 @@ def insert_filenotes(file_id: int, file_notes: list):
     def note_already_exists(rec: list) -> bool:
         """
         suppose that there can't be more than one note
-        for the same file created at the same time
+        for the same file created and modified at the same time
         """
         sql = 'select 1 from filenotes where (fileid, created, modified) = (?,?,?) '
         tt = cursor.execute(sql, (file_id, rec[3], rec[4])).fetchone()
@@ -284,7 +284,7 @@ def insert_filenotes(file_id: int, file_notes: list):
             if note_already_exists(rec):
                 continue
             max_note_id += 1
-            cursor.execute(sql3, (file_id, max_note_id, rec[0], *rec[3:]))
+            cursor.execute(sql3, (file_id, max_note_id, rec[0], rec[4], rec[3]))
 
 def recent_loaded_files() -> apsw.Cursor:
     sql = (
