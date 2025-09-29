@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 
 from collections import defaultdict
 
@@ -197,6 +197,7 @@ class dirModel(QAbstractItemModel):
             # set children sorted by dir name case insensitive
             children[key].sort(key=lambda item: item.itemData[0].lower())
             parents[key].children = children[key]
+        logger.info(f'{len(parents)=}, {len(children)=}')
 
     def restore_index(self, path):
         parent = QModelIndex()

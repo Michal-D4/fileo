@@ -151,9 +151,7 @@ class fileNote(QWidget):
                 copy_html()
             elif act.text() == 'Open file':
                 file_id = self.ui.textBrowser.anchorAt(pos)[8:]
-                ag.signals_.user_signal.emit(
-                    f'Open file by path\\{db_ut.get_file_path(file_id)}'
-                )
+                ag.signals_.user_signal.emit(f'Open file by path\\{db_ut.get_file_path(file_id)}')
 
     def set_text(self, note: str):
         def set_note_title():

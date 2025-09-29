@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo3\src\widgets\scan_disk.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\scan_disk.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -13,11 +13,6 @@ class Ui_scanDisk(object):
     def setupUi(self, scanDisk):
         scanDisk.setObjectName("scanDisk")
         scanDisk.resize(451, 228)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(scanDisk.sizePolicy().hasHeightForWidth())
-        scanDisk.setSizePolicy(sizePolicy)
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(scanDisk)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.dlg_frame = QtWidgets.QFrame(parent=scanDisk)
@@ -100,12 +95,6 @@ class Ui_scanDisk(object):
         self.horizontalLayout_5.setStretch(1, 1)
         self.verticalLayout.addLayout(self.horizontalLayout_5)
         self.no_ext = QtWidgets.QCheckBox(parent=self.ext_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.no_ext.sizePolicy().hasHeightForWidth())
-        self.no_ext.setSizePolicy(sizePolicy)
-        self.no_ext.setMinimumSize(QtCore.QSize(0, 0))
         self.no_ext.setIconSize(QtCore.QSize(0, 0))
         self.no_ext.setObjectName("no_ext")
         self.verticalLayout.addWidget(self.no_ext)

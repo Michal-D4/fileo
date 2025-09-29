@@ -83,9 +83,9 @@ class fileModel(QAbstractTableModel):
             if role == Qt.ItemDataRole.DisplayRole:
                 # len(row) > col; len=1 -> col=0; len=2 -> col=(0,1) etc
                 if len(line) > col:
-                    if self.header[col] in ('Date of last note','Modified','Open Date',):
+                    if self.header[col] in ('Added date', 'Date of last note','Modified','Open Date',):
                         return line[col].toString("yyyy-MM-dd hh:mm")
-                    if self.header[col] in ('Added date', 'Created'):
+                    if self.header[col] == 'Created':
                         return line[col].toString("yyyy-MM-dd")
                     if self.header[col] == 'Published':
                         return line[col].toString("MMM yyyy")
@@ -166,18 +166,15 @@ class fileModel(QAbstractTableModel):
                 except AttributeError:
                     cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_ctime))
                 line[1] = line[5] = line[10] = cre_time
-                file_id = db_ut.insert_file(
-                    ('', new_name, *(
-                        line[i].toSecsSinceEpoch() if
-                        isinstance(line[i], QDateTime)
-                        else line[i] for i in (1,5,2,10,3,4,7,6,8,)
-                        ), path
-                    )
-                )
+                ff = [line[i].toSecsSinceEpoch() if isinstance(line[i], QDateTime)
+                      else line[i] for i in (5,2,10,3,4,7,6,8,1,)]
+                file_id, is_new_ext = db_ut.insert_file(('', new_name, *ff[:-1], path), ff[-1], ag.fileSource.CREATED.value)
                 self.user_data[index.row()] = file_id
                 dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
                 db_ut.copy_file(file_id, dir_id)
                 ag.signals_.user_signal.emit(f"New file created\\{file_id}")
+                if is_new_ext:
+                    ag.signals_.user_signal.emit("ext inserted")
 
             def old_file() -> bool:
                 try:

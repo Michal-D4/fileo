@@ -1,7 +1,7 @@
 # from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QCoreApplication, QPoint, pyqtSlot, QSize
+from PyQt6.QtCore import Qt, QCoreApplication, QPoint, pyqtSlot
 from PyQt6.QtGui import QMouseEvent, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QFormLayout,
     QLineEdit, QCheckBox, QComboBox, QHBoxLayout,
@@ -101,7 +101,7 @@ class Preferences(QWidget):
             "DEFAULT_DB_PATH": self.db_path.text(),
             "DEFAULT_EXPORT_PATH": self.export_path.text(),
             "DEFAULT_REPORT_PATH": self.report_path.text(),
-            "DEFAULT_FILE_PATH": self.file_path.text(),
+            "DEFAULT_FILE_PATH": Path(self.file_path.text()).as_posix(),
             "DEFAULT_LOG_PATH": self.log_path.text(),
             "FOLDER_HISTORY_DEPTH": self.folder_history_depth.text(),
             "RECENT_FILE_LIST_LENGTH": self.last_file_list_length.text(),
@@ -237,6 +237,7 @@ class Preferences(QWidget):
 
         ag.file_data.passive_style()
         ag.file_data.cur_page_restyle()
+        ag.file_data.file_info.setStyleSheet(tug.get_dyn_qss("line_edit"))
         ag.signals_.color_theme_changed.emit()
 
     def set_icons(self):

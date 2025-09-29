@@ -13,12 +13,6 @@ class Ui_foldable(object):
     def setupUi(self, foldable):
         foldable.setObjectName("foldable")
         foldable.resize(189, 140)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(foldable.sizePolicy().hasHeightForWidth())
-        foldable.setSizePolicy(sizePolicy)
-        foldable.setMinimumSize(QtCore.QSize(0, 0))
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(foldable)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setSpacing(0)

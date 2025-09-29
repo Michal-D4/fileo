@@ -49,7 +49,9 @@ There are three additional application modes: RECENT_FILES, FOUND_FILES and FILE
 * FOUND_FILES - list of files you found using the search dialog
 * FILE_BY_REF - the file list window contains a file referenced from the note of some file. The transition to this mode occurs after clicking on the link.
 
-In FILTER mode, the list of files depends on the filter options set in FILTER_SETUP mode. The filter may depend on the selected folders, selected tags, and selected authors in the boxes in the left pane. In FILTER_SETUP mode, the list of files does not change when changing the selected folders, tags, authors. But in FILTER mode, any changes are immediately displayed in the list of files.
+In FILTER mode, the list of files depends on the filter options set in FILTER_SETUP mode. The filter depends on the folders, tags, and authors selected in the boxes on the left panel. In FILTER_SETUP mode, the file list remains unchanged when the selected folders, tags, and authors are changed. However, in FILTER mode, any changes are immediately reflected in the file list.
+
+> **Note**. I recently discovered that author information isn't in high demand, at least not for me. I implemented the ability to rename this widget to whatever you like. (For example, I renamed it "Keywords" and use them accordingly.)
 
 ## Files
 
@@ -86,7 +88,7 @@ The following icons used for folders depending of their attributes:
 
 You can freely create, move, copy and delete folders in the folder tree, the files will remain untouched. The application is designed for files, not folders. Folders are just a tool for organizing access to files. If, as a result of deleting folders, the file is not in any of the folders, you can still find it in several different ways: by filter, by searching by name, by searching by text in notes, among recently viewed files.
 
-You can also *copy/move files from one folder to another*  by dragging *with the left or right mouse button pressed*.
+You can also *copy/move files from one folder to another* by dragging *with the left or right mouse button pressed*.
 
 > **Important.** Deleting a folder with only one parent will delete all of its child folders. If a folder has more than one parent folder, it will be removed only from the current parent folder and will remain in the others.
 
@@ -96,8 +98,8 @@ You can also *copy/move files from one folder to another*  by dragging *with the
 
 1. Checkbox. Used to switch the "FOLDERS" widget to "Show hidden folders" mode. The "markdown" folder (2b) is hidden, and the same "markdown" folder (2a) is not hidden and is located in the root (does not have a visible parent folder).
 2. A "markdown" folder that has more than one parent folder:
-   a. not hidden folder in the root
-   b. hidden folder in the "GUI" folder
+   2a. not hidden folder "markdown" in the root
+   2b. hidden folder "markdown" in the "GUI" folder
 3. hovered folder with the tooltip "verse" different from folder name "rhyme"
 4. The current (or selected) folder. You can select multiple folders at once using the Shift or Ctrl keys.
 5. The current file "SQLite.md".
@@ -143,15 +145,25 @@ There are several methods to add files:
 
    > **Note**. In the file note you can have reference(s) to another file(s) in the data base. If you drag the file with such note the reference will be broken, there is no interbase references.
 
+4. You can drag-drop selected files from one instance of app to folder in the another instance.
+
+5. You can create new empty file within an app, since **v 1.3.48**.
+
 ### Working with filters
 
-![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/image-20230213185910924.png)
+![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/file-filter.jpg)
 
 The "folders" and "files not in any folder" options are mutually exclusive.
 
 The Apply button applies a specified filter without closing the Filter Setup dialog box.
 
 The Done button applies the filter, closes the dialog, and switches the application to "**Filter Mode**". In this mode, when you change the selection in any of the fields on the left panel (Folders, Tags, Extensions, Authors), the file list will immediately change accordingly.
+
+Recursive search within folders, "all subfolders" option, introduced since **v 1.3.09**.
+
+The option "files not included in any folder" introduced since **v 1.3.40**. It allows you to find files that aren't visible in folders.
+
+The "file add method" option was added in version **1.3.57**. There are five methods to add files to the app's DB, described in the section above.
 
 ### Search files by name
 

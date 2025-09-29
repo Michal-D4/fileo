@@ -1,5 +1,4 @@
 from loguru import logger
-from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import (pyqtSlot, QPoint, QThread,
     QTimer, Qt, QModelIndex,
@@ -13,12 +12,6 @@ from . import (app_globals as ag, low_bk, load_files,
 from ..widgets import search_files as sf, workers, dup
 from .. import tug
 from .file_model import fileProxyModel
-
-if TYPE_CHECKING:
-    from .sho import shoWindow
-
-self: 'shoWindow' = None
-min_width = 220
 
 
 def save_bk_settings():
@@ -34,7 +27,7 @@ def save_bk_settings():
             "TAG_SEL_LIST": low_bk.tag_selection(),
             "EXT_SEL_LIST": low_bk.ext_selection(),
             "AUTHOR_SEL_LIST": low_bk.author_selection(),
-            "SHOW_HIDDEN": int(self.show_hidden.isChecked()),
+            "SHOW_HIDDEN": int(ag.app.show_hidden.isChecked()),
             "DIR_HISTORY": ag.history.get_history(),
             "SELECTED_DIRS" : selected_dirs(),
             "RECENT_FILES": ag.recent_files,
@@ -137,7 +130,7 @@ def bk_setup():
     del_key.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Delete folder(s)"))
     act_pref = QShortcut(QKeySequence("Ctrl+,"), ag.app)
     act_pref.activated.connect(lambda: ag.signals_.user_signal.emit("MainMenu Preferences"))
-    esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+    esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), ag.app)
     esc.activated.connect(close_last_popup)
 
 def close_last_popup():
@@ -148,7 +141,7 @@ def close_last_popup():
 @pyqtSlot()
 def show_main_menu():
     is_db_opened = bool(ag.db.conn)
-    menu = QMenu(self)
+    menu = QMenu(ag.app)
     act_new = QAction('New window')
     menu.addAction(act_new)
     menu.addSeparator()
@@ -185,7 +178,7 @@ def resize_section_0():
     ww = ag.file_list.width()
     sz = ww-6 if ag.file_list.verticalScrollBar().isVisible() else ww
     sz0 = sum((hdr.sectionSize(i) for i in range(1, hdr.count())))
-    hdr.resizeSection(0, max(sz - sz0, min_width))
+    hdr.resizeSection(0, max(sz - sz0, 220))
 
 def set_files_resize_event():
     def file_list_resize(e: QResizeEvent):
@@ -287,9 +280,9 @@ def populate_all():
     low_bk.populate_author_list()
 
     hide_state = ag.get_db_setting("SHOW_HIDDEN", 0)
-    self.show_hidden.setChecked(hide_state)
-    self.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
-    ag.buttons.append((self.show_hidden, "show_hide"))
+    ag.app.show_hidden.setChecked(hide_state)
+    ag.app.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
+    ag.buttons.append((ag.app.show_hidden, "show_hide"))
 
     ag.file_data.set_edit_state(ag.get_db_setting("NOTE_EDIT_STATE", (False,)))
 
@@ -298,13 +291,15 @@ def restore_history():
     hist = ag.get_db_setting('DIR_HISTORY', [[], [], -1])
     if len(hist) == 2:
         hist = [[], [], -1]
+    logger.info(f'history length: {len(hist[0])}')
     ag.history.set_history(hist)
     low_bk.set_enable_prev_next()
+    logger.info(f'next.isEnabled: {ag.app.btn_next.isEnabled()}, prev.isEnabled: {ag.app.btn_prev.isEnabled()}')
 
 @pyqtSlot(QPoint)
 def dir_menu(pos):
     idx = ag.dir_list.indexAt(pos)
-    menu = QMenu(self)
+    menu = QMenu(ag.app)
     if idx.isValid():
         menu.addAction("Create folder\tCtrl-W")
         menu.addAction("Create folder as child\tCtrl-E")
@@ -328,7 +323,7 @@ def dir_menu(pos):
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
-    menu = QMenu(self)
+    menu = QMenu(ag.app)
     sel_model = ag.file_list.selectionModel()
     if sel_model.currentIndex().isValid():
         menu.addAction("Reveal in explorer")
@@ -343,9 +338,10 @@ def file_menu(pos):
         menu.addSeparator()
         menu.addAction("Export selected files")
         menu.addSeparator()
-    menu.addAction("Create new file")
-    if ag.mode is ag.appMode.RECENT_FILES:
+    if ag.dir_list.currentIndex().isValid():
+        menu.addAction("Create new file")
         menu.addSeparator()
+    if ag.mode is ag.appMode.RECENT_FILES:
         menu.addAction("Clear file history")
         if sel_model.hasSelection():
             menu.addAction("Remove selected from history")
@@ -354,9 +350,10 @@ def file_menu(pos):
         menu.addAction("Remove file(s) from folder")
         menu.addSeparator()
         menu.addAction("Delete file(s) from DB")
-    action = menu.exec(ag.file_list.mapToGlobal(pos))
-    if action:
-        ag.signals_.user_signal.emit(f"Files {action.text()}")
+    if len(menu.actions()) > 0:
+        action = menu.exec(ag.file_list.mapToGlobal(pos))
+        if action:
+            ag.signals_.user_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):
@@ -367,29 +364,29 @@ def file_loading(root_path: str, ext: list[str]):
     if not ag.db.conn:
         return
 
-    self.loader = load_files.loadFiles()
-    self.loader.set_files_iterator(load_files.yield_files(root_path, ext))
-    if self.is_busy:
+    ag.app.loader = load_files.loadFiles()
+    ag.app.loader.set_files_iterator(load_files.yield_files(root_path, ext))
+    if ag.app.is_busy:
         ag.start_thread = 'load_files'
     else:
         start_load_files()
 
 def start_load_files():
-    self.thread = QThread(self)
+    ag.app.thread = QThread(ag.app)
 
-    self.loader.moveToThread(self.thread)
+    ag.app.loader.moveToThread(ag.app.thread)
 
-    self.thread.started.connect(self.loader.load_data)
-    self.loader.finished.connect(finish_loading)
-    self.loader.finished.connect(self.loader.deleteLater)
+    ag.app.thread.started.connect(ag.app.loader.load_data)
+    ag.app.loader.finished.connect(finish_loading)
+    ag.app.loader.finished.connect(ag.app.loader.deleteLater)
 
-    self.thread.start()
-    self.set_busy(True)
+    ag.app.thread.start()
+    ag.app.set_busy(True)
 
 @pyqtSlot(bool)
 def finish_loading(has_new_ext: bool):
-    self.thread.quit()
-    self.set_busy(False)
+    ag.app.thread.quit()
+    ag.app.set_busy(False)
     if has_new_ext:
         ag.signals_.user_signal.emit("ext inserted")
     low_bk.dirs_changed(ag.dir_list.currentIndex())
@@ -438,24 +435,24 @@ def run_update_touched_files():
     run_worker(workers.update_touched_files)
 
 def run_worker(func):
-    if self.is_busy or not ag.db.conn:
+    if ag.app.is_busy or not ag.db.conn:
         return
-    self.thread = QThread(self)
+    ag.app.thread = QThread(ag.app)
 
-    self.worker = workers.worker(func)
-    self.worker.moveToThread(self.thread)
+    ag.app.worker = workers.worker(func)
+    ag.app.worker.moveToThread(ag.app.thread)
 
-    self.thread.started.connect(self.worker.run)
-    self.worker.finished.connect(finish_worker)
-    self.worker.finished.connect(self.worker.deleteLater)
+    ag.app.thread.started.connect(ag.app.worker.run)
+    ag.app.worker.finished.connect(finish_worker)
+    ag.app.worker.finished.connect(ag.app.worker.deleteLater)
 
-    self.thread.start()
-    self.set_busy(True)
+    ag.app.thread.start()
+    ag.app.set_busy(True)
 
 @pyqtSlot()
 def finish_worker():
-    self.thread.quit()
-    self.set_busy(False)
+    ag.app.thread.quit()
+    ag.app.set_busy(False)
     if ag.start_thread == 'load_files':
         ag.start_thread = None
         start_load_files()

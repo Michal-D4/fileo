@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\dup.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\dup.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -30,11 +30,6 @@ class Ui_DlgDup(object):
         self.horizontalLayout.setContentsMargins(9, 6, 9, 6)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.ico = QtWidgets.QLabel(parent=self.ttl_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ico.sizePolicy().hasHeightForWidth())
-        self.ico.setSizePolicy(sizePolicy)
         self.ico.setMinimumSize(QtCore.QSize(3, 32))
         self.ico.setText("")
         self.ico.setObjectName("ico")

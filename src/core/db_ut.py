@@ -1,7 +1,7 @@
 # from loguru import logger
 import apsw
 from collections import deque, abc
-from pathlib import PurePath
+from pathlib import Path
 
 from PyQt6.QtWidgets import QStyle
 
@@ -171,6 +171,7 @@ def registered_file_id(path: str, filename: str) -> int:
 def get_path_id(path: str) -> int:
     sql1 = 'select id from paths where path = ?'
     sql2 = 'insert into paths (path) values (?)'
+    path = Path(path).as_posix()
     with ag.db.conn as conn:
         curs = conn.cursor()
         res = curs.execute(sql1, (path,)).fetchone()
@@ -183,78 +184,80 @@ def update_file_name_path(file_id: int, path_id: int, file_name: str):
     sql = 'update files set (filename, path) = (?, ?) where id = ?'
     ag.db.conn.cursor().execute(sql, (file_name, path_id, file_id))
 
-def insert_file(file_data: list) -> int:
+def file_add_reason(file_id: int) -> ag.fileSource:
+    sql = 'select how_added from files where id = ?'
+    rsn = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
+    return ag.fileSource(rsn[0]) if rsn else ag.fileSource.SCAN_SYS
+
+def insert_file(file_data: list, added: int, how_added: int) -> tuple[int, bool]:
     sql = (
         'insert into files (path, extid, hash, filename, '
-        'added, modified, opened, created, rating, nopen, size, '
-        'pages, published) values (?,?,?,?,?,?,?,?,?,?,?,?,?)'
+        'modified, opened, created, rating, nopen, size, '
+        'pages, published, added, how_added) '
+        'values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
     )
 
-    def _get_path_id(conn: apsw.Connection) -> int:
-        sql1 = 'select id from paths where path = ?'
-        sql2 = 'insert into paths (path) values (?)'
-        curs = conn.cursor()
-        res = curs.execute(sql1, (file_data[-1],)).fetchone()
-        if res:
-            return res[0]
-        curs.execute(sql2, (file_data[-1],)).fetchone()
-        return conn.last_insert_rowid()
-
-    def _get_ext_id(conn: apsw.Connection) -> int:
+    def _get_ext_id() -> tuple[int, bool]:
+        """
+        extension is considered case-insensitive in the app.
+        This only influence to the filter - file extensions
+        are considered as the same iregardless of case.
+        However, when opening a file, it opens with
+        its actual extension.
+        """
         sql1 = 'select id from extensions where lower(extension) = ?'
         sql2 = 'insert into extensions (extension) values (?)'
-        ext = PurePath(file_data[1]).suffix.strip('.')
+        ext = Path(file_data[1]).suffix.strip('.')
         curs = conn.cursor()
         res = curs.execute(sql1, (ext.lower(),)).fetchone()
         if res:
-            return res[0]
+            return res[0], False
         curs.execute(sql2, (ext,)).fetchone()
-        return conn.last_insert_rowid()
+        return conn.last_insert_rowid(), True
 
     with ag.db.conn as conn:
-        path_id = _get_path_id(conn)
-        ext_id = _get_ext_id(conn)
-        conn.cursor().execute(sql, (path_id, ext_id, *file_data[:-1]))
-        return conn.last_insert_rowid()
+        path_id = get_path_id(file_data[-1])
+        ext_id, is_new = _get_ext_id()
+        conn.cursor().execute(sql, (path_id, ext_id, *file_data[:-1], added, how_added))
+        return conn.last_insert_rowid(), is_new
 
-def insert_tags(id, tags: list):
-    """
-    id - file id
-    """
+def insert_tags(file_id, tags: list) -> bool:
     sqls = [
         'select id from tags where tag = ?',
         'insert into tags (tag) values (?)',
         'insert into filetag values (?,?)',
     ]
+    new_tags = False
     with ag.db.conn as conn:
         for tag in tags:
-            tag_author_insert(conn, sqls, tag, id)
+            new_tags |= tag_author_insert(conn, sqls, tag, file_id)
+    return new_tags
 
-def insert_authors(id: int, authors: list):
-    """
-    id - file id
-    """
+def insert_authors(file_id: int, authors: list) -> bool:
     sqls = [
         'select id from authors where author = ?',
         'insert into authors (author) values (?)',
         'insert into fileauthor values (?,?)',
     ]
+    new_authors = False
     with ag.db.conn as conn:
         for author in authors:
-            tag_author_insert(conn, sqls, author, id)
+            new_authors |= tag_author_insert(conn, sqls, author, file_id)
+    return new_authors
 
-def tag_author_insert(conn: apsw.Connection, sqls: list, item: str, id: int):
+def tag_author_insert(conn: apsw.Connection, sqls: list, name: str, file_id: int) -> bool:
     cursor = conn.cursor()
-    tt = cursor.execute(sqls[0], (item,)).fetchone()
+    tt = cursor.execute(sqls[0], (name,)).fetchone()
     if tt:
         try:
-            cursor.execute(sqls[2], (id, tt[0]))
+            cursor.execute(sqls[2], (file_id, tt[0]))
         except apsw.ConstraintError:
             pass         # ignore, author duplication
-    else:
-        cursor.execute(sqls[1], (item,))
-        t_id = conn.last_insert_rowid()
-        cursor.execute(sqls[2], (id, t_id))
+        return False
+    cursor.execute(sqls[1], (name,))
+    t_id = conn.last_insert_rowid()
+    cursor.execute(sqls[2], (file_id, t_id))
+    return True          # new tag / author inserted
 
 def insert_filenotes(file_id: int, file_notes: list):
     if len(file_notes) == 0:
@@ -267,13 +270,13 @@ def insert_filenotes(file_id: int, file_notes: list):
         tt = cursor.execute(sql, (file_id,)).fetchone()
         return tt[0] if tt[0] else 0
 
-    def note_already_exists(rec: list) -> bool:
+    def note_already_exists() -> bool:
         """
-        suppose that there can't be more than one note
-        for the same file created and modified at the same time
+        suppose that there can't be more than one note for the same file
+        with the same creation and modification time
         """
         sql = 'select 1 from filenotes where (fileid, created, modified) = (?,?,?) '
-        tt = cursor.execute(sql, (file_id, rec[3], rec[4])).fetchone()
+        tt = cursor.execute(sql, (file_id, rec[4], rec[3])).fetchone()
         return bool(tt)
 
     with ag.db.conn as conn:
@@ -281,7 +284,7 @@ def insert_filenotes(file_id: int, file_notes: list):
         max_note_id = get_max_note_id()
 
         for rec in file_notes:
-            if note_already_exists(rec):
+            if note_already_exists():
                 continue
             max_note_id += 1
             cursor.execute(sql3, (file_id, max_note_id, rec[0], rec[4], rec[3]))
@@ -348,7 +351,7 @@ def filter_files(checks: dict) -> apsw.Cursor:
         }[key]
 
     def filter_subsqls():
-        if checks['dir'] or checks['no_dir'] or checks['created_here']:
+        if checks['dir'] or checks['no_dir'] or checks['add_method']:
             sqlist.append(filter_sqls('dir_sql'))
         if checks['tag']:
             sqlist.append(filter_sqls('tag_sql'))
@@ -402,12 +405,11 @@ def delete_not_exist_file(id: int):
     sql_del = 'delete from files where id = ?'
     ag.db.conn.cursor().execute(sql_del, (id,))
 
-def delete_file(id: int):
+def delete_file(file_id: int):
     """
     delete file, esential info about file
     will be tied to one of its duplicates if any
     """
-    sql_hash = 'select hash from files where id = :be_removed'
     sql_sta = (
         'select count(*), sum(nopen), max(rating), max(modified), '
         'max(opened) from files where hash = ?'
@@ -439,14 +441,14 @@ def delete_file(id: int):
         file notes, rating and number of openings will be
         tied to one of the saved files among its duplicates
         """
-        hash = curs.execute(sql_hash, {'be_removed': id}).fetchone()
+        hash = get_file_hash(file_id)
         if not hash:
             return
-        sta = curs.execute(sql_sta, (hash[0],)).fetchone()
+        sta = curs.execute(sql_sta, (hash,)).fetchone()
         if sta[0] > 1:  # if duplicates exists
             saved_id = curs.execute(
                 sql_saved_id,
-                {'hash': hash[0], 'be_removed': id}
+                {'hash': hash, 'be_removed': file_id}
             ).fetchone()[0]
             _id = curs.execute(
                 sql_max_id, {'saved_id': saved_id}
@@ -457,7 +459,7 @@ def delete_file(id: int):
                 {
                     'saved_id': saved_id,
                     'max_id': max_note_id,
-                    'be_removed': id
+                    'be_removed': file_id
                 }
             )
             curs.execute(
@@ -472,13 +474,13 @@ def delete_file(id: int):
             )
             try:
                 curs.execute(sql_upd_tags,
-                    {'saved_id': saved_id, 'be_removed': id}
+                    {'saved_id': saved_id, 'be_removed': file_id}
                 )
             except apsw.ConstraintError:
                 pass         # ignore, tag duplication
             try:
                 curs.execute(sql_upd_authors,
-                    {'saved_id': saved_id,'be_removed': id}
+                    {'saved_id': saved_id,'be_removed': file_id}
                 )
             except apsw.ConstraintError:
                 pass         # ignore, author duplication
@@ -486,7 +488,7 @@ def delete_file(id: int):
     with ag.db.conn as conn:
         curs = conn.cursor()
         update_with_saved()
-        curs.execute(sql_del, (id,))
+        curs.execute(sql_del, (file_id,))
 
 def delete_file_dir_link(id: int, dir_id: int):
     sql = 'delete from filedir where (file, dir) = (?,?)'
@@ -509,43 +511,54 @@ def get_dir_id_for_file(file_id: int) -> int:
     res = ag.db.conn.cursor().execute(sql, (file_id,)).fetchone()
     return res[0] if res else 0
 
-def temp_files_dir(dirs: list, sub_dirs: bool):
-    sql0 = "insert into aux values ('dir', ?)"
-    sql1 = (
-        "with x(id) as (select id from parentdir where parent = ? "
-        "union select t.id from x inner join parentdir t "
-        "on t.parent = x.id) select * from x"
+def temp_files_dir(dirs: list, checks: dict) -> bool:
+    sql_det = (
+        "insert into aux(key, val) select 'files_dir', fd.file from filedir fd",
+        "join files f on f.id = fd.file",
+        "fd.dir in (select val from aux where key = 'dir')",
+        "f.how_added = :how_no",
+        "insert into aux (key, val) select 'files_dir', f.id from files f",
+        "f.id not in (select distinct file from filedir)",
+        "where", "and",
     )
-    sql2 = (
-        "insert into aux(key, val) select 'files_dir', file from "
-        "filedir where dir in (select val from aux where key = 'dir')"
-    )
-    curs = ag.db.conn.cursor()
-    if sub_dirs:
+
+    def files_dir() -> tuple[bool, str]:
+        to_join = ((0,6,2,), (0,1,6,2,7,3,))
+        sql0 = "insert into aux values ('dir', ?)"
+        sql1 = (
+            "with x(id) as (select id from parentdir where parent = ? "
+            "union select t.id from x inner join parentdir t "
+            "on t.parent = x.id) select * from x"
+        )
         dir_ = set(dirs)
-        for dd in dirs:
-            scur = curs.execute(sql1, dd)
-            for s in scur:
-                dir_.add(s)
+        if checks["sub_dir"]:
+            for dd in dirs:
+                for s in curs.execute(sql1, dd):
+                    dir_.add(s)
         curs.executemany(sql0, dir_)
+
+        return (len(dir_) == 1), ' '.join((sql_det[i] for i in to_join[checks["add_method"]]))
+
+    def files_no_dir() -> str:
+        to_join = ((4,6,5,), (4,6,5,7,3,))
+        return ' '.join((sql_det[i] for i in to_join[checks["add_method"]]))
+
+    curs = ag.db.conn.cursor()
+    ret_val = False
+    if checks["dir"]:
+        ret_val, sql = files_dir()
+    elif checks["no_dir"]:
+        sql = files_no_dir()
+    elif checks["add_method"]:
+        sql = ' '.join((sql_det[i] for i in (4,6,3,)))
     else:
-        curs.executemany(sql0, dirs)
+        return False
 
-    curs.execute(sql2)
-
-def temp_files_no_dir():
-    sql = (
-        "insert into aux (key, val) select 'files_dir', id from "
-        "files where id not in (select distinct file from filedir)"
-    )
-    ag.db.conn.cursor().execute(sql)
-
-def temp_files_created_here():
-    sql = (
-        "insert into aux (key, val) select 'files_dir', id from "
-        "files where added = created"
-    )
-    ag.db.conn.cursor().execute(sql)
+    if checks["add_method"]:
+        curs.execute(sql, {'how_no': checks.get("how_added", 1)})
+    else:
+        curs.execute(sql)
+    return ret_val
 
 def clear_temp():
     sql = "delete from aux where key != 'TREE_PATH'"
@@ -628,7 +641,7 @@ def get_file_export(fileid: int) -> dict:
         return tt
 
     sql1 = (
-        'select f.hash, f.filename, f.added, f.modified, f.opened, '
+        'select f.hash, f.filename, f.modified, f.opened, '
         'f.created, f.rating, f.nopen, f.size, f.pages, '
         'f.published, p.path from files f join paths p '
         'on p.id = f.path where f.id = ?'
@@ -693,19 +706,6 @@ def insert_dir(dir_name: str, parent: int) -> int:
         id = conn.last_insert_rowid()
         curs.execute(sql3, (parent, id,))
     return id
-
-def copy_existent(file_id: int, parent_dir: int) -> int:
-    """
-    make copy of existent file while import from file
-    """
-    sql = (  # the "existent" folder id in the current folder if any
-        'select d.id from dirs d join parentdir p on '
-        'p.id = d.id where (p.parent, d.name) = (?,?)'
-    )
-    id = ag.db.conn.cursor().execute(sql, (parent_dir, 'existent')).fetchone()
-    exist_id = id[0] if id else insert_dir('existent', parent_dir)
-    copy_file(file_id, exist_id)
-    return exist_id
 
 def update_hidden_state(id: int, parent: int, hidden: bool):
     sql = 'update parentdir set hide = :hide where (id,parent) = (:id,:parent)'
@@ -791,7 +791,7 @@ def move_dir(new: int, old: int, id: int) -> bool:
             return False   # dir can't be moved here, already exists
 
 def get_file_hash(file_id: int) -> str:
-    hash_sql = "select hash from files where id = ?"
+    hash_sql = "select hash from files where id = ? and size > 0"
     hash_ = ag.db.conn.cursor().execute(hash_sql, (file_id,)).fetchone()
     return hash_[0] if hash_ else ''
 
@@ -976,7 +976,7 @@ def get_note_date_files(checks: dict) -> apsw.Cursor:
         if last_any == "last":
             return (f'with x(fileid, {date_field}) as '
             f'(select fileid, max({date_field}) from filenotes group by fileid) '
-            f'select * from x where {" and ".join(cond)}'
+            f'select fileid from x where {" and ".join(cond)}'
         )
 
     if checks['note date is set']:

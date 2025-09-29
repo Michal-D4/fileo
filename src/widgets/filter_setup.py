@@ -1,5 +1,5 @@
 # from loguru import logger
-from PyQt6.QtCore import Qt, QDate, QPoint, QSize
+from PyQt6.QtCore import Qt, QDate, QPoint, QSize, QDateTime, QTime, QTimeZone
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QWidget
 
@@ -8,7 +8,7 @@ from .ui_set_filter import Ui_filterSetup
 from .. import tug
 
 UNIX_EPOCH = 2440588   # julian date of 1970-01-01
-DLG_SIZE = QSize(479, 546)
+DLG_SIZE = QSize(502, 496)
 
 SIZE_RATIO = {
     '8pt': 0.90,
@@ -18,9 +18,6 @@ SIZE_RATIO = {
     '12pt': 1.10,
     '14pt': 1.15,
 }
-
-def unix_date(ts: float) -> int:
-    return int((ts - UNIX_EPOCH) * 86400)
 
 
 class FilterSetup(QWidget):
@@ -33,6 +30,7 @@ class FilterSetup(QWidget):
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        self.init_how_added()
         self.ui.note_date_type.setVisible(self.ui.date_type.currentText() == 'note_date')
 
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
@@ -65,20 +63,23 @@ class FilterSetup(QWidget):
         self.ui.btnApply.clicked.connect(self.apply_clicked)
 
         self.mouseMoveEvent = self.move_self
-        f_size = tug.get_app_setting('FONT_SIZE', '10pt')
-        self.cur_size = DLG_SIZE * SIZE_RATIO[f_size]
+        self.font_changed(tug.get_app_setting('FONT_SIZE', '10pt'))
         ag.signals_.font_size_changed.connect(self.font_changed)
+
+    def init_how_added(self):
+        items = ("", "scan file system", "drag from file system", "import file list",
+                 "drag from another instance    ", "created here")
+        for it in ag.fileSource:
+            self.ui.how_added.addItem(items[it.value], userData=it.value)
 
     def file_button_clicked(self, id: int):
         if self.checked_btn != -1:
             self.ui.file_buttons.button(self.checked_btn).setChecked(False)
         self.checked_btn = -1 if self.checked_btn == id else id
 
-    def sizeHint(self):
-        return self.cur_size
-
     def font_changed(self, font_size: str):
         self.cur_size = DLG_SIZE * SIZE_RATIO[font_size]
+        self.ui.dlg_frame.setMinimumSize(self.cur_size)
         self.adjustSize()
 
     def move_self(self, e: QMouseEvent):
@@ -155,8 +156,9 @@ class FilterSetup(QWidget):
     def store_temp(self):
         self.checks = {
             'dir': self.ui.selected_dir.isChecked(),
+            'sub_dir': self.ui.subDirs.isChecked(),
             'no_dir': self.ui.no_folder.isChecked(),
-            'created_here': self.ui.createdHere.isChecked(),
+            'add_method': self.ui.add_method.isChecked(),
             'tag': self.ui.selected_tag.isChecked(),
             'ext': self.ui.selected_ext.isChecked(),
             'author': self.ui.selected_author.isChecked(),
@@ -164,9 +166,14 @@ class FilterSetup(QWidget):
             'note_date': self.ui.note_date_type.currentText(),
             'after': self.ui.after.isChecked(),
             'before': self.ui.before.isChecked(),
-            'date_after': str(unix_date(self.ui.after_date.date().toJulianDay())),
-            'date_before': str(unix_date(self.ui.before_date.date().addDays(1).toJulianDay())),
+            'date_after': QDateTime(self.ui.after_date.date(), QTime(),
+                                    QTimeZone(QTimeZone.Initialization.UTC)).toSecsSinceEpoch(),
+            'date_before': QDateTime(self.ui.before_date.date().addDays(1), QTime(),
+                                     QTimeZone(QTimeZone.Initialization.UTC)).toSecsSinceEpoch(),
         }
+        if self.checks['add_method']:
+            self.checks['how_added'] = self.ui.how_added.currentData(Qt.ItemDataRole.UserRole)
+
         db_ut.clear_temp()
         self.store_dir_files()
         if self.checks['tag']:
@@ -178,35 +185,27 @@ class FilterSetup(QWidget):
         self.store_note_date_files()
 
     def store_dir_files(self):
-        if not self.checks['dir']:   # if any folder is not selected
-            self.single_folder = False
-            if self.checks['no_dir']:
-                db_ut.temp_files_no_dir()
-                return
-            if self.checks['created_here']:
-                db_ut.temp_files_created_here()
-                return
         idxs = ag.dir_list.selectionModel().selectedIndexes()
         self.single_folder = (len(idxs) == 1)
         dirs = []
         for idx in idxs:
             dirs.append((idx.data(Qt.ItemDataRole.UserRole).id,))
-        db_ut.temp_files_dir(dirs, self.ui.subDirs.isChecked())
+        self.single_folder = db_ut.temp_files_dir(dirs, self.checks)
 
     def store_tag_files(self):
-        id_list = ag.tag_list.get_selected_ids()
-        if not id_list:              # if any tag is not selected
+        tag_ids = ag.tag_list.get_selected_ids()
+        if not tag_ids:              # if any tag is not selected
             self.checks['tag'] = False
             return
         if self.ui.all_btn.isChecked():
-            tag_files = db_ut.get_tag_files(id_list[0])   # tag_files: set
-            for id in id_list[1:]:
+            tag_files = db_ut.get_tag_files(tag_ids[0])   # tag_files: set
+            for id in tag_ids[1:]:
                 tag_files &= db_ut.get_tag_files(id)
                 if not tag_files:
                     break
         else:                        # self.ui.any_btn.isChecked()
             tag_files = set()
-            for id in id_list:
+            for id in tag_ids:
                 tag_files |= db_ut.get_tag_files(id)
         for file in tag_files:
             db_ut.save_to_temp('file_tag', file)
@@ -281,9 +280,10 @@ class FilterSetup(QWidget):
             "DIR_CHECK": self.ui.selected_dir.isChecked(),
             "SUB_DIR_CHECK": self.ui.subDirs.isChecked(),
             "NO_FOLDER": self.ui.no_folder.isChecked(),
-            "CREATED_HERE": self.ui.createdHere.isChecked(),
+            "USE_ADD_METHOD": self.ui.add_method.isChecked(),
             "TAG_CHECK": self.ui.selected_tag.isChecked(),
             "IS_ALL": self.ui.all_btn.isChecked(),
+            "HOW_ADDED": self.ui.how_added.currentIndex(),
             "EXT_CHECK": self.ui.selected_ext.isChecked(),
             "AUTHOR_CHECK": self.ui.selected_author.isChecked(),
             "OPEN_CHECK": self.ui.open_sel.isChecked(),
@@ -309,13 +309,12 @@ class FilterSetup(QWidget):
         self.ui.no_folder.setChecked(ag.get_db_setting("NO_FOLDER", False))
         if self.ui.no_folder.isChecked():
             self.checked_btn = self.ui.file_buttons.id(self.ui.no_folder)
-        self.ui.createdHere.setChecked(ag.get_db_setting("CREATED_HERE", False))
-        if self.ui.createdHere.isChecked():
-            self.checked_btn = self.ui.file_buttons.id(self.ui.createdHere)
+        self.ui.add_method.setChecked(ag.get_db_setting("USE_ADD_METHOD", False))
         self.ui.selected_tag.setChecked(ag.get_db_setting("TAG_CHECK", False))
         is_all = ag.get_db_setting("IS_ALL", False)
         self.ui.all_btn.setChecked(is_all)
         self.ui.any_btn.setChecked(not is_all)
+        self.ui.how_added.setCurrentIndex(ag.get_db_setting("HOW_ADDED", 0))
         self.ui.selected_ext.setChecked(ag.get_db_setting("EXT_CHECK", False))
         self.ui.selected_author.setChecked(ag.get_db_setting("AUTHOR_CHECK", False))
         self.ui.open_sel.setChecked(ag.get_db_setting("OPEN_CHECK", False))

@@ -83,17 +83,6 @@ class Locations(QTextBrowser):
             self.selectAll()
         super().copy()
 
-    def get_branch(self, file_id: int=0) -> list:
-        """
-        returns the first branch the file belongs to
-        """
-        if file_id == 0:
-            return []
-        for branch, f_id in self.names.values():
-            if f_id == file_id:
-                return branch
-        return []
-
     def go_file(self):
         branch = ','.join((str(i) for i in self.branch[0]))
         file_id = self.branch[1]
@@ -205,9 +194,7 @@ class Locations(QTextBrowser):
         for key, val in self.names.items():
             key0, *_ = key.split('/')
             tt, nu_key = (
-                file_branch_line()
-                if val[1] == self.file_id else
-                dup_file_branch_line()
+                file_branch_line() if val[1] == self.file_id else dup_file_branch_line()
             )
             re_names[nu_key] = val
             txt.append(tt)

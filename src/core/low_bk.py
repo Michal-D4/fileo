@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 import json
 from pathlib import Path
 from datetime import datetime
@@ -84,28 +84,30 @@ def set_user_action_handlers():
         "file reveal": reveal_in_explorer,
         "Files Clear file history": clear_recent_files,
         "Files Remove selected from history": remove_files_from_recent,
-        "show_recent_files": show_recent_files,
     }
 
     @pyqtSlot(str)
     def execute_action(action: str):
         pos = action.find("\\")
         act = action if pos == -1 else action[:pos]
-        try:
+        to_run = data_methods.get(act, None)
+        if to_run:
             if pos == -1:
-                data_methods[act]()
+                to_run()
             else:
-                data_methods[act](action[pos+1:].strip())
-        except KeyError as err:
+                to_run(action[pos+1:].strip())
+        else:
             ag.show_message_box(
                 'Action not implemented',
-                f'Action name "{err}" not implemented',
+                f'Action name "{act}" not implemented',
                 icon=QStyle.StandardPixmap.SP_MessageBoxWarning
             )
 
     return execute_action
 
 def create_file():
+    if not ag.dir_list.currentIndex().isValid():
+        return
     model:  fileProxyModel = ag.file_list.model()
     smodel: fileModel = model.sourceModel()
     idx = ag.file_list.currentIndex()
@@ -442,6 +444,7 @@ def expand_branch(branch: list) -> QModelIndex:
 def set_dir_model():
     model: dirModel = dirModel()
     model.set_model_data()
+    logger.info(f'{model.rowCount()=}')
     ag.dir_list.setModel(model)
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
@@ -449,6 +452,9 @@ def set_dir_model():
 
 def restore_selected_dirs():
     branches = ag.get_db_setting("SELECTED_DIRS", [])
+    if not branches:
+        show_files([])
+        return
     selection = QItemSelection()
     for br in branches:
         idx = expand_branch(branch=br)
@@ -527,15 +533,9 @@ def to_next_folder():
     ag.history.next_dir()
     to_history_folder()
 
-@pyqtSlot(int)
+@pyqtSlot()
 def to_history_folder():
-    branch = ag.history.get_current()
-    if not branch:
-        return
-    _history_folder(branch)
-
-def _history_folder(branch: list):
-    idx = expand_branch(branch)
+    idx = expand_branch(ag.history.get_current())
     if idx.isValid():
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
@@ -829,11 +829,7 @@ def _export_files(out: QTextStream):
         def file_ids_in_note():
             txt, *_ = note
             pos = txt.find('fileid:/')
-            step = 0
             while pos > 0:      # pos can't be 0
-                step += 1
-                if step > 15:
-                    break
                 pos2 = txt.find(')', pos)
                 file_id = int(txt[pos+8:pos2])
                 if file_id not in ids:
@@ -859,6 +855,10 @@ def _export_files(out: QTextStream):
     notes = {}
     get_notes()
 
+    app_v = ag.app_version()
+    db_v = ag.db.conn.cursor().execute("PRAGMA user_version").fetchone()[0]
+    out << json.dumps({'app_v': app_v, 'db_v': db_v}) << "\n"
+
     for idn in ids:
         try:
             file_data = db_ut.get_file_export(idn)
@@ -866,7 +866,7 @@ def _export_files(out: QTextStream):
             continue
         file_data['notes'] = notes[idn]
         file_data['id'] = idn
-        out << f"{json.dumps(file_data)}\n"
+        out << json.dumps(file_data) << "\n"
 
 def import_files():
     pp = Path('~/fileo/export').expanduser()
@@ -878,30 +878,28 @@ def import_files():
     if ok:
         fp = QFile(file_name)
         fp.open(QIODeviceBase.OpenModeFlag.ReadOnly)
-        _import_files(QTextStream(fp), ag.dir_list.currentIndex())
+        _import_files(QTextStream(fp), ag.dir_list.currentIndex(), ag.fileSource.IMPORT_DB)
 
-def _import_files(fp: QTextStream, target: QModelIndex):
+def _import_files(fp: QTextStream, target: QModelIndex, source: ag.fileSource = ag.fileSource.DRAG_DB):
     def load_file(fl: dict) -> int:
-        nonlocal exist_dir, file_ids
+        nonlocal file_ids, new_tag, new_auther, new_ext
         file_ = fl['file']
         f_path: Path = Path(file_[-1]) / file_[1]
         if not f_path.is_file():
             return 0
 
         dir_id = target.data(Qt.ItemDataRole.UserRole).id
-
         file_id = db_ut.registered_file_id(file_[-1], file_[1])
-        if file_id:
-            exist_dir = db_ut.copy_existent(file_id, dir_id)
-        else:
-            file_id = db_ut.insert_file(file_)
-            db_ut.copy_file(file_id, dir_id)
+        if not file_id:
+            file_id, is_new_ext = db_ut.insert_file(file_, added_ts, source.value)
+            new_ext |= is_new_ext
+        db_ut.copy_file(file_id, dir_id)
 
         file_ids[fl['id']] = file_id
 
-        db_ut.insert_tags(file_id, fl['tags'])
+        new_tag |= db_ut.insert_tags(file_id, fl['tags'])
         db_ut.insert_filenotes(file_id, fl['notes'])
-        db_ut.insert_authors(file_id, fl['authors'])
+        new_auther |= db_ut.insert_authors(file_id, fl['authors'])
 
     def reset_file_ids_in_notes():
         def replace_file_id(note):
@@ -910,7 +908,8 @@ def _import_files(fp: QTextStream, target: QModelIndex):
             while pos > 0:      # pos can't be 0
                 pos2 = txt.find(')', pos)
                 file_id = txt[pos+8:pos2]
-                txt = txt.replace(file_id, str(file_ids[int(file_id)]))
+                if int(file_id) in file_ids:
+                    txt = txt.replace(file_id, str(file_ids[int(file_id)]))
                 pos = txt.find('fileid:/', pos2)
             if pp:
                 db_ut.update_note_exported(f_id, note_id, txt)
@@ -919,28 +918,35 @@ def _import_files(fp: QTextStream, target: QModelIndex):
             for note in db_ut.get_file_notes(new_id):
                 replace_file_id(note)
 
-    exist_dir = 0
     file_ids = {}
+    new_tag = new_auther = new_ext = False
+    added_ts = int(datetime.now().replace(microsecond=0).timestamp())
 
-    while not fp.atEnd():
-        load_file(json.loads(fp.readLine()))
+    vers = json.loads(fp.readLine())
+    if vers.get('app_v', '') == ag.app_version():
+        db_v = ag.db.conn.cursor().execute("PRAGMA user_version").fetchone()[0]
+        if vers.get('db_v', '') == db_v:
+            while not fp.atEnd():
+                load_file(json.loads(fp.readLine()))
 
-    reset_file_ids_in_notes()
+            reset_file_ids_in_notes()
 
-    ag.tag_list.list_changed.emit()
-    ag.author_list.list_changed.emit()
-
-    if exist_dir > 0:
-        branch = ag.define_branch(target)
-        branch.append(exist_dir)
-        set_dir_model()
-        idx = expand_branch(branch)
-        ag.dir_list.setCurrentIndex(idx)
-    else:
-        if ag.dir_list.currentIndex() == target:
-            refresh_dir_list()
+            if new_tag:
+                populate_tag_list()
+                ag.tag_list.list_changed.emit()
+            if new_auther:
+                populate_author_list()
+                ag.author_list.list_changed.emit()
+            if new_ext:
+                populate_ext_list()
         else:
-            ag.dir_list.setCurrentIndex(target)
+            ag.show_message_box('Data from Wrong version of DB',
+                f'Data DB v. = {vers.get("db_v", '')}, current DB v. = {db_v}'
+            )
+    else:
+        ag.show_message_box('Data from Wrong version of application',
+            f'Data app.v. = {vers.get("app_v", '')}, current app.v. = {ag.app_version()}'
+        )
 #endregion
 
 #region  Files - Dirs
@@ -952,9 +958,7 @@ def open_manualy(index: QModelIndex):
             d_path = i_path.parent
             while not d_path.exists():
                 d_path = d_path.parent
-            filename, ok = QFileDialog.getOpenFileName(ag.app,
-                directory=str(d_path)
-            )
+            filename, ok = QFileDialog.getOpenFileName(ag.app, directory=str(d_path))
 
             if ok:
                 f_path = Path(filename)

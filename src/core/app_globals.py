@@ -28,7 +28,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.56'
+    return '1.3.57'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -48,6 +48,14 @@ recent_files = []
 recent_files_length = 20
 stop_thread = False
 start_thread = None
+
+@unique
+class fileSource(Enum):
+    SCAN_SYS = 1
+    DRAG_SYS = 2
+    IMPORT_DB = 3
+    DRAG_DB = 4
+    CREATED = 5
 
 @unique
 class appMode(Enum):
@@ -178,14 +186,14 @@ def define_branch(index: QModelIndex) -> list:
     branch.append(int(dir_list.isExpanded(index)))
     return branch
 
-KB, MB, GB = 1024, 1048576, 1073741824
 def human_readable_size(n):
-    if n > GB:
-        return f'{n/GB:.2f} Gb'
-    if n > MB:
-        return f'{n/MB:.2f} Mb'
-    if n > KB:
-        return f'{n/KB:.2f} Kb'
+    kb, mb, gb = 1024, 1048576, 1073741824
+    if n > gb:
+        return f'{n/gb:.2f} Gb'
+    if n > mb:
+        return f'{n/mb:.2f} Mb'
+    if n > kb:
+        return f'{n/kb:.2f} Kb'
     return n
 
 def add_recent_file(id_: int):

@@ -540,12 +540,6 @@
       </item>
       <item>
        <widget class="QFrame" name="main_pane">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="minimumSize">
          <size>
           <width>170</width>
@@ -880,18 +874,6 @@
             </property>
             <item>
              <widget class="QFrame" name="vSplit">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
               <property name="styleSheet">
                <string notr="true"/>
               </property>
@@ -916,12 +898,6 @@
               </property>
               <item>
                <widget class="QTreeView" name="file_list">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -993,18 +969,6 @@
               </item>
               <item>
                <widget class="QFrame" name="noteHolder">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
                 <property name="styleSheet">
                  <string notr="true"/>
                 </property>

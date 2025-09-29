@@ -4,10 +4,11 @@ from PyQt6.QtCore import Qt, QDateTime
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import (QWidget, QFormLayout, QLabel,
     QLineEdit, QVBoxLayout, QScrollArea, QFrame, QApplication,
-    QMenu,
+    QMenu, QHBoxLayout,
 )
 
 from ..core import app_globals as ag, db_ut
+from .. import tug
 
 
 class fileInfo(QWidget):
@@ -22,13 +23,19 @@ class fileInfo(QWidget):
         self.pages.setObjectName('edit_pages')
         self.rating.editingFinished.connect(self.rating_changed)
         self.pages.editingFinished.connect(self.pages_changed)
+        self.setStyleSheet(tug.get_dyn_qss("line_edit"))
 
         self.form_setup()
         self.set_event_handler()
 
     def copy_file_data(self, e: QMouseEvent, row: int):
         def copy_row(i: int) -> str:
-            fld = self.form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget()
+            if i == 8:
+                fld = self.rating
+            elif i == 10:
+                fld = self.pages
+            else:
+                fld = self.form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget()
             lbl = self.form_layout.itemAt(i, QFormLayout.ItemRole.LabelRole).widget()
             return f'{lbl.text()}\t{fld.text()}'
 
@@ -74,9 +81,15 @@ class fileInfo(QWidget):
         self.form_layout.addRow("Created date:", QLabel())
         self.form_layout.addRow("Publication date(book):", QLabel())
         self.form_layout.addRow("File opened (times):", QLabel())
-        self.form_layout.addRow("File rating:", self.rating)
+        h_lay0 = QHBoxLayout()
+        h_lay0.addWidget(self.rating, 1)
+        h_lay0.addStretch(5)
+        self.form_layout.addRow("File rating:", h_lay0)
         self.form_layout.addRow("Size of file:", QLabel())
-        self.form_layout.addRow("Pages(book):", self.pages)
+        h_lay1 = QHBoxLayout()
+        h_lay1.addWidget(self.pages, 1)
+        h_lay1.addStretch(5)
+        self.form_layout.addRow("Pages(book):", h_lay1)
 
 
         self.form_info = QFrame(self)
@@ -93,22 +106,35 @@ class fileInfo(QWidget):
         v_layout.addWidget(scroll)
 
     def populate_fields(self):
-        idx = ag.file_list.currentIndex()
-        if idx.isValid():
-            self.file_id = idx.data(Qt.ItemDataRole.UserRole)
-            fields = db_ut.get_file_info(self.file_id)
-            if not fields:
-                return
+        fields = db_ut.get_file_info(self.file_id)
+        if not fields:
+            self.rating.setText('')
+            self.pages.setText('')
             for i in range(self.form_layout.rowCount()):
-                if i >= 2 and i <= 6:
-                    field = self.time_value(fields[i])
-                elif i == 9:
-                    field = ag.human_readable_size(fields[i])
-                else:
-                    field = fields[i]
+                if i==8 or i==10:
+                    continue
                 self.form_layout.itemAt(
                     i, QFormLayout.ItemRole.FieldRole
-                    ).widget().setText(str(field))
+                    ).widget().setText('')
+            return
+        for i in range(self.form_layout.rowCount()):
+            if i == 2:
+                field = '  /  '.join((self.time_value(fields[i]), ag.fileSource(db_ut.file_add_reason(self.file_id)).name))
+            elif i > 2 and i <= 6:
+                field = self.time_value(fields[i])
+            elif i == 8:
+                self.rating.setText(str(fields[i]))
+                continue
+            elif i == 9:
+                field = ag.human_readable_size(fields[i])
+            elif i == 10:
+                self.pages.setText(str(fields[i]))
+                continue
+            else:
+                field = fields[i]
+            self.form_layout.itemAt(
+                i, QFormLayout.ItemRole.FieldRole
+                ).widget().setText(str(field))
 
     def time_value(self, val: int) -> str:
         a = QDateTime()

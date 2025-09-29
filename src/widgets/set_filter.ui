@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>484</width>
-    <height>546</height>
+    <width>520</width>
+    <height>523</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,7 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1,0">
+     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -104,7 +104,10 @@
           <widget class="QFrame" name="fileref">
            <layout class="QVBoxLayout" name="filesLayout">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,1">
+              <property name="spacing">
+               <number>6</number>
+              </property>
               <item>
                <widget class="QFrame" name="frameDir">
                 <property name="frameShape">
@@ -128,12 +131,6 @@
                  </property>
                  <item>
                   <widget class="QCheckBox" name="selected_dir">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
                    <property name="checked">
                     <bool>false</bool>
                    </property>
@@ -162,11 +159,11 @@
                    </item>
                    <item>
                     <widget class="QCheckBox" name="subDirs">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
+                     <property name="minimumSize">
+                      <size>
+                       <width>120</width>
+                       <height>0</height>
+                      </size>
                      </property>
                      <property name="text">
                       <string>all subfolders</string>
@@ -180,12 +177,6 @@
               </item>
               <item>
                <widget class="QPlainTextEdit" name="dir_list">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -213,30 +204,8 @@
             </item>
             <item>
              <widget class="QCheckBox" name="no_folder">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
               <property name="text">
                <string>files not included in any folder</string>
-              </property>
-              <attribute name="buttonGroup">
-               <string notr="true">file_buttons</string>
-              </attribute>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="createdHere">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>files created in fileo</string>
               </property>
               <attribute name="buttonGroup">
                <string notr="true">file_buttons</string>
@@ -248,20 +217,23 @@
          </item>
          <item>
           <layout class="QFormLayout" name="formLayout">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::ExpandingFieldsGrow</enum>
+           </property>
            <property name="leftMargin">
             <number>9</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
            </property>
            <property name="rightMargin">
             <number>9</number>
            </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
            <item row="0" column="0">
             <widget class="QFrame" name="frame_tag">
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>16777215</height>
-              </size>
-             </property>
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
              </property>
@@ -289,12 +261,6 @@
               </property>
               <item>
                <widget class="QCheckBox" name="selected_tag">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="minimumSize">
                  <size>
                   <width>50</width>
@@ -308,15 +274,9 @@
               </item>
               <item>
                <widget class="QRadioButton" name="all_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="minimumSize">
                  <size>
-                  <width>50</width>
+                  <width>60</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -333,15 +293,9 @@
               </item>
               <item>
                <widget class="QRadioButton" name="any_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="minimumSize">
                  <size>
-                  <width>50</width>
+                  <width>60</width>
                   <height>0</height>
                  </size>
                 </property>
@@ -359,16 +313,10 @@
            <item row="0" column="1">
             <widget class="QPlainTextEdit" name="tag_list">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>50</height>
-              </size>
              </property>
              <property name="maximumSize">
               <size>
@@ -388,28 +336,15 @@
             </widget>
            </item>
            <item row="1" column="0">
-            <widget class="QCheckBox" name="selected_ext">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
+            <widget class="QCheckBox" name="selected_ext"/>
            </item>
            <item row="1" column="1">
             <widget class="QPlainTextEdit" name="ext_list">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>50</height>
-              </size>
              </property>
              <property name="maximumSize">
               <size>
@@ -429,28 +364,15 @@
             </widget>
            </item>
            <item row="2" column="0">
-            <widget class="QCheckBox" name="selected_author">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
+            <widget class="QCheckBox" name="selected_author"/>
            </item>
            <item row="2" column="1">
             <widget class="QPlainTextEdit" name="author_list">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>50</height>
-              </size>
              </property>
              <property name="maximumSize">
               <size>
@@ -469,44 +391,26 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
+           <item row="4" column="0">
             <widget class="QCheckBox" name="open_sel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="text">
               <string>open #</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
+           <item row="4" column="1">
             <layout class="QHBoxLayout" name="HLayoutOpen" stretch="1,0,2,1">
              <property name="leftMargin">
-              <number>9</number>
+              <number>0</number>
              </property>
              <item>
               <widget class="QComboBox" name="open_cond">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>16777215</height>
-                </size>
-               </property>
                <item>
                 <property name="text">
                  <string>&lt;=</string>
@@ -537,24 +441,6 @@
              </item>
              <item>
               <widget class="QLineEdit" name="open_edit">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>16777215</height>
-                </size>
-               </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
@@ -578,44 +464,26 @@
              </item>
             </layout>
            </item>
-           <item row="4" column="0">
+           <item row="5" column="0">
             <widget class="QCheckBox" name="rating_sel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>0</height>
+              </size>
              </property>
              <property name="text">
               <string>rating</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
+           <item row="5" column="1">
             <layout class="QHBoxLayout" name="HLayoutRating" stretch="1,0,2,1">
              <property name="leftMargin">
-              <number>9</number>
+              <number>0</number>
              </property>
              <item>
               <widget class="QComboBox" name="rating_cond">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>16777215</height>
-                </size>
-               </property>
                <item>
                 <property name="text">
                  <string>&lt;</string>
@@ -651,24 +519,6 @@
              </item>
              <item>
               <widget class="QLineEdit" name="rating_edit">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>16777215</height>
-                </size>
-               </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
@@ -692,10 +542,10 @@
              </item>
             </layout>
            </item>
-           <item row="5" column="0">
+           <item row="6" column="0">
             <widget class="QFrame" name="date_type_frame">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -728,48 +578,12 @@
                  <number>12</number>
                 </property>
                 <item>
-                 <widget class="QLabel" name="label_3">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <pointsize>10</pointsize>
-                   </font>
-                  </property>
-                  <property name="text">
-                   <string>Date of</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <widget class="QComboBox" name="date_type">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>16777215</height>
-                   </size>
                   </property>
                   <property name="font">
                    <font>
@@ -793,7 +607,7 @@
                   </item>
                   <item>
                    <property name="text">
-                    <string>published</string>
+                    <string>published    </string>
                    </property>
                   </item>
                   <item>
@@ -804,20 +618,16 @@
                  </widget>
                 </item>
                 <item>
-                 <spacer name="horizontalSpacer_4">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                 <widget class="QLabel" name="label_3">
+                  <property name="font">
+                   <font>
+                    <pointsize>10</pointsize>
+                   </font>
                   </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                  <property name="text">
+                   <string>date</string>
                   </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>32</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -825,6 +635,9 @@
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <property name="leftMargin">
                  <number>9</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
                 </property>
                 <item>
                  <widget class="QLabel" name="label">
@@ -834,40 +647,12 @@
                  </widget>
                 </item>
                 <item>
-                 <spacer name="horizontalSpacer_9">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>50</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
                  <widget class="QComboBox" name="note_date_type">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>16777215</height>
-                   </size>
                   </property>
                   <property name="font">
                    <font>
@@ -876,7 +661,7 @@
                   </property>
                   <item>
                    <property name="text">
-                    <string>last modified</string>
+                    <string>last modified    </string>
                    </property>
                   </item>
                   <item>
@@ -896,28 +681,12 @@
                   </item>
                  </widget>
                 </item>
-                <item>
-                 <spacer name="horizontalSpacer_10">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>10</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
                </layout>
               </item>
              </layout>
             </widget>
            </item>
-           <item row="5" column="1">
+           <item row="6" column="1">
             <widget class="QFrame" name="date_frame">
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
@@ -930,7 +699,7 @@
                <number>6</number>
               </property>
               <property name="leftMargin">
-               <number>9</number>
+               <number>0</number>
               </property>
               <property name="topMargin">
                <number>0</number>
@@ -950,12 +719,6 @@
                  <layout class="QHBoxLayout" name="HLayoutAfter_2">
                   <item>
                    <widget class="QCheckBox" name="after">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
                     <property name="minimumSize">
                      <size>
                       <width>80</width>
@@ -971,32 +734,7 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QDateEdit" name="after_date">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="sizeIncrement">
-                     <size>
-                      <width>0</width>
-                      <height>2</height>
-                     </size>
-                    </property>
-                   </widget>
+                   <widget class="QDateEdit" name="after_date"/>
                   </item>
                  </layout>
                 </item>
@@ -1004,50 +742,13 @@
                  <layout class="QHBoxLayout" name="HLayoutBefore_2">
                   <item>
                    <widget class="QCheckBox" name="before">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
                     <property name="text">
                      <string>before</string>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QDateEdit" name="before_date">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="sizeIncrement">
-                     <size>
-                      <width>0</width>
-                      <height>2</height>
-                     </size>
-                    </property>
-                   </widget>
+                   <widget class="QDateEdit" name="before_date"/>
                   </item>
                  </layout>
                 </item>
@@ -1067,6 +768,23 @@
                </spacer>
               </item>
              </layout>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="add_method">
+             <property name="minimumSize">
+              <size>
+               <width>210</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>method of adding file</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="how_added">
             </widget>
            </item>
           </layout>
@@ -1107,18 +825,6 @@
          </item>
          <item>
           <widget class="QPushButton" name="btnApply">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
            <property name="text">
             <string>Apply</string>
            </property>
@@ -1129,18 +835,6 @@
          </item>
          <item>
           <widget class="QPushButton" name="btnDone">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
            <property name="text">
             <string>Done</string>
            </property>
@@ -1163,14 +857,14 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="file_buttons">
-   <property name="exclusive">
-    <bool>false</bool>
-   </property>
-  </buttongroup>
   <buttongroup name="tag_buttons">
    <property name="exclusive">
     <bool>true</bool>
+   </property>
+  </buttongroup>
+  <buttongroup name="file_buttons">
+   <property name="exclusive">
+    <bool>false</bool>
    </property>
   </buttongroup>
  </buttongroups>

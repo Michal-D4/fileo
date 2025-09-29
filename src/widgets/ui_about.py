@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\about.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\about.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -31,13 +31,6 @@ class Ui_aboutForm(object):
         self.horizontalLayout.setContentsMargins(-1, 9, -1, 9)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.ico = QtWidgets.QLabel(parent=self.ttl_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ico.sizePolicy().hasHeightForWidth())
-        self.ico.setSizePolicy(sizePolicy)
-        self.ico.setMinimumSize(QtCore.QSize(0, 0))
-        self.ico.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.ico.setText("")
         self.ico.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeading|QtCore.Qt.AlignmentFlag.AlignLeft|QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.ico.setObjectName("ico")

@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo\src\widgets\fold_container.ui'
+# Form implementation generated from reading ui file 'c:\Users\mihal\OneDrive\Documents\pyprj\fileo-G\fileo\src\widgets\fold_container.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -13,13 +13,6 @@ class Ui_Foldings(object):
     def setupUi(self, Foldings):
         Foldings.setObjectName("Foldings")
         Foldings.resize(170, 651)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(Foldings.sizePolicy().hasHeightForWidth())
-        Foldings.setSizePolicy(sizePolicy)
-        Foldings.setMinimumSize(QtCore.QSize(0, 0))
-        Foldings.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(Foldings)
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_4.setSpacing(0)

@@ -186,6 +186,7 @@ class aBrowser(QWidget):
             self.save_sel_tags = self.sel_tags
         self.all_selected = True
         self.sel_tags = list(self.tags.keys())
+        self.change_selection.emit(self.sel_tags)
         self.show_in_bpowser()
 
     def get_selected_ids(self) -> list[int]:
@@ -199,9 +200,7 @@ class aBrowser(QWidget):
         self.scroll_pos = self.browser.verticalScrollBar().value()
         mod = QGuiApplication.keyboardModifiers()
         self.update_selected(href, mod)
-        if not self.all_selected:
-            self.change_selection.emit(self.sel_tags)
-            self.all_selected = False
+        self.change_selection.emit(self.sel_tags)
         self.show_in_bpowser()
 
     def item_to_edit(self, pos: QPoint):
@@ -226,7 +225,7 @@ class aBrowser(QWidget):
     def update_selected(self, href: QUrl, mod: Qt.KeyboardModifier):
         if self.all_selected:
             self.sel_tags = self.save_sel_tags
-            self.show_in_bpowser()
+            self.all_selected = False
             return
         tref = href.toString()[1:]
         if mod is Qt.KeyboardModifier.ControlModifier:

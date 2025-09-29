@@ -59,9 +59,9 @@ class History(object):
         trim(self.branches)
         trim(self.flags)
 
-    def get_current(self):
+    def get_current(self) -> tuple:
         if self.curr == -1:
-            return []
+            return (0, 0)
         self.is_hist = True
         return (*(int(x) for x in self.branches[self.curr].split(',')), self.flags[self.curr])
 

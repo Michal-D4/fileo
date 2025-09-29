@@ -16,6 +16,7 @@ TABLES = (
     'path integer NOT NULL, '
     'filename text NOT NULL, '
     'added date not null default -62135596800, '
+    'how_added integer not null, '
     'modified date not null default -62135596800, '
     'opened date not null default -62135596800, '
     'created date not null default -62135596800, '
@@ -99,7 +100,7 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 26
+USER_VER = 27
 
 def check_app_schema(db_name: str) -> bool:
     with apsw.Connection(db_name) as conn:
@@ -115,7 +116,7 @@ def tune_new_version() -> bool:
     try:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
         logger.info(f'{v=}, {USER_VER=}')
-        if v[0] != USER_VER:
+        if v[0] < USER_VER:
             convert_to_new_version(conn, v[0])
     except apsw.SQLError as err:
         logger.exception(f'{err.args}', exc_info=True)
@@ -152,7 +153,7 @@ def convert_to_new_version(conn, db_v):
     def update_to_v24(conn: apsw.Connection):
         sql1 = (
             'INSERT or ignore into COPY_FILES select id, extid, '
-            'path, filename, -62135596800, modified, opened, created, '
+            'path, filename, -62135596800, 1, modified, opened, created, '
             'rating, nopen, hash, size, pages, published FROM files'
         )
 
@@ -173,7 +174,7 @@ def convert_to_new_version(conn, db_v):
         if len(hist) == 2:
             h0,h1 = hist
             logger.info(f'{h0=}, {h1=}')
-            ag.save_db_settings(DIR_HISTORY=(*h0, h1))
+            ag.save_db_settings(DIR_HISTORY=([], [], -1))
 
     def update_to_v26(conn: apsw.Connection):
         """
@@ -182,6 +183,48 @@ def convert_to_new_version(conn, db_v):
         """
         sql = 'update paths set path = REPLACE(path, "\\", "/") where instr(path, "\") > 0'
         conn.cursor().execute(sql).fetchall()
+
+    def update_to_v27(conn: apsw.Connection):
+        def insert_how_added_field():
+            sql1 = (
+                'INSERT or ignore into COPY_FILES select id, extid, '
+                'path, filename, added, 1, modified, opened, created, '
+                'rating, nopen, hash, size, pages, published FROM files'
+            )
+            sql2 = 'update files set how_added = ? where added = created'
+
+
+            tbl_def = TABLES[1].replace("files", "COPY_FILES")
+            curs.execute(tbl_def)
+            curs.execute(sql1)
+            curs.execute('DROP TABLE files')
+            curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
+            curs.execute(sql2, (ag.fileSource.CREATED.value,))
+
+        def remove_path_duplicates():
+            sql1 = (
+                "with x(path, min_id, cnt) as ("
+                "select path, min(id), count(*) from paths group by path) "
+                "update files set path = (select x.min_id from x "
+                "join paths p on p.path = x.path "
+                "where x.cnt > 1 and files.path = p.id) "
+                "where path in ("
+                "select p.id from paths p join x on p.path = x.path "
+                "where p.id > x.min_id and x.cnt > 1)"
+            )
+            sql2 = (
+                "with x(path, min_id, cnt) as ("
+                "select path, min(id), count(*) from paths group by path) "
+                "delete from paths where path in ("
+                "select path from x where x.cnt > 1 and paths.id > x.min_id)"
+            )
+            curs.execute(sql1)
+            curs.execute(sql2)
+
+        curs = conn.cursor()
+        update_to_v26(conn)
+        insert_how_added_field()
+        remove_path_duplicates()
 
     if db_v < 21:
         update_to_v21(conn)
@@ -200,6 +243,9 @@ def convert_to_new_version(conn, db_v):
 
     if db_v < 26:
         update_to_v26(conn)
+
+    if db_v < 27:
+        update_to_v27(conn)
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 

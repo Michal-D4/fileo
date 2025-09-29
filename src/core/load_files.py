@@ -1,3 +1,4 @@
+# from loguru import logger
 import apsw
 from datetime import datetime
 from dataclasses import dataclass
@@ -59,21 +60,22 @@ class loadFiles(QObject):
         self.files = files
 
     def load_to_dir(self, dir_id):
+        def drop_file():
+            if not file.is_file():
+                return
+            path_id = self.get_path_id(file.parent.as_posix())
+
+            self._insert_file(path_id, file, ag.fileSource.DRAG_SYS.value, dragged_ts)
+
+        dragged_ts = int(datetime.now().replace(microsecond=0).timestamp())
         self.dir_id = dir_id
         for line in self.files:
             file = Path(line)
-            self.drop_file(file)
+            drop_file()
 
         if self.ext_inserted:
             ag.signals_.user_signal.emit("ext inserted")
         self.conn.close()
-
-    def drop_file(self, filepath: Path):
-        if not filepath.is_file():
-            return
-        path_id = self.get_path_id(filepath.parent.as_posix())
-
-        self._insert_file(path_id, filepath)
 
     @pyqtSlot()
     def load_data(self):
@@ -83,35 +85,36 @@ class loadFiles(QObject):
         :return: None
         abend happen if self.files is not iterable
         """
-        self.create_load_dir()
+        def create_load_dir():
+            load_dir = f'Load {datetime.now().strftime("%b %d %H:%M")}'
+            self.root_id = self._insert_dir(load_dir)
+            self.add_parent_dir(0, self.root_id)
+
+        def insert_file():
+            """
+            :param full_file_name:
+            :return: file_id if inserted new, 0 if already exists
+            """
+            path_id = self.get_path_id(file.parent.as_posix())
+
+            self.dir_id = self.get_dir_id(file.parent, path_id)
+
+            self._insert_file(path_id, file, ag.fileSource.SCAN_SYS.value, add_ts)
+
+        create_load_dir()
+
+        add_ts = int(datetime.now().replace(microsecond=0).timestamp())
 
         for line in self.files:
             if ag.stop_thread:
                 break
 
             file = Path(line)
-            self.insert_file(file)
+            insert_file()
         self.conn.close()
         self.finished.emit(self.ext_inserted)
 
-    def create_load_dir(self):
-        load_dir = f'Load {datetime.now().strftime("%b %d %H:%M")}'
-        self.root_id = self._insert_dir(load_dir)
-        self.add_parent_dir(0, self.root_id)
-
-    def insert_file(self, file_name: Path):
-        """
-        Insert file into files table
-        :param full_file_name:
-        :return: file_id if inserted new, 0 if already exists
-        """
-        path_id = self.get_path_id(file_name.parent.as_posix())
-
-        self.dir_id = self.get_dir_id(file_name.parent, path_id)
-
-        self._insert_file(path_id, file_name)
-
-    def _insert_file(self, path_id: int, filepath: Path):
+    def _insert_file(self, path_id: int, filepath: Path, source: int, add_time: int):
         def insert_extension() -> int:
             FIND_EXT = 'select id from extensions where lower(extension) = ?;'
             INSERT_EXT = 'insert into extensions (extension) values (:ext);'
@@ -133,12 +136,11 @@ class loadFiles(QObject):
             ).fetchone()
             return file_id[0] if file_id else 0
 
-        def file_insert():
-            INSERT_FILE = ('insert into files (filename, extid, path, added) '
-                'values (:file, :ext_id, :path, :now);')
-            ts = int(datetime.now().timestamp())
+        def file_insert() -> int:
+            INSERT_FILE = ('insert into files (filename, extid, path, added, how_added) '
+                'values (:file, :ext_id, :path, :added, :how);')
             self.conn.cursor().execute(INSERT_FILE,
-                {'file': filepath.name, 'ext_id': ext_id, 'path': path_id, 'now': ts}
+                {'file': filepath.name, 'ext_id': ext_id, 'path': path_id, 'added': add_time, 'how': source}
             )
             return self.conn.last_insert_rowid()
 

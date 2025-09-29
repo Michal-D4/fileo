@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.57 - 2025, 28 September
+* A flag has been introduced to register the method for adding a file to the DB.
+* Added the ability to filter files by the method of adding files to the DB.
+* Made some improvements, removedeliminated some inconsistencies, fixed some errors.
+
 ## 1.3.56 - 2025, 16 September
 * Simplify application initialization to eliminate errors.
 * some other changes, improvements

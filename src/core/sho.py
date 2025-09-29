@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
 from .. import tug
 from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate, folderEditDelegate
+from .load_files import loadFiles
 from ..ui.ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
 from ..widgets.filter_setup import FilterSetup
@@ -141,17 +142,19 @@ class shoWindow(QMainWindow):
         mode = ag.appMode(
             int(ag.get_db_setting("APP_MODE", ag.appMode.DIR.value))
         )
+        logger.info(f'{mode=!r}')
         if mode.value > ag.appMode.FILTER_SETUP.value:
             mode = ag.appMode.DIR
         btn = self.ui.toolbar_btns.button(mode.value)
         btn.setChecked(True)
         ag.set_mode(mode)
-        ag.app.ui.app_mode.setText(mode.name)
+        logger.info(f'{ag.mode=!r}')
+        self.ui.app_mode.setText(mode.name)
         self.toggle_filter_show()
 
     def restore_note_height(self):
         hh = tug.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
-        ag.file_data.set_height(hh)
+        ag.file_data.set_height(int(hh))
 
     def restore_geometry(self):
         self.rect = tug.get_app_setting("MainWindowGeometry")
@@ -275,7 +278,8 @@ class shoWindow(QMainWindow):
         menu.actions()[-1].setText(new_ttl)
 
     def connect_slots(self):
-        ag.app = bk_ut.self = self
+        ag.app = self
+        self.loader: loadFiles = None
         self.ui.toolbar_btns.idClicked.connect(self.toggle_btn)
 
         self.ui.btnToggleBar.clicked.connect(self.click_toggle_bar)
