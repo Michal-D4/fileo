@@ -1,5 +1,5 @@
-import apsw
 from loguru import logger
+import apsw
 
 from . import app_globals as ag
 
@@ -100,16 +100,18 @@ TABLES = (
 )
 
 APP_ID = 1718185071
-USER_VER = 27
+USER_VER = 28
 
-def check_app_schema(db_name: str) -> bool:
-    with apsw.Connection(db_name) as conn:
-        try:
-            v = conn.cursor().execute("PRAGMA application_id").fetchone()
-            # logger.info(f'{v=}, {APP_ID=}')
-        except apsw.NotADBError:
-            return False
-    return v[0] == APP_ID
+def check_app_schema(db_path: str) -> str:
+    try:
+        conn = apsw.Connection(db_path)
+        conn.cursor().execute('PRAGMA quick_check;').fetchone()
+    except (apsw.CantOpenError, apsw.SQLError, apsw.NotADBError) as e:
+        logger.info(f'{e.args}, DB file: {db_path}')
+        return e.args[0]
+
+    app_id = conn.cursor().execute("PRAGMA application_id").fetchone()
+    return  "Ok" if app_id[0] == APP_ID else "not a fileo database"
 
 def tune_new_version() -> bool:
     conn = ag.db.conn
@@ -125,7 +127,7 @@ def tune_new_version() -> bool:
 
 def convert_to_new_version(conn, db_v):
     logger.info(f'<<<  {db_v=}, {USER_VER=}, {ag.db.path=}')
-    def update_to_v21(conn: apsw.Connection):
+    def update_to_v21():
         try:
             conn.cursor().execute(
                 'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
@@ -133,7 +135,7 @@ def convert_to_new_version(conn, db_v):
         except apsw.SQLError:
             pass
 
-    def update_to_v22(conn: apsw.Connection):
+    def update_to_v22():
         sql = (
             "update dirs set multy = 1 where id in ("
             "select id from parentdir p group by id having count(*) > 1)"
@@ -146,11 +148,11 @@ def convert_to_new_version(conn, db_v):
         except apsw.SQLError:
             pass
 
-    def update_to_v23(conn: apsw.Connection):
+    def update_to_v23():
         sql = 'delete from settings where key = ?'
         conn.cursor().execute(sql, ('DIR_HISTORY',))
 
-    def update_to_v24(conn: apsw.Connection):
+    def update_to_v24():
         sql1 = (
             'INSERT or ignore into COPY_FILES select id, extid, '
             'path, filename, -62135596800, 1, modified, opened, created, '
@@ -176,7 +178,7 @@ def convert_to_new_version(conn, db_v):
             logger.info(f'{h0=}, {h1=}')
             ag.save_db_settings(DIR_HISTORY=([], [], -1))
 
-    def update_to_v26(conn: apsw.Connection):
+    def update_to_v26():
         """
         different path delimiters, "\" and "/" in table "paths"
         change "\" to "/"
@@ -184,7 +186,7 @@ def convert_to_new_version(conn, db_v):
         sql = 'update paths set path = REPLACE(path, "\\", "/") where instr(path, "\") > 0'
         conn.cursor().execute(sql).fetchall()
 
-    def update_to_v27(conn: apsw.Connection):
+    def update_to_v27():
         def insert_how_added_field():
             sql1 = (
                 'INSERT or ignore into COPY_FILES select id, extid, '
@@ -222,30 +224,40 @@ def convert_to_new_version(conn, db_v):
             curs.execute(sql2)
 
         curs = conn.cursor()
-        update_to_v26(conn)
+        update_to_v26()
         insert_how_added_field()
         remove_path_duplicates()
 
+    def update_to_v28():
+        sql = 'SELECT sql FROM sqlite_schema WHERE name = ? and instr(sql, ?);'
+        is_ok = conn.cursor().execute(sql, ('settings', 'PRIMARY')).fetchone()
+        if not is_ok:
+            conn.cursor().execute('DROP TABLE settings')
+            conn.cursor().execute(TABLES[0])
+
     if db_v < 21:
-        update_to_v21(conn)
+        update_to_v21()
 
     if db_v < 22:
-        update_to_v22(conn)
+        update_to_v22()
 
     if db_v < 23:
-        update_to_v23(conn)
+        update_to_v23()
 
     if db_v < 24:
-        update_to_v24(conn)
+        update_to_v24()
 
     if db_v < 25:
         update_to_v25()
 
     if db_v < 26:
-        update_to_v26(conn)
+        update_to_v26()
 
     if db_v < 27:
-        update_to_v27(conn)
+        update_to_v27()
+
+    if db_v < 28:
+        update_to_v28()
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 
@@ -253,8 +265,5 @@ def create_tables(db_name: str):
     conn = apsw.Connection(db_name)
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    cursor = conn.cursor()
-    for tbl in TABLES:
-        cursor.execute(tbl)
-
+    conn.cursor().execute(''.join(TABLES))
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')

@@ -1,5 +1,5 @@
-from pathlib import Path
 from loguru import logger
+from pathlib import Path
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, pyqtSlot, QPoint
@@ -32,9 +32,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.listDB.customContextMenuRequested.connect(self.item_menu)
         self.listDB.setCurrentCell(0, 0)
         self.btn_add.setIcon(tug.get_icon("plus"))
-        self.btn_add.clicked.connect(
-            lambda: ag.signals_.user_signal.emit("MainMenu Create/Open DB")
-        )
+        self.btn_add.clicked.connect(lambda: ag.signals_.user_signal.emit("MainMenu Create/Open DB"))
 
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
         return_key.activated.connect(lambda: self.item_click(self.listDB.currentItem()))
@@ -103,7 +101,6 @@ class OpenDB(QWidget, Ui_openDB):
         tug.save_app_setting(DB_List=db_list)
 
     def add_db_name(self, db_path:str):
-        logger.info(f'{db_path=}')
         if self.open_existed(db_path):
             return
 
@@ -115,9 +112,8 @@ class OpenDB(QWidget, Ui_openDB):
             self.set_cell_0(db_path, True, now)
             self.open_db(db_path)
             return
-        ag.show_message_box(
-            'Error open DB',
-            self.msg,
+        logger.info(f'{self.msg=}')
+        ag.show_message_box('Error open DB', self.msg,
             icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
 
@@ -138,29 +134,26 @@ class OpenDB(QWidget, Ui_openDB):
         if ok_:
             self.add_db_name(str(Path(db_name)))
 
-    def verify_db_file(self, file_name: str) -> bool:
+    def verify_db_file(self, db_path: str) -> bool:
         """
         return  True if file is correct DB to store 'files data'
                     or empty/new file to create new DB
                 False otherwise
         """
-        file_ = Path(file_name).resolve(strict=False)
-        if file_.exists():
-            if file_.is_file():
-                if create_db.check_app_schema(file_name):
+        path = Path(db_path).resolve(strict=False)
+        if path.exists():
+            if path.is_file():
+                if path.stat().st_size == 0:                 # empty file
+                    create_db.create_tables(db_path)
                     return True
-                if file_.stat().st_size == 0:                 # empty file
-                    create_db.create_tables(file_name)
+                msg = create_db.check_app_schema(db_path)
+                if msg == "Ok":
                     return True
-                else:
-                    self.msg = f"not fileo DB: {file_name}"
-                    return False
-        elif file_.parent.exists and file_.parent.is_dir():   # file not exist
-            create_db.create_tables(file_name)
+                self.msg = f'{msg}: "{db_path}"'
+                return False
+        else:                           # new DB file
+            create_db.create_tables(db_path)
             return True
-        else:
-            self.msg = f"bad path: {file_name}"
-            return False
 
     @pyqtSlot(QTableWidgetItem)
     def item_click(self, item: QTableWidgetItem):
@@ -181,21 +174,24 @@ class OpenDB(QWidget, Ui_openDB):
     def check_and_open(self, db_path: str, used: bool=False) -> bool:
         if used:
             return False
-        if create_db.check_app_schema(db_path):
-            self.open_db(db_path)
-            return True
-        ag.show_message_box(
-            'Error open DB',
-            f'Database "{ag.db.path}" is corrupted',
+        path = Path(db_path).resolve(strict=False)
+        if not path.exists():
+            msg = "not exist DB file"
+        else:
+            msg = create_db.check_app_schema(db_path)
+            if msg == "Ok":
+                self.open_db(db_path)
+                return True
+
+        logger.info(f'{self.msg=}: "{db_path}"')
+        ag.show_message_box('Error open DB', f'{msg}: "{db_path}"',
             icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
         return False
 
     def open_in_new_window(self, db_path: str):
         if ag.db.conn:
-            tug.save_app_setting(
-                FILE_LIST_HEADER=ag.file_list.header().saveState()
-            )
+            tug.save_app_setting(FILE_LIST_HEADER=ag.file_list.header().saveState())
         ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
         self.close()
 
@@ -208,7 +204,6 @@ class OpenDB(QWidget, Ui_openDB):
 
     def mark_not_used(self, row: int):
         def msg_callback(res: int):
-            logger.info(f'{res=}')
             if res == 1:
                 item.setData(Qt.ItemDataRole.UserRole, (path, False, dt))
                 self.listDB.setItem(row, 1, QTableWidgetItem(f'{dt!s}'))

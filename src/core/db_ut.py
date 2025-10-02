@@ -990,6 +990,8 @@ def create_connection(path: str) -> bool:
         return False
     try:
         conn: apsw.Connection = apsw.Connection(path)
+        ag.db.path = path
+        ag.db.conn = conn
     except apsw.CantOpenError as e:
         ag.show_message_box(
             'Error open DB',
@@ -998,12 +1000,9 @@ def create_connection(path: str) -> bool:
         )
         return False
 
-    ag.db.path = path
-    ag.db.conn = conn
-
     if not create_db.tune_new_version():
         ag.db.path = ''
-        ag.db.conn = None
+        ag.db.conn.close()
         return False
 
     ag.signals_.user_signal.emit('Enable_buttons')
@@ -1012,7 +1011,6 @@ def create_connection(path: str) -> bool:
     cursor.execute('pragma foreign_keys = ON;')
     cursor.execute('pragma temp_store = MEMORY;')
     cursor.execute('pragma busy_timeout=1000')
-
     cursor.execute('create temp table if not exists aux (key, val)')
     save_to_temp("TREE_PATH", '')
 

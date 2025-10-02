@@ -939,6 +939,8 @@ def _import_files(fp: QTextStream, target: QModelIndex, source: ag.fileSource = 
                 ag.author_list.list_changed.emit()
             if new_ext:
                 populate_ext_list()
+            if target == ag.dir_list.currentIndex():
+                refresh_file_list()
         else:
             ag.show_message_box('Data from Wrong version of DB',
                 f'Data DB v. = {vers.get("db_v", '')}, current DB v. = {db_v}'

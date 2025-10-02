@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.58 - 2025, 01 October
+* fixed a bug with restoring selected files and folders when opening an old version DB
+* refresh file list after dragging files from another app instance
+* revised DB opening error handling
+* some other minor changes
+
 ## 1.3.57 - 2025, 28 September
 * A flag has been introduced to register the method for adding a file to the DB.
 * Added the ability to filter files by the method of adding files to the DB.
