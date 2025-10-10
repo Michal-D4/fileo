@@ -2,10 +2,12 @@
 import apsw
 from collections import deque, abc
 from pathlib import Path
+from datetime import datetime, timedelta
 
 from PyQt6.QtWidgets import QStyle
 
 from . import app_globals as ag, create_db
+from ..widgets.dir_tree_cycle import removeDirCycle
 
 
 def dir_tree_select() -> list: # type: ignore
@@ -675,26 +677,26 @@ def update_tooltip(data: ag.DirData):
     sql2 = 'update parentdir set tool_tip = ? where (parent, id) = (?,?)'
     with ag.db.conn as conn:
         curs = conn.cursor()
-        dir_name = curs.execute(sql1, (data.id,)).fetchone()
+        dir_name = curs.execute(sql1, (data.dir_id,)).fetchone()
         tip = None if dir_name[0] == data.tool_tip else data.tool_tip
         curs.execute(
-            sql2, (tip, data.parent_id, data.id)
+            sql2, (tip, data.parent, data.dir_id)
         )
 
 def update_dir_name(name: str, data: ag.DirData):
     sql1 = 'update dirs set name = ? where id = ?'
     sql2 = 'update parentdir set tool_tip = null where (parent, id) = (?,?)'
     with ag.db.conn as conn:
-        conn.cursor().execute(sql1, (name, data.id))
+        conn.cursor().execute(sql1, (name, data.dir_id))
         if name == data.tool_tip:
-            conn.cursor().execute(sql2, (data.parent_id, data.id))
+            conn.cursor().execute(sql2, (data.parent, data.dir_id))
 
 def save_file_id(d_data: ag.DirData):
     sql = 'update parentdir set file_id = ? where (parent, id) = (?,?)'
 
     with ag.db.conn as conn:
         conn.cursor().execute(
-            sql, (d_data.file_id, d_data.parent_id, d_data.id)
+            sql, (d_data.file_id, d_data.parent, d_data.dir_id)
         )
 
 def insert_dir(dir_name: str, parent: int) -> int:
@@ -726,10 +728,10 @@ def dir_min_parent(dir_id: int) -> int:
     parent = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()
     return parent[0]
 
-def dir_children(id: int) -> apsw.Cursor:
-    sql = 'select parent, id from parentdir where parent = ?'
+def dir_children(parent_id: int) -> apsw.Cursor:
+    sql = 'select id from parentdir where parent = ?'
     with ag.db.conn as conn:
-        return conn.cursor().execute(sql, (id,))
+        return conn.cursor().execute(sql, (parent_id,))
 
 def children_names(parent: int) -> apsw.Cursor:
     sql = ('select d.name, d.id, d.multy from dirs d '
@@ -765,11 +767,11 @@ def copy_dir(parent: int, dir_data: ag.DirData) -> bool:
     sql2 = 'insert into parentdir (parent, id, hide, file_id) values (:parent, :id, 0, :file_id)'
     with ag.db.conn as conn:
         try:
-            conn.cursor().execute(sql1, {'id': dir_data.id,})
+            conn.cursor().execute(sql1, {'id': dir_data.dir_id,})
             conn.cursor().execute(
                 sql2,
                 {'parent': parent,
-                 'id': dir_data.id,
+                 'id': dir_data.dir_id,
                  'file_id': dir_data.file_id,}
             )
             return True
@@ -986,6 +988,18 @@ def get_note_date_files(checks: dict) -> apsw.Cursor:
         return []
 
 def create_connection(path: str) -> bool:
+    def check_for_cycle():
+        month=int(timedelta(days=30).total_seconds())
+        last_check = ag.get_db_setting("LAST_CHECK_FOR_CYCLES", create_db.APP_ID)
+        now = int(datetime.now().replace(microsecond=0).timestamp())
+        if now - last_check < month:
+            return
+
+        rm_cycles = removeDirCycle()
+        rm_cycles.construct_adj_list()
+        rm_cycles.remove_cycles()
+        ag.save_db_settings(LAST_CHECK_FOR_CYCLES=now)
+
     if not path:
         return False
     try:
@@ -1006,6 +1020,7 @@ def create_connection(path: str) -> bool:
         return False
 
     ag.signals_.user_signal.emit('Enable_buttons')
+    check_for_cycle()
 
     cursor = conn.cursor()
     cursor.execute('pragma foreign_keys = ON;')

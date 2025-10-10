@@ -15,27 +15,27 @@ class dirItem(object):
 
         self.userData: ag.DirData = user_data
 
-    def child(self, row):
+    def child(self, row) -> 'dirItem':
         return self.children[row] if self.children else None
 
-    def childCount(self):
+    def childCount(self) -> int:
         return len(self.children)
 
-    def childNumber(self):
+    def childNumber(self) -> int:
         if self.parentItem is not None:
             return self.parentItem.children.index(self)
         return 0
 
-    def columnCount(self):
+    def columnCount(self) -> int:
         return 1
 
-    def data(self):
+    def data(self) -> str:
         return self.itemData
 
-    def user_data(self):
+    def user_data(self) -> ag.DirData:
         return self.userData
 
-    def insertChildren(self, row: int, count: int, columns: int=1):
+    def insertChildren(self, row: int, count: int, columns: int=1) -> bool:
         if row < 0 or row > len(self.children):
             return False
 
@@ -46,13 +46,13 @@ class dirItem(object):
 
     def appendChild(self, item: 'dirItem'):
         item.parentItem = self
-        item.userData.parent_id = self.userData.id
+        item.userData.parent = self.userData.dir_id
         self.children.append(item)
 
-    def parent(self):
+    def parent(self) -> 'dirItem':
         return self.parentItem
 
-    def removeChildren(self, position, count):
+    def removeChildren(self, position, count) -> bool:
         if position < 0 or position + count > len(self.children):
             return False
 
@@ -61,7 +61,7 @@ class dirItem(object):
 
         return True
 
-    def setData(self, value, role=Qt.ItemDataRole.EditRole):
+    def setData(self, value, role=Qt.ItemDataRole.EditRole) -> bool:
         if role == Qt.ItemDataRole.ToolTipRole:
             self.userData.tool_tip = value
             db_ut.update_tooltip(self.userData)
@@ -81,7 +81,7 @@ class dirModel(QAbstractItemModel):
 
         self.rootItem = dirItem(data='', user_data=ag.DirData(0, 0))
 
-    def columnCount(self, parent=None):
+    def columnCount(self, parent=None) -> int:
         return 1
 
     def data(self, index, role: Qt.ItemDataRole):
@@ -112,7 +112,7 @@ class dirModel(QAbstractItemModel):
             Qt.ItemFlag.ItemIsDropEnabled |
             super().flags(index))
 
-    def getItem(self, index):
+    def getItem(self, index) -> dirItem:
         if index.isValid():
             item = index.internalPointer()
             if item:
@@ -120,7 +120,7 @@ class dirModel(QAbstractItemModel):
 
         return self.rootItem
 
-    def index(self, row, column, parent: QModelIndex):
+    def index(self, row, column, parent: QModelIndex) -> QModelIndex:
         if parent.isValid() and parent.column() != 0:
             return QModelIndex()
 
@@ -131,14 +131,14 @@ class dirModel(QAbstractItemModel):
 
         return QModelIndex()
 
-    def insertRows(self, row: int, count: int, parent: QModelIndex):
+    def insertRows(self, row: int, count: int, parent: QModelIndex) -> bool:
         parentItem = self.getItem(parent)
         self.beginInsertRows(parent, row, row + count - 1)
         success = parentItem.insertChildren(row, count)
         self.endInsertRows()
         return success
 
-    def parent(self, index):
+    def parent(self, index) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
 
@@ -149,7 +149,7 @@ class dirModel(QAbstractItemModel):
             return QModelIndex()
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
 
-    def removeRows(self, position, rows, parent: QModelIndex):
+    def removeRows(self, position, rows, parent: QModelIndex) -> bool:
         parentItem = self.getItem(parent)
 
         self.beginRemoveRows(parent, position, position + rows - 1)
@@ -163,7 +163,7 @@ class dirModel(QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def setData(self, index, value, role: Qt.ItemDataRole):
+    def setData(self, index, value, role: Qt.ItemDataRole) -> bool:
         if role != Qt.ItemDataRole.EditRole and role != Qt.ItemDataRole.ToolTipRole:
             return False
 
@@ -189,9 +189,9 @@ class dirModel(QAbstractItemModel):
             children[key].append(item)
 
         for row in dirs:
-            u_dat = row[-1]    # ag.DirData
+            u_dat: ag.DirData = row[-1]
             item = dirItem(data=row[1], user_data=u_dat)
-            enroll_item(row[0], u_dat.id, item)
+            enroll_item(row[0], u_dat.dir_id, item)
 
         for key in children:
             # set children sorted by dir name case insensitive
@@ -199,7 +199,7 @@ class dirModel(QAbstractItemModel):
             parents[key].children = children[key]
         logger.info(f'{len(parents)=}, {len(children)=}')
 
-    def restore_index(self, path):
+    def restore_index(self, path) -> QModelIndex:
         parent = QModelIndex()
         for id_ in path:
             idx = self.index(int(id_), 0, parent)

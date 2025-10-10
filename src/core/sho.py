@@ -14,7 +14,7 @@ from .. import tug
 from .compact_list import aBrowser
 from .filename_editor import fileEditorDelegate, folderEditDelegate
 from .load_files import loadFiles
-from ..ui.ui_main import Ui_Sho
+from ..ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
 from ..widgets.filter_setup import FilterSetup
 from ..widgets.fold_container import FoldContainer

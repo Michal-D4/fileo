@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.3.59 - 2025, 09 October
+* In Linux, reverted to use dbus to reveal file in directory
+* NoteEditor, paste from clipboard, background color bug fixed
+* Created method to remove cycles in a folder tree, if any. it is scheduled to run once a month
+* some other minor changes, improvements
+
 ## 1.3.58 - 2025, 01 October
 * fixed a bug with restoring selected files and folders when opening an old version DB
 * refresh file list after dragging files from another app instance

@@ -2,37 +2,38 @@ from loguru import logger
 
 from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl, QByteArray
 from PyQt6.QtGui import QFocusEvent, QDropEvent, QDragEnterEvent, QTextCursor
-from PyQt6.QtWidgets import QWidget, QTextEdit, QHBoxLayout
+from PyQt6.QtWidgets import QTextEdit
 
 from .file_note import fileNote
 from ..core import app_globals as ag, db_ut
-from .. import tug
 
 
-class noteEditor(QWidget):
+class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
-        self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.note_editor = QTextEdit()
-        self.layout.addWidget(self.note_editor)
-
         self.note: fileNote = None
         self.drag_enter_btns = 0
+        self.dragged = False
 
-        self.note_editor.setAcceptDrops(False)
         self.setAcceptDrops(True)
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
-        self.note_editor.focusOutEvent = self.editor_lost_focus
-        self.note_editor.setStyleSheet(tug.get_dyn_qss("note_edit"))
+        self.focusOutEvent = self.editor_lost_focus
+        self.dragMoveEvent = self.dragEnterEvent
+
+    def insertFromMimeData(self, source: QMimeData):
+        if self.dragged:
+            self.dragged = False
+            return
+        if source.hasText():
+            self.insertPlainText(source.text())
+        else:
+            super().insertFromMimeData(source)
 
     def dragEnterEvent(self, e: QDragEnterEvent) -> None:
         mimedata: QMimeData = e.mimeData()
         if ((mimedata.hasFormat(ag.mimeType.files_in.value)
             and e.source() is ag.app)
             or mimedata.hasFormat(ag.mimeType.files_uri.value)):
-            # logger.info(f'{e.buttons()=}')
             self.drag_enter_btns = e.buttons()
             e.accept()
         else:
@@ -77,11 +78,10 @@ class noteEditor(QWidget):
             return ''.join(tt)
 
         data: QMimeData = e.mimeData()
-        t: QTextCursor = self.note_editor.cursorForPosition(e.position().toPoint())
+        t: QTextCursor = self.cursorForPosition(e.position().toPoint())
         if data.hasFormat(ag.mimeType.files_uri.value):
             uris: QUrl = data.urls()
             uri = uris[0]
-            # logger.info(f'{uri.scheme()=}')
             if uri.scheme() == 'file':
                 tt = []
                 for ur in uris:
@@ -95,10 +95,10 @@ class noteEditor(QWidget):
             logger.info(f'{e.buttons()=}')  # intensionaly, to see if Qt recover bottons in dropEvent
             t.insertText(
                 insert_file_id()
-                # if e.buttons() & Qt.MouseButton.LeftButton
-                if self.drag_enter_btns & Qt.MouseButton.LeftButton
-                else insert_file_uri()
+                if self.drag_enter_btns & Qt.MouseButton.LeftButton else
+                insert_file_uri()
             )
+        self.dragged = True
         return super().dropEvent(e)
 
     def editor_lost_focus(self, e: QFocusEvent):
@@ -108,10 +108,7 @@ class noteEditor(QWidget):
 
     def start_edit(self, note: fileNote):
         self.note = note
-        self.note_editor.setPlainText(db_ut.get_note(
-            self.get_file_id(), self.get_note_id()
-            )
-        )
+        self.setPlainText(db_ut.get_note(self.get_file_id(), self.get_note_id()))
 
     def get_file_id(self) -> int:
         return self.note.get_file_id() if self.note else 0
@@ -120,10 +117,10 @@ class noteEditor(QWidget):
         return self.note.get_note_id() if self.note else 0
 
     def set_text(self, text: str):
-        self.note_editor.setPlainText(text)
+        self.setPlainText(text)
 
     def get_text(self):
-        return self.note_editor.toPlainText()
+        return self.toPlainText()
 
     def get_note(self) -> fileNote:
         return self.note

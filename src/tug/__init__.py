@@ -13,13 +13,14 @@ from PyQt6.QtCore import QSettings, QVariant
 from PyQt6.QtGui import QIcon, QPixmap
 
 from .. import qss
+
 FONT_SIZE = {
-    '8pt': ('8pt', '9pt'),
-    '9pt': ('9pt', '10pt'),
-    '10pt': ('10pt', '11pt'),
-    '11pt': ('11pt', '12pt'),
-    '12pt': ('12pt', '14pt'),
-    '14pt': ('14pt', '16pt'),
+    '8pt': ('8pt', '9pt', '8pt'),
+    '9pt': ('9pt', '10pt', '9pt'),
+    '10pt': ('10pt', '11pt', '9pt'),
+    '11pt': ('11pt', '12pt', '10pt'),
+    '12pt': ('12pt', '14pt', '11pt'),
+    '14pt': ('14pt', '16pt', '12pt'),
 }
 
 if sys.platform.startswith("win"):
@@ -28,7 +29,10 @@ if sys.platform.startswith("win"):
 
 elif sys.platform.startswith("linux"):
     def reveal_file(path: str):
-        subprocess.Popen(["xdg-open", path])
+        cmd = f'''dbus-send --session --dest=org.freedesktop.FileManager1 --type=method_call \
+/org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems \
+array:string:file:////{str(Path(path)).replace(' ', '%20')} string:'''
+        subprocess.Popen(cmd.split(' '))
 
 else:
     def reveal_file(path: str):
@@ -200,7 +204,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     read_params()
     qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'])
     font_size_key = get_app_setting('FONT_SIZE', '10pt')
-    qss_params['$normalSize'], qss_params['$bigSize'] = FONT_SIZE[font_size_key]
+    qss_params['$normalSize'], qss_params['$bigSize'], qss_params['$menuSize'] = FONT_SIZE[font_size_key]
 
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)

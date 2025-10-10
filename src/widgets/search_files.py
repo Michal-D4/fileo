@@ -1,9 +1,6 @@
 # from loguru import logger
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QWidget, QLineEdit,
     QHBoxLayout, QToolButton, QFrame, QSizePolicy,
-    QMessageBox,
 )
 
 from ..core  import app_globals as ag

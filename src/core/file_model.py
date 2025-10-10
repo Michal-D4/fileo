@@ -170,7 +170,7 @@ class fileModel(QAbstractTableModel):
                       else line[i] for i in (5,2,10,3,4,7,6,8,1,)]
                 file_id, is_new_ext = db_ut.insert_file(('', new_name, *ff[:-1], path), ff[-1], ag.fileSource.CREATED.value)
                 self.user_data[index.row()] = file_id
-                dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).id
+                dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).dir_id
                 db_ut.copy_file(file_id, dir_id)
                 ag.signals_.user_signal.emit(f"New file created\\{file_id}")
                 if is_new_ext:

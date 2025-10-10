@@ -59,7 +59,7 @@ def set_user_action_handlers():
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
         "Files Delete file(s) from DB": delete_files,
-        "Files Reveal in explorer": open_folder,
+        "Files Reveal in explorer": open_file_folder,
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "Files Create new file": create_file,
@@ -149,8 +149,7 @@ def copy_trees():
                 break
         udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
         dirs.append((
-            f'{idx.data(Qt.ItemDataRole.DisplayRole)}{ss[udat.multy]}',
-            udat.id
+            f'{idx.data(Qt.ItemDataRole.DisplayRole)}{ss[udat.multy]}', udat.dir_id
         ))
     else:
         tt.extend(dirs)
@@ -411,8 +410,7 @@ def get_dir_names_path(index: QModelIndex) -> list:
     while item:
         if not item.parent():
             break
-        name = item.data()
-        branch.append(name)
+        branch.append(item.data())    # dir name
         item = item.parent()
     branch.reverse()
     return branch
@@ -428,7 +426,7 @@ def expand_branch(branch: list) -> QModelIndex:
     for it in branch[:-1]:
         for i,child in enumerate(item.children):
             ud = child.user_data()
-            if it == ud.id:
+            if it == ud.dir_id:
                 parent = model.index(i, 0, parent)
                 item = child
                 if expanded:
@@ -552,7 +550,7 @@ def show_folder_files():
         )
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
 
-        show_files(db_ut.get_files(u_dat.id, u_dat.parent_id), u_dat.file_id)
+        show_files(db_ut.get_files(u_dat.dir_id, u_dat.parent), u_dat.file_id)
     else:
         show_files([])
 
@@ -674,16 +672,14 @@ def copy_full_file_name():
         files.append(full_file_name(idx))
     QApplication.clipboard().setText('\n'.join(files))
 
-def open_folder():
+def open_file_folder():
     idx = ag.file_list.currentIndex()
     if idx.isValid():
-        path = full_file_name(idx)
-        tug.reveal_file(str(Path(path)))
+        tug.reveal_file(full_file_name(idx))
         ag.add_recent_file(idx.data(Qt.ItemDataRole.UserRole))
 
 def reveal_in_explorer(file_id: int|str):
-    path = db_ut.get_file_path(file_id)
-    tug.reveal_file(str(Path(path)))
+    tug.reveal_file(db_ut.get_file_path(file_id))
 
 def full_file_name(index: QModelIndex) -> str:
     return db_ut.get_file_path(index.data(Qt.ItemDataRole.UserRole))
@@ -777,9 +773,9 @@ def remove_files():
     row = ag.file_list.model().rowCount()
     for idx in ag.file_list.selectionModel().selectedRows(0):
         row = min(row, idx.row())
-        id = idx.data(Qt.ItemDataRole.UserRole)
-        dir_id = get_dir_id(id)
-        db_ut.delete_file_dir_link(id, dir_id)
+        file_id = idx.data(Qt.ItemDataRole.UserRole)
+        dir_id = get_dir_id(file_id)
+        db_ut.delete_file_dir_link(file_id, dir_id)
     post_delete_file(row)
 
 def remove_file_from_location(param: str):
@@ -795,7 +791,7 @@ def get_dir_id(file: int) -> int:
     if ag.mode is ag.appMode.DIR or ag.filter_dlg.is_single_folder():
         dir_idx = ag.dir_list.currentIndex()
         dir_dat: ag.DirData = dir_idx.data(Qt.ItemDataRole.UserRole)
-        return dir_dat.id
+        return dir_dat.dir_id
 
     return db_ut.get_dir_id_for_file(file)
 
@@ -883,15 +879,15 @@ def import_files():
 def _import_files(fp: QTextStream, target: QModelIndex, source: ag.fileSource = ag.fileSource.DRAG_DB):
     def load_file(fl: dict) -> int:
         nonlocal file_ids, new_tag, new_auther, new_ext
-        file_ = fl['file']
-        f_path: Path = Path(file_[-1]) / file_[1]
+        a_file = fl['file']
+        f_path: Path = Path(a_file[-1]) / a_file[1]
         if not f_path.is_file():
             return 0
 
-        dir_id = target.data(Qt.ItemDataRole.UserRole).id
-        file_id = db_ut.registered_file_id(file_[-1], file_[1])
+        dir_id = target.data(Qt.ItemDataRole.UserRole).dir_id
+        file_id = db_ut.registered_file_id(a_file[-1], a_file[1])
         if not file_id:
-            file_id, is_new_ext = db_ut.insert_file(file_, added_ts, source.value)
+            file_id, is_new_ext = db_ut.insert_file(a_file, added_ts, source.value)
             new_ext |= is_new_ext
         db_ut.copy_file(file_id, dir_id)
 
@@ -1012,10 +1008,10 @@ def create_dir():
 
 def create_folder(index: QModelIndex):
     parent = index.parent()
-    parent_id = parent.data(Qt.ItemDataRole.UserRole).id if parent.isValid() else 0
+    parent_id = parent.data(Qt.ItemDataRole.UserRole).dir_id if parent.isValid() else 0
     dir_id = db_ut.insert_dir("New folder", parent_id)
 
-    user_data = ag.DirData(parent_id=parent_id, id=dir_id)
+    user_data = ag.DirData(parent=parent_id, dir_id=dir_id)
     item: dirItem = index.internalPointer()
     item.setUserData(user_data)
     item.setData("New folder", Qt.ItemDataRole.EditRole)
@@ -1035,14 +1031,14 @@ def delete_folders():
 
     for idx in ag.dir_list.selectionModel().selectedRows(0):
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        if not db_ut.break_link(u_dat.id, u_dat.parent_id):
-            delete_tree(u_dat.id)
+        if not db_ut.break_link(u_dat.dir_id, u_dat.parent):
+            delete_tree(u_dat.dir_id)
     dirs_changed(to_idx)
     ag.history.check_remove()
     set_enable_prev_next()
 
-def delete_tree(dirid: int):
-    for parent, dir_id in db_ut.dir_children(dirid):
+def delete_tree(parent: int):
+    for dir_id in db_ut.dir_children(parent):
         if not db_ut.break_link(dir_id, parent):
             delete_tree(dir_id)
 
@@ -1067,11 +1063,10 @@ def toggle_hidden_state():
     model: dirModel = ag.dir_list.model()
     for idx in selected:
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        if u_dat.id:
+        if u_dat.dir_id:
             u_dat.hidden = not u_dat.hidden
-            db_ut.update_hidden_state(u_dat.id, u_dat.parent_id, u_dat.hidden)
-            item: dirItem = model.getItem(idx)
-            item.setUserData(u_dat)
+            db_ut.update_hidden_state(u_dat.dir_id, u_dat.parent, u_dat.hidden)
+            model.getItem(idx).setUserData(u_dat)
 #endregion
 
 #region  Tags

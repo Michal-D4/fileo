@@ -317,7 +317,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.edit_btns.show()
         self.l_editor.show()
         self.switch_page(Page.EDIT)
-        self.editor.note_editor.setFocus()
+        self.editor.setFocus()
 
     def get_edit_state(self) -> tuple:
         def get_attributes():

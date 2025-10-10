@@ -49,20 +49,20 @@ class OpenDB(QWidget, Ui_openDB):
         if item:
             if item.column() > 0:
                 item = self.listDB.item(item.row(), 0)
-            db_path, used, _ = item.data(Qt.ItemDataRole.UserRole)
-            db_name = Path(db_path).name
-            menu = self.db_list_menu(db_name, used)
+            path, used, _ = item.data(Qt.ItemDataRole.UserRole)
+            db_path = Path(path)
+            menu = self.db_list_menu(db_path.name, used)
             action = menu.exec(self.listDB.mapToGlobal(pos))
             if action:
                 menu_item_text = action.text()
                 if not used and menu_item_text.endswith('window'):
-                    self.open_in_new_window(db_path)
+                    self.open_in_new_window(str(db_path))
                 elif not used and menu_item_text.startswith('Delete'):
                     self.remove_row(item.row())
                 elif menu_item_text.startswith('Open'):
-                    self.check_and_open(db_path, used)
+                    self.check_and_open(str(db_path), used)
                 elif menu_item_text.startswith('Reveal'):
-                    tug.reveal_file(db_path)
+                    tug.reveal_file(str(db_path))
                 elif menu_item_text.startswith('Free'):
                     self.mark_not_used(item.row())
 

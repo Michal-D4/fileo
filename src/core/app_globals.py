@@ -28,7 +28,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.58'
+    return '1.3.59'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -121,8 +121,8 @@ class mimeType(Enum):
 
 @dataclass(slots=True)
 class DirData():
-    parent_id: int
-    id: int
+    parent: int
+    dir_id: int
     multy: bool = False
     hidden: bool = False
     file_id: int = 0
@@ -134,7 +134,7 @@ class DirData():
 
     def __repr__(self) -> str:
         return (
-            f'DirData(parent_id={self.parent_id}, id={self.id}, '
+            f'DirData(parent={self.parent}, dir_id={self.dir_id}, '
             f'multy={self.multy}, hidden={self.hidden}, '
             f'file_id={self.file_id}, tool_tip={self.tool_tip})'
         )
@@ -177,9 +177,9 @@ def define_branch(index: QModelIndex) -> list:
     item = index.internalPointer()
     branch = []
     while 1:
-        u_dat = item.user_data()
-        branch.append(u_dat.id)
-        if u_dat.parent_id == 0:
+        u_dat: DirData = item.user_data()
+        branch.append(u_dat.dir_id)
+        if u_dat.parent == 0:
             break
         item = item.parent()
     branch.reverse()

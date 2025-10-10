@@ -189,7 +189,7 @@ class FilterSetup(QWidget):
         self.single_folder = (len(idxs) == 1)
         dirs = []
         for idx in idxs:
-            dirs.append((idx.data(Qt.ItemDataRole.UserRole).id,))
+            dirs.append((idx.data(Qt.ItemDataRole.UserRole).dir_id,))
         self.single_folder = db_ut.temp_files_dir(dirs, self.checks)
 
     def store_tag_files(self):

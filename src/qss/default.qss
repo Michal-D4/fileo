@@ -9,6 +9,10 @@ QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, 
    font-size: $normalSize;
    outline: none;
 }
+QHeaderView, QMenu {
+   font-family: $fontFamily;
+   font-size: $menuSize;
+}
 QLabel {
    background-color: transparent;
    color: $textColor;
@@ -476,4 +480,3 @@ QTableWidget {
 ##edit_message~font-size: $bigSize
 ##edit_message~font-size: $normalSize
 ##note_menu~QMenu {padding: 0; background-color: $leftPaneBG; border: $shapeBorder1 $innerBorder;} QMenu::item {background-color: transparent; color: $textColor;} QMenu::item:disabled, QMenu::item:selected:disabled {background-color: $itemDisabled; color: $selectorPassive;} QMenu::item:selected {background-color: $itemHoverBG;} QMenu::separator {height: 1px; background-color: $innerBorder;}
-##note_edit~QTextEdit {color: $textColor; selection-color: $selectedText; selection-background-color: $selectedBG;}
