@@ -47,7 +47,7 @@ class diskScanner(QWidget):
         if self.ui.no_ext.isChecked():
             exts.append('')
 
-        ag.signals_.start_disk_scanning.emit(str(root), exts)
+        ag.signals.start_disk_scanning.emit(str(root), exts)
         self.close()
 
     def set_exts(self):

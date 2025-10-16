@@ -86,11 +86,11 @@ class Locations(QTextBrowser):
     def go_file(self):
         branch = ','.join((str(i) for i in self.branch[0]))
         file_id = self.branch[1]
-        ag.signals_.user_signal.emit(f'file-note: Go to file\\{file_id}-{branch}')
+        ag.signals.user_signal.emit(f'file-note: Go to file\\{file_id}-{branch}')
 
     def delete_file(self):
         branch, file_id = self.branch
-        ag.signals_.user_signal.emit(f'remove_file_from_location\\{file_id},{branch[-1]}')
+        ag.signals.user_signal.emit(f'remove_file_from_location\\{file_id},{branch[-1]}')
 
     def set_current_branch(self) -> str:
         line = self.select_line_under_mouse()
@@ -98,7 +98,7 @@ class Locations(QTextBrowser):
         return line
 
     def reveal_file(self):
-        ag.signals_.user_signal.emit(f'file reveal\\{self.branch[1]}')
+        ag.signals.user_signal.emit(f'file reveal\\{self.branch[1]}')
 
     def remove_duplicate(self):
         def get_other_branch() -> int:

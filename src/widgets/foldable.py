@@ -38,7 +38,7 @@ class Foldable(QWidget):
         """
         self.toggle_collapse()
 
-        ag.signals_.collapseSignal.emit(self, self.ui.toFold.isChecked())
+        ag.signals.collapseSignal.emit(self, self.ui.toFold.isChecked())
 
     def set_hovering(self, hover: bool):
         if hover:
@@ -84,7 +84,7 @@ class Foldable(QWidget):
             self.ui.toFold.setText(ttl.upper())
             ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
             tug.save_app_setting(FoldTitles=(','.join((*ttls.split(',')[:-1], ttl))))
-            ag.signals_.author_widget_title.emit(ttl)
+            ag.signals.author_widget_title.emit(ttl)
             editor.close()
 
         def editor_setup():

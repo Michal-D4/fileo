@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
 
 from .. import tug
 from .compact_list import aBrowser
-from .filename_editor import fileEditorDelegate, folderEditDelegate
+from .edit_delegates import fileEditorDelegate, folderEditDelegate
 from .load_files import loadFiles
 from ..ui_main import Ui_Sho
 from ..widgets.file_data import fileDataHolder
@@ -89,8 +89,8 @@ class shoWindow(QMainWindow):
         ag.save_db_settings(AppVersion=cur_v)
 
     def restore_settings(self, db_name: str):
-        ag.signals_.user_signal.connect(low_bk.set_user_action_handlers())
-        ag.signals_.author_widget_title.connect(self.change_menu_more)
+        ag.signals.user_signal.connect(low_bk.set_user_action_handlers())
+        ag.signals.author_widget_title.connect(self.change_menu_more)
 
         self.restore_geometry()
         self.restore_container()
@@ -258,7 +258,7 @@ class shoWindow(QMainWindow):
 
         ctrl_n = QShortcut(QKeySequence("Ctrl+N"), ag.file_list)
         ctrl_n.setContext(Qt.ShortcutContext.WidgetShortcut)
-        ctrl_n.activated.connect(lambda: ag.signals_.user_signal.emit("Files Create new file"))
+        ctrl_n.activated.connect(lambda: ag.signals.user_signal.emit("Files Create new file"))
 
     def set_button_icons(self):
         m_icons = [
@@ -298,8 +298,8 @@ class shoWindow(QMainWindow):
         self.ui.hSplit.mouseMoveEvent = self.hsplit_move_event
         self.ui.hSplit.leaveEvent = self.leave_event
 
-        ag.signals_.open_db_signal.connect(self.switch_db)
-        ag.signals_.filter_setup_closed.connect(self.close_filter_setup)
+        ag.signals.open_db_signal.connect(self.switch_db)
+        ag.signals.filter_setup_closed.connect(self.close_filter_setup)
 
     def toggle_btn(self, id: int):
         logger.info(f'{id=}, {ag.appMode(id).name=}')
@@ -311,7 +311,7 @@ class shoWindow(QMainWindow):
 
     def db_list_show(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
-            ag.signals_.user_signal.emit("MainMenu DB selector")
+            ag.signals.user_signal.emit("MainMenu DB selector")
 
     @pyqtSlot()
     def close_filter_setup(self):
@@ -333,7 +333,7 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
-        if ag.file_data.height() == ag.file_data.s_height:
+        if ag.file_data.height() == ag.file_data.norm_height:
             self.setCursor(Qt.CursorShape.SizeVerCursor)
             e.accept()
 
@@ -469,7 +469,7 @@ class shoWindow(QMainWindow):
             "maximizedWindow": int(self.isMaximized()),
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
-            "noteHolderHeight": ag.file_data.s_height,
+            "noteHolderHeight": ag.file_data.norm_height,
             "DB_NAME": ag.db.path,
         }
         if ag.filter_dlg and ag.filter_dlg.isVisible():

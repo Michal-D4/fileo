@@ -32,7 +32,7 @@ class OpenDB(QWidget, Ui_openDB):
         self.listDB.customContextMenuRequested.connect(self.item_menu)
         self.listDB.setCurrentCell(0, 0)
         self.btn_add.setIcon(tug.get_icon("plus"))
-        self.btn_add.clicked.connect(lambda: ag.signals_.user_signal.emit("MainMenu Create/Open DB"))
+        self.btn_add.clicked.connect(lambda: ag.signals.user_signal.emit("MainMenu Create/Open DB"))
 
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
         return_key.activated.connect(lambda: self.item_click(self.listDB.currentItem()))
@@ -168,7 +168,7 @@ class OpenDB(QWidget, Ui_openDB):
             )
         self.save_db_list(ag.db.path, db_path, self.get_item_list())
         logger.info(f'open_db_signal.emit {db_path}')
-        ag.signals_.open_db_signal.emit(db_path)
+        ag.signals.open_db_signal.emit(db_path)
         self.close()
 
     def check_and_open(self, db_path: str, used: bool=False) -> bool:
@@ -192,7 +192,7 @@ class OpenDB(QWidget, Ui_openDB):
     def open_in_new_window(self, db_path: str):
         if ag.db.conn:
             tug.save_app_setting(FILE_LIST_HEADER=ag.file_list.header().saveState())
-        ag.signals_.user_signal.emit(f'MainMenu New window\\{db_path}')
+        ag.signals.user_signal.emit(f'MainMenu New window\\{db_path}')
         self.close()
 
     def get_item_list(self) -> list:

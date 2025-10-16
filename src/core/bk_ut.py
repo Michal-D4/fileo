@@ -90,7 +90,7 @@ def set_menu_more(self):
         act = QAction(item, self, checkable=True)
         act.setChecked(True)
         act.triggered.connect(
-            lambda state, it = i: ag.signals_.hideSignal.emit(state, it)
+            lambda state, it = i: ag.signals.hideSignal.emit(state, it)
         )
         menu.addAction(act)
 
@@ -112,7 +112,7 @@ def bk_setup():
 
     dd.set_drag_drop_handlers()
 
-    ag.signals_.start_disk_scanning.connect(file_loading)
+    ag.signals.start_disk_scanning.connect(file_loading)
 
     ag.tag_list.edit_item.connect(low_bk.tag_changed)
     ag.author_list.edit_item.connect(low_bk.author_changed)
@@ -120,16 +120,16 @@ def bk_setup():
     ag.author_list.delete_items.connect(low_bk.delete_authors)
 
     ag.file_list.doubleClicked.connect(
-        lambda: ag.signals_.user_signal.emit("double click file"))
+        lambda: ag.signals.user_signal.emit("double click file"))
 
     ctrl_w = QShortcut(QKeySequence("Ctrl+W"), ag.dir_list)
-    ctrl_w.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder"))
+    ctrl_w.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Create folder"))
     ctrl_e = QShortcut(QKeySequence("Ctrl+E"), ag.dir_list)
-    ctrl_e.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Create folder as child"))
+    ctrl_e.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Create folder as child"))
     del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.dir_list)
-    del_key.activated.connect(lambda: ag.signals_.user_signal.emit("Dirs Delete folder(s)"))
+    del_key.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Delete folder(s)"))
     act_pref = QShortcut(QKeySequence("Ctrl+,"), ag.app)
-    act_pref.activated.connect(lambda: ag.signals_.user_signal.emit("MainMenu Preferences"))
+    act_pref.activated.connect(lambda: ag.signals.user_signal.emit("MainMenu Preferences"))
     esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), ag.app)
     esc.activated.connect(close_last_popup)
 
@@ -171,7 +171,7 @@ def show_main_menu():
         if action.text() == 'Report duplicate files':
             check_duplicates(auto=False)
             return
-        ag.signals_.user_signal.emit(f"MainMenu {action.text()}")
+        ag.signals.user_signal.emit(f"MainMenu {action.text()}")
 
 def resize_section_0():
     hdr = ag.file_list.header()
@@ -226,8 +226,6 @@ def restore_dirs():
             idx = model.mapFromSource(s_idx)
             ag.file_list.setCurrentIndex(idx)
             ag.file_list.scrollTo(idx)
-    elif  ag.mode is ag.appMode.RECENT_FILES:
-        low_bk.show_recent_files()
     elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
     header_restore()
@@ -308,7 +306,7 @@ def dir_menu(pos):
         menu.addSeparator()
         menu.addAction("Edit tooltip")
         menu.addSeparator()
-        menu.addAction("Copy to clipboard")
+        menu.addAction("Copy tree of children")
         menu.addSeparator()
         menu.addAction("Import files")
         menu.addSeparator()
@@ -319,7 +317,7 @@ def dir_menu(pos):
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:
         item = action.text().split('\t')[0]
-        ag.signals_.user_signal.emit(f"Dirs {item}")
+        ag.signals.user_signal.emit(f"Dirs {item}")
 
 @pyqtSlot(QPoint)
 def file_menu(pos):
@@ -353,7 +351,7 @@ def file_menu(pos):
     if len(menu.actions()) > 0:
         action = menu.exec(ag.file_list.mapToGlobal(pos))
         if action:
-            ag.signals_.user_signal.emit(f"Files {action.text()}")
+            ag.signals.user_signal.emit(f"Files {action.text()}")
 
 @pyqtSlot(str, list)
 def file_loading(root_path: str, ext: list[str]):
@@ -388,7 +386,7 @@ def finish_loading(has_new_ext: bool):
     ag.app.thread.quit()
     ag.app.set_busy(False)
     if has_new_ext:
-        ag.signals_.user_signal.emit("ext inserted")
+        ag.signals.user_signal.emit("ext inserted")
     low_bk.dirs_changed(ag.dir_list.currentIndex())
 
 @pyqtSlot()

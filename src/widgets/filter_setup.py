@@ -57,14 +57,14 @@ class FilterSetup(QWidget):
         )
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
-        ag.signals_.author_widget_title.connect(lambda ttl: self.ui.selected_author.setText(ttl.lower()))
+        ag.signals.author_widget_title.connect(lambda ttl: self.ui.selected_author.setText(ttl.lower()))
 
         self.ui.btnDone.clicked.connect(self.done_clicked)
         self.ui.btnApply.clicked.connect(self.apply_clicked)
 
         self.mouseMoveEvent = self.move_self
         self.font_changed(tug.get_app_setting('FONT_SIZE', '10pt'))
-        ag.signals_.font_size_changed.connect(self.font_changed)
+        ag.signals.font_size_changed.connect(self.font_changed)
 
     def init_how_added(self):
         items = ("", "scan file system", "drag from file system", "import file list",
@@ -137,11 +137,11 @@ class FilterSetup(QWidget):
         self.ui.rating_edit.setEnabled(st)
 
     def done_clicked(self):
-        ag.signals_.filter_setup_closed.emit()
+        ag.signals.filter_setup_closed.emit()
         self.close()
 
     def apply_clicked(self):
-        ag.signals_.user_signal.emit("filter_changed")
+        ag.signals.user_signal.emit("filter_changed")
 
     def get_file_list(self):
         self.store_temp()
@@ -248,7 +248,7 @@ class FilterSetup(QWidget):
     def dir_selection_changed(self):
         self.set_dir_list()
         if ag.mode is ag.appMode.FILTER and self.ui.selected_dir.isChecked():
-            ag.signals_.user_signal.emit("filter_changed")
+            ag.signals.user_signal.emit("filter_changed")
 
     def set_tag_list(self, tags: list[str]):
         self.ui.tag_list.setPlainText(', '.join([f"[{tag}]" for tag in tags]))
@@ -256,7 +256,7 @@ class FilterSetup(QWidget):
     def tag_selection_changed(self, tags: list[str]):
         self.set_tag_list(tags)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_tag.isChecked():
-            ag.signals_.user_signal.emit("filter_changed")
+            ag.signals.user_signal.emit("filter_changed")
 
     def set_ext_list(self, exts: list[str]):
         self.ui.ext_list.setPlainText(', '.join([f"[{ext}]" for ext in exts]))
@@ -264,7 +264,7 @@ class FilterSetup(QWidget):
     def ext_selection_changed(self, exts: list[str]):
         self.set_ext_list(exts)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_ext.isChecked():
-            ag.signals_.user_signal.emit("filter_changed")
+            ag.signals.user_signal.emit("filter_changed")
 
     def set_author_list(self, authors: list[str]):
         self.ui.author_list.setPlainText(
@@ -273,7 +273,7 @@ class FilterSetup(QWidget):
     def author_selection_changed(self, authors: list[str]):
         self.set_author_list(authors)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_author.isChecked():
-            ag.signals_.user_signal.emit("filter_changed")
+            ag.signals.user_signal.emit("filter_changed")
 
     def save_filter_settings(self):
         settings = {

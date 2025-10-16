@@ -95,7 +95,7 @@ class fileNote(QWidget):
                 db_ut.delete_file_notes(self.file_id)
                 note_text = f'{link}  `Created: {datetime.now().strftime(TIME_FORMAT)}`'
                 db_ut.insert_note(self.file_id, note_text)
-                ag.signals_.refresh_note_list.emit()
+                ag.signals.refresh_note_list.emit()
 
             note_file = Path(filepath.parent, f'{filepath.stem}.notes.md')
             old_content = read_note_file(note_file) if note_file.exists() else ''
@@ -151,7 +151,7 @@ class fileNote(QWidget):
                 copy_html()
             elif act.text() == 'Open file':
                 file_id = self.ui.textBrowser.anchorAt(pos)[8:]
-                ag.signals_.user_signal.emit(f'Open file by path\\{db_ut.get_file_path(file_id)}')
+                ag.signals.user_signal.emit(f'Open file by path\\{db_ut.get_file_path(file_id)}')
 
     def set_text(self, note: str):
         def set_note_title():
@@ -242,17 +242,17 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        ag.signals_.start_edit_note.emit(self)
+        ag.signals.start_edit_note.emit(self)
 
     @pyqtSlot()
     def remove_note(self):
-        ag.signals_.delete_note.emit(self)
+        ag.signals.delete_note.emit(self)
 
     @pyqtSlot(QUrl)
     def ref_clicked(self, href: QUrl):
         scheme = href.scheme()
         if scheme == 'fileid':
-            ag.signals_.user_signal.emit(f'show file\\{href.fileName()}')
+            ag.signals.user_signal.emit(f'show file\\{href.fileName()}')
         elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
 

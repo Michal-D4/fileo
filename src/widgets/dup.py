@@ -72,7 +72,7 @@ class dlgDup(QWidget, Ui_DlgDup):
     @pyqtSlot()
     def show_duplicates(self):
         path = self.get_report_path() if self.is_user_request else self.save_report()
-        ag.signals_.user_signal.emit(f"Open file by path\\{str(path)}")
+        ag.signals.user_signal.emit(f"Open file by path\\{str(path)}")
 
     def save_dup_report(self, path: Path):
         with open(path, "w") as out:

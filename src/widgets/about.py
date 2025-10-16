@@ -36,7 +36,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
         self.ok_btn.setShortcut(QKeySequence(Qt.Key.Key_Return))
 
         self.mouseMoveEvent = self.move_self
-        ag.signals_.font_size_changed.connect(lambda: self.adjustSize())
+        ag.signals.font_size_changed.connect(lambda: self.adjustSize())
 
     def move_self(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:

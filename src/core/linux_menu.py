@@ -16,7 +16,11 @@ def use_action_menu(e: QDropEvent) -> bool:
     if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
         e.setDropAction(Qt.DropAction.CopyAction)
         return False
-    return True
+    if (e.mimeData().hasFormat(ag.mimeType.folders.value) or
+        e.mimeData().hasFormat(ag.mimeType.files_in.value)):
+        e.setDropAction(Qt.DropAction.CopyAction)
+        return True
+    return False
 
 def action_menu(e: QDropEvent):
     pos = e.position().toPoint()

@@ -172,9 +172,9 @@ class fileModel(QAbstractTableModel):
                 self.user_data[index.row()] = file_id
                 dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).dir_id
                 db_ut.copy_file(file_id, dir_id)
-                ag.signals_.user_signal.emit(f"New file created\\{file_id}")
+                ag.signals.user_signal.emit(f"New file created\\{file_id}")
                 if is_new_ext:
-                    ag.signals_.user_signal.emit("ext inserted")
+                    ag.signals.user_signal.emit("ext inserted")
 
             def old_file() -> bool:
                 try:

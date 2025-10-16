@@ -28,7 +28,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.3.59'
+    return '1.4.01'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -230,4 +230,4 @@ def show_message_box(
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals  # noqa: E402
-signals_ = AppSignals()
+signals = AppSignals()

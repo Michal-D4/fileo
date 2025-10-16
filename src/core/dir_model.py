@@ -160,7 +160,6 @@ class dirModel(QAbstractItemModel):
 
     def rowCount(self, parent=QModelIndex()):
         parentItem = self.getItem(parent)
-
         return parentItem.childCount()
 
     def setData(self, index, value, role: Qt.ItemDataRole) -> bool:

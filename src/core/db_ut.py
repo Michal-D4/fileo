@@ -728,6 +728,11 @@ def dir_min_parent(dir_id: int) -> int:
     parent = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()
     return parent[0]
 
+def has_children(dir_id: int) -> bool:
+    sql = 'select 1 from parentdir where parent = ?'
+    res = ag.db.conn.cursor().execute(sql, (dir_id,)).fetchone()
+    return bool(res)
+
 def dir_children(parent_id: int) -> apsw.Cursor:
     sql = 'select id from parentdir where parent = ?'
     with ag.db.conn as conn:
@@ -1019,7 +1024,7 @@ def create_connection(path: str) -> bool:
         ag.db.conn.close()
         return False
 
-    ag.signals_.user_signal.emit('Enable_buttons')
+    ag.signals.user_signal.emit('Enable_buttons')
     check_for_cycle()
 
     cursor = conn.cursor()

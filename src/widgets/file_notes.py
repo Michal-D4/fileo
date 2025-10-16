@@ -21,9 +21,9 @@ class notesContainer(QScrollArea):
 
         self.file_id = 0
 
-        ag.signals_.delete_note.connect(self.remove_item)
-        ag.signals_.refresh_note_list.connect(self.set_notes_data)
-        ag.signals_.color_theme_changed.connect(self.theme_changed)
+        ag.signals.delete_note.connect(self.remove_item)
+        ag.signals.refresh_note_list.connect(self.set_notes_data)
+        ag.signals.color_theme_changed.connect(self.theme_changed)
 
     def set_ui(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -54,7 +54,7 @@ class notesContainer(QScrollArea):
 
     def go_to_file(self):
         file_id = self.editor.get_file_id()
-        ag.signals_.user_signal.emit(f"file-note: Go to file\\{file_id}")
+        ag.signals.user_signal.emit(f"file-note: Go to file\\{file_id}")
 
     def is_editing(self):
         return self.editing
@@ -120,16 +120,6 @@ class notesContainer(QScrollArea):
                 item.widget().deleteLater()
 
     def finish_editing(self):
-        self.update_note()
-        self.editing = False
-
-    def update_note(self):
-        def compare_hashes(file1: int, file2: int) -> bool:
-            return (
-                file1 == file2 or
-                db_ut.get_file_hash(file1) == db_ut.get_file_hash(file2)
-            )
-
         note: fileNote = self.editor.get_note()
         file_id = note.get_file_id()
         note_id = note.get_note_id()
@@ -141,10 +131,11 @@ class notesContainer(QScrollArea):
             ts = db_ut.insert_note(file_id, txt)
 
         ag.add_recent_file(file_id)
-
-        if compare_hashes(self.file_id, file_id):
+        if self.file_id == file_id or db_ut.get_file_hash(self.file_id) == db_ut.get_file_hash(file_id):
             self.update_date_in_file_list(ts)
             self.set_notes_data()
+
+        self.editing = False
 
     def update_date_in_file_list(self, ts: int):
         if ts > 0:

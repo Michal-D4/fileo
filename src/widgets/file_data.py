@@ -1,7 +1,7 @@
 # from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtCore import QPoint, Qt, QSize
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -18,10 +18,6 @@ from .note_editor import noteEditor
 from .srch_in_notes import srchInNotes
 from .. import tug
 
-def set_note_holder_height(hh: int):
-    ag.app.ui.noteHolder.setMinimumHeight(hh)
-    ag.app.ui.noteHolder.setMaximumHeight(hh)
-
 @unique
 class Page(Enum):
     TAGS = 0
@@ -36,7 +32,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.file_id = 0
-        self.s_height = 0
+        self.norm_height = 0
+        self.curr_height = 0
+        self.state: int = 1  # 0-MIN, 1-NORM, 2-MAX
 
         self.setupUi(self)
 
@@ -57,8 +55,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
         self.l_editor.hide()
 
-        ag.signals_.start_edit_note.connect(self.start_edit)
-        ag.signals_.author_widget_title.connect(self.set_author_title)
+        ag.signals.start_edit_note.connect(self.start_edit)
+        ag.signals.author_widget_title.connect(self.set_author_title)
 
         self.set_buttons()
 
@@ -73,9 +71,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
 
+        ag.app.ui.noteHolder.sizeHint = self.file_data_size_hint
+
+    def file_data_size_hint(self) -> QSize:
+        return QSize(self.width(), self.curr_height)
+
     def set_height(self, hh: int):
-        self.s_height = hh
-        set_note_holder_height(hh)
+        self.norm_height = self.curr_height = hh
 
     def set_author_title(self, ttl: str):
         self.l_authors.setText(f"{ttl[:-1]} selector")
@@ -193,8 +195,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.switch_page(Page.LOCS)
 
     def l_file_info_press(self, e: QMouseEvent):
-        if self.cur_page is not Page.INFO:
-            self.l_file_info.setToolTip('copy file info by press "Right button + Shift"')
         self.switch_page(Page.INFO)
 
     def l_file_notes_press(self, e: QMouseEvent):
@@ -233,33 +233,30 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             self.authorEdit.hide()
             self.tagEdit.show()
 
-        if self.cur_page is Page.INFO:
-            self.l_file_info.setToolTip("")
-
         self.cur_page = new_page
         self.pages.setCurrentIndex(new_page.value)
 
     def maximize_pane(self):
-        if ag.app.ui.noteHolder.height() == self.s_height:
-            set_note_holder_height(ag.file_list.height() + self.s_height)
+        if self.state == 1:
+            self.curr_height = ag.file_list.height() + ag.app.ui.noteHolder.height()
             ag.file_list.hide()
             self.expand.setEnabled(False)
         else:
-            self.labels.show()
-            self.pages.show()
+            self.labels.show(); self.pages.show()  # noqa: E702
             self.collapse.setEnabled(True)
-            set_note_holder_height(self.s_height)
+            self.curr_height = self.norm_height
+        self.state += 1
 
     def minimize_pane(self):
-        if ag.app.ui.noteHolder.height() == self.s_height:
-            set_note_holder_height(self.head.height())
-            self.pages.hide()
-            self.labels.hide()
+        if self.state == 1:
+            self.curr_height = self.head.height()
+            self.pages.hide(); self.labels.hide()  # noqa: E702
             self.collapse.setEnabled(False)
         else:
             self.expand.setEnabled(True)
-            set_note_holder_height(self.s_height)
+            self.curr_height = self.norm_height
             ag.file_list.show()
+        self.state -= 1
 
     def srch_notes(self):
         if "srchInNotes" in ag.popups:

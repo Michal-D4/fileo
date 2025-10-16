@@ -10,7 +10,7 @@ class tagBrowser(aBrowser):
         super().__init__(parent)
         self.file_id = 0
         self.editor = editor
-        ag.signals_.color_theme_changed.connect(self.show_in_bpowser)
+        ag.signals.color_theme_changed.connect(self.show_in_bpowser)
 
     def show_in_bpowser(self):
         self.browser.clear()
@@ -32,7 +32,7 @@ class tagBrowser(aBrowser):
         self.remove_tags(old, new)
         if self.add_tags(old, new):
             self.set_list(db_ut.get_tags())
-            ag.signals_.user_signal.emit("tag_inserted")
+            ag.signals.user_signal.emit("tag_inserted")
 
     def remove_tags(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)

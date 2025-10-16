@@ -17,6 +17,11 @@ QLabel {
    background-color: transparent;
    color: $textColor;
 }
+QToolTip {
+   background-color: $notActiveItemBG;
+   color: $selectedText;
+   border: none;
+}
 QToolButton {
    background-color: transparent;
 }

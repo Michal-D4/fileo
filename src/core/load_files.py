@@ -74,7 +74,7 @@ class loadFiles(QObject):
             drop_file()
 
         if self.ext_inserted:
-            ag.signals_.user_signal.emit("ext inserted")
+            ag.signals.user_signal.emit("ext inserted")
         self.conn.close()
 
     @pyqtSlot()

@@ -1,9 +1,13 @@
 # Change Log
 
+## 1.4.01 - 2025, 16 October
+* a lot of minor changes, improvements, enhancement
+* I have no idea what else to do, so I decided to change the minor version number (3->4), since the application is already matured enough
+
 ## 1.3.59 - 2025, 09 October
 * In Linux, reverted to use dbus to reveal file in directory
 * NoteEditor, paste from clipboard, background color bug fixed
-* Created method to remove cycles in a folder tree, if any. it is scheduled to run once a month
+* Created method to remove cycles in a folder tree, if any. It is scheduled to run once a month
 * some other minor changes, improvements
 
 ## 1.3.58 - 2025, 01 October
@@ -15,7 +19,7 @@
 ## 1.3.57 - 2025, 28 September
 * A flag has been introduced to register the method for adding a file to the DB.
 * Added the ability to filter files by the method of adding files to the DB.
-* Made some improvements, removedeliminated some inconsistencies, fixed some errors.
+* Made some improvements, eliminated some inconsistencies, fixed some errors.
 
 ## 1.3.56 - 2025, 16 September
 * Simplify application initialization to eliminate errors.

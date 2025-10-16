@@ -14,10 +14,10 @@ class History(object):
     def set_current(self, curr: int) -> tuple:
         self.curr = curr
         self.is_hist = True
-        ag.signals_.user_signal.emit('curr_history_folder')
+        ag.signals.user_signal.emit('curr_history_folder')
 
     def history_changed(self):
-        ag.signals_.user_signal.emit('history_changed')
+        ag.signals.user_signal.emit('history_changed')
 
     def check_remove(self):
         kk = []

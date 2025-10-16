@@ -12,7 +12,7 @@ from PyQt6.QtCore import (Qt, QSize, QModelIndex,
 )
 from PyQt6.QtGui import QDesktopServices, QFocusEvent, QAction
 from PyQt6.QtWidgets import (QApplication, QAbstractItemView,
-    QFileDialog, QMessageBox, QMenu, QToolButton, QStyle,
+    QFileDialog, QMessageBox, QMenu, QToolButton, QStyle, QDialog,
 )
 
 from . import (db_ut, app_globals as ag, reports as rep,
@@ -24,7 +24,7 @@ from ..widgets import about, preferences
 from ..widgets.open_db import OpenDB
 from ..widgets.scan_disk_for_files import diskScanner
 from .. import tug
-from .filename_editor import folderEditDelegate
+from .edit_delegates import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 340
 
@@ -47,7 +47,7 @@ def set_user_action_handlers():
         "Dirs Edit tooltip": edit_tooltip,
         "Dirs Toggle hidden state": toggle_hidden_state,
         "Dirs Import files": import_files,
-        "Dirs Copy to clipboard": copy_trees,
+        "Dirs Copy tree of children": copy_trees,
         "tag_inserted": populate_tag_list,
         "ext inserted": populate_ext_list,
         "author_inserted": populate_author_list,
@@ -58,7 +58,7 @@ def set_user_action_handlers():
         "Open file by path": open_with_url,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
-        "Files Delete file(s) from DB": delete_files,
+        "Files Delete file(s) from DB": ask_delete_files,
         "Files Reveal in explorer": open_file_folder,
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
@@ -128,31 +128,26 @@ def copy_trees():
         for name1, id1 in ini:
             first = f'{name1}/' if id1 else ''
             for name2, id2, mu in db_ut.children_names(id1):
-                dd.append((f'{first}{name2}{ss[mu]}', id2))
+                vv = (f'{first}{name2}{ss[mu]}', id2)
+                if db_ut.has_children(id2):
+                    dd.append(vv)
+                else:
+                    tt.append(vv)
         if dd:
-            tt.extend(dd)
             children(dd)
 
     idxs = ag.dir_list.selectionModel().selectedIndexes()
     dirs = []
     tt = []
-    ii = 0
-    model = ag.dir_list.model()
-    root_child = model.index(0, 0, QModelIndex())
-    root_rows = model.rowCount(root_child.parent())
-
+    model: dirModel = ag.dir_list.model()
     for idx in idxs:
-        if not idx.parent().isValid():  # child of root
-            ii += 1
-            if ii == root_rows:
-                dirs = [('', 0)]
-                break
         udat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-        dirs.append((
-            f'{idx.data(Qt.ItemDataRole.DisplayRole)}{ss[udat.multy]}', udat.dir_id
-        ))
-    else:
-        tt.extend(dirs)
+        vv = (f'{idx.data(Qt.ItemDataRole.DisplayRole)}{ss[udat.multy]}', udat.dir_id)
+        if model.getItem(idx).childCount():
+            dirs.append(vv)
+        else:
+            tt.append(vv)
+
     children(dirs)
     qq = [x[0] for x in tt]
     qq.sort(key=str.lower)
@@ -731,12 +726,12 @@ def update_open_date(index: QModelIndex):
     if ts > 0:
         ag.file_list.model().update_opened(ts, index)
 
-def delete_files():
+def ask_delete_files():
     """
     delete file from DB
     """
-    def msg_callback(res: int):
-        if res == 1:
+    def delete_files(res: int):
+        if res == QDialog.DialogCode.Accepted.value:
             edit_state = ag.file_data.get_edit_state()
             ed_file_id = edit_state[1] if edit_state[0] else 0
             row = ag.file_list.model().rowCount()
@@ -763,7 +758,7 @@ def delete_files():
         'Selected files will be deleted. Please confirm',
         btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
         icon=QStyle.StandardPixmap.SP_MessageBoxQuestion,
-        callback=msg_callback
+        callback=delete_files
     )
 
 def remove_files():

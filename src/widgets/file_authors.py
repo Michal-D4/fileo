@@ -86,7 +86,7 @@ class authorBrowser(QWidget):
         self.remove_items(old, new)
         if self.add_items(old, new):
             self.br.set_list(db_ut.get_authors())
-            ag.signals_.user_signal.emit("author_inserted")
+            ag.signals.user_signal.emit("author_inserted")
 
     def remove_items(self, old: list[str], new: list[str]):
         diff = set(old) - set(new)

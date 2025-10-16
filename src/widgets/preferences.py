@@ -213,7 +213,7 @@ class Preferences(QWidget):
         self.cur_size = self.init_size * SIZE_RATIO[f_size]
         self.adjustSize()
         ag.app.adjustSize()
-        ag.signals_.font_size_changed.emit(f_size)
+        ag.signals.font_size_changed.emit(f_size)
 
     def change_theme(self, idx: int):
         self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
@@ -238,7 +238,7 @@ class Preferences(QWidget):
         ag.file_data.passive_style()
         ag.file_data.cur_page_restyle()
         ag.file_data.file_info.setStyleSheet(tug.get_dyn_qss("line_edit"))
-        ag.signals_.color_theme_changed.emit()
+        ag.signals.color_theme_changed.emit()
 
     def set_icons(self):
         def set_icons_from_list(buttons):

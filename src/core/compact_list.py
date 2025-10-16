@@ -75,7 +75,7 @@ class aBrowser(QWidget):
         self.scroll_pos = 0
 
         self.browser.anchorClicked.connect(self.ref_clicked)
-        ag.signals_.color_theme_changed.connect(self.show_in_bpowser)
+        ag.signals.color_theme_changed.connect(self.show_in_bpowser)
 
         if not self.read_only:
             f2 = QShortcut(QKeySequence(Qt.Key.Key_F2), self.browser)

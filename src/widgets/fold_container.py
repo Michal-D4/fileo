@@ -170,8 +170,8 @@ class FoldContainer(QWidget):
             self._filters.append(filter)
 
     def _connect_signal(self):
-        ag.signals_.collapseSignal.connect(self._toggle_collapsed)
-        ag.signals_.hideSignal.connect(self.set_hidden)
+        ag.signals.collapseSignal.connect(self._toggle_collapsed)
+        ag.signals.hideSignal.connect(self.set_hidden)
 
     def _shown(self) -> int:
         """

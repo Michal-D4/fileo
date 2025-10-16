@@ -1,4 +1,4 @@
-from loguru import logger
+# from loguru import logger
 
 from PyQt6.QtCore import Qt, QMimeData, QDataStream, QIODevice, QUrl, QByteArray
 from PyQt6.QtGui import QFocusEvent, QDropEvent, QDragEnterEvent, QTextCursor
@@ -12,7 +12,6 @@ class noteEditor(QTextEdit):
     def __init__(self, parent = None) -> None:
         super().__init__(parent)
         self.note: fileNote = None
-        self.drag_enter_btns = 0
         self.dragged = False
 
         self.setAcceptDrops(True)
@@ -34,7 +33,6 @@ class noteEditor(QTextEdit):
         if ((mimedata.hasFormat(ag.mimeType.files_in.value)
             and e.source() is ag.app)
             or mimedata.hasFormat(ag.mimeType.files_uri.value)):
-            self.drag_enter_btns = e.buttons()
             e.accept()
         else:
             e.ignore()
@@ -92,18 +90,17 @@ class noteEditor(QTextEdit):
             e.accept()
         elif data.hasFormat(ag.mimeType.files_in.value):
             file_data: QByteArray = data.data(ag.mimeType.files_in.value)
-            logger.info(f'{e.buttons()=}')  # intensionaly, to see if Qt recover bottons in dropEvent
             t.insertText(
-                insert_file_id()
-                if self.drag_enter_btns & Qt.MouseButton.LeftButton else
                 insert_file_uri()
+                if e.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier) else
+                insert_file_id()
             )
         self.dragged = True
         return super().dropEvent(e)
 
     def editor_lost_focus(self, e: QFocusEvent):
         if e.lostFocus():
-            ag.signals_.user_signal.emit('SaveEditState')
+            ag.signals.user_signal.emit('SaveEditState')
         super().focusOutEvent(e)
 
     def start_edit(self, note: fileNote):
