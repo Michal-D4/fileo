@@ -12,14 +12,6 @@ from ..core import app_globals as ag
 from .foldable import Foldable
 from .ui_pref import Ui_prefForm
 
-SIZE_RATIO = {
-    '8pt': 0.90,
-    '9pt': 0.95,
-    '10pt': 1.00,
-    '11pt': 1.05,
-    '12pt': 1.10,
-    '14pt': 1.15,
-}
 
 class Preferences(QWidget):
 
@@ -135,7 +127,7 @@ class Preferences(QWidget):
             self.fontsize.addItem(key)
         self.cur_font_size = tug.get_app_setting('FONT_SIZE', '10pt')
         self.fontsize.setCurrentText(self.cur_font_size)
-        self.cur_size = self.init_size * SIZE_RATIO[self.cur_font_size]
+        self.cur_size = self.init_size * tug.SIZE_RATIO[self.cur_font_size]
         self.fontsize.currentIndexChanged.connect(self.change_font_size)
 
         pp = Path('~/fileo').expanduser()
@@ -210,7 +202,7 @@ class Preferences(QWidget):
         f_size = self.fontsize.currentText()
         tug.save_app_setting(FONT_SIZE=f_size)
         self.set_theme(self.themes.currentData(Qt.ItemDataRole.UserRole))
-        self.cur_size = self.init_size * SIZE_RATIO[f_size]
+        self.cur_size = self.init_size * tug.SIZE_RATIO[f_size]
         self.adjustSize()
         ag.app.adjustSize()
         ag.signals.font_size_changed.emit(f_size)
@@ -237,7 +229,7 @@ class Preferences(QWidget):
 
         ag.file_data.passive_style()
         ag.file_data.cur_page_restyle()
-        ag.file_data.file_info.setStyleSheet(tug.get_dyn_qss("line_edit"))
+        ag.file_data.file_info.setStyleSheet(' '.join((tug.get_dyn_qss("line_edit"), tug.get_dyn_qss("date_time_edit"))))
         ag.signals.color_theme_changed.emit()
 
     def set_icons(self):

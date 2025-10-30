@@ -4,7 +4,7 @@ QFrame {
 QStackedWidget QWidget {
    background-color: $fileFrameBG;
 }
-QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit, QTextEdit {
+QLabel, QTreeView, QTableWidget, QCheckBox, QRadioButton, QComboBox, QDateEdit, QLineEdit, QTextEdit, QDateTimeEdit {
    font-family: $fontFamily;
    font-size: $normalSize;
    outline: none;
@@ -130,6 +130,28 @@ QPushButton {
 }
 QPushButton:hover {
    background-color: $hoverBG;
+}
+QDateTimeEdit::up-button {
+   background-color: $inputBG;
+}
+QDateTimeEdit::up-button:hover {
+   background-color: $hoverBG;
+}
+QDateTimeEdit::down-button {
+   background-color: $inputBG;
+}
+QDateTimeEdit::down-button:hover {
+   background-color: $hoverBG;
+}
+QDateTimeEdit::up-arrow {
+   image: url('$up_trigon');
+   width: 9px;
+   height: 6px;
+}
+QDateTimeEdit::down-arrow {
+   image: url('$down_trigon');
+   width: 9px;
+   height: 6px;
 }
 QLineEdit {
    border: none;
@@ -485,3 +507,4 @@ QTableWidget {
 ##edit_message~font-size: $bigSize
 ##edit_message~font-size: $normalSize
 ##note_menu~QMenu {padding: 0; background-color: $leftPaneBG; border: $shapeBorder1 $innerBorder;} QMenu::item {background-color: transparent; color: $textColor;} QMenu::item:disabled, QMenu::item:selected:disabled {background-color: $itemDisabled; color: $selectorPassive;} QMenu::item:selected {background-color: $itemHoverBG;} QMenu::separator {height: 1px; background-color: $innerBorder;}
+##date_time_edit~QDateTimeEdit {border: none; margin: 0px; background-color: $inputBG; color: $textColor;}

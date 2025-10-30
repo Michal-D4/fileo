@@ -1,11 +1,11 @@
-# from loguru import logger
+from loguru import logger
 import apsw
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QModelIndex
+from PyQt6.QtCore import QModelIndex, QDateTime
 from PyQt6.QtWidgets import QMessageBox, QStyle
 
 from ..widgets.cust_msgbox import CustomMessageBox
@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .history import History
     from ..widgets.fold_container import foldGrip
 
+DATE_1970_1_1 = QDateTime(1970,1,1,0,0)
 
 def app_name() -> str:
     return "fileo"
@@ -28,7 +29,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.4.01'
+    return '1.4.02'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -84,6 +85,7 @@ def set_mode(new_mode: appMode):
     if new_mode is mode:
         return
 
+    logger.info(f'curr.mode: {mode.name}, new mode: {new_mode.name}')
     if mode is appMode.FILTER and new_mode.value > appMode.FILTER_SETUP.value:
         dir_list.selectionModel().selectionChanged.disconnect(filter_dlg.dir_selection_changed)
         disconnected = True
@@ -186,7 +188,7 @@ def define_branch(index: QModelIndex) -> list:
     branch.append(int(dir_list.isExpanded(index)))
     return branch
 
-def human_readable_size(n):
+def human_readable_size(n) -> str:
     kb, mb, gb = 1024, 1048576, 1073741824
     if n > gb:
         return f'{n/gb:.2f} Gb'
@@ -194,7 +196,7 @@ def human_readable_size(n):
         return f'{n/mb:.2f} Mb'
     if n > kb:
         return f'{n/kb:.2f} Kb'
-    return n
+    return str(n)
 
 def add_recent_file(id_: int):
     """
@@ -220,7 +222,7 @@ def show_message_box(
         callback=None):
     dlg = CustomMessageBox(msg, app)
     if callback:
-        dlg.finished.connect(callback)
+        dlg.finished.connect(callback)   # parameter: result: int
     dlg.set_title(title)
     dlg.set_buttons(btn)
     dlg.set_msg_icon(icon)

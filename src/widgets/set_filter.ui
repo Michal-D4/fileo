@@ -477,71 +477,6 @@
              </property>
             </widget>
            </item>
-           <item row="5" column="1">
-            <layout class="QHBoxLayout" name="HLayoutRating" stretch="1,0,2,1">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QComboBox" name="rating_cond">
-               <item>
-                <property name="text">
-                 <string>&lt;</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>=</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>&gt;</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_8">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>12</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="rating_edit">
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_3">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>80</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
            <item row="6" column="0">
             <widget class="QFrame" name="date_type_frame">
              <property name="sizePolicy">
@@ -590,31 +525,6 @@
                     <pointsize>11</pointsize>
                    </font>
                   </property>
-                  <item>
-                   <property name="text">
-                    <string>opened</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>modified</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>added</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>published    </string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>note_date</string>
-                   </property>
-                  </item>
                  </widget>
                 </item>
                 <item>
@@ -661,7 +571,7 @@
                   </property>
                   <item>
                    <property name="text">
-                    <string>last modified    </string>
+                    <string>last modified</string>
                    </property>
                   </item>
                   <item>
@@ -784,7 +694,73 @@
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QComboBox" name="how_added">
+            <widget class="QComboBox" name="how_added"/>
+           </item>
+           <item row="5" column="1">
+            <widget class="QFrame" name="rating_frame">
+             <layout class="QHBoxLayout" name="HLayoutRating" stretch="1,0,2,1">
+              <property name="leftMargin">
+               <number>1</number>
+              </property>
+              <item>
+               <widget class="QComboBox" name="rating_cond">
+                <item>
+                 <property name="text">
+                  <string>&lt;</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>=</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>&gt;</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>12</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="rating_edit">
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Fixed</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>80</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>

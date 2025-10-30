@@ -76,15 +76,13 @@ class shoWindow(QMainWindow):
         if saved_v == cur_v:
             return
 
-        def ver1348():
-            if saved_v < 1348:
-                path = tug.get_app_setting('DEFAULT_FILE_PATH',
-                    str(Path('~/fileo/files').expanduser()))
-                if not Path(path).exists():
-                    tug.create_dir(Path(path))
-                    tug.save_app_setting(DEFAULT_FILE_PATH=path)
+        def ver1402():
+            if saved_v < 1402:
+                ttls = tug.get_app_setting('FoldTitles', '')
+                if isinstance(ttls, str):
+                    tug.save_app_setting(FoldTitles=ttls.split(','))
 
-        ver1348()
+        ver1402()
 
         ag.save_db_settings(AppVersion=cur_v)
 
@@ -94,11 +92,6 @@ class shoWindow(QMainWindow):
 
         self.restore_geometry()
         self.restore_container()
-
-        ag.file_data = fileDataHolder()
-        ag.file_data.setObjectName("file_data_holder")
-        set_widget_to_frame(self.ui.noteHolder, ag.file_data)
-        self.restore_note_height()
 
         ag.history = history.History(
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
@@ -121,11 +114,33 @@ class shoWindow(QMainWindow):
         logger.info(f'open DB: {Path(path).name}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
+            self.get_header_data()
             self.init_filter_setup()
-            ag.file_data.set_tag_author_data()
+            self.set_file_data_holder()
             return True
         self.ui.db_name.setText('Click to select DB')
         return False
+
+    def set_file_data_holder(self):
+        # delete if already exist
+        layout = self.ui.noteHolder.layout()
+        item = layout.takeAt(0)
+        widget = item.widget() if item else None
+        if widget is not None:
+            widget.deleteLater()
+
+        # create new fileDataHolder
+        ag.file_data = fileDataHolder()
+        ag.file_data.setObjectName("file_data_holder")
+        layout.addWidget(ag.file_data)
+        self.restore_note_height()
+        ag.file_data.set_tag_author_data()
+
+    def get_header_data(self):
+        tug.qss_params['$FileListFields'] = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
+        tug.qss_params['$FieldTypes'] = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
+        tug.qss_params['$ToolTips'] = ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])
+        tug.qss_params['$FieldFormats'] = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
 
     def restore_container(self):
         bk_ut.set_menu_more(self)
@@ -148,7 +163,6 @@ class shoWindow(QMainWindow):
         btn = self.ui.toolbar_btns.button(mode.value)
         btn.setChecked(True)
         ag.set_mode(mode)
-        logger.info(f'{ag.mode=!r}')
         self.ui.app_mode.setText(mode.name)
         self.toggle_filter_show()
 
@@ -192,11 +206,6 @@ class shoWindow(QMainWindow):
         self.show_hidden.clicked.connect(self.show_hide_click)
         self.show_hidden.setDisabled(True)
 
-        self.collapse_btn = self._create_button("collapse_all", 'collapse_all', 'Collapse/expand tree')
-        self.collapse_btn.setCheckable(True)
-        self.collapse_btn.clicked.connect(bk_ut.toggle_collapse)
-        self.collapse_btn.setDisabled(True)
-
     def _create_button(self, icon_name: str, btn_name: str, tool_tip: str) -> QToolButton:
         btn = QToolButton()
         btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
@@ -223,7 +232,6 @@ class shoWindow(QMainWindow):
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         ag.dir_list.setObjectName('dir_list')
-        ag.dir_list.expanded.connect(lambda: self.collapse_btn.setChecked(False))
         set_widget_to_frame(frames[0], ag.dir_list)
         ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
         ag.dir_list.setItemDelegateForColumn(0, folderEditDelegate(self))
@@ -242,6 +250,9 @@ class shoWindow(QMainWindow):
 
         ag.file_list = self.ui.file_list
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
+
+        self.ui.noteHolder.setLayout(QVBoxLayout())
+        self.ui.noteHolder.layout().setContentsMargins(0,0,0,0)
 
         self.ui.btn_search.setIcon(tug.get_icon("search"))
         ag.buttons.append((self.ui.btn_search, "search"))
@@ -272,6 +283,8 @@ class shoWindow(QMainWindow):
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
             ag.buttons.append((btn, icon_name))
+        self.ui.btnFilter.setEnabled(False)
+        self.ui.btnFilterSetup.setEnabled(False)
 
     def change_menu_more(self, new_ttl: str):
         menu = self.ui.more.menu()
@@ -301,11 +314,10 @@ class shoWindow(QMainWindow):
         ag.signals.open_db_signal.connect(self.switch_db)
         ag.signals.filter_setup_closed.connect(self.close_filter_setup)
 
-    def toggle_btn(self, id: int):
-        logger.info(f'{id=}, {ag.appMode(id).name=}')
-        if id == ag.curr_btn_id:
+    def toggle_btn(self, btn_id: int):
+        if btn_id == ag.curr_btn_id:
             return
-        ag.set_mode(ag.appMode(id))
+        ag.set_mode(ag.appMode(btn_id))
         self.toggle_filter_show()
         low_bk.refresh_file_list()
 
@@ -333,9 +345,11 @@ class shoWindow(QMainWindow):
 
     @pyqtSlot(QMouseEvent)
     def hsplit_enter_event(self, e: QEnterEvent):
-        if ag.file_data.height() == ag.file_data.norm_height:
+        if ag.file_data and ag.file_data.state == 1:
             self.setCursor(Qt.CursorShape.SizeVerCursor)
             e.accept()
+        else:
+            e.ignore()
 
     @pyqtSlot(QMouseEvent)
     def hsplit_press_event(self, e: QMouseEvent):
@@ -362,7 +376,7 @@ class shoWindow(QMainWindow):
     def note_holder_resize(self, y: int) -> int:
         y0 = self.start_pos.y()
         delta = y0 - y
-        cur_height = self.ui.noteHolder.height()
+        cur_height = ag.file_data.norm_height
         h = max(cur_height + delta, MIN_NOTE_HEIGHT)
         h = min(h, self.ui.main_pane.height() - MIN_NOTE_HEIGHT - 35)
         ag.file_data.set_height(h)

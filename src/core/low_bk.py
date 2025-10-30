@@ -6,7 +6,7 @@ import pickle
 import re
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
-    pyqtSlot, QUrl, QDateTime, QFile, QTextStream,
+    pyqtSlot, QUrl, QFile, QTextStream,
     QIODeviceBase, QItemSelectionModel, QPoint,
     QItemSelection,
 )
@@ -27,11 +27,6 @@ from .. import tug
 from .edit_delegates import folderEditDelegate
 
 MAX_WIDTH_DB_DIALOG = 340
-
-file_list_fields = (
-    'File Name', 'Added date', 'Open Date', 'rating', 'Open#', 'Modified',
-    'Pages', 'Size', 'Published', 'Date of last note', 'Created',
-)
 
 
 def set_user_action_handlers():
@@ -64,7 +59,7 @@ def set_user_action_handlers():
         "Files Export selected files": export_files,
         "Files Create new file": create_file,
         "filter_changed": filtered_files,
-        "MainMenu New window": new_window,
+        "MainMenu New window": new_instance,
         "MainMenu Create/Open DB": create_open_db,
         "MainMenu DB selector": show_db_list,
         "MainMenu Scan disk for files": scan_disk,
@@ -84,6 +79,7 @@ def set_user_action_handlers():
         "file reveal": reveal_in_explorer,
         "Files Clear file history": clear_recent_files,
         "Files Remove selected from history": remove_files_from_recent,
+        "header_field_changed": header_changed,
     }
 
     @pyqtSlot(str)
@@ -105,6 +101,13 @@ def set_user_action_handlers():
 
     return execute_action
 
+def header_changed(val: str):
+    ag.file_data.reset_file_info(val)
+    model: fileProxyModel = ag.file_list.model()
+    model.update_header(val)
+    if val[0] in "38":
+        ag.filter_dlg.set_ed_fields(val[0])
+
 def create_file():
     if not ag.dir_list.currentIndex().isValid():
         return
@@ -115,7 +118,6 @@ def create_file():
     row = sidx.row()+1
     if smodel.insertRow(row):
         sidx = smodel.index(row, 0)
-        model: fileProxyModel = ag.file_list.model()
         idx = model.mapFromSource(sidx)
         ag.file_list.edit(idx)
         ag.file_list.setCurrentIndex(idx)
@@ -164,14 +166,14 @@ def refresh_dir_list():
 
     ag.dir_list.setCurrentIndex(idx)
 
-def new_window(db_name: str=''):
+def new_instance(db_name: str=''):
     tug.save_app_setting(MainWindowGeometry=ag.app.normalGeometry())
     tug.new_window(db_name)
 
 def clear_recent_files():
     ag.recent_files.clear()
     ag.switch_to_prev_mode()
-    mode_changed()
+    refresh_file_list()
 
 def remove_files_from_recent():
     for idx in ag.file_list.selectionModel().selectedRows(0):
@@ -248,7 +250,7 @@ def to_file_by_link(param: str):
             btn = ag.app.ui.toolbar_btns.button(ag.appMode.DIR.value)
             btn.setChecked(True)
             ag.set_mode(ag.appMode.DIR)
-            mode_changed()
+            refresh_file_list()
         ag.dir_list.setCurrentIndex(idx)
         ag.dir_list.scrollTo(idx, QAbstractItemView.ScrollHint.PositionAtCenter)
         set_current_file(int(file_id))
@@ -289,7 +291,8 @@ def enable_buttons():   # when create connection to DB
     ag.app.ui.btn_search.setEnabled(True)
     ag.app.refresh_tree.setEnabled(True)
     ag.app.show_hidden.setEnabled(True)
-    ag.app.collapse_btn.setEnabled(True)
+    ag.app.ui.btnFilter.setEnabled(True)
+    ag.app.ui.btnFilterSetup.setEnabled(True)
 
 def rename_file():
     idx: QModelIndex = ag.file_list.currentIndex()
@@ -357,6 +360,7 @@ def srch_files_common(param: str, search_in) -> int:
             last_id = fid
 
     ag.set_mode(ag.appMode.FOUND_FILES)
+    # logger.info('>>> before show_files()')
     return show_files(db_ut.get_found_files(), 0, False)
 
 def find_files_by_name(param: str):
@@ -437,7 +441,6 @@ def expand_branch(branch: list) -> QModelIndex:
 def set_dir_model():
     model: dirModel = dirModel()
     model.set_model_data()
-    logger.info(f'{model.rowCount()=}')
     ag.dir_list.setModel(model)
 
     ag.dir_list.selectionModel().selectionChanged.connect(ag.filter_dlg.dir_selection_changed)
@@ -474,7 +477,7 @@ def dirlist_get_focus(e: QFocusEvent):
     if ag.mode.value < ag.appMode.RECENT_FILES.value:
         return
     ag.switch_to_prev_mode()
-    mode_changed()
+    refresh_file_list()
 
 def save_curr_file_id(dir_idx: QModelIndex):
     """ save id of current file in dir (folder) """
@@ -502,14 +505,6 @@ def dir_view_setup():
 #endregion
 
 #region  Files - setup, populate ...
-def mode_changed():
-    refresh_file_list()
-    if ag.mode is ag.appMode.FILTER:
-        row = ag.get_db_setting("FILTER_FILE_ROW", 0)
-        idx = ag.file_list.model().index(row, 0)
-        ag.file_list.setCurrentIndex(idx)
-        ag.file_list.scrollTo(idx)
-
 def refresh_file_list():
     if ag.mode is ag.appMode.DIR:
         show_folder_files()
@@ -535,7 +530,8 @@ def to_history_folder():
 
 def filtered_files():
     ag.app.ui.files_heading.setText('filtered files')
-    show_files(ag.filter_dlg.get_file_list())
+    file_id = ag.get_db_setting("FILTER_FILE_ID", 0)
+    show_files(ag.filter_dlg.get_file_list(), file_id)
 
 def show_folder_files():
     idx = ag.dir_list.currentIndex()
@@ -544,20 +540,20 @@ def show_folder_files():
             f'files from folder "{idx.data(Qt.ItemDataRole.DisplayRole)}"'
         )
         u_dat: ag.DirData = idx.data(Qt.ItemDataRole.UserRole)
-
         show_files(db_ut.get_files(u_dat.dir_id, u_dat.parent), u_dat.file_id)
     else:
         show_files([])
 
 def show_recent_files():
     ag.app.ui.files_heading.setText('Recent files')
+    # logger.info('>>> before show_files()')
     show_files(get_recent_files())
     ag.file_list.setFocus()
 
 def get_recent_files() -> list:
     ''' in LIFO order '''
     ag.set_mode(ag.appMode.RECENT_FILES)
-    return (db_ut.get_file(id_) for id_ in ag.recent_files[::-1])
+    return (db_ut.get_file(idx) for idx in ag.recent_files[::-1])
 
 def show_files(files, cur_file: int = 0, show_empty: bool = True) -> int:
     """
@@ -565,59 +561,29 @@ def show_files(files, cur_file: int = 0, show_empty: bool = True) -> int:
     :@param files - list of file
     :@param cur_file - set current file, 0 is on first line
     """
-    ag.file_list.setSortingEnabled(
-        ag.mode is not ag.appMode.RECENT_FILES
-    )
-    model = fill_file_model(files)
-    files = model.rowCount()
-    if files or show_empty:
+    ag.file_list.setSortingEnabled(ag.mode is not ag.appMode.RECENT_FILES)
+    model: fileModel = fileModel()
+    model.fill_model(files)
+    file_cnt = model.rowCount()
+    ag.app.ui.file_count.setText(f"files: {file_cnt}")
+    if file_cnt == 0:
+        file_notes_show(QModelIndex())
+    if file_cnt or show_empty:
         set_file_model(model)
         ag.file_list.selectionModel().currentRowChanged.connect(current_file_changed)
         set_current_file(cur_file)
-    return files
+    return file_cnt
 
 def single_file(file_id: str):
     if ag.mode is ag.appMode.DIR:
         save_curr_file_id(ag.dir_list.currentIndex())
     elif ag.mode is ag.appMode.FILTER:
-        ag.save_db_settings(FILTER_FILE_ROW=ag.file_list.currentIndex().row())
+        ag.save_db_settings(FILTER_FILE_ID=ag.file_list.currentIndex().data(Qt.ItemDataRole.UserRole))
     ag.set_mode(ag.appMode.FILE_BY_REF)
     ag.app.ui.files_heading.setText('single_file')
-
+    # logger.info('>>> before show_files()')
     show_files([db_ut.get_file(file_id)])
     ag.file_list.setFocus()
-
-def fill_file_model(files) -> fileModel:
-    field_types = (
-        'str', 'date', 'date', 'int', 'int', 'date',
-        'int', 'int', 'date', 'date', 'date',
-    )
-    model: fileModel = fileModel()
-
-    for ff in files:
-        if not ff[0]:
-            continue
-        ff1 = []
-        for i,typ in enumerate(field_types):
-            ff1.append(
-                ag.human_readable_size(ff[i]) if file_list_fields[i] == 'Size'
-                else field_val(typ, ff[i])
-            )
-
-        filename = Path(ff[0])
-        ff1.append(
-            (filename.stem.lower(), filename.suffix.lower())
-            if filename.suffix else
-            (filename.stem.lower(),)
-        )
-        model.append_row(ff1, ff[-1])   # ff[-1] - file_id
-
-    rows = model.rowCount()
-    ag.app.ui.file_count.setText(f"files: {rows}")
-    if rows == 0:
-        file_notes_show(QModelIndex())
-
-    return model
 
 def set_current_file(file_id: int):
     model: fileProxyModel = ag.file_list.model()
@@ -627,25 +593,16 @@ def set_current_file(file_id: int):
 
     idx = model.get_index_by_id(file_id)
     if idx.isValid():
+        # logger.info('>>> before file_list.setCurrentIndex -> idx')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
     else:
         ag.file_list.setCurrentIndex(model.index(0, 0))
 
-def field_val(typ:str, val=None):
-    if typ == "str":
-        return val if val else ''
-    if typ == "int":
-        return int(val) if val else 0
-    a = QDateTime()
-    a.setSecsSinceEpoch(-62135596800 if val is None else val)
-    return a
-
 def set_file_model(model: fileModel):
     proxy_model = fileProxyModel()
     proxy_model.setSourceModel(model)
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
-    model.setHeaderData(0, Qt.Orientation.Horizontal, file_list_fields)
     ag.file_list.setModel(proxy_model)
 
 @pyqtSlot(QModelIndex, QModelIndex)
@@ -696,6 +653,7 @@ def open_current_file():
 
 def new_file_created(id: str):
     ag.file_list.clearSelection()
+    # logger.info('>>> before set_current_file()')
     set_current_file(int(id))
     open_current_file()
     file_notes_show(ag.file_list.currentIndex())
@@ -730,8 +688,8 @@ def ask_delete_files():
     """
     delete file from DB
     """
-    def delete_files(res: int):
-        if res == QDialog.DialogCode.Accepted.value:
+    def delete_files(result: int):
+        if result == QDialog.DialogCode.Accepted.value:
             edit_state = ag.file_data.get_edit_state()
             ed_file_id = edit_state[1] if edit_state[0] else 0
             row = ag.file_list.model().rowCount()

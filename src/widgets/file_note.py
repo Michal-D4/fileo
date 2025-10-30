@@ -165,10 +165,19 @@ class fileNote(QWidget):
             wth = int(tug.qss_params.get('$note_title_width', 40))
             self.ui.note_title.setText(txt[:wth])
 
-        prep = f'\n{note}'
-        prep = prep.replace('<<', '&#60')
-        prep = prep.replace('>>', '&#62')
-        self.text = prep
+        def replace_lt_gt() -> str:
+            parts = []
+            repl = True
+            for pp in note.split('`'):
+                if repl:
+                    if pp.rfind('</') == -1:
+                        pp = pp.replace('<', '&lt;').replace('>', '&gt;')
+                parts.append(pp)
+                repl = not repl
+            return f'\n{'`'.join(parts) if len(parts) > 1 else parts[0]}'
+
+        self.text = replace_lt_gt()
+
         set_note_title()
 
     def set_browser_text(self):

@@ -1,7 +1,7 @@
 # from loguru import logger
 from enum import Enum, unique
 
-from PyQt6.QtCore import QPoint, Qt, QSize
+from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QMouseEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QWidget, QStackedWidget
 
@@ -18,6 +18,10 @@ from .note_editor import noteEditor
 from .srch_in_notes import srchInNotes
 from .. import tug
 
+def set_note_holder_height(hh: int):
+    ag.app.ui.noteHolder.setMinimumHeight(hh)
+    ag.app.ui.noteHolder.setMaximumHeight(hh)
+
 @unique
 class Page(Enum):
     TAGS = 0
@@ -33,13 +37,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         super().__init__(parent)
         self.file_id = 0
         self.norm_height = 0
-        self.curr_height = 0
         self.state: int = 1  # 0-MIN, 1-NORM, 2-MAX
 
         self.setupUi(self)
 
-        authors_ttl = tug.qss_params['$FoldTitles'].split(',')[-1]
-        self.set_author_title(authors_ttl)
+        authors_ttl = tug.qss_params['$FoldTitles'][-1]
+        self.set_author_title(authors_ttl.capitalize())
 
         self.page_selectors = {
             Page.TAGS: self.l_tags,
@@ -71,13 +74,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
 
-        ag.app.ui.noteHolder.sizeHint = self.file_data_size_hint
-
-    def file_data_size_hint(self) -> QSize:
-        return QSize(self.width(), self.curr_height)
 
     def set_height(self, hh: int):
-        self.norm_height = self.curr_height = hh
+        self.norm_height = hh
+        set_note_holder_height(hh)
 
     def set_author_title(self, ttl: str):
         self.l_authors.setText(f"{ttl[:-1]} selector")
@@ -238,23 +238,23 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def maximize_pane(self):
         if self.state == 1:
-            self.curr_height = ag.file_list.height() + ag.app.ui.noteHolder.height()
             ag.file_list.hide()
+            set_note_holder_height(ag.file_list.height() + ag.app.ui.noteHolder.height())
             self.expand.setEnabled(False)
         else:
             self.labels.show(); self.pages.show()  # noqa: E702
             self.collapse.setEnabled(True)
-            self.curr_height = self.norm_height
+            set_note_holder_height(self.norm_height)
         self.state += 1
 
     def minimize_pane(self):
         if self.state == 1:
-            self.curr_height = self.head.height()
+            set_note_holder_height(self.head.height())
             self.pages.hide(); self.labels.hide()  # noqa: E702
             self.collapse.setEnabled(False)
         else:
             self.expand.setEnabled(True)
-            self.curr_height = self.norm_height
+            set_note_holder_height(self.norm_height)
             ag.file_list.show()
         self.state -= 1
 
@@ -335,6 +335,9 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.editor.set_note(note)
         self.editor.set_text(vals[3])
         self.show_editor()
+
+    def reset_file_info(self, changes: str):
+        self.file_info.editable_field_changed(changes)
 
     def set_data(self, file_id: int):
         # logger.info(f'{file_id=}')

@@ -1,106 +1,125 @@
 from loguru import logger
 import apsw
+from enum import IntEnum
 
 from . import app_globals as ag
 
-TABLES = (
-    (                # settings
-    'CREATE TABLE IF NOT EXISTS settings ('
-    'key text PRIMARY KEY NOT NULL, '
-    'value blob); '
-    ),
-    (                # files
-    'CREATE TABLE IF NOT EXISTS files ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'extid integer NOT NULL, '
-    'path integer NOT NULL, '
-    'filename text NOT NULL, '
-    'added date not null default -62135596800, '
-    'how_added integer not null, '
-    'modified date not null default -62135596800, '
-    'opened date not null default -62135596800, '
-    'created date not null default -62135596800, '
-    'rating integer not null default 0, '
-    'nopen integer not null default 0, '
-    'hash text, '
-    'size integer not null default 0, '
-    'pages integer not null default 0, '
-    'published date not null default -62135596800, '
-    'FOREIGN KEY (extid) REFERENCES extensions (id)); '
-    ),
-    (                # dirs
-    'CREATE TABLE IF NOT EXISTS dirs ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'name text, '
-    'multy integer not null default 0); '
-    ),
-    (                # paths
-    'CREATE TABLE IF NOT EXISTS paths ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'path text); '
-    ),
-    (                # filedir
-    'CREATE TABLE IF NOT EXISTS filedir ('
-    'file integer NOT NULL, '
-    'dir integer NOT NULL, '
-    'PRIMARY KEY(dir, file), '
-    'FOREIGN KEY (dir) REFERENCES dirs (id) on delete cascade, '
-    'FOREIGN KEY (file) REFERENCES files (id) on delete cascade); '
-    ),
-    (                # parentdir
-    'CREATE TABLE IF NOT EXISTS parentdir ('
-    'parent integer NOT NULL, '
-    'id integer NOT NULL, '
-    'hide integer not null default 0, '
-    'file_id integer not null default 0, '
-    'tool_tip text, '
-    'PRIMARY KEY(parent, id)); '
-    ),
-    (                # tags
-    'CREATE TABLE IF NOT EXISTS tags ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'tag text NOT NULL); '
-    ),
-    (                # filetag
-    'CREATE TABLE IF NOT EXISTS filetag ('
-    'fileid integer NOT NULL, '
-    'tagid integer NOT NULL, '
-    'PRIMARY KEY(fileid, tagid), '
-    'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade, '
-    'FOREIGN KEY (tagid) REFERENCES tags (id) on delete cascade); '
-    ),
-    (                # authors
-    'CREATE TABLE IF NOT EXISTS authors ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'author text NOT NULL); '
-    ),
-    (                # fileauthor
-    'CREATE TABLE IF NOT EXISTS fileauthor ('
-    'fileid integer NOT NULL, '
-    'aid integer NOT NULL, '
-    'PRIMARY KEY(fileid, aid), '
-    'FOREIGN KEY (aid) REFERENCES authors (id) on delete cascade, '
-    'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
-    ),
-    (                # filenotes
-    'CREATE TABLE IF NOT EXISTS filenotes ('
-    'fileid integer NOT NULL, '
-    'id integer NOT NULL, '
-    'filenote text NOT NULL, '
-    'created date not null default -62135596800, '
-    'modified date not null default -62135596800, '
-    'PRIMARY KEY(fileid, id), '
-    'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
-    ),
-    (                # extensions
-    'CREATE TABLE IF NOT EXISTS extensions ('
-    'id integer PRIMARY KEY NOT NULL, '
-    'extension text); '
-    ),
-)
-
+DATE_1970_1_1 = ag.DATE_1970_1_1.toSecsSinceEpoch()
 APP_ID = 1718185071
-USER_VER = 28
+USER_VER = 29
+
+class tableIdx(IntEnum):
+    SETTINGS = 0
+    FILES = 1
+    # DIRS = 2
+    # PATHS = 3
+    # FILEDIR = 4
+    # PARENTDIR = 5
+    # TAGS = 6
+    # FILETAG = 7
+    # AUTHORS = 8
+    # FILEAUTHOR = 9
+    # FILENOTES = 10
+    # EXTENSIONS = 11
+
+
+def define_tables(idx: int|None = None):
+    tables = (
+        (                # settings
+        'CREATE TABLE IF NOT EXISTS settings ('
+        'key text PRIMARY KEY NOT NULL, '
+        'value blob); '
+        ),
+        (                # files
+        'CREATE TABLE IF NOT EXISTS files ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'extid integer NOT NULL, '
+        'path integer NOT NULL, '
+        'filename text NOT NULL, '
+        f'added date not null default {DATE_1970_1_1}, '
+        'how_added integer not null, '
+        f'modified date not null default {DATE_1970_1_1}, '
+        f'opened date not null default {DATE_1970_1_1}, '
+        f'created date not null default {DATE_1970_1_1}, '
+        'rating integer not null default 0, '
+        'nopen integer not null default 0, '
+        'hash text, '
+        'size integer not null default 0, '
+        'pages integer not null default 0, '
+        f'published date not null default {DATE_1970_1_1}, '
+        'FOREIGN KEY (extid) REFERENCES extensions (id)); '
+        ),
+        (                # dirs
+        'CREATE TABLE IF NOT EXISTS dirs ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'name text, '
+        'multy integer not null default 0); '
+        ),
+        (                # paths
+        'CREATE TABLE IF NOT EXISTS paths ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'path text); '
+        ),
+        (                # filedir
+        'CREATE TABLE IF NOT EXISTS filedir ('
+        'file integer NOT NULL, '
+        'dir integer NOT NULL, '
+        'PRIMARY KEY(dir, file), '
+        'FOREIGN KEY (dir) REFERENCES dirs (id) on delete cascade, '
+        'FOREIGN KEY (file) REFERENCES files (id) on delete cascade); '
+        ),
+        (                # parentdir
+        'CREATE TABLE IF NOT EXISTS parentdir ('
+        'parent integer NOT NULL, '
+        'id integer NOT NULL, '
+        'hide integer not null default 0, '
+        'file_id integer not null default 0, '
+        'tool_tip text, '
+        'PRIMARY KEY(parent, id)); '
+        ),
+        (                # tags
+        'CREATE TABLE IF NOT EXISTS tags ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'tag text NOT NULL); '
+        ),
+        (                # filetag
+        'CREATE TABLE IF NOT EXISTS filetag ('
+        'fileid integer NOT NULL, '
+        'tagid integer NOT NULL, '
+        'PRIMARY KEY(fileid, tagid), '
+        'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade, '
+        'FOREIGN KEY (tagid) REFERENCES tags (id) on delete cascade); '
+        ),
+        (                # authors
+        'CREATE TABLE IF NOT EXISTS authors ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'author text NOT NULL); '
+        ),
+        (                # fileauthor
+        'CREATE TABLE IF NOT EXISTS fileauthor ('
+        'fileid integer NOT NULL, '
+        'aid integer NOT NULL, '
+        'PRIMARY KEY(fileid, aid), '
+        'FOREIGN KEY (aid) REFERENCES authors (id) on delete cascade, '
+        'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
+        ),
+        (                # filenotes
+        'CREATE TABLE IF NOT EXISTS filenotes ('
+        'fileid integer NOT NULL, '
+        'id integer NOT NULL, '
+        'filenote text NOT NULL, '
+        f'created date not null default {DATE_1970_1_1}, '
+        f'modified date not null default {DATE_1970_1_1}, '
+        'PRIMARY KEY(fileid, id), '
+        'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
+        ),
+        (                # extensions
+        'CREATE TABLE IF NOT EXISTS extensions ('
+        'id integer PRIMARY KEY NOT NULL, '
+        'extension text); '
+        ),
+    )
+    return ''.join(tables) if idx is None else tables[idx]
 
 def check_app_schema(db_path: str) -> str:
     try:
@@ -155,11 +174,11 @@ def convert_to_new_version(conn, db_v):
     def update_to_v24():
         sql1 = (
             'INSERT or ignore into COPY_FILES select id, extid, '
-            'path, filename, -62135596800, 1, modified, opened, created, '
+            f'path, filename, {DATE_1970_1_1}, 1, modified, opened, created, '
             'rating, nopen, hash, size, pages, published FROM files'
         )
 
-        tbl_def = TABLES[1].replace("files", "COPY_FILES")
+        tbl_def = define_tables(tableIdx.FILES).replace("files", "COPY_FILES")
         curs = conn.cursor()
         curs.execute(tbl_def)
         curs.execute(sql1)
@@ -196,7 +215,7 @@ def convert_to_new_version(conn, db_v):
             sql2 = 'update files set how_added = ? where added = created'
 
 
-            tbl_def = TABLES[1].replace("files", "COPY_FILES")
+            tbl_def = define_tables(tableIdx.FILES).replace("files", "COPY_FILES")
             curs.execute(tbl_def)
             curs.execute(sql1)
             curs.execute('DROP TABLE files')
@@ -233,7 +252,19 @@ def convert_to_new_version(conn, db_v):
         is_ok = conn.cursor().execute(sql, ('settings', 'PRIMARY')).fetchone()
         if not is_ok:
             conn.cursor().execute('DROP TABLE settings')
-            conn.cursor().execute(TABLES[0])
+            conn.cursor().execute(define_tables(tableIdx.SETTINGS))
+
+    def update_to_v29():
+        to_upd = (('files', 'added'), ('files',  'modified'),
+                  ('files',  'opened'), ('files',  'created'), ('files',  'published'),
+                  ('filenotes', 'created'), ('filenotes', 'modified'))
+        def update_min_date():
+            sql = f'update {tbl} set {fld} = {DATE_1970_1_1} where {fld} < -86400;'
+            curs.execute(sql)
+
+        curs = conn.cursor()
+        for tbl,fld in to_upd:
+            update_min_date()
 
     if db_v < 21:
         update_to_v21()
@@ -259,11 +290,14 @@ def convert_to_new_version(conn, db_v):
     if db_v < 28:
         update_to_v28()
 
+    if db_v < 29:
+        update_to_v29()
+
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 
 def create_tables(db_name: str):
     conn = apsw.Connection(db_name)
     conn.cursor().execute('pragma journal_mode=WAL')
     conn.cursor().execute(f'PRAGMA application_id={APP_ID}')
-    conn.cursor().execute(''.join(TABLES))
+    conn.cursor().execute(define_tables())
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')

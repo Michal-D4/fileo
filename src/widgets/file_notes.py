@@ -139,12 +139,9 @@ class notesContainer(QScrollArea):
 
     def update_date_in_file_list(self, ts: int):
         if ts > 0:
-            last_note_date = QDateTime()
-            last_note_date.setSecsSinceEpoch(ts)
-            ag.file_list.model().update_field_by_name(
-                last_note_date, "Date of last note",
-                ag.file_list.currentIndex()
-            )
+            a_ts_date = QDateTime()
+            a_ts_date.setSecsSinceEpoch(ts)
+            ag.file_list.model().update_last_note_data(a_ts_date, ag.file_list.currentIndex())
 
     @pyqtSlot(fileNote)
     def remove_item(self, note: fileNote):

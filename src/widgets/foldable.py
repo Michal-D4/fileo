@@ -83,7 +83,7 @@ class Foldable(QWidget):
             ttl = editor.text()
             self.ui.toFold.setText(ttl.upper())
             ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
-            tug.save_app_setting(FoldTitles=(','.join((*ttls.split(',')[:-1], ttl))))
+            tug.save_app_setting(FoldTitles=(*ttls[:-1], ttl))
             ag.signals.author_widget_title.emit(ttl)
             editor.close()
 

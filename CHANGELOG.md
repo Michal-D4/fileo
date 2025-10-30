@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.4.02 - 2025, 22 October
+* Fixed the bug with collapsing/expanding the bottom pane of the file list.
+* Three fields in the file list are rarely used, at least by me. I decided to add the ability to change their names, tooltips, formats, and even data types. These are the "Rating," "Pages," and "Published" fields. Data can be entered into these fields from the file list or from the "File info" page.
+* some other changes and improvements
+
 ## 1.4.01 - 2025, 16 October
 * a lot of minor changes, improvements, enhancement
 * I have no idea what else to do, so I decided to change the minor version number (3->4), since the application is already matured enough

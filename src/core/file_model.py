@@ -16,6 +16,7 @@ SZ_SCALE = {
     'Gb': 1073741824
 }
 
+
 class fileProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
@@ -25,23 +26,21 @@ class fileProxyModel(QSortFilterProxyModel):
         if not index.isValid():
             return super().flags(index)
 
-        return (
-            (Qt.ItemFlag.ItemIsEditable |
-             Qt.ItemFlag.ItemIsDragEnabled |
-             super().flags(index))
-            if self.sourceModel().headerData(index.column()) in (
-                'rating', 'Pages', 'Published', 'File Name'   # ItemIsEditable
-            )
-            else  # is not ItemIsEditable
-            (Qt.ItemFlag.ItemIsDragEnabled |
-             super().flags(index))
+        return (  # is ItemIsEditable
+            Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsDragEnabled | super().flags(index)
+            if self.sourceModel().is_editable(index.column()) else  # is not ItemIsEditable
+            Qt.ItemFlag.ItemIsDragEnabled | super().flags(index)
         )
+
+    def update_header(self, vals: str):
+        model: fileModel = self.sourceModel()
+        model.update_header(vals)
 
     def update_opened(self, ts: int, index: QModelIndex):
         self.sourceModel().update_opened(ts, self.mapToSource(index))
 
-    def update_field_by_name(self, val, name: str, index: QModelIndex):
-        self.sourceModel().update_field_by_name(val, name, self.mapToSource(index))
+    def update_last_note_data(self, val, index: QModelIndex):
+        self.sourceModel().update_last_note_data(val, self.mapToSource(index))
 
     def get_index_by_id(self, id: int) -> int:
         idx = self.sourceModel().get_index_by_id(id)
@@ -64,15 +63,64 @@ class fileProxyModel(QSortFilterProxyModel):
 class fileModel(QAbstractTableModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.header = ()
+        self.field_names = tug.qss_params['$FileListFields']
+        self.editable = tug.qss_params['$Editable']
+        self.field_type = tug.qss_params['$FieldTypes']
+        self.tool_tip = tug.qss_params['$ToolTips']
+        self.formats = tug.qss_params['$FieldFormats']
         self.rows = []
         self.user_data: list[int] = []  # file_id
+
+    def update_header(self, vals: str):
+        def convert_to_str():
+            for i in range(len(self.rows)):
+                self.rows[i][ii] = ''
+
+        def convert_to_int():
+            for i in range(len(self.rows)):
+                self.rows[i][ii] = 0
+
+        def convert_to_date():
+            for i in range(len(self.rows)):
+                self.rows[i][ii] = ag.DATE_1970_1_1
+
+        def convert():
+            if typ == 'str':
+                convert_to_str()
+            elif typ == 'int':
+                convert_to_int()
+            elif typ == 'date':
+                convert_to_date()
+            self.dataChanged.emit(self.index(0, ii), self.index(self.rowCount()-1, ii), [Qt.ItemDataRole.DisplayRole])
+
+        idx, name, typ, old_typ, tip, fmt = vals.split('ё')    # ё most impossible symbol in title & toolTip
+        ii = int(idx)
+        if name != self.field_names[ii]:
+            self.field_names[ii] = name
+            ag.save_db_settings(FileListFields = self.field_names)
+            self.headerDataChanged.emit(Qt.Orientation.Horizontal, ii, ii)
+
+        if typ != old_typ:
+            convert()
+            self.field_type[ii] = typ
+            ag.save_db_settings(FieldTypes = self.field_type)
+
+        if tip != self.tool_tip[ii]:
+            self.tool_tip[ii] = tip
+            ag.save_db_settings(ToolTips = self.tool_tip)
+
+        if fmt != self.formats[ii]:
+            self.formats[ii] = fmt
+            ag.save_db_settings(FieldFormats = self.formats)
+
+    def is_editable(self, column: int) -> bool:
+        return self.editable & 1 << column
 
     def rowCount(self, parent=None):
         return len(self.rows)
 
     def columnCount(self, parent=None):
-        return len(self.header)
+        return len(self.field_names)
 
     def data(self, index, role: Qt.ItemDataRole):
         if index.isValid():
@@ -81,15 +129,9 @@ class fileModel(QAbstractTableModel):
             if col == 0 and role == Qt.ItemDataRole.ToolTipRole:
                 return line[col]
             if role == Qt.ItemDataRole.DisplayRole:
-                # len(row) > col; len=1 -> col=0; len=2 -> col=(0,1) etc
-                if len(line) > col:
-                    if self.header[col] in ('Added date', 'Date of last note','Modified','Open Date',):
-                        return line[col].toString("yyyy-MM-dd hh:mm")
-                    if self.header[col] == 'Created':
-                        return line[col].toString("yyyy-MM-dd")
-                    if self.header[col] == 'Published':
-                        return line[col].toString("MMM yyyy")
-                    return line[col]
+                if self.formats[col] and isinstance(line[col], QDateTime):
+                    return line[col].toString(self.formats[col])
+                return line[col]
             elif role == Qt.ItemDataRole.EditRole:
                 return line[col]
             elif role == Qt.ItemDataRole.UserRole:
@@ -111,7 +153,7 @@ class fileModel(QAbstractTableModel):
         if 0 > row > len(self.rows):
             success = False
         else:
-            date0 = QDateTime().fromSecsSinceEpoch(-62135596800)
+            date0 = ag.DATE_1970_1_1
             for i in range(count):
                 self.rows.insert(
                     row, ['<file_name>.md',date0,date0,0,0,date0,0,0,date0,date0,date0,('<file_name>','md')]
@@ -134,17 +176,11 @@ class fileModel(QAbstractTableModel):
         self.endRemoveRows()
         return True
 
-    def headerData(self, section,
-        orientation=Qt.Orientation.Horizontal,
-        role=Qt.ItemDataRole.DisplayRole):
-        if not self.header:
-            return None
-        if (orientation == Qt.Orientation.Horizontal
-            and role == Qt.ItemDataRole.DisplayRole):
-            return self.header[section]
-
-    def setHeaderData(self, p_int, orientation, value, role=None):
-        self.header = value
+    def headerData(self, section, orientation=Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self.field_names[section]
+        if role == Qt.ItemDataRole.ToolTipRole:
+            return self.tool_tip[section]
 
     def setData(self, index, value, role: Qt.ItemDataRole):
         if role != Qt.ItemDataRole.EditRole:
@@ -155,10 +191,7 @@ class fileModel(QAbstractTableModel):
                 try:
                     new_path.touch(exist_ok=False)
                 except (FileExistsError, OSError) as e:
-                    ag.show_message_box(
-                        'File already exists',
-                        f'{e}'
-                    )
+                    ag.show_message_box('File already exists', f'{e}')
                     return
 
                 try:
@@ -213,14 +246,13 @@ class fileModel(QAbstractTableModel):
         line = self.rows[index.row()]
         if col < 0 or col >= len(line):
             return False
-        field = self.header[col]
-        if field == 'File Name':
+        field = tug.qss_params['$EditableFields'].get(col, '')
+        if field == 'filename':
             if not _rename_file(value):
                 return False
-            field = 'filename'
         else:
             line[col] = value
-            if field == 'Published':
+            if tug.qss_params['$FieldTypes'][col] == 'date':
                 value = value.toSecsSinceEpoch()
         db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
@@ -237,14 +269,43 @@ class fileModel(QAbstractTableModel):
         """
         ts - the unix epoch timestamp
         """
-        if "Open#" in self.header:
-            i = self.header.index("Open#")
+        if "Open#" in self.field_names:
+            i = self.field_names.index("Open#")
             self.rows[index.row()][i] += 1
-        if "Open Date" in self.header:
-            i = self.header.index("Open Date")
+        if "Open Date" in self.field_names:
+            i = self.field_names.index("Open Date")
             self.rows[index.row()][i].setSecsSinceEpoch(ts)
 
-    def update_field_by_name(self, val, name: str, index: QModelIndex):
-        if name in self.header:
-            i = self.header.index(name)
-            self.rows[index.row()][i] = val
+    def update_last_note_data(self, val, index: QModelIndex):
+        self.rows[index.row()][9] = val
+
+    def fill_model(self, files):
+        def field_val():
+            if typ == "str":
+                return val if val else ''
+            if typ == "int":
+                try:
+                    ret = int(val)
+                except ValueError:
+                    ret = 0
+                return ret
+            a = QDateTime()
+            a.setSecsSinceEpoch(val) if isinstance(val, int) else ag.DATE_1970_1_1
+            return a
+
+        for ff in files:
+            if not ff[0]:
+                continue
+            ff1 = []
+            for typ, name, val in zip(tug.qss_params['$FieldTypes'], tug.qss_params['$FileListFields'], ff[:-1]):
+                ff1.append(
+                    ag.human_readable_size(val) if name == 'Size' else field_val()
+                )
+
+            filename = Path(ff[0])
+            ff1.append(
+                (filename.stem.lower(), filename.suffix.lower())
+                if filename.suffix else
+                (filename.stem.lower(),)
+            )
+            self.append_row(ff1, ff[-1])   # ff[-1] - file_id

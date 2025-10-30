@@ -186,9 +186,9 @@ class FoldContainer(QWidget):
         return sum((1 for ff in self.widgets if not (ff.is_hidden or ff.is_collapsed)))
 
     def _set_titles(self):
-        ttls = tug.qss_params['$FoldTitles'].split(',')
-        for i,ff in enumerate(self.widgets):
-            ff.wid.set_title(ttls[i])
+        ttls = tug.qss_params['$FoldTitles']
+        for ttl,ff in zip(ttls, self.widgets):
+            ff.wid.set_title(ttl)
 
     def add_widget(self, w: QWidget, index: int) -> None:
         self.widgets[index].wid.add_widget(w)

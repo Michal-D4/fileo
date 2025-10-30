@@ -47,7 +47,6 @@ class AboutDialog(QWidget, Ui_aboutForm):
                 e.accept()
             self.start_pos = pos_
 
-
     def get_info_icon(self) -> QPixmap:
         ico = QStyle.standardIcon(
             self.style(),

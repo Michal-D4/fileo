@@ -10,15 +10,6 @@ from .. import tug
 UNIX_EPOCH = 2440588   # julian date of 1970-01-01
 DLG_SIZE = QSize(502, 496)
 
-SIZE_RATIO = {
-    '8pt': 0.90,
-    '9pt': 0.95,
-    '10pt': 1.00,
-    '11pt': 1.05,
-    '12pt': 1.10,
-    '14pt': 1.15,
-}
-
 
 class FilterSetup(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
@@ -30,14 +21,17 @@ class FilterSetup(QWidget):
 
         self.ui = Ui_filterSetup()
         self.ui.setupUi(self)
+        self.ui.selected_tag.setMinimumWidth(60)
         self.init_how_added()
-        self.ui.note_date_type.setVisible(self.ui.date_type.currentText() == 'note_date')
+        self.set_rating_field()
+        self.set_publish_field()
+        self.ui.note_date_type.setVisible(self.ui.date_type.currentData(Qt.ItemDataRole.UserRole) == 'note_date')
 
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
         self.ui.after_date.setCalendarPopup(True)
         self.ui.before_date.setCalendarPopup(True)
-        ttls = tug.qss_params['$FoldTitles'].lower()
-        titles = ttls.split(',')
+        ttls = tug.qss_params['$FoldTitles']
+        titles = [x.lower() for x in ttls]
         self.ui.selected_dir.setText(titles[0])
         self.ui.selected_tag.setText(titles[1])
         self.ui.selected_ext.setText(titles[2])
@@ -53,7 +47,8 @@ class FilterSetup(QWidget):
         self.ui.open_sel.clicked.connect(self.open_clicked)
         self.ui.rating_sel.clicked.connect(self.rating_clicked)
         self.ui.date_type.currentIndexChanged.connect(
-            lambda: self.ui.note_date_type.setVisible(self.ui.date_type.currentText() == 'note_date')
+            lambda: self.ui.note_date_type.setVisible(
+                self.ui.date_type.currentData(Qt.ItemDataRole.UserRole) == 'note_date')
         )
         self.ui.after_date.editingFinished.connect(self.changed_after_date)
         self.ui.before_date.editingFinished.connect(self.changed_before_date)
@@ -65,6 +60,25 @@ class FilterSetup(QWidget):
         self.mouseMoveEvent = self.move_self
         self.font_changed(tug.get_app_setting('FONT_SIZE', '10pt'))
         ag.signals.font_size_changed.connect(self.font_changed)
+
+    def set_ed_fields(self, field: str):
+        {'3': self.set_rating_field, '8': self.set_publish_field}[field]()
+
+    def set_rating_field(self):
+        is_int = tug.qss_params['$FieldTypes'][3] == "int"
+        self.ui.rating_sel.setVisible(is_int)
+        self.ui.rating_frame.setVisible(is_int)
+
+        if is_int:
+            self.ui.rating_sel.setText(tug.qss_params['$FileListFields'][3])
+
+    def set_publish_field(self):
+        self.ui.date_type.clear()
+        db_flds = {1: "added", 2: "opened", 5: "modified", 8: "published", 9: "note_date"}
+        date_ids = (1, 2, 5, 8, 9,) if tug.qss_params['$FieldTypes'][8] == "date" else (1, 2, 5, 9,)
+        for i in date_ids:
+            self.ui.date_type.addItem(tug.qss_params['$FileListFields'][i], userData=db_flds[i])
+        self.ui.date_type.setCurrentIndex(ag.get_db_setting("DATE_TYPE", 0))
 
     def init_how_added(self):
         items = ("", "scan file system", "drag from file system", "import file list",
@@ -78,7 +92,8 @@ class FilterSetup(QWidget):
         self.checked_btn = -1 if self.checked_btn == id else id
 
     def font_changed(self, font_size: str):
-        self.cur_size = DLG_SIZE * SIZE_RATIO[font_size]
+        self.cur_size = DLG_SIZE * tug.SIZE_RATIO[font_size]
+        self.ui.selected_tag.setMinimumWidth(int(60 * tug.SIZE_RATIO[font_size]))
         self.ui.dlg_frame.setMinimumSize(self.cur_size)
         self.adjustSize()
 
@@ -141,6 +156,7 @@ class FilterSetup(QWidget):
         self.close()
 
     def apply_clicked(self):
+        ag.save_db_settings(FILTER_FILE_ID=0)
         ag.signals.user_signal.emit("filter_changed")
 
     def get_file_list(self):
@@ -162,7 +178,7 @@ class FilterSetup(QWidget):
             'tag': self.ui.selected_tag.isChecked(),
             'ext': self.ui.selected_ext.isChecked(),
             'author': self.ui.selected_author.isChecked(),
-            'date': self.ui.date_type.currentText(),
+            'date': self.ui.date_type.currentData(Qt.ItemDataRole.UserRole),
             'note_date': self.ui.note_date_type.currentText(),
             'after': self.ui.after.isChecked(),
             'before': self.ui.before.isChecked(),
@@ -248,7 +264,7 @@ class FilterSetup(QWidget):
     def dir_selection_changed(self):
         self.set_dir_list()
         if ag.mode is ag.appMode.FILTER and self.ui.selected_dir.isChecked():
-            ag.signals.user_signal.emit("filter_changed")
+            self.apply_clicked()
 
     def set_tag_list(self, tags: list[str]):
         self.ui.tag_list.setPlainText(', '.join([f"[{tag}]" for tag in tags]))
@@ -256,7 +272,7 @@ class FilterSetup(QWidget):
     def tag_selection_changed(self, tags: list[str]):
         self.set_tag_list(tags)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_tag.isChecked():
-            ag.signals.user_signal.emit("filter_changed")
+            self.apply_clicked()
 
     def set_ext_list(self, exts: list[str]):
         self.ui.ext_list.setPlainText(', '.join([f"[{ext}]" for ext in exts]))
@@ -264,7 +280,7 @@ class FilterSetup(QWidget):
     def ext_selection_changed(self, exts: list[str]):
         self.set_ext_list(exts)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_ext.isChecked():
-            ag.signals.user_signal.emit("filter_changed")
+            self.apply_clicked()
 
     def set_author_list(self, authors: list[str]):
         self.ui.author_list.setPlainText(
@@ -273,7 +289,7 @@ class FilterSetup(QWidget):
     def author_selection_changed(self, authors: list[str]):
         self.set_author_list(authors)
         if ag.mode is ag.appMode.FILTER and self.ui.selected_author.isChecked():
-            ag.signals.user_signal.emit("filter_changed")
+            self.apply_clicked()
 
     def save_filter_settings(self):
         settings = {

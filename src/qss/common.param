@@ -13,3 +13,8 @@ $SemiboldFamily~Segoe UI Semibold
 $FoldTitles~Folders,Tags,File Extensions,Authors
 # ico file name without extension. PNG for Linux, ICO for Windows
 $ico_app~app
+$FileListFields~329,File Name,Added date,Open Date,rating,Open#,Modified,Pages,Size,Published,Date of last note,Created
+$ToolTips~,Added date,Last opening date,rating of file,How many times the file was opened,Last modified date,Number of pages(in book),Size of file,Publication date(book),Date of last note,File creation date
+$FieldTypes~str,date,date,int,int,date,int,int,date,date,date
+$FieldFormats~,yyyy-MM-dd hh:mm,yyyy-MM-dd hh:mm,,,yyyy-MM-dd hh:mm,,,MMM yyyy,yyyy-MM-dd hh:mm,yyyy-MM-dd
+$EditableFields~0,filename,3,rating,6,pages,8,published

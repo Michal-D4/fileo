@@ -22,6 +22,14 @@ FONT_SIZE = {
     '12pt': ('12pt', '14pt', '11pt'),
     '14pt': ('14pt', '16pt', '12pt'),
 }
+SIZE_RATIO = {
+    '8pt': 0.90,
+    '9pt': 0.95,
+    '10pt': 1.00,
+    '11pt': 1.05,
+    '12pt': 1.10,
+    '14pt': 1.15,
+}
 
 if sys.platform.startswith("win"):
     def reveal_file(path: str):
@@ -52,15 +60,15 @@ themes = {}
 temp_dir = tempfile.TemporaryDirectory()
 
 def new_window(db_name: str):
-    logger.info(f'{db_name=}, frozen: {getattr(sys, "frozen", False)}')
     if getattr(sys, "frozen", False):
-        logger.info(f'frozen: {db_name=}, {entry_point}')
+        logger.info(f'frozen: {entry_point}')
+        logger.info(f'{db_name=}')
         subprocess.Popen([entry_point, db_name, 'False', ])
     else:
-        logger.info(f'not frozen: {db_name=}, {entry_point}')
-        subprocess.Popen(
-            [sys.executable, entry_point, db_name, 'False', ],  # sys.executable - python interpreter
-        )
+        logger.info(f'not frozen: {entry_point}')
+        logger.info(f'{db_name=}')
+        # sys.executable - python interpreter
+        subprocess.Popen([sys.executable, entry_point, db_name, 'False', ],)
 
 def get_app_setting(key: str, default: Optional[Any]=None) -> QVariant:
     """
@@ -80,7 +88,6 @@ def set_logger(first_instance: bool):
         return
 
     fmt = "{time:%y-%b-%d %H:%M:%S} | {module}.{function}({line}): {message}"
-
     log_path = Path(get_app_setting("DEFAULT_LOG_PATH")) / ('fileo.log' if first_instance else 'second.log')
     logger.add(str(log_path), format=fmt, rotation="1 days", retention=3)
     # logger.add(sys.stderr, format='"{file.path}({line})", {function} - {message}')
@@ -116,6 +123,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     dyn_qss.clear()
     qss_params.clear()
     theme_path = resources.files(qss)
+    logger.info(f'{theme_path=}')
 
     def get_theme_list():
         global themes
@@ -138,6 +146,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     def read_file(name: str) -> str:
         res_file = theme_path / name
+        logger.info(f'{res_file=}')
         if res_file.exists():
             with open(res_file, "r") as ft:
                 return ft.read()
@@ -199,19 +208,30 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
                 key, val = line[2:].split('~')
                 dyn_qss[key].append(val)
 
+    def parse_field_names():
+        eds, *names = qss_params['$FileListFields'].split(',')
+        qss_params['$FileListFields'] = names
+        qss_params['$Editable'] = int(eds)
+
     styles = read_file(theme.get('qss', files['qss']))
     icons_txt = read_file(theme.get('ico', files['ico']))
     read_params()
-    qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'])
     font_size_key = get_app_setting('FONT_SIZE', '10pt')
     qss_params['$normalSize'], qss_params['$bigSize'], qss_params['$menuSize'] = FONT_SIZE[font_size_key]
 
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)
-
     svgs = collect_all_icons(icons_res)
 
     tr_styles = translate_qss(styles)
+
+    qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'].split(','))
+    parse_field_names()
+    qss_params['$ToolTips'] = qss_params['$ToolTips'].split(',')
+    qss_params['$FieldTypes'] = qss_params['$FieldTypes'].split(',')
+    xx = qss_params['$EditableFields'].split(',')
+    qss_params['$EditableFields'] = dict((int(xx[i]),xx[i+1]) for i in range(0,8,2))
+
     start_dyn = extract_dyn_qss()
 
     if to_save:
@@ -277,7 +297,7 @@ def collect_all_icons(icons_res: dict) -> dict:
             'check_box_off', 'check_box_on',
             'radio_btn', 'radio_btn_active',
             'vline3', 'angle_down3', 'angle_right3',
-            'angle_down2',
+            'angle_down2', 'up_trigon', 'down_trigon',
         ),
     }
     return set_icons(keys, icons_res)

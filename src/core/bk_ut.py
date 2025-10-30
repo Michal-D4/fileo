@@ -1,7 +1,7 @@
 from loguru import logger
 
 from PyQt6.QtCore import (pyqtSlot, QPoint, QThread,
-    QTimer, Qt, QModelIndex,
+    QTimer, Qt,
 )
 from PyQt6.QtGui import QResizeEvent, QKeySequence, QShortcut, QAction
 from PyQt6.QtWidgets import QMenu, QTreeView, QHeaderView
@@ -11,7 +11,7 @@ from . import (app_globals as ag, low_bk, load_files,
 )
 from ..widgets import search_files as sf, workers, dup
 from .. import tug
-from .file_model import fileProxyModel
+from ..widgets.header_field_editor import fieldEditor
 
 
 def save_bk_settings():
@@ -35,9 +35,7 @@ def save_bk_settings():
             "NOTE_EDIT_STATE": ag.file_data.get_edit_state(),
         }
         if ag.mode is ag.appMode.FILTER:
-            model: fileProxyModel = ag.file_list.model()
-            idx = model.mapToSource(ag.file_list.currentIndex())
-            settings["FILTER_FILE_ROW"] = idx.row()
+            settings["FILTER_FILE_ID"] = ag.file_list.currentIndex().data(Qt.ItemDataRole.UserRole)
         ag.save_db_settings(**settings)
         if ag.mode is ag.appMode.DIR:
             low_bk.save_curr_file_id(ag.dir_list.currentIndex())
@@ -61,32 +59,12 @@ def search_files():
     ff.show()
     ff.srch_pattern.setFocus()
 
-@pyqtSlot(bool)
-def toggle_collapse(collapse: bool):
-    def move_to_root() -> QModelIndex:
-        idx = ag.dir_list.currentIndex()
-        prev = idx.parent()
-        while prev.isValid():
-            idx = prev
-            prev = prev.parent()
-        return idx
-
-    if collapse:
-        low_bk.save_branch(ag.dir_list.currentIndex())
-        idx = move_to_root()
-        if idx.isValid():
-            ag.dir_list.setCurrentIndex(idx)
-            ag.dir_list.collapse(idx)
-    else:
-        idx = low_bk.restore_branch()
-        ag.dir_list.setCurrentIndex(idx)
-
 def set_menu_more(self):
     self.ui.more.setIcon(tug.get_icon("more"))
     ag.buttons.append((self.ui.more, "more"))
     menu = QMenu(self)
     ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
-    for i,item in enumerate(ttls.split(',')):
+    for i,item in enumerate(ttls):
         act = QAction(item, self, checkable=True)
         act.setChecked(True)
         act.triggered.connect(
@@ -188,15 +166,11 @@ def set_files_resize_event():
     ag.file_list.resizeEvent = file_list_resize
 
 def set_field_menu():
-    tool_tips = (
-        ",Added date, Last opening date,rating of file,number of file openings,"
-        "Last modified date,Number of pages(in book),Size of file,"
-        "Publication date(book),Date of last note,File creation date"
-    ).split(',')
     hdr = ag.file_list.header()
 
     menu = QMenu(ag.app)
-    for i,field,tt in zip(range(len(low_bk.file_list_fields)), low_bk.file_list_fields, tool_tips):
+    field_list = tug.qss_params['$FileListFields']
+    for i,field,tt in zip(range(len(field_list)), field_list, tug.qss_params['$ToolTips']):
         act = QAction(field, ag.app, checkable=True)
         if tt:
             act.setToolTip(tt)
@@ -219,13 +193,6 @@ def restore_dirs():
     ag.filter_dlg.restore_filter_settings()
     if ag.mode is ag.appMode.FILTER:
         low_bk.filtered_files()
-        row = ag.get_db_setting("FILTER_FILE_ROW", 0)
-        model: fileProxyModel = ag.file_list.model()
-        s_idx = model.sourceModel().index(row, 0)
-        if s_idx.isValid():
-            idx = model.mapFromSource(s_idx)
-            ag.file_list.setCurrentIndex(idx)
-            ag.file_list.scrollTo(idx)
     elif  ag.mode is ag.appMode.FILTER_SETUP:
         low_bk.show_files([])
     header_restore()
@@ -254,14 +221,23 @@ def header_menu(pos: QPoint):
     idx = hdr.logicalIndexAt(pos)
     if idx:
         me = QMenu()
-        me.addAction(f'Hide column "{low_bk.file_list_fields[idx]}"')
-        action = me.exec(hdr.mapToGlobal(
-            QPoint(pos.x(), pos.y() + hdr.height()))
-        )
+        me.addAction(f'Hide column "{tug.qss_params['$FileListFields'][idx]}"')
+        if (idx in (3, 6, 8)) and ('fieldEditor' not in ag.popups):
+            me.addAction('Edit title')
+        pos = QPoint(pos.x(), hdr.height()+3)
+        action = me.exec(hdr.mapToGlobal(pos))
         if action:
-            toggle_show_column(False, idx)
-            menu = ag.app.ui.field_menu.menu()
-            menu.actions()[idx].setChecked(False)
+            if action.text().startswith('Hide'):
+                toggle_show_column(False, idx)
+                menu = ag.app.ui.field_menu.menu()
+                menu.actions()[idx].setChecked(False)
+            elif action.text().startswith('Edit'):
+                edit_header_field(idx, pos)
+
+def edit_header_field(idx: int, pos: QPoint):
+    editor = fieldEditor(idx, ag.file_list)
+    editor.move(pos.x()-editor.width(), pos.y())
+    editor.show()
 
 @pyqtSlot(int, int, int)
 def resized_column(localIdx: int, oldSize: int, newSize: int):
