@@ -90,9 +90,8 @@ class dlgDup(QWidget, Ui_DlgDup):
         )
         return ico.pixmap(QSize(32, 32))
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         if not self.is_user_request:
             tug.save_app_setting(CHECK_DUPLICATES = int(not self.checkBox.isChecked()))
         ag.popups.pop("dlgDup")
-        return super().close()
+        return super().closeEvent(a0)

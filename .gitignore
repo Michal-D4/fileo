@@ -9,6 +9,7 @@ EXE/
 .history
 .vscode
 *.code-workspace
+*.exe
 
 # Virtual environments
 .venv

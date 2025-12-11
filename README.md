@@ -147,11 +147,17 @@ There are several methods to add files:
 
 4. You can drag-drop selected files from one instance of app to folder in the another instance.
 
-5. You can create new empty file within an app, since **v 1.3.48**.
+5. You can create new empty file within an app, since **v. 1.3.48**.
 
 ### Working with filters
 
+The filter setup dialog have two page since **v. 1.4.03**
+
 ![image-20230213185910924](https://github.com/Michal-D4/fileo/raw/main/img/file-filter.jpg)
+
+
+
+![file-filter-adv](https://github.com/Michal-D4/fileo/raw/main/img/file-filter-adv.jpg)
 
 The "folders" and "files not in any folder" options are mutually exclusive.
 
@@ -185,7 +191,9 @@ The available options are
 - case sensitive,
 - match full word.
 
-The regular expression and match full word options are mutually exclusive.
+The regular expression and match full word options are mutually exclusive. In case of using regular expressions, you can use the regular expression code itself to get the required result.
+
+Since **v. 1.4.04**, you can walk through matches found in notes.
 
 ### How to make notes to the file
 
@@ -240,11 +248,11 @@ The file may be located in different folders. In fact, these are links to the sa
 
 ![Locations](https://github.com/Michal-D4/fileo/raw/main/img/Locations.jpg)
 
-1 - list of branches where the current file can be found. The list also includes duplicate files, if any. Duplicates are marked with "`----> Dup:`" followed by the name of the duplicate; a duplicate file may have a different name than the file itself; duplicates are identified by having the same content (by a hash computed from its content).
+There is a list of branches where the current file can be found. The list also includes duplicate files, if any. Duplicates are marked with "`----> Dup:`" followed by the name of the duplicate; a duplicate file may have a different name than the file itself; duplicates are identified by having the same content (by a hash computed from its content).
 
 The branch marked with a bullet is ***a current location***.
 
-2 - a context menu:
+A context menu:
 
 1. copy - copy selected lines
 2. go to this location - go to the file in the folder under mouse cursor
@@ -305,31 +313,36 @@ The "last use date" field contains "Now" for the currently used DB. It may not b
 
 Three color themes have been created for the application: “Default”, “Light” and “Dark”.
 
-You can switch theme in the preferences menu item:
+You can launch the theme selection dialog from main menu or with the shortcut Ctrl+T:
 
-![image-20240505145226631](https://github.com/Michal-D4/fileo/raw/main/img//preferences_in_main_menu.png)
+![preferences_in_menu](https://github.com/Michal-D4/fileo/raw/main/img/preferences_in_main_menu.png)
 
-![image-20240505145706247](https://github.com/Michal-D4/fileo/raw/main/img//color_themes.png)
+Theme selector:
+
+![theme-selector](https://github.com/Michal-D4/fileo/raw/main/img/theme-selector.png)
 
 # Installation
 
-* Windows. Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge Windows](https://sourceforge.net/projects/fileo/files/Windows/) where `x.y.z` - version and run it.
+* **Windows.** Download the installer `fileo_setup.x.y.z.exe`  from [sourceforge Windows](https://sourceforge.net/projects/fileo/files/Windows/) where `x.y.z` - version and run it.
 
-* Linux. Download `fileo.AppImage` from [sourceforge Linux](https://sourceforge.net/projects/fileo/files/Linux/)
+* **Linux.** Download `fileo.AppImage` from [sourceforge Linux](https://sourceforge.net/projects/fileo/files/Linux/)
 
-* Linux and Windows
+* **Linux and Windows.** You can clone source of application from Github:
 
-  install as Python package from PyPi:
-
-  ```
-    > pip install md2fileo
+  ```shell
+  git clone https://github.com/Michal-D4/fileo.git
   ```
 
   and then run with
 
+  ```shell
+  > python -m fileo
   ```
-    > python -m fileo
-  ```
+
+  The python package `md2fileo`  was removed from PyPI because
+
+  * some problems with packaging necessary data files,
+  * the application is not a library or package that can be used in other applications, so there is no point in distributing it as a package.
 
 
 

@@ -35,7 +35,7 @@ def update0_files():
             db_ut.delete_not_exist_file(f_id)
 
 def update_touched_files():
-    last_scan = ag.get_db_setting('LAST_SCAN_OPENED', ag.DATE_1970_1_1.toSecsSinceEpoch)
+    last_scan = ag.get_db_setting('LAST_SCAN_OPENED', ag.ZERO_DATE)
     ag.save_db_settings(LAST_SCAN_OPENED=int(datetime.now().timestamp()))
     files = db_ut.files_toched(last_scan)
     for f_id, file, path, hash0 in files:

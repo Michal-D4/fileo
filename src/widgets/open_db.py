@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (QFileDialog, QMenu,
     QHeaderView, QStyle,
 )
 
+from .cust_msgbox import show_message_box
 from ..core import create_db, app_globals as ag
 from .ui_open_db import Ui_openDB
 from .. import tug
@@ -113,7 +114,7 @@ class OpenDB(QWidget, Ui_openDB):
             self.open_db(db_path)
             return
         logger.info(f'{self.msg=}')
-        ag.show_message_box('Error open DB', self.msg,
+        show_message_box('Error open DB', self.msg,
             icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
 
@@ -184,7 +185,7 @@ class OpenDB(QWidget, Ui_openDB):
                 return True
 
         logger.info(f'{self.msg=}: "{db_path}"')
-        ag.show_message_box('Error open DB', f'{msg}: "{db_path}"',
+        show_message_box('Error open DB', f'{msg}: "{db_path}"',
             icon=QStyle.StandardPixmap.SP_MessageBoxCritical
         )
         return False
@@ -212,7 +213,7 @@ class OpenDB(QWidget, Ui_openDB):
         item = self.listDB.item(row, 0)
         path, _, dt = item.data(Qt.ItemDataRole.UserRole)
         name = Path(path).name
-        ag.show_message_box(
+        show_message_box(
             f'DB "{name}" marked as in use',
             'Do you want to mark it as not in use?',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -232,7 +233,6 @@ class OpenDB(QWidget, Ui_openDB):
 
         tug.save_app_setting(DB_List=db_list)
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         ag.popups.pop("OpenDB")
-        return super().close()
+        return super().closeEvent(a0)

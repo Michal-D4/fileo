@@ -1,5 +1,3 @@
-from typing import List
-
 from PyQt6.QtWidgets import QWidget, QLineEdit
 
 from ..core import app_globals as ag
@@ -11,19 +9,17 @@ class Foldable(QWidget):
     The Foldable widget is designed for the left sidebar
     to implement expanded/collapsed views on it.
     """
-    qss_decorator: List
-
     def __init__(self, parent: QWidget=None) -> None:
         QWidget.__init__(self, parent)
 
         self.ui = Ui_foldable()
         self.ui.setupUi(self)
-        self.ui.decorator.setStyleSheet(self.qss_decorator[0])
+        self.ui.decorator.setStyleSheet(tug.get_dyn_qss('decorator_p'))
 
         self._toggle_icon()
 
         self.ui.toFold.clicked.connect(self.on_click)
-        ag.buttons.append((self.ui.toFold, "down", "right"))
+        ag.buttons[self.ui.toFold.objectName()] = (self.ui.toFold, "down", "right")
 
     def set_decoration(self, to_show: bool) -> None:
         """
@@ -42,15 +38,11 @@ class Foldable(QWidget):
 
     def set_hovering(self, hover: bool):
         if hover:
-            qss = ''.join(self.qss_decorator)
+            qss = tug.get_dyn_qss('decorator_p,decorator_a')
         else:
-            qss = self.qss_decorator[0]
+            qss = tug.get_dyn_qss('decorator_p')
 
         self.ui.decorator.setStyleSheet(qss)
-
-    @classmethod
-    def set_decorator_qss(cls, qss: List):
-        cls.qss_decorator = qss
 
     def _toggle_icon(self):
         self.ui.toFold.setIcon(
@@ -80,10 +72,10 @@ class Foldable(QWidget):
 
     def change_title(self, pos):
         def finish_edit():
-            ttl = editor.text()
+            ttl = editor.text().lower()
             self.ui.toFold.setText(ttl.upper())
-            ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
-            tug.save_app_setting(FoldTitles=(*ttls[:-1], ttl))
+            ttls = tug.get_app_setting('FOLD_TITLES', tug.qss_params['$FoldTitles'])
+            tug.save_app_setting(FOLD_TITLES=(*ttls[:-1], ttl))
             ag.signals.author_widget_title.emit(ttl)
             editor.close()
 

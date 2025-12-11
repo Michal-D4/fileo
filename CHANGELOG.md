@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.4.04 - 2025, 11 December
+* When searching for files by note context, you can now jump to the next/previous found substring match in notes.
+* Now the filter can be used to select files without notes.
+* some other changes and improvements
+
+## 1.4.03 - 2025, 25 November
+* split filter setup dialog into two pages
+* Font and theme are now located in separate menu items, rather than in preferences
+* some other changes and improvements
+
 ## 1.4.02 - 2025, 22 October
 * Fixed the bug with collapsing/expanding the bottom pane of the file list.
 * Three fields in the file list are rarely used, at least by me. I decided to add the ability to change their names, tooltips, formats, and even data types. These are the "Rating," "Pages," and "Published" fields. Data can be entered into these fields from the file list or from the "File info" page.

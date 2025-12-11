@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QStyle, QMessageBox,
 
 from .ui_cust_msgbox import Ui_msgBox
 from .. import tug
+from ..core import app_globals as ag
 
 
 class CustomMessageBox(QDialog, Ui_msgBox):
@@ -88,3 +89,20 @@ class CustomMessageBox(QDialog, Ui_msgBox):
     def set_msg_icon(self, icon=QStyle.StandardPixmap.SP_MessageBoxInformation):
         ico = QStyle.standardIcon(self.style(), icon)
         self.msg_ico.setPixmap(ico.pixmap(QSize(32, 32)))
+
+
+def show_message_box(
+        title: str, msg: str,
+        btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
+        icon = QStyle.StandardPixmap.SP_MessageBoxInformation,
+        details: str = '',
+        callback=None):
+    dlg = CustomMessageBox(msg, ag.app)
+    if callback:
+        dlg.finished.connect(callback)   # parameter: result: int
+    dlg.set_title(title)
+    dlg.set_buttons(btn)
+    dlg.set_msg_icon(icon)
+    dlg.set_details(details)
+    dlg.open()
+    return dlg

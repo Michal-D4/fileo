@@ -1,14 +1,16 @@
 # from loguru import logger
 
-from PyQt6.QtCore import Qt, QDateTime, pyqtSlot
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtCore import Qt, QDateTime, pyqtSlot, QTimer
+from PyQt6.QtGui import QMouseEvent, QTextCursor
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
     QVBoxLayout, QScrollArea, QAbstractScrollArea, QStyle,
 )
 
 from ..core import app_globals as ag, db_ut
-from .file_note import fileNote
+from .file_note import fileNote, Direction
 from .note_editor import noteEditor
+from .srch_in_notes import srchInNotes
+from .cust_msgbox import show_message_box
 
 
 class notesContainer(QScrollArea):
@@ -20,6 +22,7 @@ class notesContainer(QScrollArea):
         self.set_ui()
 
         self.file_id = 0
+        self.ids = []
 
         ag.signals.delete_note.connect(self.remove_item)
         ag.signals.refresh_note_list.connect(self.set_notes_data)
@@ -27,26 +30,27 @@ class notesContainer(QScrollArea):
 
     def set_ui(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setSizeAdjustPolicy(
-            QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
-        )
+        self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.setWidgetResizable(True)
-        self.setAlignment(
-            Qt.AlignmentFlag.AlignLeading|
-            Qt.AlignmentFlag.AlignLeft|
-            Qt.AlignmentFlag.AlignTop
-        )
-        self.setObjectName("container")
-        self.scrollWidget = QWidget()
-        self.scrollWidget.setObjectName("scrollWidget")
-        self.scroll_layout = QVBoxLayout(self.scrollWidget)
+        self.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.setStyleSheet("border: none;")
+
+    def set_scroll_widget(self):
+        scrollWidget = QWidget()
+        scrollWidget.setObjectName("scrollWidget")
+        self.scroll_layout = QVBoxLayout(scrollWidget)
         self.scroll_layout.setContentsMargins(0,0,0,0)
         self.scroll_layout.setSpacing(2)
         self.scroll_layout.setObjectName('scroll_layout')
-        self.scrollWidget.setLayout(self.scroll_layout)
-        self.setWidget(self.scrollWidget)
+        self.setWidget(scrollWidget)
         self.scroll_layout.addStretch(1)
-        self.setStyleSheet("border: none;")
+        fileNote.set_current_note(None)
+        self.ids.clear()
+
+    def set_search_object(self, obj: srchInNotes):
+        obj.next_btn.clicked.connect(self.go_next_match)
+        obj.prev_btn.clicked.connect(self.go_prev_match)
+        self.search_obj = obj
 
     def go_menu(self, e: QMouseEvent):
         if e.buttons() == Qt.MouseButton.LeftButton:
@@ -77,33 +81,88 @@ class notesContainer(QScrollArea):
     def get_file_id(self):
         return self.file_id
 
-    def set_notes_data(self):
-        def add_to_top(item: fileNote):
-            item.setSizePolicy(
-                QSizePolicy.Policy.Preferred,
-                QSizePolicy.Policy.MinimumExpanding
-            )
-            self.scroll_layout.insertWidget(0, item)
+    def set_notes_data(self, plain: bool=False):
+        def add_to_top(note: fileNote):
+            note.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
+            self.scroll_layout.insertWidget(0, note)
+            self.ids.insert(0, note.note_id)
 
         self.setUpdatesEnabled(False)
+        self.set_scroll_widget()
         ag.note_buttons.clear()
-        self.clear_layout()
         for row in db_ut.get_file_notes(self.file_id):
-            note = fileNote(*row[1:])
-            note.set_text(row[0])
+            note = fileNote(*row[1:])  # except note text
+            note.set_text(row[0], plain)
             note.add_buttons()
             add_to_top(note)
-        self.collapse()
-        self.show_first_note()
+        self.collapse_all()
+        self.show_first_note(plain)
         self.setUpdatesEnabled(True)
         self.show()
 
-    def show_first_note(self):
+    def show_first_note(self, plain: bool):
+        if ag.mode is ag.appMode.FOUND_IN_NOTES:
+            if self.find_in_next_note(0):
+                self.search_obj.next_btn.setEnabled(True)
+            elif not plain:
+                self.set_notes_data(plain=True)
+            return
         item = self.scroll_layout.itemAt(0)
         if item.widget():
             note: fileNote = item.widget()
             note.ui.collapse.setChecked(False)
-            note.view_note()
+
+    def find_in_next_note(self, beg: int) -> bool:
+        for i in range(beg, self.scroll_layout.count()):
+            item = self.scroll_layout.itemAt(i)
+            note: fileNote = item.widget()
+            if isinstance(note, fileNote):
+                note.set_cursor_position(QTextCursor.MoveOperation.Start)
+                if note.find_pattern() > -1:
+                    self.switch_note(note)
+                    return True
+        return False
+
+    def find_in_prev_note(self) -> bool:
+        for i in reversed(range(self.ids.index(fileNote.current_note.note_id))):
+            item = self.scroll_layout.itemAt(i)
+            note: fileNote = item.widget()
+            note.set_cursor_position()
+            if note and note.find_pattern(direction=Direction.Prev) > -1:
+                self.switch_note(note)
+                return True
+        return False
+
+    def switch_note(self, note: fileNote) -> bool:
+        if fileNote.current_note:
+            fileNote.current_note.ui.collapse.setChecked(True)
+        fileNote.set_current_note(note)
+        fileNote.current_note.ui.collapse.setChecked(False)
+
+    @pyqtSlot()
+    def go_next_match(self):
+        pos = fileNote.current_note.find_pattern()
+        if pos == -1:
+            if not self.find_in_next_note(self.ids.index(fileNote.current_note.note_id)+1):
+                self.search_obj.next_btn.setEnabled(False)
+                return
+        self.search_obj.prev_btn.setEnabled(True)
+        QTimer.singleShot(25, self.scroll_to_current_pos)
+
+    @pyqtSlot()
+    def go_prev_match(self):
+        pos = fileNote.current_note.find_pattern(direction=Direction.Prev)
+        if pos == -1:
+            if not self.find_in_prev_note():
+                self.search_obj.prev_btn.setEnabled(False)
+                return
+        self.search_obj.next_btn.setEnabled(True)
+        QTimer.singleShot(25, self.scroll_to_current_pos)
+
+    def scroll_to_current_pos(self):
+        note = fileNote.current_note
+        pos = note.mapToParent(note.cursor_location())
+        self.ensureVisible(pos.x(), pos.y(), xMargin=50, yMargin=100)
 
     def theme_changed(self):
         for i in reversed(range(self.scroll_layout.count())):
@@ -112,12 +171,6 @@ class notesContainer(QScrollArea):
                 note: fileNote = item.widget()
                 if not note.ui.collapse.isChecked():
                     note.set_browser_text()
-
-    def clear_layout(self):
-        for i in reversed(range(self.scroll_layout.count()-1)):
-            item = self.scroll_layout.takeAt(i)
-            if item.widget():
-                item.widget().deleteLater()
 
     def finish_editing(self):
         note: fileNote = self.editor.get_note()
@@ -151,7 +204,7 @@ class notesContainer(QScrollArea):
         if (self.editing and
             self.editor.get_note_id() == note_id and
             self.editor.get_file_id() == file_id):
-            ag.show_message_box(
+            show_message_box(
                 'Note is editing now',
                 "The note can't be deleted right now.",
                 icon=QStyle.StandardPixmap.SP_MessageBoxWarning,
@@ -165,7 +218,7 @@ class notesContainer(QScrollArea):
                 note.deleteLater()
                 db_ut.delete_note(file_id, note_id)
 
-        ag.show_message_box(
+        show_message_box(
             'delete file note',
             'confirm deletion of note',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -173,10 +226,7 @@ class notesContainer(QScrollArea):
             callback=msg_callback
         )
 
-    def collapse(self):
-        if self.scroll_layout.count() <= 1:
-            return
-
+    def collapse_all(self):
         for i in reversed(range(self.scroll_layout.count()-1)):
             item = self.scroll_layout.itemAt(i)
             if item.widget():

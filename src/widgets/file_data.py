@@ -16,6 +16,7 @@ from .file_tags import tagBrowser
 from .locations import Locations
 from .note_editor import noteEditor
 from .srch_in_notes import srchInNotes
+from .cust_msgbox import show_message_box
 from .. import tug
 
 def set_note_holder_height(hh: int):
@@ -80,7 +81,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         set_note_holder_height(hh)
 
     def set_author_title(self, ttl: str):
-        self.l_authors.setText(f"{ttl[:-1]} selector")
+        self.l_authors.setText(f"{ttl[:-1].title()} selector")
         self.authorEdit.setToolTip(f"File\'s {ttl.lower()}")
         self.authorEdit.setPlaceholderText(
             f'Enter a list of {ttl.lower()} separated by commas or select from the "{ttl[:-1]} selector"'
@@ -106,7 +107,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         ctrl_n.activated.connect(self.new_file_note)
 
         self.collapse_notes.setIcon(tug.get_icon("collapse_notes"))
-        self.collapse_notes.clicked.connect(self.notes.collapse)
+        self.collapse_notes.clicked.connect(self.notes.collapse_all)
 
         self.save.setIcon(tug.get_icon("ok"))
         self.save.clicked.connect(self.save_note)
@@ -117,13 +118,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.cancel.setShortcut("Ctrl+Q")
 
         self.edit_btns.hide()
-        ag.buttons.append((self.expand, "up"))
-        ag.buttons.append((self.collapse, "down3"))
-        ag.buttons.append((self.srch_in_notes, "search"))
-        ag.buttons.append((self.plus, "plus"))
-        ag.buttons.append((self.collapse_notes, "collapse_notes"))
-        ag.buttons.append((self.save, "ok"))
-        ag.buttons.append((self.cancel, "cancel2"))
+        ag.buttons[self.expand.objectName()] = (self.expand, "up")
+        ag.buttons[self.collapse.objectName()] = (self.collapse, "down3")
+        ag.buttons[self.srch_in_notes.objectName()] = (self.srch_in_notes, "search")
+        ag.buttons[self.plus.objectName()] = (self.plus, "plus")
+        ag.buttons[self.collapse_notes.objectName()] = (self.collapse_notes, "collapse_notes")
+        ag.buttons[self.save.objectName()] = (self.save, "ok")
+        ag.buttons[self.cancel.objectName()] = (self.cancel, "cancel2")
 
     def set_pages(self):
         self.pages = QStackedWidget(self)
@@ -175,9 +176,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             lbl.setStyleSheet(ss)
 
     def cur_page_restyle(self):
-        self.page_selectors[self.cur_page].setStyleSheet(
-            tug.get_dyn_qss('active_selector')
-        )
+        self.page_selectors[self.cur_page].setStyleSheet(tug.get_dyn_qss('active_selector'))
 
     def l_tags_press(self, e: QMouseEvent):
         self.tagEdit.setReadOnly(False)
@@ -207,17 +206,13 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.switch_page(Page.EDIT)
 
     def switch_page(self, new_page: Page):
-        if new_page is self.cur_page:
+        if new_page is self.cur_page:   # self.cur_page to be changed to new_page
             return
         ag.add_recent_file(self.file_id)
         # logger.info(f'{self.cur_page.name=}, {new_page.name=}')
 
-        self.page_selectors[self.cur_page].setStyleSheet(
-            tug.get_dyn_qss('passive_selector')
-        )
-        self.page_selectors[new_page].setStyleSheet(
-            tug.get_dyn_qss('active_selector')
-        )
+        self.page_selectors[self.cur_page].setStyleSheet(tug.get_dyn_qss('passive_selector'))
+        self.page_selectors[new_page].setStyleSheet(tug.get_dyn_qss('active_selector'))
 
         if self.cur_page is Page.NOTE:
             self.note_btns.hide()
@@ -262,20 +257,19 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         if "srchInNotes" in ag.popups:
             return
         sn = srchInNotes(self)
-        sn.move(self.srch_in_notes.pos() - QPoint(sn.width(), -10))
+        sn.move(self.srch_in_notes.pos() - QPoint(sn.width()+2, -2))
         sn.show()
         sn.srch_pattern.setFocus()
-
-    def short_cancel_editing(self):
-        if not self.notes.is_editing():
-            return
-        self.cancel_note_editing()
+        if ag.mode is ag.appMode.FOUND_IN_NOTES:
+            sn.next_btn.setEnabled(True)
+            sn.prev_btn.setEnabled(True)
+            self.notes.set_search_object(sn)
 
     def cancel_note_editing(self):
-        # logger.info(f'{self.cur_page.name=}')
-        self.l_editor.hide()
-        self.notes.set_editing(False)
-        self.l_file_notes_press(None)
+        if self.notes.is_editing():
+            self.l_editor.hide()
+            self.notes.set_editing(False)
+            self.l_file_notes_press(None)
 
     def save_note(self):
         if self.notes.is_editing():
@@ -300,7 +294,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
             self.switch_page(Page.EDIT)
 
         if self.notes.is_editing():
-            ag.show_message_box(
+            show_message_box(
                 "There is an active editor",
                 "Only one note editor can be opened at a time",
                 callback=call_back
@@ -339,8 +333,12 @@ class fileDataHolder(QWidget, Ui_FileNotes):
     def reset_file_info(self, changes: str):
         self.file_info.editable_field_changed(changes)
 
+    def set_notes_search_options(self):
+        fileNote.set_search_options()
+        srch_obj: srchInNotes = ag.popups.get('srchInNotes', None)
+        self.notes.set_search_object(srch_obj)
+
     def set_data(self, file_id: int):
-        # logger.info(f'{file_id=}')
         self.file_id = file_id
 
         self.tag_selector.set_file_id(file_id)

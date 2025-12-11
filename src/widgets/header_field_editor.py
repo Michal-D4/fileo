@@ -1,9 +1,9 @@
 # from loguru import logger
 
-from PyQt6.QtCore import pyqtSlot
 from PyQt6.QtWidgets import QWidget, QMessageBox, QStyle, QDialog
 
 from .ui_field_editor import Ui_fldEditor
+from .cust_msgbox import show_message_box
 from .. import tug
 from ..core import app_globals as ag
 
@@ -15,16 +15,17 @@ class fieldEditor(QWidget, Ui_fldEditor):
 
         self.setupUi(self)
         self.index = idx
-        self.typ = tug.qss_params['$FieldTypes'][self.index]
+        self.typ = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])[self.index]
         self.set_data()
 
         self.ok.clicked.connect(self.save_new)
         self.cancel.clicked.connect(self.close)
+        self.reset.clicked.connect(self.reset_field)
         ag.popups["fieldEditor"] = self
 
     def set_data(self):
         def type_changed():
-            ag.show_message_box(
+            show_message_box(
                 'Field type will be changed',
                 f'Data in field "{self.title.text()}" will be lost. Please confirm',
                 btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
@@ -55,23 +56,29 @@ class fieldEditor(QWidget, Ui_fldEditor):
             fmt = self.fld_format.text()
             self.ok.setFocus()
 
-        title = tug.qss_params['$FileListFields'][self.index]
+        title = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])[self.index]
         self.title.setText(title)
-        fmt = tug.qss_params['$FieldFormats'][self.index]
+        fmt = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])[self.index]
         self.fld_type.setCurrentText(self.typ)
-        self.tool_tip.setText(tug.qss_params['$ToolTips'][self.index])
+        self.tool_tip.setText(ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])[self.index])
         self.fld_format.setText('yyyy-MM-dd hh:mm' if not fmt and self.typ == 'date' else fmt)
         self.fld_type.currentIndexChanged.connect(type_changed)
         self.title.editingFinished.connect(title_edit_finished)
         self.tool_tip.editingFinished.connect(tool_tip_edit_finished)
         self.fld_format.editingFinished.connect(format_edit_finished)
 
+    def reset_field(self):
+        self.title.setText(tug.qss_params['$FileListFields'][self.index])
+        self.fld_type.setCurrentText(tug.qss_params['$FieldTypes'][self.index])
+        self.tool_tip.setText(tug.qss_params['$ToolTips'][self.index])
+        self.fld_format.setText(tug.qss_params['$FieldFormats'][self.index])
+
     def save_new(self):
         def clear_field_in_db():
             if self.index not in (3,6,8):
                 return
             fields = tug.qss_params['$EditableFields']
-            vals = {'str': '', 'int': 0, 'date': ag.DATE_1970_1_1.toSecsSinceEpoch()}
+            vals = {'str': '', 'int': 0, 'date': ag.ZERO_DATE}
             sql = f'update files set {fields[self.index]} = ?'
             with ag.db.conn as conn:
                 conn.cursor().execute(sql, (vals[self.fld_type.currentText()],))
@@ -87,7 +94,6 @@ class fieldEditor(QWidget, Ui_fldEditor):
         )
         self.close()
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         ag.popups.pop("fieldEditor")
-        return super().close()
+        return super().closeEvent(a0)

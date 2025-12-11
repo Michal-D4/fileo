@@ -1,14 +1,13 @@
 from loguru import logger
 import apsw
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QModelIndex, QDateTime
-from PyQt6.QtWidgets import QMessageBox, QStyle
+from PyQt6.QtCore import Qt, QModelIndex, QDateTime
 
-from ..widgets.cust_msgbox import CustomMessageBox
 from .. import tug
 
 if TYPE_CHECKING:
@@ -18,9 +17,8 @@ if TYPE_CHECKING:
     from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
-    from ..widgets.fold_container import foldGrip
 
-DATE_1970_1_1 = QDateTime(1970,1,1,0,0)
+ZERO_DATE = QDateTime(1970,1,1,0,0).toSecsSinceEpoch()
 
 def app_name() -> str:
     return "fileo"
@@ -29,7 +27,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.4.02'
+    return '1.4.04'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -39,11 +37,10 @@ ext_list: 'aBrowser' = None
 author_list: 'aBrowser' = None
 file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
-fold_grips: 'list[foldGrip]' = None
 popups = {}
 
-buttons = []
-note_buttons = []
+buttons = defaultdict(tuple)
+note_buttons = []     # buttons for each note
 history: 'History' = None
 recent_files = []
 recent_files_length = 20
@@ -65,7 +62,8 @@ class appMode(Enum):
     FILTER_SETUP = 3
     RECENT_FILES = 4
     FOUND_FILES = 5
-    FILE_BY_REF = 6
+    FOUND_IN_NOTES = 6
+    FILE_BY_REF = 7
 
     def __repr__(self) -> str:
         return f'{self.name}:{self.value}'
@@ -86,12 +84,18 @@ def set_mode(new_mode: appMode):
         return
 
     logger.info(f'curr.mode: {mode.name}, new mode: {new_mode.name}')
+    if mode is appMode.FILTER:
+        save_db_settings(FILTER_FILE_ID = file_list.currentIndex().data(Qt.ItemDataRole.UserRole))
+
     if mode is appMode.FILTER and new_mode.value > appMode.FILTER_SETUP.value:
         dir_list.selectionModel().selectionChanged.disconnect(filter_dlg.dir_selection_changed)
         disconnected = True
     elif disconnected:
         dir_list.selectionModel().selectionChanged.connect(filter_dlg.dir_selection_changed)
         disconnected = False
+
+    if mode is appMode.FOUND_IN_NOTES and 'srchInNotes' in popups:
+        popups['srchInNotes'].close()
 
     mode = new_mode
     app.ui.app_mode.setText(mode.name)
@@ -213,22 +217,6 @@ def add_recent_file(id_: int):
     recent_files.append(id_)
     if len(recent_files) > recent_files_length:
         recent_files.pop(0)
-
-def show_message_box(
-        title: str, msg: str,
-        btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Close,
-        icon = QStyle.StandardPixmap.SP_MessageBoxInformation,
-        details: str = '',
-        callback=None):
-    dlg = CustomMessageBox(msg, app)
-    if callback:
-        dlg.finished.connect(callback)   # parameter: result: int
-    dlg.set_title(title)
-    dlg.set_buttons(btn)
-    dlg.set_msg_icon(icon)
-    dlg.set_details(details)
-    dlg.open()
-    return dlg
 
 # only this instance of AppSignals should be used anywhere in the application
 from .app_signals import AppSignals  # noqa: E402

@@ -117,7 +117,6 @@ class foldGrip():
 class FoldContainer(QWidget):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
-        Foldable.set_decorator_qss(tug.get_dyn_qss('decorator', -1))
 
         self.height_ = 0
 
@@ -129,11 +128,12 @@ class FoldContainer(QWidget):
         wid.ui.toFold.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         wid.ui.toFold.customContextMenuRequested.connect(wid.change_title)
 
-        ag.fold_grips = self.widgets
-
         self.__first_visible: int = -1
 
         self._setup()
+
+    def visible_state(self):
+        return (not x.is_hidden for x in self.widgets)
 
     @property
     def first_visible(self) -> int:
@@ -152,26 +152,26 @@ class FoldContainer(QWidget):
             self.widgets[seq].set_collapsed_height()
 
     def _setup(self):
+        def set_titles():
+            ttls = tug.qss_params['$FoldTitles']
+            for ttl,ff in zip(ttls, self.widgets):
+                ff.wid.set_title(ttl)
+
+        def connect_signals():
+            ag.signals.collapseSignal.connect(self._toggle_collapsed)
+            ag.signals.hideSignal.connect(self.set_hidden)
+
+        def setup_event_filter():
+            self._filters = []
+            for i,ff in enumerate(self.widgets):
+                filter = MouseEventFilter(ff.wid.ui.decorator, i)
+                filter.resize_foldable.connect(self._resize_widget)
+                self._filters.append(filter)
+
         self.ui.scrollArea.setMinimumHeight(int(MIN_HEIGHT * 1.5))
-
-        self._set_titles()
-
-        self._connect_signal()
-        self._setup_event_filter()
-
-    def set_qss_fold(self, qss: list):
-        self.widgets[0].wid.set_decorator_qss(qss)
-
-    def _setup_event_filter(self):
-        self._filters = []
-        for i,ff in enumerate(self.widgets):
-            filter = MouseEventFilter(ff.wid.ui.decorator, i)
-            filter.resize_foldable.connect(self._resize_widget)
-            self._filters.append(filter)
-
-    def _connect_signal(self):
-        ag.signals.collapseSignal.connect(self._toggle_collapsed)
-        ag.signals.hideSignal.connect(self.set_hidden)
+        set_titles()
+        connect_signals()
+        setup_event_filter()
 
     def _shown(self) -> int:
         """
@@ -184,11 +184,6 @@ class FoldContainer(QWidget):
         returns number of not hidden and not collapsed widgets
         """
         return sum((1 for ff in self.widgets if not (ff.is_hidden or ff.is_collapsed)))
-
-    def _set_titles(self):
-        ttls = tug.qss_params['$FoldTitles']
-        for ttl,ff in zip(ttls, self.widgets):
-            ff.wid.set_title(ttl)
 
     def add_widget(self, w: QWidget, index: int) -> None:
         self.widgets[index].wid.add_widget(w)
@@ -226,27 +221,17 @@ class FoldContainer(QWidget):
 
     def process_collapse(self, seq: int, to_collapse: bool):
         self.widgets[seq].is_collapsed = to_collapse
-
-        if to_collapse:
-            self._collapse_current(seq)
-        else:
-            self._expand_current(seq)
+        self._collapse_current(seq) if to_collapse else self._expand_current(seq)
 
     def _collapse_current(self, seq: int):
         """
         seq is sequence number of widget to be collapsed
         """
-        if self.shown_not_collapsed() == 0:
-            self._expand_stretch(True)
-        else:
-            self._increase_next(seq)
+        self._expand_stretch(True) if self.shown_not_collapsed() == 0 else self._increase_next(seq)
 
     def _expand_current(self, seq: int):
-        if self.shown_not_collapsed() == 1:  # all widgets are collapsed yet
-            self._expand_stretch(False)
-        else:
-            # self.widgets[seq].set_default_height()
-            self._decrease_next(seq)
+        # if self.shown_not_collapsed() == 1:  # all widgets are collapsed yet
+        self._expand_stretch(False) if self.shown_not_collapsed() == 1 else self._decrease_next(seq)
 
     def _increase_next(self, seq: int):
         delta = self.height_ - self._actual_height()
@@ -284,7 +269,7 @@ class FoldContainer(QWidget):
     def restore_state(self, state: list):
         """
         restore state of container:
-        - number of first visible widget
+        - index of first visible widget
         - height of container
         - for each widget in container:
           - is_collapsed: bool
@@ -315,7 +300,7 @@ class FoldContainer(QWidget):
         """
         function is used to collect data to save settings of state
         - width of container, it restore in parrent of the widget
-        - first_visible - number of first wisible widget in container
+        - first_visible - index of first wisible widget in container
         - height - height of container, it also set in the resize event,
           but this value need in the restore_state method which
           is called before resize event
@@ -360,10 +345,7 @@ class FoldContainer(QWidget):
                 seq if seq == visibles[0] else visibles[0] )
 
     def _actual_height(self) -> int:
-        return reduce(add, (
-            (ff.height for ff in self.widgets if not ff.is_hidden)
-            ), 0
-        )
+        return reduce(add, ((ff.height for ff in self.widgets if not ff.is_hidden)), 0)
 
     @pyqtSlot(QResizeEvent)
     def resizeEvent(self, a0: QResizeEvent) -> None:
@@ -432,8 +414,7 @@ class FoldContainer(QWidget):
             remain = [ff for ff in self.widgets if not (
                 ff.is_collapsed or ff.is_hidden) and ff.height > MIN_HEIGHT]
         else:
-            remain = [ff for ff in self.widgets if not (
-                ff.is_collapsed or ff.is_hidden)]
+            remain = [ff for ff in self.widgets if not (ff.is_collapsed or ff.is_hidden)]
 
         for ff in remain:
             ff.height += increament()
@@ -455,13 +436,13 @@ class FoldContainer(QWidget):
     @pyqtSlot(int, QPoint, int)
     def _resize_widget(self, e_type: int, pos: QPoint, seq: int):
         self.cur_pos = self.mapFromGlobal(pos)
-        choice_ = {QMouseEvent.Type.MouseMove: self._resize,
-                   QMouseEvent.Type.MouseButtonPress: self._resize_start,
-                   QMouseEvent.Type.MouseButtonRelease: self._resize_end,
-                   QMouseEvent.Type.Enter: self._hover_start,
-                   QMouseEvent.Type.Leave: self._hover_end,
-                   }
-        choice_[e_type](self.cur_pos.y(), seq)
+        {
+            QMouseEvent.Type.MouseMove: self._resize,
+            QMouseEvent.Type.MouseButtonPress: self._resize_start,
+            QMouseEvent.Type.MouseButtonRelease: self._resize_end,
+            QMouseEvent.Type.Enter: self._hover_start,
+            QMouseEvent.Type.Leave: self._hover_end,
+        }[e_type](self.cur_pos.y(), seq)
 
     def _resize_start(self, y: int, seq: int):
         self.y0 = y

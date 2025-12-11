@@ -74,7 +74,6 @@ class AboutDialog(QWidget, Ui_aboutForm):
         else:
             self.ttl_label.setText('About Fileo')
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         ag.popups.pop("AboutDialog")
-        return super().close()
+        return super().closeEvent(a0)

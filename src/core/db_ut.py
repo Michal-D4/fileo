@@ -3,14 +3,16 @@ import apsw
 from collections import deque, abc
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Generator, Any
 
 from PyQt6.QtWidgets import QStyle
 
 from . import app_globals as ag, create_db
 from ..widgets.dir_tree_cycle import removeDirCycle
+from ..widgets.cust_msgbox import show_message_box
 
 
-def dir_tree_select() -> list: # type: ignore
+def dir_tree_select() -> Generator[Any, None, None]:
     sql2 = ('select p.parent, d.id, d.multy, p.hide, p.file_id, '
                'COALESCE(p.tool_tip, d.name), d.name '
                'from dirs d join parentdir p on p.id = d.id '
@@ -132,7 +134,7 @@ def get_files(dir_id: int, parent: int) -> apsw.Cursor:
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        f'f.size, f.published, COALESCE(x.last_note_date, {create_db.DATE_1970_1_1}), f.created, '
+        f'f.size, f.published, COALESCE(x.last_note_date, {ag.ZERO_DATE}), f.created, '
         'f.id from files f '
         'left join x on x.fileid = f.id '
         'join filedir fd on fd.file = f.id '
@@ -146,17 +148,17 @@ def get_found_files() -> apsw.Cursor:
         'with x(fileid, last_note_date) as (select fileid, max(modified) '
         'from filenotes group by fileid) '
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        f'f.size, f.published, COALESCE(x.last_note_date, {create_db.DATE_1970_1_1}), f.created, '
+        f'f.size, f.published, COALESCE(x.last_note_date, {ag.ZERO_DATE}), f.created, '
         'f.id from files f '
         'left join x on x.fileid = f.id '
-        'where f.id in (select val from aux where key="file_srch");'
+        'where f.id in (select val from aux where key = :current_mode);'
     )
-    return ag.db.conn.cursor().execute(sql)
+    return ag.db.conn.cursor().execute(sql, {'current_mode': ag.mode.name})
 
 def get_file(file_id: int) -> abc.Iterable:
     sql = (
         'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, f.pages, '
-        f'f.size, f.published, COALESCE(max(fn.modified), {create_db.DATE_1970_1_1}), '
+        f'f.size, f.published, COALESCE(max(fn.modified), {ag.ZERO_DATE}), '
         'f.created, f.id from files f '
         'left join filenotes fn on fn.fileid = f.id where f.id = :f_id;'
     )
@@ -310,9 +312,14 @@ def update_file_data(id, st, hash):
     sql = (
         f'update files set (modified, created, size{hs[0]}) = (?, ?, ?{hs[1]}) where id = ?'
     )
-    ag.db.conn.cursor().execute(sql, (int(st.st_mtime), int(st.st_ctime), st.st_size, hash, id)
+    try:
+        time = st.st_birthtime
+    except AttributeError:
+        time = st.st_ctime  # st_ctime is deprecated on Windows. Use st_birthtime for the file creation time
+    ag.db.conn.cursor().execute(sql,
+        (int(st.st_mtime), int(time), st.st_size, hash, id)
         if hash else
-        (int(st.st_mtime), int(st.st_ctime), st.st_size, id))
+        (int(st.st_mtime), int(time), st.st_size, id))
 
 def filter_files(checks: dict) -> apsw.Cursor:
     par = []
@@ -331,12 +338,12 @@ def filter_files(checks: dict) -> apsw.Cursor:
                 "select fileid from fileauthor where aid in "
                 "(select val from aux where key = 'author')"
             ),
-            'note_date': "select val from aux where key = 'note_date_files'",
+            'note_sql': "select val from aux where key = 'note_files'",
             'sql0': (
                 'with x(fileid, last_note_date) as (select fileid, max(modified) '
                 'from filenotes group by fileid) '
                 'select f.filename, f.added, f.opened, f.rating, f.nopen, f.modified, '
-                f'f.pages, f.size, f.published, COALESCE(x.last_note_date, {create_db.DATE_1970_1_1}), '
+                f'f.pages, f.size, f.published, COALESCE(x.last_note_date, {ag.ZERO_DATE}), '
                 'f.created, f.id from files f '
                 'left join x on x.fileid = f.id '
             ),
@@ -358,8 +365,8 @@ def filter_files(checks: dict) -> apsw.Cursor:
             sqlist.append(filter_sqls('ext_sql'))
         if checks['author']:
             sqlist.append(filter_sqls('author_sql'))
-        if checks['note date is set']:
-            sqlist.append(filter_sqls('note_date'))
+        if checks['notes_checked']:
+            sqlist.append(filter_sqls('note_sql'))
 
     def filter_parcond():
         if checks['open_check']:
@@ -368,12 +375,12 @@ def filter_files(checks: dict) -> apsw.Cursor:
         if checks['rating_check']:
             cond.append(filter_sqls(f'rating-{checks["rating_op"]}'))
             par.append(checks['rating_val'])
-        if checks["date"] != "note_date":
+        if checks["date_field"] != "note_date":
             if checks['after']:
-                cond.append(filter_sqls('after', checks["date"]))
+                cond.append(filter_sqls('after', checks["date_field"]))
                 par.append(checks['date_after'])
             if checks['before']:
-                cond.append(filter_sqls('before', checks["date"]))
+                cond.append(filter_sqls('before', checks["date_field"]))
                 par.append(checks['date_before'])
 
     def assemble_filter_sql() -> str:
@@ -544,7 +551,8 @@ def clear_temp():
     ag.db.conn.cursor().execute(sql)
 
 def save_to_temp(key: str, val):
-    ag.db.conn.cursor().execute("insert into aux values (?, ?)", (key, val))
+    sql = f'insert into aux values ("{key}", ?)'
+    ag.db.conn.cursor().executemany(sql, val)
 
 def save_branch_in_aux(path):
     sql = 'update aux set val = :path where key = :key'
@@ -906,7 +914,11 @@ def get_tag_files(tag: int) -> set[int]:
         files.append(id[0])
     return set(files)
 
-def get_note_date_files(checks: dict) -> apsw.Cursor:
+def files_without_notes() -> apsw.Cursor:
+    sql = 'select id from files where id not in (select distinct fileid from filenotes);'
+    return ag.db.conn.cursor().execute(sql)
+
+def get_note_date_files(checks: dict) -> apsw.Cursor|list:
     """
     checks['note_date'] — one of the options:
     "last modified", "any modified", "last created", "any created"
@@ -930,7 +942,7 @@ def get_note_date_files(checks: dict) -> apsw.Cursor:
             f'select fileid from x where {" and ".join(cond)}'
         )
 
-    if checks['note date is set']:
+    if checks['notes_checked']:
         sql = compose_sql()
         return ag.db.conn.cursor().execute(sql, param)
     else:
@@ -956,7 +968,7 @@ def create_connection(path: str) -> bool:
         ag.db.path = path
         ag.db.conn = conn
     except apsw.CantOpenError as e:
-        ag.show_message_box(
+        show_message_box(
             'Error open DB',
             f'{e.args}, DB file: {path}',
             icon=QStyle.StandardPixmap.SP_MessageBoxCritical
@@ -976,6 +988,6 @@ def create_connection(path: str) -> bool:
     cursor.execute('pragma temp_store = MEMORY;')
     cursor.execute('pragma busy_timeout=1000')
     cursor.execute('create temp table if not exists aux (key, val)')
-    save_to_temp("TREE_PATH", '')
+    save_to_temp("TREE_PATH", (('',),))
 
     return True

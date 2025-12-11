@@ -29,10 +29,7 @@ def set_app_icon(app: QApplication):
 def setup_ui(self: 'shoWindow'):
     self.start_move = QPoint()
 
-    self.setWindowFlags(
-        Qt.WindowType.FramelessWindowHint |
-        Qt.WindowType.WindowMinMaxButtonsHint
-    )
+    self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
     self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     self.ui.close.clicked.connect(self.close_app)

@@ -8,6 +8,7 @@ from PyQt6.QtGui import (QMouseEvent, QTextCursor, QAction,
 )
 from PyQt6.QtWidgets import QTextBrowser, QMenu, QMessageBox, QStyle
 
+from .cust_msgbox import show_message_box
 from ..core import app_globals as ag, db_ut
 
 
@@ -122,7 +123,7 @@ class Locations(QTextBrowser):
 
         file_id = self.branch[1]
         path = db_ut.get_file_path(file_id)
-        ag.show_message_box(
+        show_message_box(
             'Removing duplicate file',
             'A file will be deleted to the trash. Please confirm',
             btn=QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,

@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QStyle
 
 from . import db_ut, app_globals as ag
 from .. import tug
+from ..widgets.cust_msgbox import show_message_box
 
 SORT_ROLE = Qt.ItemDataRole.UserRole + 1
 SZ_SCALE = {
@@ -15,7 +16,10 @@ SZ_SCALE = {
     'Mb': 1048576,
     'Gb': 1073741824
 }
-
+def create_date_obj(val: int) -> QDateTime:
+    d = QDateTime()
+    d.setSecsSinceEpoch(val)
+    return d
 
 class fileProxyModel(QSortFilterProxyModel):
 
@@ -63,11 +67,11 @@ class fileProxyModel(QSortFilterProxyModel):
 class fileModel(QAbstractTableModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.field_names = tug.qss_params['$FileListFields']
+        self.field_names = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
         self.editable = tug.qss_params['$Editable']
-        self.field_type = tug.qss_params['$FieldTypes']
-        self.tool_tip = tug.qss_params['$ToolTips']
-        self.formats = tug.qss_params['$FieldFormats']
+        self.field_type = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
+        self.tool_tip = ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])
+        self.formats = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
         self.rows = []
         self.user_data: list[int] = []  # file_id
 
@@ -82,7 +86,7 @@ class fileModel(QAbstractTableModel):
 
         def convert_to_date():
             for i in range(len(self.rows)):
-                self.rows[i][ii] = ag.DATE_1970_1_1
+                self.rows[i][ii] = create_date_obj(ag.ZERO_DATE)
 
         def convert():
             if typ == 'str':
@@ -153,12 +157,10 @@ class fileModel(QAbstractTableModel):
         if 0 > row > len(self.rows):
             success = False
         else:
-            date0 = ag.DATE_1970_1_1
+            line = [create_date_obj(ag.ZERO_DATE) if x=='date' else 0 if x=='int' else '' for x in self.field_type[1:]]
             for i in range(count):
-                self.rows.insert(
-                    row, ['<file_name>.md',date0,date0,0,0,date0,0,0,date0,date0,date0,('<file_name>','md')]
-                )
-                self.user_data.insert(row, 0)
+                self.rows.insert(row, ['<file_name>.md', *line, ('<file_name>','md')])
+                self.user_data.insert(row, 0)          # file_id = 0
             success = True
         self.endInsertRows()
         return success
@@ -186,95 +188,87 @@ class fileModel(QAbstractTableModel):
         if role != Qt.ItemDataRole.EditRole:
             return False
 
-        def _rename_file(new_name: str) -> bool:
-            def new_file():
-                try:
-                    new_path.touch(exist_ok=False)
-                except (FileExistsError, OSError) as e:
-                    ag.show_message_box('File already exists', f'{e}')
-                    return
-
-                try:
-                    cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_birthtime))
-                except AttributeError:
-                    cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_ctime))
-                line[1] = line[5] = line[10] = cre_time
-                ff = [line[i].toSecsSinceEpoch() if isinstance(line[i], QDateTime)
-                      else line[i] for i in (5,2,10,3,4,7,6,8,1,)]
-                file_id, is_new_ext = db_ut.insert_file(('', new_name, *ff[:-1], path), ff[-1], ag.fileSource.CREATED.value)
-                self.user_data[index.row()] = file_id
-                dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).dir_id
-                db_ut.copy_file(file_id, dir_id)
-                ag.signals.user_signal.emit(f"New file created\\{file_id}")
-                if is_new_ext:
-                    ag.signals.user_signal.emit("ext inserted")
-
-            def old_file() -> bool:
-                try:
-                    Path(path).rename(new_path)
-                except (FileExistsError, FileNotFoundError, PermissionError) as e:
-                    ag.show_message_box(
-                        'Error renaming file',
-                        f'{e}',
-                        icon=QStyle.StandardPixmap.SP_MessageBoxCritical
-                    )
-                    return False
-                return True
-
-            if file_id:
-                path = db_ut.get_file_path(file_id)
-                new_path = Path(path).parent / new_name
-                ok = old_file()
-            else:
-                path = tug.get_app_setting('DEFAULT_FILE_PATH',
-                    str(Path('~/fileo/files').expanduser()))
-                new_path = Path(path) / new_name
-                ok = False
-                new_file()
+        def rename_file(new_name: str) -> bool:
+            path = db_ut.get_file_path(file_id)
+            new_path = Path(path).parent / new_name
+            try:
+                Path(path).rename(new_path)
+            except (FileExistsError, FileNotFoundError, PermissionError) as e:
+                show_message_box('Error renaming file', f'{e}', icon=QStyle.StandardPixmap.SP_MessageBoxCritical)
+                return False
 
             line[0] = new_name
-            line[-1] = (
-                (new_path.stem.lower(), new_path.suffix.lower())
-                if new_path.suffix else
-                (new_path.stem.lower(),)
-            )
+            line[-1] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
             ag.app.ui.current_filename.setText(new_name)
-            return ok
+            return True
+
+        def create_file(new_file: str):
+            path = tug.get_app_setting('DEFAULT_FILE_PATH', str(Path('~/fileo/files').expanduser()))
+            new_path = Path(path) / new_file
+
+            try:
+                new_path.touch(exist_ok=False)
+            except (FileExistsError, OSError) as e:
+                show_message_box('File already exists', f'{e}')
+                return
+
+            try:
+                cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_birthtime))
+            except AttributeError:
+                cre_time = QDateTime().fromSecsSinceEpoch(int(new_path.stat().st_ctime))
+
+            line[1] = line[5] = line[10] = cre_time
+            line[0] = new_file
+            line[-1] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
+            ff = [line[i].toSecsSinceEpoch() if isinstance(line[i], QDateTime) else line[i] for i in (5,2,10,3,4,7,6,8,1,)]
+            file_id, is_new_ext = db_ut.insert_file(('', new_file, *ff[:-1], path), ff[-1], ag.fileSource.CREATED.value)
+            self.user_data[row] = file_id
+            dir_id = ag.dir_list.currentIndex().data(Qt.ItemDataRole.UserRole).dir_id
+            db_ut.copy_file(file_id, dir_id)
+            ag.signals.user_signal.emit(f"New file created\\{file_id}")
+            if is_new_ext:
+                ag.signals.user_signal.emit("ext inserted")
 
         col = index.column()
-        file_id = self.user_data[index.row()]
-        line = self.rows[index.row()]
-        if col < 0 or col >= len(line):
-            return False
-        field = tug.qss_params['$EditableFields'].get(col, '')
-        if field == 'filename':
-            if not _rename_file(value):
-                return False
+        row = index.row()
+        file_id = self.user_data[row]
+        line = self.rows[row]
+
+        if file_id == 0 and col == 0:
+            create_file(value)
+            return True
         else:
-            line[col] = value
-            if tug.qss_params['$FieldTypes'][col] == 'date':
-                value = value.toSecsSinceEpoch()
+            field = tug.qss_params['$EditableFields'].get(col, '')
+            if field == 'filename':
+                if not rename_file(value):
+                    return False
+            else:
+                line[col] = value
+                if self.field_type[col] == 'date':
+                    value = value.toSecsSinceEpoch()
         db_ut.update_files_field(file_id, field, value)
         self.dataChanged.emit(index, index)
         ag.add_recent_file(self.user_data[index.row()])
         return True
 
     def get_index_by_id(self, file_id: int) -> QModelIndex:
-        for i,f_id in enumerate(self.user_data):
-            if f_id == file_id:
-                return self.index(i, 0, QModelIndex())
-        return QModelIndex()
+        try:
+            i = self.user_data.index(file_id)
+        except ValueError:
+            return QModelIndex()
+        return self.index(i, 0, QModelIndex())
 
     def update_opened(self, ts: int, index: QModelIndex):
         """
         ts - the unix epoch timestamp
         """
+        row = index.row()
         if "Open#" in self.field_names:
             i = self.field_names.index("Open#")
-            self.rows[index.row()][i] += 1
+            self.rows[row][i] += 1
         if "Open Date" in self.field_names:
             i = self.field_names.index("Open Date")
-            self.rows[index.row()][i].setSecsSinceEpoch(ts)
+            self.rows[row][i].setSecsSinceEpoch(ts)
 
     def update_last_note_data(self, val, index: QModelIndex):
         self.rows[index.row()][9] = val
@@ -289,22 +283,20 @@ class fileModel(QAbstractTableModel):
                 except ValueError:
                     ret = 0
                 return ret
-            a = QDateTime()
-            a.setSecsSinceEpoch(val) if isinstance(val, int) else ag.DATE_1970_1_1
-            return a
+            return create_date_obj(val if isinstance(val, int) else ag.ZERO_DATE)
 
         for ff in files:
             if not ff[0]:
                 continue
             ff1 = []
-            for typ, name, val in zip(tug.qss_params['$FieldTypes'], tug.qss_params['$FileListFields'], ff[:-1]):
+            for typ, name, val in zip(self.field_type, self.field_names, ff[:-1]):
                 ff1.append(
                     ag.human_readable_size(val) if name == 'Size' else field_val()
                 )
 
             filename = Path(ff[0])
             ff1.append(
-                (filename.stem.lower(), filename.suffix.lower())
+                (filename.stem.lower(), filename.suffix.strip('.').lower())
                 if filename.suffix else
                 (filename.stem.lower(),)
             )

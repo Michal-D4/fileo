@@ -4,9 +4,8 @@ from enum import IntEnum
 
 from . import app_globals as ag
 
-DATE_1970_1_1 = ag.DATE_1970_1_1.toSecsSinceEpoch()
 APP_ID = 1718185071
-USER_VER = 29
+USER_VER = 30
 
 class tableIdx(IntEnum):
     SETTINGS = 0
@@ -19,7 +18,7 @@ class tableIdx(IntEnum):
     # FILETAG = 7
     # AUTHORS = 8
     # FILEAUTHOR = 9
-    # FILENOTES = 10
+    FILENOTES = 10
     # EXTENSIONS = 11
 
 
@@ -36,17 +35,17 @@ def define_tables(idx: int|None = None):
         'extid integer NOT NULL, '
         'path integer NOT NULL, '
         'filename text NOT NULL, '
-        f'added date not null default {DATE_1970_1_1}, '
+        'added date not null, '
         'how_added integer not null, '
-        f'modified date not null default {DATE_1970_1_1}, '
-        f'opened date not null default {DATE_1970_1_1}, '
-        f'created date not null default {DATE_1970_1_1}, '
+        'modified date not null, '
+        'opened date not null, '
+        'created date not null, '
         'rating integer not null default 0, '
         'nopen integer not null default 0, '
         'hash text, '
         'size integer not null default 0, '
         'pages integer not null default 0, '
-        f'published date not null default {DATE_1970_1_1}, '
+        'published date not null, '
         'FOREIGN KEY (extid) REFERENCES extensions (id)); '
         ),
         (                # dirs
@@ -108,8 +107,8 @@ def define_tables(idx: int|None = None):
         'fileid integer NOT NULL, '
         'id integer NOT NULL, '
         'filenote text NOT NULL, '
-        f'created date not null default {DATE_1970_1_1}, '
-        f'modified date not null default {DATE_1970_1_1}, '
+        'created date not null, '
+        'modified date not null, '
         'PRIMARY KEY(fileid, id), '
         'FOREIGN KEY (fileid) REFERENCES files (id) on delete cascade); '
         ),
@@ -125,7 +124,7 @@ def check_app_schema(db_path: str) -> str:
     try:
         conn = apsw.Connection(db_path)
         conn.cursor().execute('PRAGMA quick_check;').fetchone()
-    except (apsw.CantOpenError, apsw.SQLError, apsw.NotADBError) as e:
+    except (apsw.CantOpenError, apsw.SQLError, apsw.NotADBError, apsw.BusyError) as e:
         logger.info(f'{e.args}, DB file: {db_path}')
         return e.args[0]
 
@@ -174,7 +173,7 @@ def convert_to_new_version(conn, db_v):
     def update_to_v24():
         sql1 = (
             'INSERT or ignore into COPY_FILES select id, extid, '
-            f'path, filename, {DATE_1970_1_1}, 1, modified, opened, created, '
+            f'path, filename, {ag.ZERO_DATE}, 1, modified, opened, created, '
             'rating, nopen, hash, size, pages, published FROM files'
         )
 
@@ -242,7 +241,6 @@ def convert_to_new_version(conn, db_v):
             curs.execute(sql1)
             curs.execute(sql2)
 
-        curs = conn.cursor()
         update_to_v26()
         insert_how_added_field()
         remove_path_duplicates()
@@ -259,12 +257,28 @@ def convert_to_new_version(conn, db_v):
                   ('files',  'opened'), ('files',  'created'), ('files',  'published'),
                   ('filenotes', 'created'), ('filenotes', 'modified'))
         def update_min_date():
-            sql = f'update {tbl} set {fld} = {DATE_1970_1_1} where {fld} < -86400;'
+            sql = f'update {tbl} set {fld} = {ag.ZERO_DATE} where {fld} < -86400;'
             curs.execute(sql)
 
-        curs = conn.cursor()
         for tbl,fld in to_upd:
             update_min_date()
+
+    def update_to_v30():
+        def drop_old_tbl(table: str):
+            curs.execute(f'DROP TABLE {table}')
+            curs.execute(f'ALTER TABLE COPY_{table} RENAME TO {table}')
+        names = {tableIdx.FILES: "files",  tableIdx.FILENOTES: "filenotes"}
+        for tbl_id, name in names.items():
+            copy_tbl(tbl_id, name)
+            drop_old_tbl(name)
+
+    def copy_tbl(tbl_id: int, table: str):
+        sql = f'INSERT or ignore into COPY_{table} select * FROM {table}'
+        tbl_def = define_tables(tbl_id).replace(table, f"COPY_{table}")
+        curs.execute(tbl_def)
+        curs.execute(sql)
+
+    curs = conn.cursor()
 
     if db_v < 21:
         update_to_v21()
@@ -292,6 +306,9 @@ def convert_to_new_version(conn, db_v):
 
     if db_v < 29:
         update_to_v29()
+
+    if db_v < 30:
+        update_to_v30()
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 

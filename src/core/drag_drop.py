@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QStyle
 
 from . import app_globals as ag, low_bk, load_files, db_ut
 from .dir_model import dirModel, dirItem
+from ..widgets.cust_msgbox import show_message_box
 
 if sys.platform.startswith("win"):
     from . import win_menu as menu
@@ -224,7 +225,7 @@ def update_file_list(target: QModelIndex):
             ag.dir_list.setCurrentIndex(target)
 
         if ag.mode is ag.appMode.FILTER:
-            ag.show_message_box(
+            show_message_box(
                 'Drop files',
                 'Application is in Filter mode, so you may not see the dropped files.',
                 icon=QStyle.StandardPixmap.SP_MessageBoxWarning
@@ -232,9 +233,7 @@ def update_file_list(target: QModelIndex):
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
-    load.set_files_iterator(
-        (it.toLocalFile() for it in data.urls())
-    )
+    load.set_files_iterator((it.toLocalFile() for it in data.urls()))
     load.load_to_dir(target)
 
 def drop_files(data: QMimeData, act: Qt.DropAction, target: QModelIndex) -> bool:

@@ -1,7 +1,6 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QDataStream, QIODevice, QCoreApplication
 from PyQt6.QtGui import QDropEvent
 from PyQt6.QtWidgets import QMenu
-
 
 from . import app_globals as ag
 
@@ -16,10 +15,17 @@ def use_action_menu(e: QDropEvent) -> bool:
     if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
         e.setDropAction(Qt.DropAction.CopyAction)
         return False
-    if (e.mimeData().hasFormat(ag.mimeType.folders.value) or
-        e.mimeData().hasFormat(ag.mimeType.files_in.value)):
+    if e.mimeData().hasFormat(ag.mimeType.folders.value):
         e.setDropAction(Qt.DropAction.CopyAction)
         return True
+    if e.mimeData().hasFormat(ag.mimeType.files_in.value):
+        data = e.mimeData()
+        files_data = data.data(ag.mimeType.files_in.value)
+        stream = QDataStream(files_data, QIODevice.OpenModeFlag.ReadOnly)
+        pid_drag_from = stream.readInt()
+        if QCoreApplication.applicationPid() == pid_drag_from:   # mimeType.files_in
+            e.setDropAction(Qt.DropAction.CopyAction)
+            return True
     return False
 
 def action_menu(e: QDropEvent):

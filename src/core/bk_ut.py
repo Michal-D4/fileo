@@ -10,6 +10,7 @@ from . import (app_globals as ag, low_bk, load_files,
     drag_drop as dd, check_update as upd,
 )
 from ..widgets import search_files as sf, workers, dup
+from ..widgets.cust_msgbox import show_message_box
 from .. import tug
 from ..widgets.header_field_editor import fieldEditor
 
@@ -54,25 +55,23 @@ def selected_dirs() -> list:
 def search_files():
     if "srchFiles" in ag.popups:
         return
-    ff = sf.srchFiles(ag.app)
-    ff.move(ag.app.width() - ff.width() - 40, 40)
+    ff = sf.srchFiles(ag.app.ui.main_pane)
+    ff.move(ag.app.ui.main_pane.width() - ff.width() - 222, 22)
     ff.show()
     ff.srch_pattern.setFocus()
 
-def set_menu_more(self):
-    self.ui.more.setIcon(tug.get_icon("more"))
-    ag.buttons.append((self.ui.more, "more"))
-    menu = QMenu(self)
-    ttls = tug.get_app_setting('FoldTitles', tug.qss_params['$FoldTitles'])
+def set_menu_more():
+    ag.app.ui.more.setIcon(tug.get_icon("more"))
+    ag.buttons[ag.app.ui.more.objectName()] = (ag.app.ui.more, "more")
+    menu = QMenu(ag.app)
+    ttls = tug.get_app_setting('FOLD_TITLES', tug.qss_params['$FoldTitles'])
     for i,item in enumerate(ttls):
-        act = QAction(item, self, checkable=True)
+        act = QAction(item.title(), ag.app, checkable=True)
         act.setChecked(True)
-        act.triggered.connect(
-            lambda state, it = i: ag.signals.hideSignal.emit(state, it)
-        )
+        act.triggered.connect(lambda state, it = i: ag.signals.hideSignal.emit(state, it))
         menu.addAction(act)
 
-    self.ui.more.setMenu(menu)
+    ag.app.ui.more.setMenu(menu)
 
 def single_shot():
     QTimer.singleShot(5 * 1000, checks)
@@ -108,6 +107,8 @@ def bk_setup():
     del_key.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Delete folder(s)"))
     act_pref = QShortcut(QKeySequence("Ctrl+,"), ag.app)
     act_pref.activated.connect(lambda: ag.signals.user_signal.emit("MainMenu Preferences"))
+    act_theme = QShortcut(QKeySequence("Ctrl+T"), ag.app)
+    act_theme.activated.connect(lambda: ag.signals.user_signal.emit("MainMenu Color Themes"))
     esc = QShortcut(QKeySequence(Qt.Key.Key_Escape), ag.app)
     esc.activated.connect(close_last_popup)
 
@@ -140,6 +141,11 @@ def show_main_menu():
     act_pref = QAction('Preferences', ag.app)
     act_pref.setShortcut(QKeySequence("Ctrl+,"))
     menu.addAction(act_pref)
+    act_theme = QAction('Color Themes', ag.app)
+    act_theme.setShortcut(QKeySequence("Ctrl+T"))
+    menu.addAction(act_theme)
+    act_font = QAction('Change font', ag.app)
+    menu.addAction(act_font)
     menu.addSeparator()
     menu.addAction('Check for updates')
     menu.addSeparator()
@@ -169,8 +175,9 @@ def set_field_menu():
     hdr = ag.file_list.header()
 
     menu = QMenu(ag.app)
-    field_list = tug.qss_params['$FileListFields']
-    for i,field,tt in zip(range(len(field_list)), field_list, tug.qss_params['$ToolTips']):
+    field_list = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
+    field_tips = ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])
+    for i,field,tt in zip(range(len(field_list)), field_list, field_tips):
         act = QAction(field, ag.app, checkable=True)
         if tt:
             act.setToolTip(tt)
@@ -210,7 +217,7 @@ def header_restore():
     hdr.sectionResized.connect(resized_column)
 
     ag.app.ui.field_menu.setIcon(tug.get_icon("more"))
-    ag.buttons.append((ag.app.ui.field_menu, "more"))
+    ag.buttons[ag.app.ui.field_menu.objectName()] = (ag.app.ui.field_menu, "more")
     set_field_menu()
     hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     hdr.customContextMenuRequested.connect(header_menu)
@@ -221,7 +228,8 @@ def header_menu(pos: QPoint):
     idx = hdr.logicalIndexAt(pos)
     if idx:
         me = QMenu()
-        me.addAction(f'Hide column "{tug.qss_params['$FileListFields'][idx]}"')
+        field = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])[idx]
+        me.addAction(f'Hide column "{field}"')
         if (idx in (3, 6, 8)) and ('fieldEditor' not in ag.popups):
             me.addAction('Edit title')
         pos = QPoint(pos.x(), hdr.height()+3)
@@ -256,7 +264,6 @@ def populate_all():
     hide_state = ag.get_db_setting("SHOW_HIDDEN", 0)
     ag.app.show_hidden.setChecked(hide_state)
     ag.app.show_hidden.setIcon(tug.get_icon("show_hide", hide_state))
-    ag.buttons.append((ag.app.show_hidden, "show_hide"))
 
     ag.file_data.set_edit_state(ag.get_db_setting("NOTE_EDIT_STATE", (False,)))
 
@@ -389,7 +396,7 @@ def check_duplicates(auto: bool=True):
         dup_dialog.asked_by_user(not auto)
         dup_dialog.show()
     elif not auto:
-        ag.show_message_box(
+        show_message_box(
             "No duplicates found",
             "No file duplicates found in DB"
         )

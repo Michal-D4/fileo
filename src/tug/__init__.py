@@ -10,25 +10,25 @@ from typing import Any, Optional
 from importlib import resources
 
 from PyQt6.QtCore import QSettings, QVariant
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QIcon, QPixmap, QFontDatabase
 
 from .. import qss
 
 FONT_SIZE = {
-    '8pt': ('8pt', '9pt', '8pt'),
-    '9pt': ('9pt', '10pt', '9pt'),
-    '10pt': ('10pt', '11pt', '9pt'),
-    '11pt': ('11pt', '12pt', '10pt'),
-    '12pt': ('12pt', '14pt', '11pt'),
-    '14pt': ('14pt', '16pt', '12pt'),
+    '8': ('8pt', '9pt', '8pt'),
+    '9': ('9pt', '10pt', '9pt'),
+    '10': ('10pt', '11pt', '9pt'),
+    '11': ('11pt', '12pt', '10pt'),
+    '12': ('12pt', '14pt', '11pt'),
+    '14': ('14pt', '16pt', '12pt'),
 }
 SIZE_RATIO = {
-    '8pt': 0.90,
-    '9pt': 0.95,
-    '10pt': 1.00,
-    '11pt': 1.05,
-    '12pt': 1.10,
-    '14pt': 1.15,
+    '8': 0.90,
+    '9': 0.95,
+    '10': 1.00,
+    '11': 1.05,
+    '12': 1.10,
+    '14': 1.15,
 }
 
 if sys.platform.startswith("win"):
@@ -106,6 +106,8 @@ def save_to_file(filename: str, msg: str):
         '\n'.join((f'Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
             f'File: {filename}',
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-", msg)))
+    from ..widgets.cust_msgbox import show_message_box
+    show_message_box("QSS saved", f'Log saved in file "{path.as_posix()}"')
 
 def save_app_setting(**kwargs):
     """
@@ -114,7 +116,6 @@ def save_app_setting(**kwargs):
     if not kwargs:
         return
     settings = QSettings(MAKER, APP_NAME)
-
     for key, value in kwargs.items():
         settings.setValue(key, QVariant(value))
 
@@ -131,7 +132,6 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         if theme_toml_file.exists():
             with open(theme_toml_file, "rb") as f:
                 themes = tomllib.load(f)
-                # logger.info(f'{themes=}')
 
     get_theme_list()
     logger.info(f'{theme_key=}')
@@ -146,7 +146,7 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     def read_file(name: str) -> str:
         res_file = theme_path / name
-        logger.info(f'{res_file=}')
+        logger.info(f'{name}, {theme_path.as_posix()}')
         if res_file.exists():
             with open(res_file, "r") as ft:
                 return ft.read()
@@ -215,9 +215,12 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     styles = read_file(theme.get('qss', files['qss']))
     icons_txt = read_file(theme.get('ico', files['ico']))
+    qss_params["$fontFamily"] = QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont).defaultFamily()
+    qss_params["$fontStyle"] = QFontDatabase.styles(qss_params["$fontFamily"])[0]
+    qss_params["$fontFamily"] = get_app_setting("FONT_FAMILY", qss_params["$fontFamily"])
     read_params()
-    font_size_key = get_app_setting('FONT_SIZE', '10pt')
-    qss_params['$normalSize'], qss_params['$bigSize'], qss_params['$menuSize'] = FONT_SIZE[font_size_key]
+    fnt_sz = get_app_setting('FONT_SIZE', '10')
+    qss_params['$normalSize'], qss_params['$bigSize'], qss_params['$menuSize'] = FONT_SIZE.get(fnt_sz, FONT_SIZE['10'])
 
     tr_icons = translate_qss(icons_txt)
     icons_res = tomllib.loads(tr_icons)
@@ -225,10 +228,13 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     tr_styles = translate_qss(styles)
 
-    qss_params['$FoldTitles'] = get_app_setting('FoldTitles', qss_params['$FoldTitles'].split(','))
+    ttls = get_app_setting('FOLD_TITLES', '')
+    qss_params['$FoldTitles'] = ttls if len(ttls) == 4 else ["Folders", "Tags", "File Extensions", "Authors"]
+    logger.info(f'{qss_params['$FoldTitles']=}')
     parse_field_names()
     qss_params['$ToolTips'] = qss_params['$ToolTips'].split(',')
     qss_params['$FieldTypes'] = qss_params['$FieldTypes'].split(',')
+    qss_params['$FieldFormats'] = qss_params['$FieldFormats'].split(',')
     xx = qss_params['$EditableFields'].split(',')
     qss_params['$EditableFields'] = dict((int(xx[i]),xx[i+1]) for i in range(0,8,2))
 
@@ -248,11 +254,14 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     return tr_styles[:start_dyn]
 
-def get_dyn_qss(key: str, idx: int=0) -> str|list:
-    qss = dyn_qss[key]
+def get_dyn_qss(keys: str|list) -> str:
+    kk = keys.split(',') if isinstance(keys, str) else keys
+    qss = []
+    for key in kk:
+        qss.extend(dyn_qss[key])
     if not qss:
-        raise Exception(f'Not defined "{key}" qss')
-    return dyn_qss[key][idx] if idx >= 0 else dyn_qss[key]
+        raise Exception(f'Not defined "{keys}" qss')
+    return ' '.join(qss)
 
 def collect_all_icons(icons_res: dict) -> dict:
     m_icons.clear()
@@ -263,6 +272,8 @@ def collect_all_icons(icons_res: dict) -> dict:
         'mult_hidden': ('mult_folder_hide',),
         'prev_folder': ('arrow_back',),
         'next_folder': ('arrow_forward',),
+        'prev_match': ('arrow_up',),
+        'next_match': ('arrow_down',),
         'history': ('history',),
         'search': ('search',),
         'match_case': ('match_case',),
