@@ -1,5 +1,6 @@
 from loguru import logger
 import apsw
+from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, unique
 import pickle
@@ -18,9 +19,8 @@ if TYPE_CHECKING:
     from ..widgets.file_data import fileDataHolder
     from ..widgets.filter_setup import FilterSetup
     from .history import History
-    from ..widgets.fold_container import foldGrip
 
-DATE_1970_1_1 = QDateTime(1970,1,1,0,0)
+ZERO_DATE = QDateTime(1970,1,1,0,0).toSecsSinceEpoch()
 
 def app_name() -> str:
     return "fileo"
@@ -29,7 +29,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.4.02'
+    return '1.4.04'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -39,11 +39,10 @@ ext_list: 'aBrowser' = None
 author_list: 'aBrowser' = None
 file_data: 'fileDataHolder' = None
 filter_dlg: 'FilterSetup' = None
-fold_grips: 'list[foldGrip]' = None
 popups = {}
 
-buttons = []
-note_buttons = []
+buttons = defaultdict(tuple)
+note_buttons = []     # buttons for each note
 history: 'History' = None
 recent_files = []
 recent_files_length = 20
@@ -65,7 +64,8 @@ class appMode(Enum):
     FILTER_SETUP = 3
     RECENT_FILES = 4
     FOUND_FILES = 5
-    FILE_BY_REF = 6
+    FOUND_IN_NOTES = 6
+    FILE_BY_REF = 7
 
     def __repr__(self) -> str:
         return f'{self.name}:{self.value}'
@@ -92,6 +92,9 @@ def set_mode(new_mode: appMode):
     elif disconnected:
         dir_list.selectionModel().selectionChanged.connect(filter_dlg.dir_selection_changed)
         disconnected = False
+
+    if mode is appMode.FOUND_IN_NOTES:
+        popups['srchInNotes'].close()
 
     mode = new_mode
     app.ui.app_mode.setText(mode.name)

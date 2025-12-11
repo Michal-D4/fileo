@@ -6,6 +6,7 @@ from pathlib import Path
 from PyQt6.QtCore import pyqtSignal, QObject, pyqtSlot
 
 from . import app_globals as ag
+from .. import tug
 
 @dataclass(slots=True)
 class PathDir():
@@ -39,6 +40,7 @@ class loadFiles(QObject):
         self.paths: dict[PathDir] = {}
         self.ext_inserted = False
         self.files = None
+        self.row_rest = [ag.ZERO_DATE,] * 4
 
         self.conn = apsw.Connection(ag.db.path)
         self.init_path()
@@ -58,6 +60,9 @@ class loadFiles(QObject):
         only try to use
         """
         self.files = files
+        pub_type = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])[8]
+        if pub_type != 'date':
+            self.row_rest[3] = '' if pub_type == 'str' else 0
 
     def load_to_dir(self, dir_id):
         def drop_file():
@@ -137,10 +142,12 @@ class loadFiles(QObject):
             return file_id[0] if file_id else 0
 
         def file_insert() -> int:
-            INSERT_FILE = ('insert into files (filename, extid, path, added, how_added) '
-                'values (:file, :ext_id, :path, :added, :how);')
-            self.conn.cursor().execute(INSERT_FILE,
-                {'file': filepath.name, 'ext_id': ext_id, 'path': path_id, 'added': add_time, 'how': source}
+            sql = (
+                'insert into files (extid, path, filename, added, how_added, '
+                'modified, opened, created, published) values (?,?,?,?,?,?,?,?,?);'
+            )
+            self.conn.cursor().execute(sql,
+                (ext_id, path_id, filepath.name, add_time, source, *self.row_rest)
             )
             return self.conn.last_insert_rowid()
 

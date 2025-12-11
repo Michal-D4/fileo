@@ -3,9 +3,10 @@ import markdown
 from datetime import datetime
 from pathlib import Path
 import re
+from enum import Enum, unique
 
-from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint
-from PyQt6.QtGui import QDesktopServices, QResizeEvent, QAction, QKeySequence
+from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint, QRegularExpression
+from PyQt6.QtGui import QDesktopServices, QResizeEvent, QAction, QKeySequence, QTextDocument, QTextCursor, QFocusEvent
 from PyQt6.QtWidgets import QWidget, QApplication, QMenu
 
 from ..core import app_globals as ag, db_ut
@@ -14,8 +15,16 @@ from .. import tug
 
 TIME_FORMAT = "%Y-%m-%d %H:%M"
 
+@unique
+class Direction(Enum):
+    Next = 1
+    Prev = 2
+
 
 class fileNote(QWidget):
+    srch_pattern = ''
+    srch_flag: QTextDocument.FindFlag = QTextDocument.FindFlag(0)
+    current_note: 'fileNote' = None
 
     def __init__(self,
                  file_id: int = 0,
@@ -26,7 +35,7 @@ class fileNote(QWidget):
         super().__init__(parent)
 
         self.file_id = int(file_id)
-        self.id = int(note_id)
+        self.note_id = int(note_id)
 
         self.modified = datetime.fromtimestamp(modified)
         self.created = datetime.fromtimestamp(created)
@@ -45,16 +54,46 @@ class fileNote(QWidget):
         self.ui.textBrowser.setOpenLinks(False)
         self.ui.textBrowser.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        self.ui.collapse.clicked.connect(self.toggle_collapse)
+        self.ui.collapse.toggled.connect(self.toggle_collapse)
         self.ui.edit.clicked.connect(self.edit_note)
         self.ui.remove.clicked.connect(self.remove_note)
         self.ui.textBrowser.anchorClicked.connect(self.ref_clicked)
+        self.ui.textBrowser.focusInEvent = self.browser_get_focus
 
         self.set_collapse_icon()
 
         self.ui.textBrowser.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.textBrowser.customContextMenuRequested.connect(self.context_menu)
         self.resizeEvent = self.note_resize
+
+    @classmethod
+    def set_current_note(cls, note: 'fileNote'):
+        cls.current_note = note
+
+    def browser_get_focus(self, a0: QFocusEvent):
+        if a0.reason() is Qt.FocusReason.MouseFocusReason:
+            self.set_current_note(self)
+            pos = self.ui.textBrowser.cursor().pos()
+            self.ui.textBrowser.cursorForPosition(self.ui.textBrowser.mapFromGlobal(pos))
+        return super().focusInEvent(a0)
+
+    @classmethod
+    def set_search_options(cls):
+        if ag.mode is ag.appMode.FOUND_IN_NOTES:
+            srch_obj = ag.popups.get('srchInNotes', None)
+            srch_opt: dict = srch_obj.srch_params()
+            txt = srch_opt.get('txt', '')
+
+            if srch_opt.get('rex', 0):
+                cls.srch_pattern = QRegularExpression(txt)
+            else:
+                cls.srch_pattern = txt
+
+            cls.srch_flag = QTextDocument.FindFlag(0)
+            if srch_opt.get('whole_word', 0):
+                cls.srch_flag = QTextDocument.FindFlag.FindWholeWords
+            if srch_opt.get('case', 0):
+                cls.srch_flag = cls.srch_flag | QTextDocument.FindFlag.FindCaseSensitively
 
     def add_buttons(self):
         ag.note_buttons.append((self.ui.edit, "toEdit"))
@@ -153,7 +192,7 @@ class fileNote(QWidget):
                 file_id = self.ui.textBrowser.anchorAt(pos)[8:]
                 ag.signals.user_signal.emit(f'Open file by path\\{db_ut.get_file_path(file_id)}')
 
-    def set_text(self, note: str):
+    def set_text(self, note: str, plain: bool):
         def set_note_title():
             # find first not empty line
             for pp in note.splitlines():
@@ -165,18 +204,37 @@ class fileNote(QWidget):
             wth = int(tug.qss_params.get('$note_title_width', 40))
             self.ui.note_title.setText(txt[:wth])
 
+        def except_image(txt) -> str:
+            parts = []
+            pos = 0
+            while 1:
+                pp = txt.find('<img src', pos)
+                if pp == -1:
+                    parts.append(txt[pos:].replace('<', '&lt;').replace('>', '&gt;'))
+                    break
+                parts.append(txt[pos:pp].replace('<', '&lt;').replace('>', '&gt;'))
+                pos = txt.find('/>', pp)
+                pos = pos+2 if pos > pp else len(txt)
+                parts.append(txt[pp:pos])
+            return ''.join(parts)
+
         def replace_lt_gt() -> str:
             parts = []
             repl = True
             for pp in note.split('`'):
                 if repl:
                     if pp.rfind('</') == -1:
-                        pp = pp.replace('<', '&lt;').replace('>', '&gt;')
+                        pp = except_image(pp)
                 parts.append(pp)
                 repl = not repl
             return f'\n{'`'.join(parts) if len(parts) > 1 else parts[0]}'
 
-        self.text = replace_lt_gt()
+        if plain:
+            self.text = note
+            self.ui.textBrowser.setPlainText(note)
+        else:
+            self.text = replace_lt_gt()
+            self.set_browser_text()
 
         set_note_title()
 
@@ -200,19 +258,37 @@ class fileNote(QWidget):
 
         txt = code_block_ally(self.text)
         txt = markdown.markdown(txt[1:])
-        self.ui.textBrowser.setHtml(' '.join(
-            (tug.get_dyn_qss("link_style"), txt)
-        ))
+        self.ui.textBrowser.setHtml(' '.join((tug.get_dyn_qss("link_style"), txt)))
+
+    def find_pattern(self, direction: Direction = Direction.Next) -> int:
+        flag = self.srch_flag
+        if direction is Direction.Prev:
+            flag |= QTextDocument.FindFlag.FindBackward
+
+        curs = self.ui.textBrowser.textCursor()
+        doc = self.ui.textBrowser.document()
+
+        curs1: QTextCursor = doc.find(self.srch_pattern, curs, flag)
+        self.ui.textBrowser.setTextCursor(curs if curs1.position() == -1 else curs1)
+        return curs1.position()
+
+    def cursor_location(self) -> QPoint:
+        return self.ui.textBrowser.cursorRect().topLeft()
+
+    def set_cursor_position(self, pos: QTextCursor.MoveOperation=QTextCursor.MoveOperation.End):
+        cursor = self.ui.textBrowser.textCursor()
+        cursor.movePosition(pos)
+        self.ui.textBrowser.setTextCursor(cursor)
 
     def set_height_by_text(self):
         if self.ui.collapse.isChecked():
             return
-        self.ui.textBrowser.document().setTextWidth(self.ui.textBrowser.width())
+        self.ui.textBrowser.document().setTextWidth(ag.file_data.width())
         size = self.ui.textBrowser.document().size().toSize()
         self.visible_height = size.height() + self.ui.note_header.height()
 
     def get_note_id(self) -> int:
-        return self.id
+        return self.note_id
 
     def get_file_id(self) -> int:
         return self.file_id
@@ -220,20 +296,18 @@ class fileNote(QWidget):
     def sizeHint(self) -> QSize:
         return QSize(0, self.visible_height)
 
-    @pyqtSlot()
-    def toggle_collapse(self):
-        self.view_note()
+    @pyqtSlot(bool)
+    def toggle_collapse(self, state: bool):
+        self.hide_note(state)    # True ==> collapsed
 
-    def view_note(self):
-        if self.ui.collapse.isChecked():
+    def hide_note(self, state: bool):
+        if state:
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.note_header.height()
-            self.ui.textBrowser.hide()
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
-            self.set_browser_text()
-            self.ui.textBrowser.show()
+        self.ui.textBrowser.setVisible(not state)
         self.set_collapse_icon()
 
     @pyqtSlot()
@@ -241,12 +315,11 @@ class fileNote(QWidget):
         if self.ui.collapse.isChecked():
             return
         self.ui.collapse.setChecked(True)
-        self.view_note()
+        self.hide_note(self.ui.collapse.isChecked())
 
     def set_collapse_icon(self):
         self.ui.collapse.setIcon(
-            tug.get_icon("right3") if self.ui.collapse.isChecked()
-            else tug.get_icon("down3")
+            tug.get_icon("right3") if self.ui.collapse.isChecked() else tug.get_icon("down3")
         )
 
     @pyqtSlot()

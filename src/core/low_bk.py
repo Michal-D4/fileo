@@ -1,9 +1,8 @@
-from loguru import logger
+# from loguru import logger
 import json
 from pathlib import Path
 from datetime import datetime
 import pickle
-import re
 
 from PyQt6.QtCore import (Qt, QSize, QModelIndex,
     pyqtSlot, QUrl, QFile, QTextStream,
@@ -22,6 +21,8 @@ from .file_model import fileModel, fileProxyModel
 from .dir_model import dirModel, dirItem
 from ..widgets import about, preferences
 from ..widgets.open_db import OpenDB
+from ..widgets.font_choosing import fontChooser
+from ..widgets.theme_choosing import themeChooser
 from ..widgets.scan_disk_for_files import diskScanner
 from .. import tug
 from .edit_delegates import folderEditDelegate
@@ -49,7 +50,6 @@ def set_user_action_handlers():
         "Files Copy file name(s)": copy_file_name,
         "Files Copy full file name(s)": copy_full_file_name,
         "Files Open file": open_current_file,
-        "New file created": new_file_created,
         "Open file by path": open_with_url,
         "double click file": double_click_file,
         "Files Remove file(s) from folder": remove_files,
@@ -58,6 +58,7 @@ def set_user_action_handlers():
         "Files Rename file": rename_file,
         "Files Export selected files": export_files,
         "Files Create new file": create_file,
+        "New file created": new_file_created,
         "filter_changed": filtered_files,
         "MainMenu New window": new_instance,
         "MainMenu Create/Open DB": create_open_db,
@@ -66,6 +67,8 @@ def set_user_action_handlers():
         "MainMenu About": show_about,
         "MainMenu Report files with same names": report_same_names,
         "MainMenu Preferences": set_preferences,
+        "MainMenu Color Themes": set_color_themes,
+        "MainMenu Change font": change_font,
         "MainMenu Check for updates": upd.check4update,
         "find_files_by_name": find_files_by_name,
         "srch_files_by_note": srch_files_by_note,
@@ -101,6 +104,23 @@ def set_user_action_handlers():
 
     return execute_action
 
+def set_color_themes():
+    if "themeChooser" in ag.popups:
+        return
+    themes = themeChooser(ag.app)
+    pos: QPoint = ag.app.ui.toolBar.mapToGlobal(ag.app.ui.btnSetup.pos())
+    themes.move(ag.app.mapFromGlobal(QPoint(pos.x()+85, pos.y()+45)))
+    themes.show()
+    themes.theme_list.setFocus()
+
+def change_font():
+    if "fontChooser" in ag.popups:
+        return
+    fonts = fontChooser(ag.app)
+    pos: QPoint = ag.app.ui.toolBar.mapToGlobal(ag.app.ui.btnSetup.pos())
+    fonts.move(ag.app.mapFromGlobal(QPoint(pos.x()+65, pos.y()+65)))
+    fonts.show()
+
 def header_changed(val: str):
     ag.file_data.reset_file_info(val)
     model: fileProxyModel = ag.file_list.model()
@@ -109,8 +129,6 @@ def header_changed(val: str):
         ag.filter_dlg.set_ed_fields(val[0])
 
 def create_file():
-    if not ag.dir_list.currentIndex().isValid():
-        return
     model:  fileProxyModel = ag.file_list.model()
     smodel: fileModel = model.sourceModel()
     idx = ag.file_list.currentIndex()
@@ -120,7 +138,6 @@ def create_file():
         sidx = smodel.index(row, 0)
         idx = model.mapFromSource(sidx)
         ag.file_list.edit(idx)
-        ag.file_list.setCurrentIndex(idx)
 
 def copy_trees():
     ss = '¹²'
@@ -323,54 +340,48 @@ def create_history_menu() -> QMenu:
     return menu
 
 def show_history_menu(pos: QPoint, btn: QToolButton):
-    btn.menu().exec(btn.mapToGlobal(
-        QPoint(0, btn.y() + btn.height()))
-    )
+    btn.menu().exec(btn.mapToGlobal(QPoint(0, btn.y() + btn.height())))
 
-def srch_files_by_note(param: str):
-    row_cnt = srch_files_common(param, db_ut.get_all_notes())
+def srch_files_by_note():
+    row_cnt = srch_files_common(ag.appMode.FOUND_IN_NOTES, db_ut.get_all_notes())
+    searching = ag.popups['srchInNotes'].search_text()
     if row_cnt:
-        ag.app.ui.files_heading.setText(f'Found files, text in notes "{param[:-3]}"')
+        ag.app.ui.files_heading.setText(f'Found files, text in notes "{searching}"')
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search in notes',
-            f'Text "{param[:-3]}" not found in notes!',
+            f'Text "{searching}" not found in notes!',
             icon=QStyle.StandardPixmap.SP_MessageBoxWarning)
 
-def srch_files_common(param: str, search_in) -> int:
-    srch, key = param[:-3],param[-3:]
-    def srch_prepare():
-        p = fr'\b{srch}\b' if key[2] == '1' else srch    # match whole word
-        rex = re.compile(p) if key[1] == '1' else re.compile(p, re.IGNORECASE)
-        q = srch.lower()
-        return {
-            '000': lambda x: q in x.lower(),  # ignore case
-            '010': lambda x: srch in x,       # case sensitive
-        }.get(key, lambda x: rex.search(x))   # lambda x: rex.search(x); defoult: key = 'x11'
-
-    srch_exp = srch_prepare()
-    last_id = 0
+def srch_files_common(mode: ag.appMode, search_in) -> int:
+    search_expression = ag.popups[{'FOUND_FILES': 'srchFiles', 'FOUND_IN_NOTES': 'srchInNotes'}[mode.name]].srch_prepare()
 
     db_ut.clear_temp()
-    for fid, srch_in in search_in:
-        if fid == last_id:
+    last_id = 0
+    found_ids = []
+    for file_id, in_text in search_in:
+        if file_id == last_id:
             continue
-        if srch_exp(srch_in):
-            db_ut.save_to_temp('file_srch', fid)
-            last_id = fid
+        if search_expression(in_text):
+            found_ids.append((file_id,))
+            last_id = file_id
 
-    ag.set_mode(ag.appMode.FOUND_FILES)
-    # logger.info('>>> before show_files()')
+    db_ut.save_to_temp(mode.name, found_ids)
+    if len(found_ids) > 0:
+        ag.set_mode(mode)
+    if ag.mode is ag.appMode.FOUND_IN_NOTES:
+        ag.file_data.set_notes_search_options()
     return show_files(db_ut.get_found_files(), 0, False)
 
-def find_files_by_name(param: str):
-    row_cnt = srch_files_common(param, db_ut.get_file_names())
+def find_files_by_name():
+    row_cnt = srch_files_common(ag.appMode.FOUND_FILES, db_ut.get_file_names())
+    searching = ag.popups['srchFiles'].search_text()
     if row_cnt:
-        ag.app.ui.files_heading.setText(f'Found files "{param[:-3]}"')
+        ag.app.ui.files_heading.setText(f'Found files "{searching}"')
         ag.file_list.setFocus()
     else:
         ag.show_message_box('Search files',
-            f'File "{param[:-3]}" not found!',
+            f'File "{searching}" not found!',
             icon=QStyle.StandardPixmap.SP_MessageBoxWarning)
 
 def set_preferences():
@@ -593,7 +604,6 @@ def set_current_file(file_id: int):
 
     idx = model.get_index_by_id(file_id)
     if idx.isValid():
-        # logger.info('>>> before file_list.setCurrentIndex -> idx')
         ag.file_list.setCurrentIndex(idx)
         ag.file_list.scrollTo(idx)
     else:
@@ -651,10 +661,8 @@ def open_current_file():
     if idx.isValid():
         open_file_by_model_index(idx)
 
-def new_file_created(id: str):
-    ag.file_list.clearSelection()
-    # logger.info('>>> before set_current_file()')
-    set_current_file(int(id))
+def new_file_created(file_id: str):
+    set_current_file(int(file_id))
     open_current_file()
     file_notes_show(ag.file_list.currentIndex())
 
@@ -1034,8 +1042,10 @@ def tag_selection() -> list:
 def tag_changed(new_tag: str):
     if new_tag == ag.tag_list.get_current():   # edit finished, but tags not changed
         return
-    db_ut.update_tag(ag.tag_list.current_id(), new_tag)
+    cur_id = ag.tag_list.current_id()
+    db_ut.update_tag(cur_id, new_tag)
     populate_tag_list()
+    ag.tag_list.set_selection((cur_id,))
     ag.tag_list.list_changed.emit()
 
 def delete_tags(tags: str):

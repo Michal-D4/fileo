@@ -232,7 +232,6 @@ class OpenDB(QWidget, Ui_openDB):
 
         tug.save_app_setting(DB_List=db_list)
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         ag.popups.pop("OpenDB")
-        return super().close()
+        return super().closeEvent(a0)

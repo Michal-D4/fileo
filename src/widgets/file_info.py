@@ -18,14 +18,14 @@ class fileInfo(QWidget):
         super().__init__(parent)
 
         self.file_id = 0
-        self.field_types = tug.qss_params['$FieldTypes']
+        self.field_types = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
         self.set_pub_widget()
         self.set_rating_widget()
         self.set_pages_widget()
         self.form_setup()
         self.rows_bottom = self.calc_rows_bottom()
 
-        self.setStyleSheet(' '.join((tug.get_dyn_qss("line_edit"), tug.get_dyn_qss("date_time_edit"))))
+        self.setStyleSheet(tug.get_dyn_qss("line_edit,date_time_edit"))
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.copy_data)
 
@@ -33,7 +33,7 @@ class fileInfo(QWidget):
         if self.field_types[8] == 'date':
             self.pub_date = QDateTimeEdit()
             if val:
-                self.pub_date.setDateTime(val)
+                self.pub_date.setDateTime(QDateTime.fromSecsSinceEpoch(val))
             self.pub_date.dateTimeChanged.connect(self.date_field_changed)
         else:
             self.pub_date = QLineEdit()
@@ -49,7 +49,7 @@ class fileInfo(QWidget):
         if self.field_types[3] == 'date':
             self.rating = QDateTimeEdit()
             if val:
-                self.rating.setDateTime(val)
+                self.rating.setDateTime(QDateTime.fromSecsSinceEpoch(val))
             self.rating.dateTimeChanged.connect(self.date_field_changed)
         else:
             self.rating = QLineEdit()
@@ -65,7 +65,7 @@ class fileInfo(QWidget):
         if self.field_types[6] == 'date':
             self.pages = QDateTimeEdit()
             if val:
-                self.pages.setDateTime(val)
+                self.pages.setDateTime(QDateTime.fromSecsSinceEpoch(val))
             self.pages.dateTimeChanged.connect(self.date_field_changed)
         else:
             self.pages = QLineEdit()
@@ -103,7 +103,7 @@ class fileInfo(QWidget):
         self.pages.selectAll()
 
     def copy_data(self, pos: QPoint):
-        formats = tug.qss_params['$FieldFormats']
+        formats = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
         def copy_row(i: int) -> str:
             if i == 6:
                 fld = self.pub_date
@@ -163,6 +163,7 @@ class fileInfo(QWidget):
 
         def reset_editable_field():
             row_type = self.field_types[idx]
+            ttl = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])[idx]
             if row_type != fld_type:
                 self.field_types[idx] = fld_type
                 self.form_layout.removeRow(row)
@@ -170,7 +171,7 @@ class fileInfo(QWidget):
                  8: replace_row8,
                  10: replace_row10,
                 }[row]()
-            elif title != tug.qss_params['$FileListFields'][idx]:
+            elif title != ttl:
                 self.form_layout.itemAt(row, QFormLayout.ItemRole.LabelRole).widget().setText(title)
 
         def find_row():
@@ -180,7 +181,7 @@ class fileInfo(QWidget):
             return -1
 
         ii, title, fld_type, *_ = changes.split('ё')    # ё most impossible symbol in title & toolTip
-        val = {'str': '', 'int': '0', 'date': ag.DATE_1970_1_1}[fld_type]
+        val = {'str': '', 'int': '0', 'date': ag.ZERO_DATE}[fld_type]
         idx = int(ii)
         row = find_row()
         reset_editable_field()
@@ -215,9 +216,10 @@ class fileInfo(QWidget):
     def form_setup(self):
         self.form_layout = QFormLayout()
         self.form_layout.setContentsMargins(9, 9, 9, 9)
+        titles = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
 
         for i,j in self.row_mapping:
-            txt = f"{'Path' if j == -1 else tug.qss_params['$FileListFields'][j]}:"
+            txt = f"{'Path' if j == -1 else titles[j]}:"
             if i == 6:
                 self.form_layout.addRow(txt, self.prepare_row_6(j))
             elif i == 8:
@@ -249,17 +251,18 @@ class fileInfo(QWidget):
         return rows
 
     def populate_fields(self, file_id: int):
-        formats = tug.qss_params['$FieldFormats']
+        formats = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
         def time_value(val: int) -> QDateTime:
             a = QDateTime()
-            a.setSecsSinceEpoch(val) if isinstance(val, int) else ag.DATE_1970_1_1
+            a.setSecsSinceEpoch(val if isinstance(val, int) else ag.ZERO_DATE)
             return a
 
         fields = db_ut.get_file_info(file_id)
+        zero_date = QDateTime.fromSecsSinceEpoch(ag.ZERO_DATE)
         if not fields:
-            self.pub_date.setDateTime(ag.DATE_1970_1_1) if isinstance(self.pub_date, QDateTimeEdit) else self.pub_date.setText('')
-            self.rating.setDateTime(ag.DATE_1970_1_1) if isinstance(self.rating, QDateTimeEdit) else self.rating.setText('')
-            self.pages.setDateTime(ag.DATE_1970_1_1) if isinstance(self.pages, QDateTimeEdit) else self.pages.setText('')
+            self.pub_date.setDateTime(zero_date) if isinstance(self.pub_date, QDateTimeEdit) else self.pub_date.setText('')
+            self.rating.setDateTime(zero_date) if isinstance(self.rating, QDateTimeEdit) else self.rating.setText('')
+            self.pages.setDateTime(zero_date) if isinstance(self.pages, QDateTimeEdit) else self.pages.setText('')
             for i in range(self.form_layout.rowCount()):
                 if i in (6,8,10):
                     continue

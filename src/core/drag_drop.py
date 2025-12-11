@@ -232,9 +232,7 @@ def update_file_list(target: QModelIndex):
 
 def drop_uri_list(data: QMimeData, target: int) -> bool:
     load = load_files.loadFiles()
-    load.set_files_iterator(
-        (it.toLocalFile() for it in data.urls())
-    )
+    load.set_files_iterator((it.toLocalFile() for it in data.urls()))
     load.load_to_dir(target)
 
 def drop_files(data: QMimeData, act: Qt.DropAction, target: QModelIndex) -> bool:

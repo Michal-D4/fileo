@@ -30,12 +30,12 @@ class CustomGrip(QWidget):
         self.edge: Qt.Edge = edge
         self.wi = Grips()
 
-        self.resize_parent = {
+        self.move_edge = {
             Qt.Edge.TopEdge: self.set_top,
             Qt.Edge.BottomEdge: self.set_bottom,
             Qt.Edge.LeftEdge: self.set_left,
             Qt.Edge.RightEdge: self.set_right
-        }[edge]()  # move_top, move_bottom, move_left, move_right
+        }[edge]()  # move_top, move_bottom, move_left, move_right methods
 
     def set_top(self):
         self.wi.top(self)
@@ -90,7 +90,7 @@ class CustomGrip(QWidget):
         return move_right
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:
-        self.resize_parent(e.globalPosition().toPoint())
+        self.move_edge(e.globalPosition().toPoint())
         return super().mouseMoveEvent(e)
 
     def resizeEvent(self, e):

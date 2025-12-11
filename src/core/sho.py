@@ -76,14 +76,6 @@ class shoWindow(QMainWindow):
         if saved_v == cur_v:
             return
 
-        def ver1402():
-            if saved_v < 1402:
-                ttls = tug.get_app_setting('FoldTitles', '')
-                if isinstance(ttls, str):
-                    tug.save_app_setting(FoldTitles=ttls.split(','))
-
-        ver1402()
-
         ag.save_db_settings(AppVersion=cur_v)
 
     def restore_settings(self, db_name: str):
@@ -114,7 +106,6 @@ class shoWindow(QMainWindow):
         logger.info(f'open DB: {Path(path).name}')
         if db_ut.create_connection(path):
             self.ui.db_name.setText(Path(path).name)
-            self.get_header_data()
             self.init_filter_setup()
             self.set_file_data_holder()
             return True
@@ -122,6 +113,8 @@ class shoWindow(QMainWindow):
         return False
 
     def set_file_data_holder(self):
+        if "srchInNotes" in ag.popups and ag.mode is not ag.appMode.FOUND_IN_NOTES:
+            ag.popups["srchInNotes"].close()
         # delete if already exist
         layout = self.ui.noteHolder.layout()
         item = layout.takeAt(0)
@@ -136,21 +129,15 @@ class shoWindow(QMainWindow):
         self.restore_note_height()
         ag.file_data.set_tag_author_data()
 
-    def get_header_data(self):
-        tug.qss_params['$FileListFields'] = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
-        tug.qss_params['$FieldTypes'] = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
-        tug.qss_params['$ToolTips'] = ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])
-        tug.qss_params['$FieldFormats'] = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
-
     def restore_container(self):
-        bk_ut.set_menu_more(self)
+        bk_ut.set_menu_more()
 
         state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
         if state:
             self.container.restore_state(state[1:])
             menu = self.ui.more.menu()
-            for i, ff in enumerate(ag.fold_grips):
-                menu.actions()[i].setChecked(not ff.is_hidden)
+            for i, visible in enumerate(self.container.visible_state()):
+                menu.actions()[i].setChecked(visible)
             self.ui.left_pane.setMinimumWidth(int(state[0]))
 
     def restore_mode(self):
@@ -212,8 +199,8 @@ class shoWindow(QMainWindow):
         btn.setStyleSheet("border:none; margin:0px; padding:0px;")
         btn.setAutoRaise(True)
         btn.setIcon(tug.get_icon(icon_name))
-        ag.buttons.append((btn, icon_name))
         btn.setObjectName(btn_name)
+        ag.buttons[btn_name] = (btn, icon_name)
         self.container.add_widget(btn, 0)
         btn.setToolTip(tool_tip)
         return btn
@@ -255,7 +242,7 @@ class shoWindow(QMainWindow):
         self.ui.noteHolder.layout().setContentsMargins(0,0,0,0)
 
         self.ui.btn_search.setIcon(tug.get_icon("search"))
-        ag.buttons.append((self.ui.btn_search, "search"))
+        ag.buttons[self.ui.btn_search.objectName()] = (self.ui.btn_search, "search")
         self.ui.btn_search.clicked.connect(bk_ut.search_files)
         ctrl_f = QShortcut(QKeySequence("Ctrl+F"), ag.file_list)
         ctrl_f.setContext(Qt.ShortcutContext.WidgetShortcut)
@@ -263,7 +250,7 @@ class shoWindow(QMainWindow):
         self.ui.btn_search.setDisabled(True)
 
         self.ui.recent_files.setIcon(tug.get_icon("history"))
-        ag.buttons.append((self.ui.recent_files, "history"))
+        ag.buttons[self.ui.recent_files.objectName()] = (self.ui.recent_files, "history")
         self.ui.recent_files.clicked.connect(low_bk.show_recent_files)
         self.ui.recent_files.setShortcut(QKeySequence("Ctrl+H"))
 
@@ -272,23 +259,22 @@ class shoWindow(QMainWindow):
         ctrl_n.activated.connect(lambda: ag.signals.user_signal.emit("Files Create new file"))
 
     def set_button_icons(self):
-        m_icons = [
-            "btnDir", "btnFilter", "btnFilterSetup",
-            "btnToggleBar", "btnSetup", 'minimize', 'maximize', 'close'
-        ]
+        m_icons = ("btnDir", "btnFilter", "btnFilterSetup",
+            "btnToggleBar", "btnSetup", "minimize", "maximize", "close",
+        )
         self.ui.toolbar_btns.setId(self.ui.btnDir, ag.appMode.DIR.value)
         self.ui.toolbar_btns.setId(self.ui.btnFilter, ag.appMode.FILTER.value)
         self.ui.toolbar_btns.setId(self.ui.btnFilterSetup, ag.appMode.FILTER_SETUP.value)
         for icon_name in m_icons:
             btn: QToolButton  = getattr(self.ui, icon_name)
             btn.setIcon(tug.get_icon(icon_name, int(btn.isChecked())))
-            ag.buttons.append((btn, icon_name))
+            ag.buttons[icon_name] = (btn, icon_name)
         self.ui.btnFilter.setEnabled(False)
         self.ui.btnFilterSetup.setEnabled(False)
 
     def change_menu_more(self, new_ttl: str):
         menu = self.ui.more.menu()
-        menu.actions()[-1].setText(new_ttl)
+        menu.actions()[-1].setText(new_ttl.title())
 
     def connect_slots(self):
         ag.app = self
@@ -483,11 +469,12 @@ class shoWindow(QMainWindow):
             "maximizedWindow": int(self.isMaximized()),
             "MainWindowGeometry": self.normalGeometry(),
             "container": self.container.save_state(),
-            "noteHolderHeight": ag.file_data.norm_height,
             "DB_NAME": ag.db.path,
         }
         if ag.filter_dlg and ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
+        if ag.file_data:
+            settings['noteHolderHeight'] = ag.file_data.norm_height
 
         if ag.db.conn:
             low_bk.save_db_list_at_close()

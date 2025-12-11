@@ -1,3 +1,5 @@
+# from loguru import logger
+
 from PyQt6.QtCore import Qt, QUrl, QRect, pyqtSignal, pyqtSlot, QPoint
 from PyQt6.QtGui import (QGuiApplication, QKeySequence, QShortcut,
     QTextCursor,
@@ -26,7 +28,7 @@ class editTag(QWidget):
         self.setLayout(layout)
 
         self.adjustSize()
-        self.editor.editingFinished.connect(self.finish_edit)
+        self.editor.returnPressed.connect(self.finish_edit)
         ag.popups["editTag"] = self
 
     @pyqtSlot()
@@ -36,12 +38,10 @@ class editTag(QWidget):
             self.parent().edit_item.emit(txt)
         self.close()
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         if "editTag" in ag.popups:
             ag.popups.pop("editTag")
-        self.parent().browser.setFocus()
-        return super().close()
+        return super().closeEvent(a0)
 
 class aBrowser(QWidget):
     edit_item = pyqtSignal(str)

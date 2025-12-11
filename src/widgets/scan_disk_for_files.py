@@ -69,7 +69,6 @@ class diskScanner(QWidget):
                 e.accept()
             self.start_pos = pos_
 
-    @pyqtSlot()
-    def close(self) -> bool:
+    def closeEvent(self, a0):
         ag.popups.pop("diskScanner")
-        return super().close()
+        return super().closeEvent(a0)

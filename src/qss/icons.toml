@@ -68,6 +68,18 @@ ico = """\
 """
 colors = [" fill=\"$svgFill\"", "disabled| fill=\"$svgDisable\""]
 
+[arrow_up]
+ico = """\
+<svg viewBox="0 0 512 512"|><path d="M288 32 110 210l45 45 101-101v325h64V154l101 101 45-45z"/></svg>\
+"""
+colors = [" fill=\"$svgFill\"", "disabled| fill=\"$svgDisable\""]
+
+[arrow_down]
+ico = """\
+<svg viewBox="0 0 512 512"|><path d="m288 480 178-178-45-45-101 101V33h-64v325L155 257l-45 45z"/></svg>\
+"""
+colors = [" fill=\"$svgFill\"", "disabled| fill=\"$svgDisable\""]
+
 [history]
 ico = """\
 <svg viewBox="0 0 24 24"| fill="none"><path d="M3.016 10H7m-3.984 0\

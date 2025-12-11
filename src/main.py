@@ -25,14 +25,11 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
             ag.dir_list.update()
 
     def set_style():
-        styles = tug.prepare_styles(theme_key, to_save=log_qss)
+        styles = tug.prepare_styles(theme_key, to_save=False)
         app.setStyleSheet(styles)
         set_app_icon(app)
 
-    log_qss = tug.get_app_setting("SAVE_THEME", False)
-    _, theme_key = tug.get_app_setting(
-        "Current Theme", ("Default Theme", "Default_Theme")
-    )
+    theme_key = tug.get_app_setting("CurrentTheme", "Default_Theme")
 
     try:
         set_style()
