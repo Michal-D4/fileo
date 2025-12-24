@@ -174,16 +174,15 @@ class FilterSetup(QWidget):
 
     def set_publish_field(self):
         self.adv.date_type.clear()
-        db_flds = {1: "added", 2: "opened", 5: "modified", 8: "published", 9: "note_date"}
+        db_flds = {1: "added", 2: "opened", 5: "modified", 9: "note_date"}
         fields = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
-        types = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
-        date_ids = (1, 2, 5, 8, 9,) if types[8] == "date" else (1, 2, 5, 9,)
-        for i in date_ids:
-            self.adv.date_type.addItem(fields[i], userData=db_flds[i])
+        for key,val in db_flds.items():
+            self.adv.date_type.addItem(fields[key], userData=val)
         self.adv.date_type.setCurrentIndex(ag.get_db_setting("DATE_TYPE", 0))
 
     def init_how_added(self):
-        items = ("", "scan file system", "drag from file system", "import file list",
+        items = ("",     # this blank value is always ignored
+                 "scan file system", "drag from file system", "import file list",
                  "drag from another instance    ", "created here")
         for it in ag.fileSource:
             self.adv.how_added.addItem(items[it.value], userData=it.value)

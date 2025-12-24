@@ -339,11 +339,11 @@ Theme selector:
   > python -m fileo
   ```
 
-  The python package `md2fileo`  was removed from PyPI because
+  The python package `md2fileo`  was removed from PyPI because 
 
   * some problems with packaging necessary data files,
   * the application is not a library or package that can be used in other applications, so there is no point in distributing it as a package.
 
-
+  
 
 [^1]:with one exception, the file may be duplicated, i.e. there may be more than one file with the same content.

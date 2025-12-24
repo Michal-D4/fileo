@@ -1,3 +1,4 @@
+from loguru import logger
 from datetime import datetime
 import hashlib
 from pathlib import Path
@@ -23,7 +24,12 @@ def sha256sum(filename: Path) -> str:
         return ''
 
 def update0_files():
+    '''
+    Update data about recently added files (with size = 0)
+    '''
     files = db_ut.recent_loaded_files()
+    cnt = 0
+    dlt = 0
     for f_id, file, path in files:
         if ag.stop_thread:
             break
@@ -31,13 +37,18 @@ def update0_files():
         f_hash = sha256sum(pp)
         if f_hash:
             db_ut.update_file_data(f_id, pp.stat(), f_hash)
+            cnt += 1
         else:
             db_ut.delete_not_exist_file(f_id)
+            dlt += 1
+    logger.info(f'updated files: {cnt}, deleted files: {dlt}')
 
 def update_touched_files():
     last_scan = ag.get_db_setting('LAST_SCAN_OPENED', ag.ZERO_DATE)
     ag.save_db_settings(LAST_SCAN_OPENED=int(datetime.now().timestamp()))
     files = db_ut.files_toched(last_scan)
+    cnt = 0
+    dlt = 0
     for f_id, file, path, hash0 in files:
         if ag.stop_thread:
             break
@@ -46,8 +57,11 @@ def update_touched_files():
         if f_hash:
             if f_hash != hash0:
                 db_ut.update_file_data(f_id, pp.stat(), f_hash)
+                cnt += 1
         else:
             db_ut.delete_not_exist_file(f_id)
+            dlt += 1
+    logger.info(f'updated files: {cnt}, deleted files: {dlt}')
 
 class worker(QObject):
     finished = pyqtSignal()

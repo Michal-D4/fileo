@@ -5,7 +5,7 @@ from enum import IntEnum
 from . import app_globals as ag
 
 APP_ID = 1718185071
-USER_VER = 30
+USER_VER = 31
 
 class tableIdx(IntEnum):
     SETTINGS = 0
@@ -45,7 +45,7 @@ def define_tables(idx: int|None = None):
         'hash text, '
         'size integer not null default 0, '
         'pages integer not null default 0, '
-        'published date not null, '
+        'published date, '
         'FOREIGN KEY (extid) REFERENCES extensions (id)); '
         ),
         (                # dirs
@@ -263,11 +263,10 @@ def convert_to_new_version(conn, db_v):
         for tbl,fld in to_upd:
             update_min_date()
 
-    def update_to_v30():
+    def update_to_v30(names):
         def drop_old_tbl(table: str):
             curs.execute(f'DROP TABLE {table}')
             curs.execute(f'ALTER TABLE COPY_{table} RENAME TO {table}')
-        names = {tableIdx.FILES: "files",  tableIdx.FILENOTES: "filenotes"}
         for tbl_id, name in names.items():
             copy_tbl(tbl_id, name)
             drop_old_tbl(name)
@@ -308,7 +307,10 @@ def convert_to_new_version(conn, db_v):
         update_to_v29()
 
     if db_v < 30:
-        update_to_v30()
+        update_to_v30({tableIdx.FILES: "files",  tableIdx.FILENOTES: "filenotes"})
+
+    if db_v < 31:
+        update_to_v30({tableIdx.FILES: "files",})
 
     conn.cursor().execute(f'PRAGMA user_version={USER_VER}')
 

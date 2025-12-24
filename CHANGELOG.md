@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.4.05 - 2025, 24 December
+* some changes and improvements
+
 ## 1.4.04 - 2025, 11 December
 * When searching for files by note context, you can now jump to the next/previous found substring match in notes.
 * Now the filter can be used to select files without notes.

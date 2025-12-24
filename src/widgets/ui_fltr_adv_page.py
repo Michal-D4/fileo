@@ -12,8 +12,9 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_pageAdv(object):
     def setupUi(self, pageAdv):
         pageAdv.setObjectName("pageAdv")
-        pageAdv.resize(518, 232)
+        pageAdv.resize(566, 232)
         self.verticalLayout = QtWidgets.QVBoxLayout(pageAdv)
+        self.verticalLayout.setContentsMargins(0, -1, 0, -1)
         self.verticalLayout.setObjectName("verticalLayout")
         self.topFrameFltr = QtWidgets.QFrame(parent=pageAdv)
         self.topFrameFltr.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
@@ -113,9 +114,9 @@ class Ui_pageAdv(object):
         self.horizontalLayout.addWidget(self.before_btn)
         self.gridLayout.addWidget(self.frame_before, 1, 3, 1, 1)
         self.gridLayout.setColumnStretch(0, 3)
-        self.gridLayout.setColumnStretch(1, 3)
+        self.gridLayout.setColumnStretch(1, 4)
         self.gridLayout.setColumnStretch(2, 1)
-        self.gridLayout.setColumnStretch(3, 3)
+        self.gridLayout.setColumnStretch(3, 4)
         self.verticalLayout.addWidget(self.topFrameFltr)
         self.gridLayout_2 = QtWidgets.QGridLayout()
         self.gridLayout_2.setObjectName("gridLayout_2")
