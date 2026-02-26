@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.06 - 2026, 26 February
+* Preventing the application from being launched again from the outside (clicking on a shortcut, launching it through a terminal, etc.). The second instance can only be launched from within the application.
+* Start editing a note using the shortcut Ctrl+E.
+
 ## 1.4.05 - 2025, 24 December
 * some changes and improvements
 

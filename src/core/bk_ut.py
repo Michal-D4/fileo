@@ -102,6 +102,7 @@ def bk_setup():
     ctrl_w = QShortcut(QKeySequence("Ctrl+W"), ag.dir_list)
     ctrl_w.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Create folder"))
     ctrl_e = QShortcut(QKeySequence("Ctrl+E"), ag.dir_list)
+    ctrl_e.setContext(Qt.ShortcutContext.WidgetShortcut)
     ctrl_e.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Create folder as child"))
     del_key = QShortcut(QKeySequence(Qt.Key.Key_Delete), ag.dir_list)
     del_key.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Delete folder(s)"))

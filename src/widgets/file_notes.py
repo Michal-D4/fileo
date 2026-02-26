@@ -1,7 +1,7 @@
 # from loguru import logger
 
 from PyQt6.QtCore import Qt, QDateTime, pyqtSlot, QTimer
-from PyQt6.QtGui import QMouseEvent, QTextCursor
+from PyQt6.QtGui import QMouseEvent, QTextCursor, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (QWidget, QSizePolicy, QMessageBox,
     QVBoxLayout, QScrollArea, QAbstractScrollArea, QStyle,
 )
@@ -27,6 +27,9 @@ class notesContainer(QScrollArea):
         ag.signals.delete_note.connect(self.remove_item)
         ag.signals.refresh_note_list.connect(self.set_notes_data)
         ag.signals.color_theme_changed.connect(self.theme_changed)
+        ctrl_e = QShortcut(QKeySequence("Ctrl+E"), self)
+        ctrl_e.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        ctrl_e.activated.connect(lambda: fileNote.edit_note(fileNote.current_note))
 
     def set_ui(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -59,6 +62,11 @@ class notesContainer(QScrollArea):
     def go_to_file(self):
         file_id = self.editor.get_file_id()
         ag.signals.user_signal.emit(f"file-note: Go to file\\{file_id}")
+
+    @pyqtSlot()
+    def edit_current_note(self):
+        if fileNote.current_note:
+            ag.signals.start_edit_note.emit(fileNote.current_note)
 
     def is_editing(self):
         return self.editing
@@ -111,6 +119,7 @@ class notesContainer(QScrollArea):
         if item.widget():
             note: fileNote = item.widget()
             note.ui.collapse.setChecked(False)
+            fileNote.set_current_note(note)
 
     def find_in_next_note(self, beg: int) -> bool:
         for i in range(beg, self.scroll_layout.count()):

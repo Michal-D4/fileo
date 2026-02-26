@@ -107,7 +107,7 @@ class Ui_fileNote(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.edit = QtWidgets.QToolButton(parent=self.btns)
         self.edit.setMinimumSize(QtCore.QSize(24, 24))
-        self.edit.setToolTip("Edit note")
+        self.edit.setToolTip("Edit note, Ctrl+E")
         self.edit.setStatusTip("")
         self.edit.setWhatsThis("")
         self.edit.setAccessibleName("")

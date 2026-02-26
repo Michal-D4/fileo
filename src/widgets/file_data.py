@@ -346,3 +346,4 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.file_info.set_file_id(file_id)
         self.notes.set_file_id(file_id)
         self.locator.set_data(file_id)
+        self.notes.setFocus(Qt.FocusReason.OtherFocusReason)

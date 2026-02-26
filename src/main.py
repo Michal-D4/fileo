@@ -4,7 +4,7 @@ import sys
 
 from loguru import logger
 
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QLockFile, QDir
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import QApplication
 
@@ -29,8 +29,17 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
         app.setStyleSheet(styles)
         set_app_icon(app)
 
-    theme_key = tug.get_app_setting("CurrentTheme", "Default_Theme")
+    if first_instance:
+        lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
+        lock_file.setStaleLockTime(0)
+        if not lock_file.tryLock(5):      # 5 milliseconds
+            logger.info(f'{lock_file.error()=}')
+            if lock_file.error() is QLockFile.LockError.LockFailedError:
+                sys.exit(0)
+        #     logger.info('after lock_file.tryLock -- never run')
+        # logger.info('after lock_file.tryLock -- only in success lock')
 
+    theme_key = tug.get_app_setting("CurrentTheme", "Default_Theme")
     try:
         set_style()
     except Exception as e:
@@ -38,7 +47,6 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
         return
 
     main_window = shoWindow(db_name, first_instance)
-
     main_window.show()
 
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)

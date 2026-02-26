@@ -298,15 +298,13 @@ class fileNote(QWidget):
 
     @pyqtSlot(bool)
     def toggle_collapse(self, state: bool):
-        self.hide_note(state)    # True ==> collapsed
-
-    def hide_note(self, state: bool):
-        if state:
+        if state:    # True ==> collapsed
             self.expanded_height = self.visible_height
             self.visible_height = self.ui.note_header.height()
         else:
             self.visible_height = self.expanded_height
             self.expanded_height = 0
+            self.set_current_note(self)
         self.ui.textBrowser.setVisible(not state)
         self.set_collapse_icon()
 
@@ -315,7 +313,7 @@ class fileNote(QWidget):
         if self.ui.collapse.isChecked():
             return
         self.ui.collapse.setChecked(True)
-        self.hide_note(self.ui.collapse.isChecked())
+        self.toggle_collapse(self.ui.collapse.isChecked())
 
     def set_collapse_icon(self):
         self.ui.collapse.setIcon(
@@ -324,7 +322,8 @@ class fileNote(QWidget):
 
     @pyqtSlot()
     def edit_note(self):
-        ag.signals.start_edit_note.emit(self)
+        if self:
+            ag.signals.start_edit_note.emit(self)
 
     @pyqtSlot()
     def remove_note(self):

@@ -70,7 +70,7 @@ class AboutDialog(QWidget, Ui_aboutForm):
 
     def set_title(self, ver: tuple=None):
         if ver:
-            self.ttl_label.setText(f'About Fileo, Python {ver[0]}, DB user v.{ver[1]}, {ver[2]}')
+            self.ttl_label.setText(f'About Fileo, Python {ver[0]}, DB v.{ver[1]}, {ver[2]}')
         else:
             self.ttl_label.setText('About Fileo')
 
