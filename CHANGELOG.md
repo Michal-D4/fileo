@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.4.07 - 2026, 03 March
+* sorting notes by creation and modification dates.
+* Copying the raw note text to the clipboard
+* fixed some issues
+
 ## 1.4.06 - 2026, 26 February
 * Preventing the application from being launched again from the outside (clicking on a shortcut, launching it through a terminal, etc.). The second instance can only be launched from within the application.
 * Start editing a note using the shortcut Ctrl+E.

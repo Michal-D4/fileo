@@ -787,25 +787,24 @@ def get_file_id_to_notes(file_id: int) -> int:
         return f_id[0]
     return file_id
 
-def get_file_notes(file_id: int, desc: bool=False) -> apsw.Cursor:
+def get_file_notes(file_id: int, order: str = "modified") -> apsw.Cursor:
     sql_hash = (
         "select filenote, fileid, id, modified, created from filenotes "
-        "where fileid in (select id from files where hash = ?) "
-        "order by modified"
+        "where fileid in (select id from files where hash = ?) order by"
     )
     sql_id = (
         "select filenote, fileid, id, modified, created from filenotes "
-        "where fileid  = ? order by modified"
+        "where fileid  = ? order by"
     )
     if file_id <= 0:
         return []
     hash_ = get_file_hash(file_id)
 
     if hash_:
-        sql = ' '.join((sql_hash, 'desc')) if desc else sql_hash
+        sql = ' '.join((sql_hash, order))
         par = hash_
     else:       # hash not calculated yet
-        sql = ' '.join((sql_id, 'desc')) if desc else sql_id
+        sql = ' '.join((sql_id, order))
         par = file_id
 
     with ag.db.conn as conn:

@@ -98,9 +98,9 @@ class notesContainer(QScrollArea):
         self.setUpdatesEnabled(False)
         self.set_scroll_widget()
         ag.note_buttons.clear()
-        for row in db_ut.get_file_notes(self.file_id):
-            note = fileNote(*row[1:])  # except note text
-            note.set_text(row[0], plain)
+        for row in db_ut.get_file_notes(self.file_id, fileNote.note_order.name.replace('_', ' ')):
+            note = fileNote(*row[1:])     # file_id, note_id, modified, created
+            note.set_text(row[0], plain)  # note_text
             note.add_buttons()
             add_to_top(note)
         self.collapse_all()
