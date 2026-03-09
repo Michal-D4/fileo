@@ -64,3 +64,4 @@ def main(entry_point: str, db_name: str, first_instance: bool):
     logger.info(f'{db_name=}')
 
     start_app(app, db_name, first_instance)
+    sys.exit(app.exec())

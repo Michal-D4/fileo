@@ -269,17 +269,20 @@ class FoldContainer(QWidget):
     def restore_state(self, state: list):
         """
         restore state of container:
-        - index of first visible widget
-        - height of container
-        - for each widget in container:
-          - is_collapsed: bool
-          - is_hidden: bool
-          - height: int
+        0 - index of first visible widget
+        1 - height of container
+        2- for each widget in container:
+           0 - is_collapsed: bool
+           1 - is_hidden: bool
+           2 - height: int
         """
         if state[0] is None:
             return
 
-        self.first_visible = int(state[0])
+        if int(state[0]) < 0:
+            self.reset_first_visible(-1)
+        else:
+            self.first_visible = int(state[0])
         self.height_ = int(state[1])
         st1 = state[2:]
 
@@ -292,20 +295,20 @@ class FoldContainer(QWidget):
             if st1[i][0]:
                 ff.is_hidden = True
 
-        _not_collapsed = self.shown_not_collapsed()
-        if _not_collapsed <= 1:
-            self._expand_stretch(_not_collapsed == 0)
+        not_collapsed = self.shown_not_collapsed()
+        if not_collapsed <= 1:
+            self._expand_stretch(not_collapsed == 0)
 
     def save_state(self) -> list:
         """
         function is used to collect data to save settings of state
-        - width of container, it restore in parrent of the widget
-        - first_visible - index of first wisible widget in container
-        - height - height of container, it also set in the resize event,
-          but this value need in the restore_state method which
-          is called before resize event
-        - states of each widget in container:
-          is_hidden, is_collapsed, and height
+        0 - width of container, it restore in parrent of the widget
+        1 - first_visible - index of first wisible widget in container
+        2 - height - height of container, it also set in the resize event,
+            but this value need in the restore_state method which
+            is called before resize event
+        3 - states of each widget in container:
+            is_hidden, is_collapsed, and height
         """
         state = [self.width(), self.first_visible, self.height_]
 
@@ -341,8 +344,7 @@ class FoldContainer(QWidget):
         visibles = [i for i,ff in enumerate(self.widgets) if not ff.is_hidden]
 
         if visibles:
-            self.first_visible = (
-                seq if seq == visibles[0] else visibles[0] )
+            self.first_visible = (seq if seq == visibles[0] else visibles[0] )
 
     def _actual_height(self) -> int:
         return reduce(add, ((ff.height for ff in self.widgets if not ff.is_hidden)), 0)

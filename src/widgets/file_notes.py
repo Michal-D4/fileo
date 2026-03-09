@@ -27,7 +27,7 @@ class notesContainer(QScrollArea):
         ag.signals.delete_note.connect(self.remove_item)
         ag.signals.refresh_note_list.connect(self.set_notes_data)
         ag.signals.color_theme_changed.connect(self.theme_changed)
-        ctrl_e = QShortcut(QKeySequence("Ctrl+E"), self)
+        ctrl_e = QShortcut(QKeySequence("Ctrl+E"), ag.app.ui.fileFrame)
         ctrl_e.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         ctrl_e.activated.connect(lambda: fileNote.edit_note(fileNote.current_note))
 

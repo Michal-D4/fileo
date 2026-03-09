@@ -45,15 +45,7 @@ def installer_update_replay(replay: QNetworkReply, silently: bool):
             return
         ver = filename[filename.find('.')+1:filename.rfind('.')]
         if ag.app_version() < ver:
-            if getattr(sys, "frozen", False):
-                open_sourceforge(ver)
-            else:
-                show_message_box(
-                    'Fileo',
-                    f'New version "{ver}" available.'
-                    'You can itstall it with "pip install md2fileo" command',
-                    btn=QMessageBox.StandardButton.Ok
-                )
+            open_sourceforge(ver)
         elif not silently:
             show_message_box(
                 'Fileo',

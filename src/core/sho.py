@@ -219,6 +219,7 @@ class shoWindow(QMainWindow):
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         ag.dir_list.setObjectName('dir_list')
+        ag.dir_list.setStyleSheet(tug.get_dyn_qss("dir_tree"))
         set_widget_to_frame(frames[0], ag.dir_list)
         ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
         ag.dir_list.setItemDelegateForColumn(0, folderEditDelegate(self))
@@ -236,6 +237,7 @@ class shoWindow(QMainWindow):
         set_widget_to_frame(frames[3], ag.author_list)
 
         ag.file_list = self.ui.file_list
+        ag.file_list.setStyleSheet(tug.get_dyn_qss("file_list"))
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
 
         self.ui.noteHolder.setLayout(QVBoxLayout())

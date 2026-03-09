@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from enum import Enum, unique
 
-from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint, QRegularExpression
+from PyQt6.QtCore  import Qt, QUrl, pyqtSlot, QSize, QPoint, QRegularExpression, QTimer
 from PyQt6.QtGui import (QDesktopServices, QResizeEvent, QAction, QKeySequence,
                          QTextDocument, QTextCursor, QFocusEvent, QMouseEvent, )
 from PyQt6.QtWidgets import QWidget, QApplication, QMenu, QStyle
@@ -373,7 +373,7 @@ class fileNote(QWidget):
     def ref_clicked(self, href: QUrl):
         scheme = href.scheme()
         if scheme == 'fileid':
-            ag.signals.user_signal.emit(f'show file\\{href.fileName()}')
+            QTimer.singleShot(25, lambda hr=href: ag.signals.user_signal.emit(f'show file\\{hr.fileName()}'))
         elif scheme.startswith('http') or scheme == 'file':
             QDesktopServices.openUrl(href)
 

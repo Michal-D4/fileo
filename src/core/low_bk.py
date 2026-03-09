@@ -595,7 +595,6 @@ def single_file(file_id: str):
     ag.app.ui.files_heading.setText('single_file')
     # logger.info('>>> before show_files()')
     show_files([db_ut.get_file(file_id)])
-    ag.file_list.setFocus()
 
 def set_current_file(file_id: int):
     model: fileProxyModel = ag.file_list.model()

@@ -22,8 +22,8 @@ class themeChooser(QWidget, Ui_themeList):
 
         self.set_themes()
 
-        self.theme_list.currentRowChanged.connect(self.apply_theme)
-        self.theme_list.itemDoubleClicked.connect(self.change_theme)
+        self.theme_list.currentItemChanged.connect(self.on_item_focus)
+        self.theme_list.itemClicked.connect(self.change_theme)
         return_key = QShortcut(QKeySequence(Qt.Key.Key_Return), self)
         return_key.activated.connect(self.change_theme)
 
@@ -38,21 +38,25 @@ class themeChooser(QWidget, Ui_themeList):
                 e.accept()
             self.start_pos = pos_
 
+    @pyqtSlot(QListWidgetItem, QListWidgetItem)
+    def on_item_focus(self, current: QListWidgetItem, previous: QListWidgetItem):
+        theme = current.data(Qt.ItemDataRole.UserRole)
+        self.apply_theme(theme)
+
     @pyqtSlot()
     def change_theme(self):
-        theme = self.apply_theme()
+        theme = self.theme_list.currentItem().data(Qt.ItemDataRole.UserRole)
+        self.apply_theme(theme)
         tug.save_app_setting(CurrentTheme=theme)
         self.rejected = False
         self.close()
 
-    def apply_theme(self) -> str:
-        theme = self.theme_list.currentItem().data(Qt.ItemDataRole.UserRole)
+    def apply_theme(self, theme: str):
         styles = tug.prepare_styles(theme, self.log_theme.isChecked())
         QCoreApplication.instance().setStyleSheet(styles)
         self.apply_dyn_qss()
         self.set_icons()
         self.log_theme.setChecked(False)
-        return theme
 
     def apply_dyn_qss(self):
         ag.filter_dlg.set_selectors_style()

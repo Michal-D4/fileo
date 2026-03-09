@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.4.08 - 2026, 09 March
+* Now you can see how the theme will look when a row in the theme chooser receives focus. Previously, you had to select this row.
+* One-click theme selection, instead of double-click. Previously, one-click was used to select a row.
+* Now all parts of a line in a directory tree made look the same in all Qt versions, i.e. have same background color. This allowed to migrate from Qt v.6.7.3 to v.6.10.2.
+* some other changes and improvements
+
 ## 1.4.07 - 2026, 03 March
 * sorting notes by creation and modification dates.
 * Copying the raw note text to the clipboard
