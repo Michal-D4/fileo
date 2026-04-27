@@ -29,16 +29,6 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
         app.setStyleSheet(styles)
         set_app_icon(app)
 
-    if first_instance:
-        lock_file = QLockFile(QDir.tempPath() + '/fileo.lock')
-        lock_file.setStaleLockTime(0)
-        if not lock_file.tryLock(5):      # 5 milliseconds
-            logger.info(f'{lock_file.error()=}')
-            if lock_file.error() is QLockFile.LockError.LockFailedError:
-                sys.exit(0)
-        #     logger.info('after lock_file.tryLock -- never run')
-        # logger.info('after lock_file.tryLock -- only in success lock')
-
     theme_key = tug.get_app_setting("CurrentTheme", "Default_Theme")
     try:
         set_style()
@@ -52,9 +42,15 @@ def start_app(app: QApplication, db_name: str, first_instance: bool):
     tab = QShortcut(QKeySequence(Qt.Key.Key_Tab), ag.app)
     tab.activated.connect(tab_toggle_focus)
 
-    sys.exit(app.exec())
-
 def main(entry_point: str, db_name: str, first_instance: bool):
+    def run_instance() -> bool:
+        if first_instance:
+            if not tug.lock:
+                tug.lock = QLockFile(QDir.tempPath() + '/fileo.lock')
+            if not tug.lock.tryLock():
+                return False
+        return True
+
     app = QApplication([])
     tug.entry_point = entry_point
     tug.set_logger(first_instance)
@@ -63,5 +59,6 @@ def main(entry_point: str, db_name: str, first_instance: bool):
     logger.info(f'{entry_point=}')
     logger.info(f'{db_name=}')
 
-    start_app(app, db_name, first_instance)
-    sys.exit(app.exec())
+    if run_instance():
+        start_app(app, db_name, first_instance)
+        sys.exit(app.exec())

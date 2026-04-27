@@ -69,6 +69,8 @@ class themeChooser(QWidget, Ui_themeList):
         ag.file_data.passive_style()
         ag.file_data.cur_page_restyle()
         ag.file_data.file_info.setStyleSheet(tug.get_dyn_qss("line_edit,date_time_edit"))
+        ag.dir_list.setStyleSheet(tug.get_dyn_qss("qss_dirs"))
+        ag.file_list.setStyleSheet(tug.get_dyn_qss("qss_files"))
         ag.signals.color_theme_changed.emit()
 
     def set_icons(self):
@@ -102,7 +104,6 @@ class themeChooser(QWidget, Ui_themeList):
     @pyqtSlot()
     def accept(self):
         self.rejected = False
-        self.apply_theme()
         self.close()
 
     def set_themes(self):
@@ -118,7 +119,7 @@ class themeChooser(QWidget, Ui_themeList):
     def reject(self):
         if self.cur_theme != self.theme_list.currentItem().data(Qt.ItemDataRole.UserRole):
             self.theme_list.setCurrentRow(self.cur_row)
-            self.apply_theme()
+            self.apply_theme(self.cur_row)
 
     def closeEvent(self, a0):
         ag.popups.pop("themeChooser")

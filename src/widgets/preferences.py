@@ -129,14 +129,10 @@ class Preferences(QWidget):
         ag.recent_files_length = int(val)
 
         self.check_dup = QCheckBox("check duplicates")
-        self.check_dup.setChecked(
-            int(tug.get_app_setting('CHECK_DUPLICATES', 1))
-        )
+        self.check_dup.setChecked(int(tug.get_app_setting('CHECK_DUPLICATES', 1)))
 
         self.check_upd = QCheckBox("check for updates")
-        self.check_upd.setChecked(
-            int(tug.get_app_setting('CHECK_UPDATE', 0))
-        )
+        self.check_upd.setChecked(int(tug.get_app_setting('CHECK_UPDATE', 0)))
 
         self.use_logging = QCheckBox("use logging")
         self.use_logging.setChecked(int(tug.get_app_setting('USE_LOGGING', 0)))

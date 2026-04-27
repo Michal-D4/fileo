@@ -2,12 +2,10 @@ from loguru import logger
 from pathlib import Path
 import time
 
-from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject, QSize
-from PyQt6.QtGui import (QCloseEvent, QEnterEvent, QMouseEvent,
-    QResizeEvent, QKeySequence, QShortcut,
-)
+from PyQt6.QtCore import QPoint, Qt, pyqtSlot, QRect, QObject, QSize, pyqtSignal
+from PyQt6.QtGui import QCloseEvent, QMouseEvent, QResizeEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (QMainWindow, QToolButton, QAbstractItemView,
-    QVBoxLayout, QTreeView, QFrame, QWidget,
+    QVBoxLayout, QTreeView, QFrame, QWidget, QSplitterHandle,
 )
 
 from .. import tug
@@ -33,10 +31,30 @@ def set_widget_to_frame(frame: QFrame, widget: QWidget):
     frame.layout().setContentsMargins(0,0,0,0)
     frame.layout().addWidget(widget)
 
+class shoEventFilter(QObject):
+    resize_foldable = pyqtSignal(int, int)  # QMouseEvent.Type, seqno
+
+    def __init__(self, widget: QSplitterHandle, seqno: int):
+        super().__init__(widget)
+
+        self._widget: QSplitterHandle = widget
+        self.seq = seqno
+        self._widget.installEventFilter(self)
+
+    def eventFilter(self, obj: QObject, event: QMouseEvent) -> bool:
+        typo = event.type()
+        """
+         2 QEvent.MouseButtonPress
+         3 QEvent.MouseButtonRelease
+        """
+        if typo in (2, 3):
+            self.resize_foldable.emit(typo, self.seq)
+        return super().eventFilter(obj, event)
 
 class shoWindow(QMainWindow):
     def __init__(self, db_name: str, first_instance: bool, parent = None) -> None:
         super().__init__(parent)
+        ag.app = self
         self.first_instance = first_instance
         self.loader: QObject = None
 
@@ -45,8 +63,6 @@ class shoWindow(QMainWindow):
         self.ui.ico.setPixmap(tug.get_icon('ico_app').pixmap(24, 24))
 
         self.create_fold_container()
-
-        self.start_pos: QPoint = QPoint()
 
         self.connect_slots()
         self.set_extra_buttons()
@@ -65,34 +81,39 @@ class shoWindow(QMainWindow):
         self.container = FoldContainer(self.ui.left_pane)
         fold_layout.addWidget(self.container)
 
-    def tune_app_version(self):
-        """
-        make changes to "setting" if necessary
-        """
-        cur_v = ag.app_version()
-        cur_v = int(cur_v.replace('.', ''))
-        saved_v = ag.get_db_setting("AppVersion", 0)
-
-        if saved_v == cur_v:
-            return
-
-        ag.save_db_settings(AppVersion=cur_v)
-
     def restore_settings(self, db_name: str):
+        def restore_container():
+            bk_ut.set_menu_more()
+
+            state = tug.get_app_setting("CONTAINER_STATE", None)
+            logger.info(f'{state=}')
+            self.container.restore_state(state)
+
+        def restore_geometry():
+            self.sho_rect = tug.get_app_setting("MainWindowGeometry", None)
+            if isinstance(self.sho_rect, QRect):
+                self.setGeometry(self.sho_rect)
+                logger.info(f'{self.sho_rect=}')
+                if not self.first_instance:
+                    self.move(self.x() + 40, self.y() + 40)
+
+            setup_ui(self)
+
+            h_sizes = tug.get_app_setting("SPLITTER_H",
+                (MIN_CONTAINER_WIDTH, self.sho_rect.width()-MIN_CONTAINER_WIDTH))
+            logger.info(f'{h_sizes=}')
+            self.ui.hSplitter.setSizes((int(x) for x in h_sizes))
+
         ag.signals.user_signal.connect(low_bk.set_user_action_handlers())
         ag.signals.author_widget_title.connect(self.change_menu_more)
 
-        self.restore_geometry()
-        self.restore_container()
+        restore_geometry()
+        restore_container()
 
         ag.history = history.History(
             int(tug.get_app_setting('FOLDER_HISTORY_DEPTH', DEFAULT_HISTORY_DEPTH))
         )
-
-        low_bk.init_db(
-            tug.get_app_setting("DB_NAME", "")
-            if self.first_instance else db_name
-        )
+        low_bk.init_db(tug.get_app_setting("DB_NAME", "") if self.first_instance else db_name)
 
     def set_busy(self, val: bool):
         self.is_busy = val
@@ -129,17 +150,6 @@ class shoWindow(QMainWindow):
         self.restore_note_height()
         ag.file_data.set_tag_author_data()
 
-    def restore_container(self):
-        bk_ut.set_menu_more()
-
-        state = tug.get_app_setting("container", (DEFAULT_CONTAINER_WIDTH, None))
-        if state:
-            self.container.restore_state(state[1:])
-            menu = self.ui.more.menu()
-            for i, visible in enumerate(self.container.visible_state()):
-                menu.actions()[i].setChecked(visible)
-            self.ui.left_pane.setMinimumWidth(int(state[0]))
-
     def restore_mode(self):
         mode = ag.appMode(
             int(ag.get_db_setting("APP_MODE", ag.appMode.DIR.value))
@@ -154,20 +164,13 @@ class shoWindow(QMainWindow):
         self.toggle_filter_show()
 
     def restore_note_height(self):
-        hh = tug.get_app_setting("noteHolderHeight", MIN_NOTE_HEIGHT)
-        ag.file_data.set_height(int(hh))
-
-    def restore_geometry(self):
-        self.rect = tug.get_app_setting("MainWindowGeometry")
-        if isinstance(self.rect, QRect):
-            self.setGeometry(self.rect)
-            if not self.first_instance:
-                self.move(self.x() + 40, self.y() + 40)
-
-        setup_ui(self)
+        hh = self.sho_rect.height() - self.ui.topBar.height() - self.ui.status.height()
+        h3 = hh // 3
+        state = tug.get_app_setting("SPLITTER_V2", (1, h3, (hh - h3, h3)))
+        ag.file_data.set_size_state(state)
 
     def sizeHint(self):
-        return QSize(self.rect.width(), self.rect.height())
+        return QSize(self.sho_rect.width(), self.sho_rect.height())
 
     def set_extra_buttons(self):
         self.btn_prev = self._create_button("prev_folder", 'btn_prev', 'Prev folder')
@@ -219,7 +222,7 @@ class shoWindow(QMainWindow):
         ag.dir_list.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         ag.dir_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         ag.dir_list.setObjectName('dir_list')
-        ag.dir_list.setStyleSheet(tug.get_dyn_qss("dir_tree"))
+        ag.dir_list.setStyleSheet(tug.get_dyn_qss("qss_dirs"))
         set_widget_to_frame(frames[0], ag.dir_list)
         ag.dir_list.focusInEvent = low_bk.dirlist_get_focus
         ag.dir_list.setItemDelegateForColumn(0, folderEditDelegate(self))
@@ -237,7 +240,7 @@ class shoWindow(QMainWindow):
         set_widget_to_frame(frames[3], ag.author_list)
 
         ag.file_list = self.ui.file_list
-        ag.file_list.setStyleSheet(tug.get_dyn_qss("file_list"))
+        ag.file_list.setStyleSheet(tug.get_dyn_qss("qss_files"))
         ag.file_list.setItemDelegateForColumn(0, fileEditorDelegate(self))
 
         self.ui.noteHolder.setLayout(QVBoxLayout())
@@ -279,7 +282,6 @@ class shoWindow(QMainWindow):
         menu.actions()[-1].setText(new_ttl.title())
 
     def connect_slots(self):
-        ag.app = self
         self.loader: loadFiles = None
         self.ui.toolbar_btns.idClicked.connect(self.toggle_btn)
 
@@ -289,15 +291,10 @@ class shoWindow(QMainWindow):
 
         self.ui.db_name.mousePressEvent = self.db_list_show
 
-        self.ui.vSplit.enterEvent = self.vsplit_enter_event
-        self.ui.vSplit.mousePressEvent = self.vsplit_press_event
-        self.ui.vSplit.mouseMoveEvent = self.vsplit_move_event
-        self.ui.vSplit.leaveEvent = self.leave_event
-
-        self.ui.hSplit.enterEvent = self.hsplit_enter_event
-        self.ui.hSplit.mousePressEvent = self.hsplit_press_event
-        self.ui.hSplit.mouseMoveEvent = self.hsplit_move_event
-        self.ui.hSplit.leaveEvent = self.leave_event
+        fltr = shoEventFilter(self.ui.hSplitter.handle(1), 0)
+        fltr.resize_foldable.connect(self.dispatch_events)
+        fltr = shoEventFilter(self.ui.vSplitter.handle(1), 1)
+        fltr.resize_foldable.connect(self.dispatch_events)
 
         ag.signals.open_db_signal.connect(self.switch_db)
         ag.signals.filter_setup_closed.connect(self.close_filter_setup)
@@ -326,94 +323,34 @@ class shoWindow(QMainWindow):
 
         bk_ut.save_bk_settings()
         if self.connect_db(db_name):
-            self.tune_app_version()
             self.restore_mode()
             bk_ut.populate_all()
             bk_ut.restore_dirs()
 
-    @pyqtSlot(QMouseEvent)
-    def hsplit_enter_event(self, e: QEnterEvent):
-        if ag.file_data and ag.file_data.state == 1:
-            self.setCursor(Qt.CursorShape.SizeVerCursor)
-            e.accept()
-        else:
-            e.ignore()
+    @pyqtSlot(int, int)
+    def dispatch_events(self, ev: int, idx: int):
+        {
+            QMouseEvent.Type.MouseButtonPress: self.resize_start,
+            QMouseEvent.Type.MouseButtonRelease: self.resize_end,
+        }[ev](idx)
 
-    @pyqtSlot(QMouseEvent)
-    def hsplit_press_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        self.start_pos = self.mapFromGlobal(cur_pos)
-        e.accept()
+    def resize_start(self, idx: int):
+        def start_hsplit():
+            self.ui.fileFrame.setStyleSheet(tug.get_dyn_qss("hor_split_pressed"))
 
-    @pyqtSlot(QMouseEvent)
-    def hsplit_move_event(self, e: QMouseEvent):
-        if e.buttons() == Qt.MouseButton.LeftButton:
-            cur_pos = e.globalPosition().toPoint()
-            if not self.start_pos:
-                self.start_pos = self.mapFromGlobal(cur_pos)
-                return
-            cur_pos = self.mapFromGlobal(cur_pos)
+        def start_vsplit():
+            self.ui.noteHolder.setStyleSheet(tug.get_dyn_qss("filenote_split_pressed"))
 
-            self.setUpdatesEnabled(False)
-            y: int = self.note_holder_resize(cur_pos.y())
-            self.setUpdatesEnabled(True)
+        (start_hsplit, start_vsplit)[idx]()
 
-            self.start_pos.setY(y)
-            e.accept()
+    def resize_end(self, idx: int):
+        def stop_hsplit():
+            self.ui.fileFrame.setStyleSheet(tug.get_dyn_qss("hor_split"))
 
-    def note_holder_resize(self, y: int) -> int:
-        y0 = self.start_pos.y()
-        delta = y0 - y
-        cur_height = ag.file_data.norm_height
-        h = max(cur_height + delta, MIN_NOTE_HEIGHT)
-        h = min(h, self.ui.main_pane.height() - MIN_NOTE_HEIGHT - 35)
-        ag.file_data.set_height(h)
+        def stop_vsplit():
+            self.ui.noteHolder.setStyleSheet(tug.get_dyn_qss("filenote_split"))
 
-        self.start_pos.setY(y0 - h + cur_height)
-        return self.start_pos.y()
-
-    @pyqtSlot(QMouseEvent)
-    def vsplit_enter_event(self, e: QEnterEvent):
-        self.setCursor(Qt.CursorShape.SizeHorCursor)
-        e.accept()
-
-    @pyqtSlot(QMouseEvent)
-    def vsplit_press_event(self, e: QMouseEvent):
-        cur_pos = e.globalPosition().toPoint()
-        self.start_pos: QPoint = self.mapFromGlobal(cur_pos)
-        e.accept()
-
-    @pyqtSlot(QMouseEvent)
-    def vsplit_move_event(self, e: QMouseEvent):
-        if e.buttons() == Qt.MouseButton.LeftButton:
-            cur_pos = e.globalPosition().toPoint()
-            if not self.start_pos:
-                self.start_pos = self.mapFromGlobal(cur_pos)
-                return
-            cur_pos = self.mapFromGlobal(cur_pos)
-
-            self.setUpdatesEnabled(False)
-            x: int = self.navigator_resize(cur_pos.x())
-            self.setUpdatesEnabled(True)
-
-            self.start_pos.setX(x)
-            e.accept()
-
-    def navigator_resize(self, x: int) -> int:
-        x0 = self.start_pos.x()
-        delta = x - x0
-        cur_width = self.ui.left_pane.width()
-        w = max(cur_width + delta, MIN_CONTAINER_WIDTH)
-        w = min(w, (self.ui.main_pane.width() + cur_width) // 2)
-
-        self.ui.left_pane.setMinimumWidth(w)
-
-        self.start_pos.setX(x0 + w)
-        return self.ui.left_pane.x() + w
-
-    def leave_event(self, e):
-        self.unsetCursor()
-        self.start_pos = QPoint()
+        (stop_hsplit, stop_vsplit)[idx]()
 
     def close_app(self):
         if self.is_busy:
@@ -456,8 +393,7 @@ class shoWindow(QMainWindow):
     @pyqtSlot()
     def click_toggle_bar(self):
         visible = self.ui.left_pane.isVisible()
-        self.ui.left_pane.setVisible(not visible)
-        self.ui.left_top.setVisible(not visible)
+        self.ui.left_part.setVisible(not visible)
         self.ui.btnToggleBar.setIcon(
             tug.get_icon("btnToggleBar", int(visible))
         )
@@ -470,14 +406,14 @@ class shoWindow(QMainWindow):
         settings = {
             "maximizedWindow": int(self.isMaximized()),
             "MainWindowGeometry": self.normalGeometry(),
-            "container": self.container.save_state(),
+            "CONTAINER_STATE": self.container.save_state(),
+            "SPLITTER_H": self.ui.hSplitter.sizes(),
             "DB_NAME": ag.db.path,
         }
+        if ag.file_data:
+            settings['SPLITTER_V2'] = ag.file_data.save_size_state()
         if ag.filter_dlg and ag.filter_dlg.isVisible():
             settings['filterDialogPosition'] = ag.filter_dlg.pos()
-        if ag.file_data:
-            settings['noteHolderHeight'] = ag.file_data.norm_height
-
         if ag.db.conn:
             low_bk.save_db_list_at_close()
             settings["FILE_LIST_HEADER"] = ag.file_list.header().saveState()

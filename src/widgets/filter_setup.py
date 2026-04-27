@@ -158,9 +158,6 @@ class FilterSetup(QWidget):
         self.set_selectors_style()
         self.filter_pages.setCurrentIndex(idx)
 
-    def set_ed_fields(self, field: str):
-        {'3': self.set_rating_field, '8': self.set_publish_field}[field]()
-
     def set_rating_field(self):
         is_int = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])[3] == "int"
         self.adv.rating_sel.setVisible(is_int)
@@ -174,7 +171,7 @@ class FilterSetup(QWidget):
 
     def set_publish_field(self):
         self.adv.date_type.clear()
-        db_flds = {1: "added", 2: "opened", 5: "modified", 9: "note_date"}
+        db_flds = {1: "added", 2: "opened", 5: "modified", 8: "published", 9: "note_date"}
         fields = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
         for key,val in db_flds.items():
             self.adv.date_type.addItem(fields[key], userData=val)

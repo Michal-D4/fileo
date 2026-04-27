@@ -68,7 +68,7 @@ def set_menu_more():
     for i,item in enumerate(ttls):
         act = QAction(item.title(), ag.app, checkable=True)
         act.setChecked(True)
-        act.triggered.connect(lambda state, it = i: ag.signals.hideSignal.emit(state, it))
+        act.triggered.connect(lambda state, it = i: ag.signals.hideSignal.emit(not state, it))
         menu.addAction(act)
 
     ag.app.ui.more.setMenu(menu)
@@ -96,8 +96,7 @@ def bk_setup():
     ag.tag_list.delete_items.connect(low_bk.delete_tags)
     ag.author_list.delete_items.connect(low_bk.delete_authors)
 
-    ag.file_list.doubleClicked.connect(
-        lambda: ag.signals.user_signal.emit("double click file"))
+    ag.file_list.doubleClicked.connect(lambda: ag.signals.user_signal.emit("double click file"))
 
     ctrl_w = QShortcut(QKeySequence("Ctrl+W"), ag.dir_list)
     ctrl_w.activated.connect(lambda: ag.signals.user_signal.emit("Dirs Create folder"))
@@ -214,6 +213,9 @@ def header_restore():
     except Exception as e:
         logger.info(f'{type(e)}; {e.args}', exc_info=True)
 
+    hdr.setSectionsClickable(True)
+    hdr.setSortIndicatorShown(True)
+    hdr.setStretchLastSection(False)
     hdr.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     hdr.sectionResized.connect(resized_column)
 
@@ -222,6 +224,7 @@ def header_restore():
     set_field_menu()
     hdr.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
     hdr.customContextMenuRequested.connect(header_menu)
+    QTimer.singleShot(150, resize_section_0)
 
 @pyqtSlot(QPoint)
 def header_menu(pos: QPoint):
@@ -231,7 +234,7 @@ def header_menu(pos: QPoint):
         me = QMenu()
         field = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])[idx]
         me.addAction(f'Hide column "{field}"')
-        if (idx in (3, 6, 8)) and ('fieldEditor' not in ag.popups):
+        if (idx in (3, 6)) and ('fieldEditor' not in ag.popups):
             me.addAction('Edit title')
         pos = QPoint(pos.x(), hdr.height()+3)
         action = me.exec(hdr.mapToGlobal(pos))
@@ -312,7 +315,9 @@ def file_menu(pos):
         menu.addSeparator()
         menu.addAction("Open file")
         menu.addSeparator()
-        menu.addAction("Rename file")
+        act = QAction("Rename file")
+        act.setShortcut(QKeySequence("F2"))
+        menu.addAction(act)
         menu.addSeparator()
     if sel_model.hasSelection():
         menu.addAction("Copy file name(s)")
@@ -321,7 +326,9 @@ def file_menu(pos):
         menu.addAction("Export selected files")
         menu.addSeparator()
     if ag.dir_list.currentIndex().isValid():
-        menu.addAction("Create new file")
+        act2 = QAction("Create new file")
+        act2.setShortcut(QKeySequence("Ctrl+N"))
+        menu.addAction(act2)
         menu.addSeparator()
     if ag.mode is ag.appMode.RECENT_FILES:
         menu.addAction("Clear file history")
@@ -329,7 +336,7 @@ def file_menu(pos):
             menu.addAction("Remove selected from history")
     if sel_model.hasSelection():
         menu.addSeparator()
-        menu.addAction("Remove file(s) from folder")
+        menu.addAction("Remove file(s) from current folder")
         menu.addSeparator()
         menu.addAction("Delete file(s) from DB")
     if len(menu.actions()) > 0:

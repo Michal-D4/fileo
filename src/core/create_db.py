@@ -2,7 +2,10 @@ from loguru import logger
 import apsw
 from enum import IntEnum
 
+from PyQt6.QtCore import QSettings
+
 from . import app_globals as ag
+from .. import tug
 
 APP_ID = 1718185071
 USER_VER = 31
@@ -131,7 +134,49 @@ def check_app_schema(db_path: str) -> str:
     app_id = conn.cursor().execute("PRAGMA application_id").fetchone()
     return  "Ok" if app_id[0] == APP_ID else "not a fileo database"
 
+def clean_app_settings(cur_v: int):
+    app_params = tug.qss_params["@appSettings"]
+    upd = tug.qss_params["@appSettingsUpd"]
+    app_par_set = set(app_params)-set(upd)
+    settings = QSettings(tug.MAKER, tug.APP_NAME)
+    for key in settings.allKeys():
+        if key in app_par_set:
+            continue
+        settings.remove(key)
+    tug.save_app_setting(AppVersion=cur_v)
+
+def clean_db_settings(cur_v: int):
+    i = tug.qss_params["$FileListFields"].index("Recent")
+    old_type = ag.get_db_setting("FieldTypes", tug.qss_params["$FieldTypes"])[i]
+    conn = ag.db.conn
+    if old_type != 'date':
+        conn.cursor().execute('update files set published = opened')
+
+    db_params = tug.qss_params["@dbSettings"]
+    upd = tug.qss_params["@dbSettingsUpd"]
+    db_par_set = set(db_params)-set(upd)
+    for key in conn.cursor().execute('select key from settings'):
+        if key[0] in db_par_set:
+            continue
+        conn.cursor().execute('delete from settings where key = ?', key)
+    ag.save_db_settings(AppVersion=cur_v)
+
 def tune_new_version() -> bool:
+    cur_v = int(ag.app_version().replace('.', ''))
+    stored_v = tug.get_app_setting("AppVersion", cur_v)
+    if isinstance(stored_v, str):
+        stored_v = int(stored_v.replace('.', ''))
+    logger.info(f'{cur_v=}, {stored_v=}')
+    if cur_v != stored_v:
+        clean_app_settings(cur_v)
+
+    stored_v = ag.get_db_setting("AppVersion", cur_v)
+    if isinstance(stored_v, str):
+        stored_v = int(stored_v.replace('.', ''))
+    logger.info(f'{cur_v=}, {stored_v=}')
+    if cur_v != stored_v:
+        clean_db_settings(cur_v)
+
     conn = ag.db.conn
     try:
         v = conn.cursor().execute("PRAGMA user_version").fetchone()
@@ -145,124 +190,6 @@ def tune_new_version() -> bool:
 
 def convert_to_new_version(conn, db_v):
     logger.info(f'<<<  {db_v=}, {USER_VER=}, {ag.db.path=}')
-    def update_to_v21():
-        try:
-            conn.cursor().execute(
-                'ALTER TABLE parentdir RENAME COLUMN is_link TO multy;'
-            )
-        except apsw.SQLError:
-            pass
-
-    def update_to_v22():
-        sql = (
-            "update dirs set multy = 1 where id in ("
-            "select id from parentdir p group by id having count(*) > 1)"
-        )
-        curs = conn.cursor()
-        try:
-            curs.execute('ALTER TABLE parentdir DROP multy;')
-            curs.execute('ALTER TABLE dirs ADD multy integer not null default 0;')
-            curs.execute(sql)
-        except apsw.SQLError:
-            pass
-
-    def update_to_v23():
-        sql = 'delete from settings where key = ?'
-        conn.cursor().execute(sql, ('DIR_HISTORY',))
-
-    def update_to_v24():
-        sql1 = (
-            'INSERT or ignore into COPY_FILES select id, extid, '
-            f'path, filename, {ag.ZERO_DATE}, 1, modified, opened, created, '
-            'rating, nopen, hash, size, pages, published FROM files'
-        )
-
-        tbl_def = define_tables(tableIdx.FILES).replace("files", "COPY_FILES")
-        curs = conn.cursor()
-        curs.execute(tbl_def)
-        curs.execute(sql1)
-        curs.execute('DROP TABLE files')
-        curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
-
-    def update_to_v25():
-        """
-        old format of history: (branches: list, flags: list), curr: int
-        new format of history: branches: list, flags: list, curr: int
-        """
-        hist = ag.get_db_setting('DIR_HISTORY', [])
-        logger.info(f'{hist=}')
-        if len(hist) == 2:
-            h0,h1 = hist
-            logger.info(f'{h0=}, {h1=}')
-            ag.save_db_settings(DIR_HISTORY=([], [], -1))
-
-    def update_to_v26():
-        """
-        different path delimiters, "\" and "/" in table "paths"
-        change "\" to "/"
-        """
-        sql = 'update paths set path = REPLACE(path, "\\", "/") where instr(path, "\") > 0'
-        conn.cursor().execute(sql).fetchall()
-
-    def update_to_v27():
-        def insert_how_added_field():
-            sql1 = (
-                'INSERT or ignore into COPY_FILES select id, extid, '
-                'path, filename, added, 1, modified, opened, created, '
-                'rating, nopen, hash, size, pages, published FROM files'
-            )
-            sql2 = 'update files set how_added = ? where added = created'
-
-
-            tbl_def = define_tables(tableIdx.FILES).replace("files", "COPY_FILES")
-            curs.execute(tbl_def)
-            curs.execute(sql1)
-            curs.execute('DROP TABLE files')
-            curs.execute('ALTER TABLE COPY_FILES RENAME TO files')
-            curs.execute(sql2, (ag.fileSource.CREATED.value,))
-
-        def remove_path_duplicates():
-            sql1 = (
-                "with x(path, min_id, cnt) as ("
-                "select path, min(id), count(*) from paths group by path) "
-                "update files set path = (select x.min_id from x "
-                "join paths p on p.path = x.path "
-                "where x.cnt > 1 and files.path = p.id) "
-                "where path in ("
-                "select p.id from paths p join x on p.path = x.path "
-                "where p.id > x.min_id and x.cnt > 1)"
-            )
-            sql2 = (
-                "with x(path, min_id, cnt) as ("
-                "select path, min(id), count(*) from paths group by path) "
-                "delete from paths where path in ("
-                "select path from x where x.cnt > 1 and paths.id > x.min_id)"
-            )
-            curs.execute(sql1)
-            curs.execute(sql2)
-
-        update_to_v26()
-        insert_how_added_field()
-        remove_path_duplicates()
-
-    def update_to_v28():
-        sql = 'SELECT sql FROM sqlite_schema WHERE name = ? and instr(sql, ?);'
-        is_ok = conn.cursor().execute(sql, ('settings', 'PRIMARY')).fetchone()
-        if not is_ok:
-            conn.cursor().execute('DROP TABLE settings')
-            conn.cursor().execute(define_tables(tableIdx.SETTINGS))
-
-    def update_to_v29():
-        to_upd = (('files', 'added'), ('files',  'modified'),
-                  ('files',  'opened'), ('files',  'created'), ('files',  'published'),
-                  ('filenotes', 'created'), ('filenotes', 'modified'))
-        def update_min_date():
-            sql = f'update {tbl} set {fld} = {ag.ZERO_DATE} where {fld} < -86400;'
-            curs.execute(sql)
-
-        for tbl,fld in to_upd:
-            update_min_date()
-
     def update_to_v30(names):
         def drop_old_tbl(table: str):
             curs.execute(f'DROP TABLE {table}')
@@ -278,33 +205,6 @@ def convert_to_new_version(conn, db_v):
         curs.execute(sql)
 
     curs = conn.cursor()
-
-    if db_v < 21:
-        update_to_v21()
-
-    if db_v < 22:
-        update_to_v22()
-
-    if db_v < 23:
-        update_to_v23()
-
-    if db_v < 24:
-        update_to_v24()
-
-    if db_v < 25:
-        update_to_v25()
-
-    if db_v < 26:
-        update_to_v26()
-
-    if db_v < 27:
-        update_to_v27()
-
-    if db_v < 28:
-        update_to_v28()
-
-    if db_v < 29:
-        update_to_v29()
 
     if db_v < 30:
         update_to_v30({tableIdx.FILES: "files",  tableIdx.FILENOTES: "filenotes"})

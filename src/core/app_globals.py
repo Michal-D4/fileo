@@ -27,7 +27,7 @@ def app_version() -> str:
     """
     if version changed here then also change it in the "pyproject.toml" file
     """
-    return '1.4.08'
+    return '1.4.09'
 
 app: 'shoWindow' = None
 dir_list: 'QTreeView' = None
@@ -57,9 +57,11 @@ class fileSource(Enum):
 
 @unique
 class appMode(Enum):
+    # main modes
     DIR = 1
     FILTER = 2
     FILTER_SETUP = 3
+    # additional modes
     RECENT_FILES = 4
     FOUND_FILES = 5
     FOUND_IN_NOTES = 6
@@ -87,6 +89,7 @@ def set_mode(new_mode: appMode):
     if mode is appMode.FILTER:
         save_db_settings(FILTER_FILE_ID = file_list.currentIndex().data(Qt.ItemDataRole.UserRole))
 
+    # not change filter settings when mode changed to additional modes
     if mode is appMode.FILTER and new_mode.value > appMode.FILTER_SETUP.value:
         dir_list.selectionModel().selectionChanged.disconnect(filter_dlg.dir_selection_changed)
         disconnected = True
@@ -215,6 +218,8 @@ def add_recent_file(id_: int):
         pass
 
     recent_files.append(id_)
+    sql = 'update files set published = unixepoch() where id = ?'
+    db.conn.cursor().execute(sql, (id_,))
     if len(recent_files) > recent_files_length:
         recent_files.pop(0)
 

@@ -12,7 +12,6 @@ class dirItem(object):
         self.parentItem: dirItem = parent
         self.itemData = data
         self.children: list[dirItem] = []
-
         self.userData: ag.DirData = user_data
 
     def child(self, row) -> 'dirItem':
@@ -38,7 +37,6 @@ class dirItem(object):
     def insertChildren(self, row: int, count: int, columns: int=1) -> bool:
         if row < 0 or row > len(self.children):
             return False
-
         for _ in range(count):
             item = dirItem('', None, self)
             self.children.insert(row, item)
@@ -55,10 +53,8 @@ class dirItem(object):
     def removeChildren(self, position, count) -> bool:
         if position < 0 or position + count > len(self.children):
             return False
-
         for row in range(count):
             self.children.pop(position)
-
         return True
 
     def setData(self, value, role=Qt.ItemDataRole.EditRole) -> bool:
@@ -78,7 +74,6 @@ class dirItem(object):
 class dirModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super().__init__(parent)
-
         self.rootItem = dirItem(data='', user_data=ag.DirData(0, 0))
 
     def columnCount(self, parent=None) -> int:
@@ -95,17 +90,13 @@ class dirModel(QAbstractItemModel):
         elif role == Qt.ItemDataRole.DecorationRole:
             u_dat = self.getItem(index).user_data()
             if u_dat.multy:
-                return (tug.get_icon("mult_hidden") if u_dat.hidden
-                        else tug.get_icon("mult_folder"))
-            return (tug.get_icon("hidden") if u_dat.hidden
-                    else tug.get_icon("folder"))
-
+                return (tug.get_icon("mult_hidden") if u_dat.hidden else tug.get_icon("mult_folder"))
+            return (tug.get_icon("hidden") if u_dat.hidden else tug.get_icon("folder"))
         return None
 
     def flags(self, index):
         if not index.isValid():
             return (Qt.ItemFlag.ItemIsDropEnabled | super().flags(index))
-
         return (
             Qt.ItemFlag.ItemIsEditable |
             Qt.ItemFlag.ItemIsDragEnabled |
@@ -117,18 +108,15 @@ class dirModel(QAbstractItemModel):
             item = index.internalPointer()
             if item:
                 return item
-
         return self.rootItem
 
     def index(self, row, column, parent: QModelIndex) -> QModelIndex:
         if parent.isValid() and parent.column() != 0:
             return QModelIndex()
-
         parentItem = self.getItem(parent)
         childItem = parentItem.child(row)
         if childItem:
             return self.createIndex(row, column, childItem)
-
         return QModelIndex()
 
     def insertRows(self, row: int, count: int, parent: QModelIndex) -> bool:
@@ -141,21 +129,17 @@ class dirModel(QAbstractItemModel):
     def parent(self, index) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
-
         item = self.getItem(index)
         parentItem = item.parent()
-
         if parentItem is self.rootItem:
             return QModelIndex()
         return self.createIndex(parentItem.childNumber(), 0, parentItem)
 
     def removeRows(self, position, rows, parent: QModelIndex) -> bool:
         parentItem = self.getItem(parent)
-
         self.beginRemoveRows(parent, position, position + rows - 1)
         success = parentItem.removeChildren(position, rows)
         self.endRemoveRows()
-
         return success
 
     def rowCount(self, parent=QModelIndex()):
@@ -165,7 +149,6 @@ class dirModel(QAbstractItemModel):
     def setData(self, index, value, role: Qt.ItemDataRole) -> bool:
         if role != Qt.ItemDataRole.EditRole and role != Qt.ItemDataRole.ToolTipRole:
             return False
-
         item = self.getItem(index)
         return item.setData(value, role)
 

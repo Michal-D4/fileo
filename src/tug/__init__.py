@@ -51,6 +51,7 @@ APP_NAME = "fileo"
 MAKER = 'miha'
 
 entry_point: str = None
+lock = None
 cfg_path = Path()
 qss_params = {}
 dyn_qss = defaultdict(list)
@@ -141,6 +142,8 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         keys = list(qss_params.keys())
         keys.sort(reverse=True)
         for key in keys:
+            if key.startswith('@'):
+                continue
             styles = styles.replace(key, qss_params[key])
         return styles
 
@@ -157,10 +160,6 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
         parse_params(param)
         parse_params('common.param')
 
-        extra = theme.get('extra', '')
-        if extra:
-            parse_params(extra)
-
         ico_app = f'{qss_params["$ico_app"]}.{"ico" if sys.platform.startswith("win") else "png"}'
         with resources.path(qss, ico_app) as _path:
             qss_params['$ico_app'] = str(_path)
@@ -173,12 +172,20 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
                     raise Exception(f'Duplicate key "{name}" in qss parameters')
                 seen.add(name)
 
-        params = read_file(param)
-        params = [it.split('~') for it in params.splitlines() if it.startswith("$") and ('~' in it)]
+        dogs = defaultdict(list)
+        params = []
+        for it in read_file(param).splitlines():
+            if it.startswith("$"):
+                params.append(it.split('~'))
+            elif it.startswith("@"):
+                key, val = it.split('~')
+                dogs[key].append(val)
+        
         check_for_double_key()
         params.sort(key=lambda x: x[0], reverse=True)
         qss_params.update(params)
         param_substitution()
+        qss_params.update(dogs)
 
     def param_substitution():
         def val_subst(val: str) -> str:
@@ -218,7 +225,9 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
     qss_params["$fontFamily"] = QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont).defaultFamily()
     qss_params["$fontStyle"] = QFontDatabase.styles(qss_params["$fontFamily"])[0]
     qss_params["$fontFamily"] = get_app_setting("FONT_FAMILY", qss_params["$fontFamily"])
+
     read_params()
+
     fnt_sz = get_app_setting('FONT_SIZE', '10')
     qss_params['$normalSize'], qss_params['$bigSize'], qss_params['$menuSize'] = FONT_SIZE.get(fnt_sz, FONT_SIZE['10'])
 
@@ -230,13 +239,13 @@ def prepare_styles(theme_key: str, to_save: bool) -> str:
 
     ttls = get_app_setting('FOLD_TITLES', '')
     qss_params['$FoldTitles'] = ttls if len(ttls) == 4 else ["Folders", "Tags", "File Extensions", "Authors"]
-    logger.info(f'{qss_params['$FoldTitles']=}')
+    logger.info(f"{qss_params['$FoldTitles']=}")
     parse_field_names()
     qss_params['$ToolTips'] = qss_params['$ToolTips'].split(',')
     qss_params['$FieldTypes'] = qss_params['$FieldTypes'].split(',')
     qss_params['$FieldFormats'] = qss_params['$FieldFormats'].split(',')
     xx = qss_params['$EditableFields'].split(',')
-    qss_params['$EditableFields'] = dict((int(xx[i]),xx[i+1]) for i in range(0,8,2))
+    qss_params['$EditableFields'] = dict((int(xx[i]),xx[i+1]) for i in range(0,len(xx)//2,2))
 
     start_dyn = extract_dyn_qss()
 
@@ -309,6 +318,7 @@ def collect_all_icons(icons_res: dict) -> dict:
             'radio_btn', 'radio_btn_active',
             'vline3', 'angle_down3', 'angle_right3',
             'angle_down2', 'up_trigon', 'down_trigon',
+            'sort_down', 'sort_up',
         ),
     }
     return set_icons(keys, icons_res)

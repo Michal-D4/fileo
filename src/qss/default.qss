@@ -48,9 +48,6 @@ QFrame#toolBar QToolButton:checked {
    border-right: none;
    border-bottom: none;
 }
-QWidget#contents {
-   background-color: $leftPaneBG;
-}
 QFrame#fold_head {
    background-color: $headerBG;
 }
@@ -171,22 +168,9 @@ QTextEdit {
    selection-color: $selectedText;
    selection-background-color: $selectedBG;
 }
-QFrame[frameShape="4"] {
-   border: none;
-   background-color: $innerBorder;
-}
-QFrame[frameShape="4"]:hover {
-   background-color: $splitHover;
-}
-QFrame[frameShape="5"] {
-   border: none;
-   background-color: $innerBorder;
-}
-QFrame[frameShape="5"]:hover {
-   background-color: $splitHover;
-}
 QFrame#fileFrame {
    border: none;
+   border-left: $shapeBorder2 $innerBorder;
    border-right: $shapeBorder2 $borderColor;
    background-color: $fileFrameBG;
 }
@@ -258,7 +242,28 @@ QHeaderView::section {
    border-top: none;
    border-left: none;
 }
+QHeaderView::down-arrow {
+   margin-top: 2;
+   margin-right: 4;
+   width: 12;
+   height: 8;
+   position: static;
+   subcontrol-position: right top;
+   image: url('$sort_down');
+}
+QHeaderView::up-arrow {
+   margin-top: 2;
+   margin-right: 4;
+   width: 12;
+   height: 8;
+   position: static;
+   subcontrol-position: right top;
+   image: url('$sort_up');
+}
 /* ------------------------- */
+QFrame#noteHolder {
+   border-top: $shapeBorder2 $innerBorder;
+}
 QFrame#head {
    background-color: $headerBG;
 }
@@ -282,6 +287,10 @@ QFrame#btns QToolButton {
 QFrame#inner {
    border: none;
    background-color: transparent;
+}
+QFrame#left_pane {
+   border: none;
+   background-color: $leftPaneBG;
 }
 QFrame#inner QTextBrowser {
    color: $textColor;
@@ -489,29 +498,35 @@ QTableWidget, QListWidget {
 ##adv_page~QToolButton:hover {background-color: $hoverBG;}
 ##adv_page~QLineEdit {background-color: $headerBG; color: $textColor;
 ##adv_page~selection-color: $selectedText; selection-background-color: $selectedBG;}
-##file_list~QTreeView {font-family: $fontFamily;font-size: $normalSize;outline: none;
-##file_list~border: none;background-color: transparent;color: $textColor;}
-##file_list~QTreeView::branch:hover {background-color: $itemHoverBG;}
-##file_list~QTreeView::branch:focus {background-color: $notActiveItemBG;}
-##file_list~QTreeView::branch:selected:active {background-color: $selectedBG;}
-##file_list~QTreeView::branch:selected:!active {background-color: $notActiveItemBG;}
-##file_list~QTreeView::item:hover {background-color: $itemHoverBG;}
-##file_list~QTreeView::item:focus {background-color: $notActiveItemBG;}
-##file_list~QTreeView::item:selected:active {background-color: $selectedBG; color: $selectedText;}
-##file_list~QTreeView::item:selected:!active {background-color: $notActiveItemBG;color: $selectedText;}
-##dir_tree~QTreeView {font-family: $fontFamily;font-size: $normalSize;outline: none;
-##dir_tree~border: none;background-color: transparent;color: $textColor;padding-left: 8px;}
-##dir_tree~QTreeView::branch:hover {background-color: $itemHoverBG;}
-##dir_tree~QTreeView::branch:focus {background-color: $notActiveItemBG;}
-##dir_tree~QTreeView::branch:selected:active {background-color: $selectedBG;}
-##dir_tree~QTreeView::branch:selected:!active {background-color: $notActiveItemBG;}
-##dir_tree~QTreeView::item:hover {background-color: $itemHoverBG;}
-##dir_tree~QTreeView::item:focus {background-color: $notActiveItemBG;}
-##dir_tree~QTreeView::item:selected:active {background-color: $selectedBG;color: $selectedText;}
-##dir_tree~QTreeView::item:selected:!active {background-color: $notActiveItemBG;color: $selectedText;}
-##dir_tree~QTreeView::branch {background-color: transparent;}
-##dir_tree~QTreeView::branch:!adjoins-item {border-image: url('$vline3') 0;}
-##dir_tree~QTreeView::branch:adjoins-item {border-image: url('$vline3') 0;}
-##dir_tree~QTreeView::branch:!has-children:!has-siblings:adjoins-item {border-image: url('$vline3') 0;}
-##dir_tree~QTreeView::branch:closed:has-children {border-image: none;image: url('$angle_right');}
-##dir_tree~QTreeView::branch:open:has-children {border-image: none;image: url('$angle_down');}
+##qss_files~QTreeView {font-family: $fontFamily;font-size: $normalSize;outline: none;
+##qss_files~border: none;background-color: transparent;color: $textColor;}
+##qss_files~QTreeView::branch:hover {background-color: $itemHoverBG;}
+##qss_files~QTreeView::branch:focus {background-color: $notActiveItemBG;}
+##qss_files~QTreeView::branch:selected:active {background-color: $selectedBG;}
+##qss_files~QTreeView::branch:selected:!active {background-color: $notActiveItemBG;}
+##qss_files~QTreeView::item:hover {background-color: $itemHoverBG;}
+##qss_files~QTreeView::item:focus {background-color: $notActiveItemBG;}
+##qss_files~QTreeView::item:selected:active {background-color: $selectedBG; color: $selectedText;}
+##qss_files~QTreeView::item:selected:!active {background-color: $notActiveItemBG;color: $selectedText;}
+##qss_dirs~QTreeView {font-family: $fontFamily;font-size: $normalSize;outline: none;
+##qss_dirs~border: none;background-color: transparent;color: $textColor;padding-left: 8px;}
+##qss_dirs~QTreeView::branch:hover {background-color: $itemHoverBG;}
+##qss_dirs~QTreeView::branch:focus {background-color: $notActiveItemBG;}
+##qss_dirs~QTreeView::branch:selected:active {background-color: $selectedBG;}
+##qss_dirs~QTreeView::branch:selected:!active {background-color: $notActiveItemBG;}
+##qss_dirs~QTreeView::item:hover {background-color: $itemHoverBG;}
+##qss_dirs~QTreeView::item:focus {background-color: $notActiveItemBG;}
+##qss_dirs~QTreeView::item:selected:active {background-color: $selectedBG;color: $selectedText;}
+##qss_dirs~QTreeView::item:selected:!active {background-color: $notActiveItemBG;color: $selectedText;}
+##qss_dirs~QTreeView::branch {background-color: transparent;}
+##qss_dirs~QTreeView::branch:!adjoins-item {border-image: url('$vline3') 0;}
+##qss_dirs~QTreeView::branch:adjoins-item {border-image: url('$vline3') 0;}
+##qss_dirs~QTreeView::branch:!has-children:!has-siblings:adjoins-item {border-image: url('$vline3') 0;}
+##qss_dirs~QTreeView::branch:closed:has-children {border-image: none;image: url('$angle_right');}
+##qss_dirs~QTreeView::branch:open:has-children {border-image: none;image: url('$angle_down');}
+##left_pane_split~QFrame {border-top: none;}
+##left_pane_split_pressed~QFrame {border-top: $shapeBorder2 $splitHover;}
+##filenote_split~QFrame#noteHolder {border-top: $shapeBorder2 $innerBorder;}
+##filenote_split_pressed~QFrame#noteHolder {border-top: $shapeBorder2 $splitHover;}
+##hor_split~QFrame#fileFrame {border-left: $shapeBorder2 $innerBorder;}
+##hor_split_pressed~QFrame#fileFrame {border-left: $shapeBorder2 $splitHover;}

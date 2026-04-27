@@ -2,7 +2,7 @@
 from pathlib import Path
 
 from PyQt6.QtCore import (QAbstractTableModel, QModelIndex, Qt,
-    QSortFilterProxyModel, QDateTime,
+    QSortFilterProxyModel, QDateTime, pyqtSlot
 )
 from PyQt6.QtWidgets import QStyle
 
@@ -10,12 +10,10 @@ from . import db_ut, app_globals as ag
 from .. import tug
 from ..widgets.cust_msgbox import show_message_box
 
+SRT_IDX = -2
 SORT_ROLE = Qt.ItemDataRole.UserRole + 1
-SZ_SCALE = {
-    'Kb': 1024,
-    'Mb': 1048576,
-    'Gb': 1073741824
-}
+SIZE_SORT_ROLE = Qt.ItemDataRole.UserRole + 2
+
 def create_date_obj(val: int) -> QDateTime:
     d = QDateTime()
     d.setSecsSinceEpoch(val)
@@ -25,6 +23,12 @@ class fileProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.rows = None
+        self.user_data = None
+        self.inserted_row = -1
+        self.lessThan = self.normalLessThan
+        self.field_names = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
+        self.editable = tug.qss_params['$Editable']
 
     def flags(self, index):
         if not index.isValid():
@@ -32,9 +36,21 @@ class fileProxyModel(QSortFilterProxyModel):
 
         return (  # is ItemIsEditable
             Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsDragEnabled | super().flags(index)
-            if self.sourceModel().is_editable(index.column()) else  # is not ItemIsEditable
+            if (self.editable & 1 << index.column()) else  # is not ItemIsEditable
             Qt.ItemFlag.ItemIsDragEnabled | super().flags(index)
         )
+
+    def set_inserted_row(self, val: int):
+        if val >= 0:
+            self.lessThan = self.new_file_lessThan
+        else:
+            self.lessThan = self.normalLessThan
+        self.inserted_row = val
+        self.sourceModel().set_inserted_row(val)
+
+    def assign_source_data(self):
+        self.rows = self.sourceModel().rows
+        self.user_data = self.sourceModel().user_data
 
     def update_header(self, vals: str):
         model: fileModel = self.sourceModel()
@@ -50,30 +66,70 @@ class fileProxyModel(QSortFilterProxyModel):
         idx = self.sourceModel().get_index_by_id(id)
         return self.mapFromSource(idx)
 
-    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        if left.column() == 0:
-            l_val = self.sourceModel().data(left, SORT_ROLE)
-            r_val = self.sourceModel().data(right, SORT_ROLE)
-            return l_val < r_val
-        if self.sourceModel().headerData(left.column()) == 'Size':
-            ll = self.sourceModel().data(left, Qt.ItemDataRole.DisplayRole)
-            rr = self.sourceModel().data(right, Qt.ItemDataRole.DisplayRole)
-            l_val = ll if isinstance(ll, int) else int(float(ll[:-3]) * SZ_SCALE[ll[-2:]])
-            r_val = rr if isinstance(rr, int) else int(float(rr[:-3]) * SZ_SCALE[rr[-2:]])
-            return l_val < r_val
-        return super().lessThan(left, right)
+    def normalLessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        def get_col(col) -> int:
+            if col == 0:
+                sort_col = SRT_IDX
+            elif self.field_names[col] == 'Size':
+                sort_col = SRT_IDX+1
+            else:
+                sort_col = col
+            return sort_col
+
+        col = get_col(left.column())
+        return self.rows[left.row()][col] < self.rows[right.row()][col]
+
+    def new_file_lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        def get_rows(idx: QModelIndex) -> tuple[int, int]:
+            flag = 1
+            row = idx.row()
+            if self.user_data[row] == 0:
+                flag = 0
+                row += 1
+            return row, flag
+
+        def get_col(col) -> int:
+            if col == 0:
+                sort_col = SRT_IDX
+            elif self.field_names[col] == 'Size':
+                sort_col = SRT_IDX+1
+            else:
+                sort_col = col
+            return sort_col
+
+        lrow, lflag = get_rows(left)
+        rrow, rflag = get_rows(right)
+        col = get_col(left.column())
+
+        l_val = (self.rows[lrow][col], lflag)
+        r_val = (self.rows[rrow][col], rflag)
+
+        return l_val < r_val
 
 
 class fileModel(QAbstractTableModel):
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.field_names = ag.get_db_setting('FileListFields', tug.qss_params['$FileListFields'])
-        self.editable = tug.qss_params['$Editable']
         self.field_type = ag.get_db_setting('FieldTypes', tug.qss_params['$FieldTypes'])
         self.tool_tip = ag.get_db_setting('ToolTips', tug.qss_params['$ToolTips'])
         self.formats = ag.get_db_setting('FieldFormats', tug.qss_params['$FieldFormats'])
         self.rows = []
         self.user_data: list[int] = []  # file_id
+        self.inserted_row = -1
+        ag.signals.cancel_edit.connect(self.edit_cancel)
+
+    def set_inserted_row(self, val: int):
+        self.inserted_row = val
+
+    @pyqtSlot()
+    def edit_cancel(self):
+        try:
+            i0 = self.user_data.index(0)
+            self.removeRows(i0, 1)
+        finally:
+            self.inserted_row = -1
 
     def update_header(self, vals: str):
         def convert_to_str():
@@ -117,9 +173,6 @@ class fileModel(QAbstractTableModel):
             self.formats[ii] = fmt
             ag.save_db_settings(FieldFormats = self.formats)
 
-    def is_editable(self, column: int) -> bool:
-        return self.editable & 1 << column
-
     def rowCount(self, parent=None):
         return len(self.rows)
 
@@ -141,35 +194,26 @@ class fileModel(QAbstractTableModel):
             elif role == Qt.ItemDataRole.UserRole:
                 return self.user_data[index.row()]
             elif role == SORT_ROLE:
-                return line[col] if col else line[-1]
+                return line[SRT_IDX]
+            elif role == SIZE_SORT_ROLE:
+                return line[SRT_IDX+1]
             elif role == Qt.ItemDataRole.TextAlignmentRole:
                 if col:
                     return Qt.AlignmentFlag.AlignRight
                 return Qt.AlignmentFlag.AlignLeft
         return None
 
-    def append_row(self, row:list, file_id: int=0):
-        self.rows.append(row)
-        self.user_data.append(file_id)
-
     def insertRows(self, row: int, count: int, parent: QModelIndex=QModelIndex()):
         self.beginInsertRows(parent, row, row + count - 1)
-        if 0 > row > len(self.rows):
-            success = False
-        else:
-            line = [create_date_obj(ag.ZERO_DATE) if x=='date' else 0 if x=='int' else '' for x in self.field_type[1:]]
-            for i in range(count):
-                self.rows.insert(row, ['<file_name>.md', *line, ('<file_name>','md')])
-                self.user_data.insert(row, 0)          # file_id = 0
-            success = True
+        line = [create_date_obj(ag.ZERO_DATE) if x=='date' else 0 if x=='int' else '' for x in self.field_type[1:]]
+        for i in range(count):
+            self.rows.insert(row, ['<file_name>.md', *line, ('<file_name>','md'), 0])
+            self.user_data.insert(row, 0)          # file_id = 0
         self.endInsertRows()
-        return success
+        return True
 
     def index(self, row, column, parent: QModelIndex=QModelIndex()):
-        if 0 > row or row >= len(self.rows):
-            return QModelIndex()
-
-        return self.createIndex(row, column, self.rows[row])
+        return self.createIndex(row, column, self.rows[row]) if 0 <= row < len(self.rows) else QModelIndex()
 
     def removeRows(self, row, count=1, parent=QModelIndex()):
         self.beginRemoveRows(QModelIndex(), row, row + count - 1)
@@ -198,7 +242,7 @@ class fileModel(QAbstractTableModel):
                 return False
 
             line[0] = new_name
-            line[-1] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
+            line[SRT_IDX] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
             ag.app.ui.current_filename.setText(new_name)
             return True
 
@@ -219,7 +263,9 @@ class fileModel(QAbstractTableModel):
 
             line[1] = line[5] = line[10] = cre_time
             line[0] = new_file
-            line[-1] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
+            line[SRT_IDX] = ((new_path.stem.lower(), new_path.suffix.strip('.').lower()) if new_path.suffix else (new_path.stem.lower(),))
+            line[SRT_IDX+1] = 0    # Size
+
             ff = [line[i].toSecsSinceEpoch() if isinstance(line[i], QDateTime) else line[i] for i in (5,2,10,3,4,7,6,8,1,)]
             file_id, is_new_ext = db_ut.insert_file(('', new_file, *ff[:-1], path), ff[-1], ag.fileSource.CREATED.value)
             self.user_data[row] = file_id
@@ -274,6 +320,10 @@ class fileModel(QAbstractTableModel):
         self.rows[index.row()][9] = val
 
     def fill_model(self, files):
+        def append_row():
+            self.rows.append(ff1)
+            self.user_data.append(ff[-1])   # ff[-1] - file_id
+
         def field_val():
             if typ == "str":
                 return val if val else ''
@@ -285,19 +335,23 @@ class fileModel(QAbstractTableModel):
                 return ret
             return create_date_obj(val if isinstance(val, int) else ag.ZERO_DATE)
 
+        sz_val = 0
         for ff in files:
             if not ff[0]:
                 continue
             ff1 = []
             for typ, name, val in zip(self.field_type, self.field_names, ff[:-1]):
-                ff1.append(
-                    ag.human_readable_size(val) if name == 'Size' else field_val()
-                )
+                if name == 'Size':
+                    tt = ag.human_readable_size(val)
+                    sz_val = val
+                else:
+                    tt = field_val()
+                ff1.append(tt)
 
             filename = Path(ff[0])
-            ff1.append(
+            ff1.append(             # SRT_IDX
                 (filename.stem.lower(), filename.suffix.strip('.').lower())
-                if filename.suffix else
-                (filename.stem.lower(),)
+                if filename.suffix else (filename.stem.lower(),)
             )
-            self.append_row(ff1, ff[-1])   # ff[-1] - file_id
+            ff1.append(sz_val)      # SRT_IDX+1
+            append_row()

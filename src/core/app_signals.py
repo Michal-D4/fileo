@@ -8,7 +8,7 @@ class AppSignals(QObject):
 
     filter_setup_closed = pyqtSignal(name="filter_setup_closed")
 
-    collapseSignal = pyqtSignal(QObject, bool)
+    collapseSignal = pyqtSignal(int, bool)
     hideSignal = pyqtSignal(bool, int)
 
     start_disk_scanning = pyqtSignal(str, list, name="start_disk_scanning")
@@ -25,3 +25,5 @@ class AppSignals(QObject):
     font_size_changed = pyqtSignal(str)
 
     author_widget_title = pyqtSignal(str)
+
+    cancel_edit = pyqtSignal()

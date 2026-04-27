@@ -1,4 +1,4 @@
-# from loguru import logger
+from loguru import logger
 import json
 from pathlib import Path
 from datetime import datetime
@@ -53,7 +53,7 @@ def set_user_action_handlers():
         "Files Open file": open_current_file,
         "Open file by path": open_with_url,
         "double click file": double_click_file,
-        "Files Remove file(s) from folder": remove_files,
+        "Files Remove file(s) from current folder": remove_files,
         "Files Delete file(s) from DB": ask_delete_files,
         "Files Reveal in explorer": open_file_folder,
         "Files Rename file": rename_file,
@@ -126,19 +126,27 @@ def header_changed(val: str):
     ag.file_data.reset_file_info(val)
     model: fileProxyModel = ag.file_list.model()
     model.update_header(val)
-    if val[0] in "38":
-        ag.filter_dlg.set_ed_fields(val[0])
+    if val[0] == "3":
+        ag.filter_dlg.set_rating_field()
 
 def create_file():
-    model:  fileProxyModel = ag.file_list.model()
-    smodel: fileModel = model.sourceModel()
-    idx = ag.file_list.currentIndex()
-    sidx = model.mapToSource(idx)
-    row = sidx.row()+1
-    if smodel.insertRow(row):
-        sidx = smodel.index(row, 0)
-        idx = model.mapFromSource(sidx)
-        ag.file_list.edit(idx)
+    def file_create():
+        row_to_insert = source_idx.row()
+        model.set_inserted_row(row_to_insert)
+        smodel: fileModel = model.sourceModel()
+        if smodel.insertRow(row_to_insert):
+            idx_source = smodel.index(row_to_insert, 0)
+            idx_proxy = model.mapFromSource(idx_source)
+            ag.file_list.edit(idx_proxy)
+
+    proxy_idx = ag.file_list.currentIndex()
+    if not proxy_idx.isValid():
+        logger.info('file_list.currentIndex is not valid')
+        return
+
+    model: fileProxyModel = ag.file_list.model()
+    source_idx = model.mapToSource(proxy_idx)
+    file_create()
 
 def copy_trees():
     ss = '¹²'
@@ -188,14 +196,22 @@ def new_instance(db_name: str=''):
     tug.save_app_setting(MainWindowGeometry=ag.app.normalGeometry())
     tug.new_window(db_name)
 
+
+UPDATE_PUBLISHED = 'update files set published = opened where id = ?'
 def clear_recent_files():
+    ag.db.conn.cursor().executemany(UPDATE_PUBLISHED, ((i,) for i in  ag.recent_files))
     ag.recent_files.clear()
     ag.switch_to_prev_mode()
     refresh_file_list()
 
 def remove_files_from_recent():
+    file_ids = []
     for idx in ag.file_list.selectionModel().selectedRows(0):
-        ag.recent_files.remove(idx.data(Qt.ItemDataRole.UserRole))
+        ii = idx.data(Qt.ItemDataRole.UserRole)
+        ag.recent_files.remove(ii)
+        file_ids.append((ii,))
+    
+    ag.db.conn.cursor().executemany(UPDATE_PUBLISHED, file_ids)
     show_recent_files()
 
 def save_db_list_at_close():
@@ -313,9 +329,7 @@ def enable_buttons():   # when create connection to DB
     ag.app.ui.btnFilterSetup.setEnabled(True)
 
 def rename_file():
-    idx: QModelIndex = ag.file_list.currentIndex()
-    idx = ag.file_list.model().index(idx.row(), 0)
-    ag.file_list.edit(idx)
+    ag.file_list.edit(ag.file_list.currentIndex())
 
 def set_enable_prev_next():
     foll, prev = ag.history.is_next_prev_enable()
@@ -347,7 +361,7 @@ def srch_files_by_note():
     row_cnt = srch_files_common(ag.appMode.FOUND_IN_NOTES, db_ut.get_all_notes())
     searching = ag.popups['srchInNotes'].search_text()
     if row_cnt:
-        ag.app.ui.files_heading.setText(f'Found files, text in notes "{searching}"')
+        ag.app.ui.files_heading.setText(f'Files found by text "{searching}" in notes')
         ag.file_list.setFocus()
     else:
         show_message_box('Search in notes',
@@ -612,6 +626,7 @@ def set_current_file(file_id: int):
 def set_file_model(model: fileModel):
     proxy_model = fileProxyModel()
     proxy_model.setSourceModel(model)
+    proxy_model.assign_source_data()
     proxy_model.setSortRole(Qt.ItemDataRole.UserRole+1)
     ag.file_list.setModel(proxy_model)
 
@@ -619,13 +634,13 @@ def set_file_model(model: fileModel):
 def current_file_changed(curr: QModelIndex, prev: QModelIndex):
     if curr.isValid():
         ag.file_list.scrollTo(curr)
-        ag.app.ui.current_filename.setText(file_name(curr))
+        ag.app.ui.current_filename.setText(get_file_name(curr))
         file_notes_show(curr)
 
 def copy_file_name():
     files = []
     for idx in ag.file_list.selectionModel().selectedRows(0):
-        files.append(file_name(idx))
+        files.append(get_file_name(idx))
     QApplication.clipboard().setText('\n'.join(files))
 
 def copy_full_file_name():
@@ -646,7 +661,7 @@ def reveal_in_explorer(file_id: int|str):
 def full_file_name(index: QModelIndex) -> str:
     return db_ut.get_file_path(index.data(Qt.ItemDataRole.UserRole))
 
-def file_name(index: QModelIndex) -> str:
+def get_file_name(index: QModelIndex) -> str:
     if index.column():
         index = ag.file_list.model().index(index.row(), 0)
     return index.data(Qt.ItemDataRole.DisplayRole)

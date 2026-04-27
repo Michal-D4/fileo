@@ -1,20 +1,43 @@
 # from loguru import logger
 
-from PyQt6.QtCore import QEvent, Qt, QTimer
+from PyQt6.QtCore import QEvent, Qt, QTimer, QModelIndex
 from PyQt6.QtWidgets import QStyledItemDelegate, QLineEdit
+
+from . import app_globals as ag
 
 
 class fileEditorDelegate(QStyledItemDelegate):
-    '''
-    The purpose of this delegate is to prevent editing of the file name with double-click event.
-    The file must be opened by the double click event
-    Another purpose: when start editing, select only file name without period and extension.
-    '''
+    """
+    The purpose of this delegate:
+      - not open editor by the double click event
+      - edit filename in the file_list
+      - when start editing, select only file name without period and extension
+      - edited file name saving depends on the reason for closing editor
+    """
     def __init__(self, parent = None) -> None:
+        self.curr_index = QModelIndex()
         super().__init__(parent)
 
-    def editorEvent(self, event: QEvent, model, option, index) -> bool:
-        return event.type() is QEvent.Type.MouseButtonDblClick
+    def eventFilter(self, editor, event):
+        if event.type() == QEvent.Type.KeyPress:
+            key = event.key()
+            if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+                # commit data and close editor
+                self.commitData.emit(editor)
+                self.closeEditor.emit(editor, QStyledItemDelegate.EndEditHint.NoHint)
+                ag.file_list.model().set_inserted_row(-1)
+                return True
+            if key == Qt.Key.Key_Escape:
+                # close the editor without committing data, delete new row from model
+                # important: closeEditor before cancel_edit
+                self.closeEditor.emit(editor, QStyledItemDelegate.EndEditHint.NoHint)
+                ag.signals.cancel_edit.emit()
+                ag.file_list.model().set_inserted_row(-1)
+                return True
+        return super().eventFilter(editor, event)
+
+    def editorEvent(self, ev: QEvent, model, option, index) -> bool:
+        return ev.type() is QEvent.Type.MouseButtonDblClick
 
     def setEditorData(self, editor: QLineEdit, index):
         def set_selection():
@@ -23,16 +46,18 @@ class fileEditorDelegate(QStyledItemDelegate):
             except RuntimeError:
                 pass
 
+        self.curr_index = index
         editor.setText(index.data(Qt.ItemDataRole.EditRole))
         pos =  editor.text().rfind('.', 1)
         if pos > 0:
             QTimer.singleShot(25, set_selection)
 
+
 class folderEditDelegate(QStyledItemDelegate):
-    '''
-    The purpose of this delegate is to switch editing of
-    folder name - and tooltip to folder name.
-    '''
+    """
+    The purpose of this delegate is to switch between
+    editing the folder name and editing the folder's tooltip.
+    """
     data_role = Qt.ItemDataRole.EditRole
 
     def __init__(self, parent = None) -> None:

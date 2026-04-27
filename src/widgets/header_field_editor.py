@@ -75,7 +75,7 @@ class fieldEditor(QWidget, Ui_fldEditor):
 
     def save_new(self):
         def clear_field_in_db():
-            if self.index not in (3,6,8):
+            if self.index not in (3,6):
                 return
             fields = tug.qss_params['$EditableFields']
             vals = {'str': '', 'int': 0, 'date': ag.ZERO_DATE}

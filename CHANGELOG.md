@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.09 - 2026, 24 April
+* Lots of slight refinements in code and UI.
+* The previously editable "published" field in the file list is now uneditable and has been renamed to "recent". It now displays the date the file was last added to the recent list.
+
 ## 1.4.08 - 2026, 09 March
 * Now you can see how the theme will look when a row in the theme chooser receives focus. Previously, you had to select this row.
 * One-click theme selection, instead of double-click. Previously, one-click was used to select a row.

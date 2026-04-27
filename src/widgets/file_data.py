@@ -19,9 +19,6 @@ from .srch_in_notes import srchInNotes
 from .cust_msgbox import show_message_box
 from .. import tug
 
-def set_note_holder_height(hh: int):
-    ag.app.ui.noteHolder.setMinimumHeight(hh)
-    ag.app.ui.noteHolder.setMaximumHeight(hh)
 
 @unique
 class Page(Enum):
@@ -38,7 +35,8 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         super().__init__(parent)
         self.file_id = 0
         self.norm_height = 0
-        self.state: int = 1  # 0-MIN, 1-NORM, 2-MAX
+        self.size_state: int = 1  # 0-MIN, 1-NORM, 2-MAX
+        self.sizes_0 = None
 
         self.setupUi(self)
 
@@ -65,6 +63,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.set_buttons()
 
         self.tagEdit.editingFinished.connect(self.tag_selector.finish_edit_tag)
+        ag.app.ui.vSplitter.splitterMoved.connect(self.splitter_moved)
 
         self.l_file_notes_press(None)
 
@@ -75,10 +74,21 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.l_file_notes.mousePressEvent = self.l_file_notes_press
         self.l_editor.mousePressEvent = self.l_editor_press
 
+    def splitter_moved(self, *_):
+        if self.size_state == 1:
+            self.norm_height = ag.app.ui.vSplitter.sizes()[1]
+        elif self.size_state == 0:
+            self.minimaze_pane()
+        elif self.size_state == 2:
+            self.maximize_pane()
 
-    def set_height(self, hh: int):
-        self.norm_height = hh
-        set_note_holder_height(hh)
+    def set_size_state(self, size_state: tuple):
+        self.size_state = int(size_state[0])
+        h1, h2 = size_state[2]
+        self.sizes_0 = (int(h1), int(h2))
+        ag.app.ui.vSplitter.setSizes(self.sizes_0)
+        self.splitter_moved([])
+        self.norm_height = int(size_state[1])
 
     def set_author_title(self, ttl: str):
         self.l_authors.setText(f"{ttl[:-1].title()} selector")
@@ -89,10 +99,10 @@ class fileDataHolder(QWidget, Ui_FileNotes):
 
     def set_buttons(self):
         self.expand.setIcon(tug.get_icon("up"))
-        self.expand.clicked.connect(self.maximize_pane)
+        self.expand.clicked.connect(self.increase_pane)
 
         self.collapse.setIcon(tug.get_icon("down3"))
-        self.collapse.clicked.connect(self.minimize_pane)
+        self.collapse.clicked.connect(self.decrease_pane)
 
         self.srch_in_notes.setIcon(tug.get_icon("search"))
         self.srch_in_notes.clicked.connect(self.srch_notes)
@@ -232,26 +242,38 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.pages.setCurrentIndex(new_page.value)
 
     def maximize_pane(self):
-        if self.state == 1:
-            ag.file_list.hide()
-            set_note_holder_height(ag.file_list.height() + ag.app.ui.noteHolder.height())
-            self.expand.setEnabled(False)
-        else:
-            self.labels.show(); self.pages.show()  # noqa: E702
-            self.collapse.setEnabled(True)
-            set_note_holder_height(self.norm_height)
-        self.state += 1
+        ag.file_list.hide()
+        self.expand.setEnabled(False)
 
-    def minimize_pane(self):
-        if self.state == 1:
-            set_note_holder_height(self.head.height())
-            self.pages.hide(); self.labels.hide()  # noqa: E702
-            self.collapse.setEnabled(False)
-        else:
+    def increase_pane(self):
+        if self.size_state == 1:   #  maximize noteHolder
+            self.sizes_0 = (0, ag.app.ui.fileFrame.height())
+            self.maximize_pane()
+        else:                 #  normal size of noteHolder
+            self.labels.show(); self.pages.show()  # noqa: E702
+            ag.file_data.setMaximumHeight(16777215)
+            self.collapse.setEnabled(True)
+            self.sizes_0 = (ag.app.ui.fileFrame.height() - self.norm_height, self.norm_height)
+        ag.app.ui.vSplitter.setSizes(self.sizes_0)
+        self.size_state += 1
+
+    def minimaze_pane(self):
+        self.pages.hide(); self.labels.hide()  # noqa: E702
+        ag.file_data.setMaximumHeight(self.head.height())
+        ag.app.ui.vSplitter.setSizes(self.sizes_0)
+        self.collapse.setEnabled(False)
+
+    def decrease_pane(self):
+        if self.size_state == 1:   #  minimize noteHolder, show only head
+            self.sizes_0 = (ag.app.ui.fileFrame.height() - self.head.height(), self.head.height())
+            self.minimaze_pane()
+        else:                 #  normal size of noteHolder
+            self.sizes_0 = (ag.app.ui.fileFrame.height() - self.norm_height, self.norm_height)
             self.expand.setEnabled(True)
-            set_note_holder_height(self.norm_height)
             ag.file_list.show()
-        self.state -= 1
+            ag.app.ui.vSplitter.setSizes(self.sizes_0)
+
+        self.size_state -= 1
 
     def srch_notes(self):
         if "srchInNotes" in ag.popups:
@@ -314,7 +336,7 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         def get_attributes():
             note: fileNote = self.editor.get_note()
             return (
-                True,
+                True,   # edit state, assume "editing"
                 note.get_file_id(),
                 note.get_note_id(),
                 self.editor.get_text(),
@@ -346,3 +368,6 @@ class fileDataHolder(QWidget, Ui_FileNotes):
         self.file_info.set_file_id(file_id)
         self.notes.set_file_id(file_id)
         self.locator.set_data(file_id)
+
+    def save_size_state(self) -> tuple:
+        return self.size_state, self.norm_height, ag.app.ui.vSplitter.sizes()

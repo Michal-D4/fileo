@@ -394,3 +394,17 @@ colors = [" fill=\"$svgFill\""]
 save_in_file = "down_trigon"
 ico = """<svg viewBox="0 0 30 20"><path d="M15 19 L0 3 L30 3 L15 19Z"|/></svg>"""
 colors = [" fill=\"$svgFill\""]
+
+[sort_up]
+save_in_file = "sort_up"
+ico = """\
+<svg viewBox="0 0 400 200"|><path d="M20 160 200 10l180 150v30L200 40 20 190z"/></svg>
+"""
+colors = [" fill=\"$splitHover\""]
+
+[sort_down]
+save_in_file = "sort_down"
+ico = """\
+<svg viewBox="0 0 400 200"|><path d="m20 10 180 150L380 10v30L200 190 20 40z"/></svg>
+"""
+colors = [" fill=\"$splitHover\""]

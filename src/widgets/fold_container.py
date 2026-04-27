@@ -1,572 +1,329 @@
-from functools import reduce
-from operator import add
+# from loguru import logger
 
-from PyQt6.QtCore import QObject, QPoint, Qt, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QMouseEvent, QResizeEvent
-from PyQt6.QtWidgets import QWidget, QFrame
+from PyQt6.QtCore import Qt, pyqtSlot, QSize, QObject, QPoint, pyqtSignal
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QWidget, QFrame, QSplitter, QSizePolicy
 
 from ..core import app_globals as ag
-from .foldable import Foldable
-from .ui_fold_container import Ui_Foldings
+from .foldable import Foldable, MIN_HEIGHT
 from .. import tug
-
-MIN_HEIGHT = 62
-
 
 class MouseEventFilter(QObject):
     resize_foldable = pyqtSignal(int, QPoint, int)  # QMouseEvent.Type, position & secno
 
-    def __init__(self, widget: QWidget, seq: int):
+    def __init__(self, widget: Foldable, seqno: int):
         super().__init__(widget)
 
-        self.pressed: bool = False
-        self.seqno: int = seq
-
-        self._widget: QWidget = widget
+        self._widget: Foldable = widget
+        self.seq = seqno
         self._widget.installEventFilter(self)
 
-    def eventFilter(self, obj: QObject, event_: QMouseEvent) -> bool:
-        if obj is self._widget:
-            to_emit = False
-
-            if event_.type() in (QMouseEvent.Type.Enter,
-                                 QMouseEvent.Type.Leave,
-                                ):
-                self.resize_foldable.emit(event_.type(), QPoint(0, 0), self.seqno)
-            elif event_.type() == QMouseEvent.Type.MouseButtonPress:
-                to_emit = True
-                self.pressed = True
-            elif event_.type() == QMouseEvent.Type.MouseButtonRelease:
-                to_emit = True
-                self.pressed = False
-            elif (event_.type() == QMouseEvent.Type.MouseMove) and self.pressed:
-                to_emit = True
-
-            if to_emit:
-                self.resize_foldable.emit(event_.type(),
-                    event_.globalPosition().toPoint(), self.seqno)
-        return super().eventFilter(obj, event_)
+    def eventFilter(self, obj: QObject, event: QMouseEvent) -> bool:
+        typo = event.type()
+        """
+         2 QEvent.MouseButtonPress
+         3 QEvent.MouseButtonRelease
+         5 QEvent.MouseMove
+        10 QEvent.Enter
+        """
+        if typo in (2, 3, 5, 10):
+            pos = event.globalPosition().toPoint()
+            # logger.info(f'{typo=}, {pos.y()=}')
+            self.resize_foldable.emit(typo, pos, self.seq)
+        return super().eventFilter(obj, event)
 
 
-class foldGrip():
-    __slot__ = ("__height", "__is_collapsed", "wid", "__is_hidden")
-
-    def __init__(self, widget: Foldable):
-        self.wid: Foldable = widget
-        self.__height: int = 0
-        self.__is_collapsed: bool = False
-        self.__is_hidden: bool = False
-
-    @property
-    def is_collapsed(self) -> bool:
-        return self.__is_collapsed
-
-    @is_collapsed.setter
-    def is_collapsed(self, val: bool):
-        self.__is_collapsed = val
-        self.reset_height()
-
-    def reset_height(self):
-        if self.__is_collapsed:
-            self.set_collapsed_height()
-        else:
-            self.set_default_height()
-
-    def set_collapsed_height(self):
-        self.wid.setMinimumHeight(self._collapsed_height())
-
-    def _collapsed_height(self) -> int:
-        hh = self.wid.ui.fold_head.height()
-        if not self.wid.ui.decorator.isHidden():
-            hh += self.wid.ui.decorator.height()
-        return hh
-
-    @property
-    def is_hidden(self) -> bool:
-        return self.__is_hidden
-
-    @is_hidden.setter
-    def is_hidden(self, val:bool):
-        self.__is_hidden = val
-        self.wid.setVisible(not val)
-        if not self.__is_hidden:
-            self.reset_height()
-
-    @property
-    def height(self) -> int:
-        if self.is_hidden:
-            return 0
-        if self.is_collapsed:
-            return self._collapsed_height()
-        return self.__height
-
-    def store_height(self) -> int:
-        return self.__height
-
-    @height.setter
-    def height(self, height: int):
-        self.__height = height
-        self.wid.setMinimumHeight(height)
-
-    def set_default_height(self):
-        if self.__height < MIN_HEIGHT:
-            self.__height = MIN_HEIGHT
-        self.wid.setMinimumHeight(self.__height)
-
-
-class FoldContainer(QWidget):
+class FoldContainer(QSplitter):
     def __init__(self, parent: QWidget = None) -> None:
         super().__init__(parent)
 
-        self.height_ = 0
+        self.sizes0 = []
+        self.y0 = 0
+        self.above = self.below = 0    # 0 not defined yet
+        self.good_for_resize = False
+        self.setOrientation(Qt.Orientation.Vertical)
+        self.setChildrenCollapsible(False)
+        self.setOpaqueResize(True)      # rubberBand doesn't appear automatically
+        self.setHandleWidth(0)          # handles aren't visible because width = 0
+        self.ffs: list[Foldable] = []
+        self.add_foldables()
 
-        self.ui = Ui_Foldings()
-        self.ui.setupUi(self)
-        self.widgets: list[foldGrip] = [foldGrip(x) for x in (
-            getattr(self.ui, m) for m in dir(self.ui)) if isinstance(x, Foldable)]
-        wid = self.widgets[-1].wid
-        wid.ui.toFold.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        wid.ui.toFold.customContextMenuRequested.connect(wid.change_title)
-
-        self.__first_visible: int = -1
+        ff = self.ffs[-1]
+        ff.ui.toFold.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        ff.ui.toFold.customContextMenuRequested.connect(ff.change_title)
+        ag.signals.collapseSignal.connect(self.toggle_collapsed)
+        ag.signals.hideSignal.connect(self.set_hidden)
 
         self._setup()
 
+    def add_foldables(self):
+        for i in range(4):
+            ff = Foldable()
+            ff.seqno = i
+            ff.setMinimumSize(QSize(0, MIN_HEIGHT))
+            ff.setObjectName(f"foldable_{i+1}")
+            self.addWidget(ff)
+            self.ffs.append(ff)
+
+        self.spacer = QWidget()
+        s_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+        s_policy.setHorizontalStretch(0)
+        s_policy.setVerticalStretch(0)
+        self.spacer.setSizePolicy(s_policy)
+        self.spacer.setMinimumHeight(0)
+        self.addWidget(self.spacer)
+
     def visible_state(self):
-        return (not x.is_hidden for x in self.widgets)
-
-    @property
-    def first_visible(self) -> int:
-        return self.__first_visible
-
-    @first_visible.setter
-    def first_visible(self, seq: int):
-        if self.__first_visible != seq and self.__first_visible >= 0:
-            self.reset_decoration(self.__first_visible, True)
-        self.__first_visible = seq
-        self.reset_decoration(seq, False)
-
-    def reset_decoration(self, seq: int, val: bool):
-        self.widgets[seq].wid.set_decoration(val)
-        if self.widgets[seq].is_collapsed:
-            self.widgets[seq].set_collapsed_height()
+        """   used in sho.py   """
+        return [not ff.is_hidden for ff in self.ffs]
 
     def _setup(self):
         def set_titles():
             ttls = tug.qss_params['$FoldTitles']
-            for ttl,ff in zip(ttls, self.widgets):
-                ff.wid.set_title(ttl)
-
-        def connect_signals():
-            ag.signals.collapseSignal.connect(self._toggle_collapsed)
-            ag.signals.hideSignal.connect(self.set_hidden)
+            for i,ff in enumerate(self.ffs):
+                ff.set_title(ttls[i])
 
         def setup_event_filter():
-            self._filters = []
-            for i,ff in enumerate(self.widgets):
-                filter = MouseEventFilter(ff.wid.ui.decorator, i)
+            for i in range(1, len(self.ffs)):
+                filter = MouseEventFilter(self.handle(i), i)
                 filter.resize_foldable.connect(self._resize_widget)
-                self._filters.append(filter)
 
-        self.ui.scrollArea.setMinimumHeight(int(MIN_HEIGHT * 1.5))
+        self.setMinimumHeight(int(MIN_HEIGHT * 1.5))
         set_titles()
-        connect_signals()
         setup_event_filter()
 
-    def _shown(self) -> int:
-        """
-        returns number of not hidden widgets
-        """
-        return sum((1 for ff in self.widgets if not (ff.is_hidden)))
-
-    def shown_not_collapsed(self) -> int:
-        """
-        returns number of not hidden and not collapsed widgets
-        """
-        return sum((1 for ff in self.widgets if not (ff.is_hidden or ff.is_collapsed)))
-
     def add_widget(self, w: QWidget, index: int) -> None:
-        self.widgets[index].wid.add_widget(w)
+        """   used in sho.py   """
+        self.ffs[index].add_widget(w)
 
     def get_frames(self) -> list[QFrame]:
-        return [w.wid.get_inner_frame() for w in self.widgets]
+        """   used in sho.py   """
+        return [ff.get_inner_frame() for ff in self.ffs]
 
-    def _expand_stretch(self, expand: bool):
-        if expand:
-            height = self.height_ - sum((ff.height for ff in self.widgets))
+    @pyqtSlot(int, bool)
+    def toggle_collapsed(self, seq: int, state: bool):
+        """   state:  True - collapsing, False - expanding   """
+        ff = self.ffs[seq]
+
+        self.setUpdatesEnabled(False)
+        if self.spacer.height():
+            szs = self.sizes()
+            szs[seq] = self.spacer.height() + ff.ui.toFold.height()
         else:
-            height = 0
-            if self.shown_not_collapsed() == 1:
-                self.expand_first()
+            delta = ff.height_inner
+            szs = (self.decrease_next, self.increase_next)[state](seq, delta)
+        self.set_min_heights(szs)
+        self.setSizes(szs)
+        self.setUpdatesEnabled(True)
 
-        self.ui.contents.layout().itemAt(
-            len(self.widgets)
-        ).spacerItem().changeSize(20, height)
+    def set_min_heights(self, sizes: list[int]):
+        all_collapsed = True    # means that each item is collapsed or hidden
+        for ff,hh in zip(self.ffs, sizes):
+            if not ff.is_hidden:
+                ff.setMinimumHeight(hh)
+                all_collapsed &= ff.is_collapsed
+        if all_collapsed:
+            sizes[-1] = self.height() - sum(sizes[:-1])
 
-    def expand_first(self):
-        first = [ff for ff in self.widgets if not (ff.is_collapsed or ff.is_hidden)]
-        if first:
-            height = self.height_ - sum((ff.height for ff in self.widgets if ff is not first[0]))
-            first[0].height = height
-
-    @pyqtSlot(QObject, bool)
-    def _toggle_collapsed(self, ff: Foldable, to_collapse: bool):
-        """
-        update view in case of collapse / expand one widget
-        seq:  sequence number of widget
-        collapsing:  True, False - expanding
-        """
-        seq = self._get_seq(ff)
-        self.process_collapse(seq, to_collapse)
-
-    def process_collapse(self, seq: int, to_collapse: bool):
-        self.widgets[seq].is_collapsed = to_collapse
-        self._collapse_current(seq) if to_collapse else self._expand_current(seq)
-
-    def _collapse_current(self, seq: int):
-        """
-        seq is sequence number of widget to be collapsed
-        """
-        self._expand_stretch(True) if self.shown_not_collapsed() == 0 else self._increase_next(seq)
-
-    def _expand_current(self, seq: int):
-        # if self.shown_not_collapsed() == 1:  # all widgets are collapsed yet
-        self._expand_stretch(False) if self.shown_not_collapsed() == 1 else self._decrease_next(seq)
-
-    def _increase_next(self, seq: int):
-        delta = self.height_ - self._actual_height()
-        if delta <= 0:
-            return
-
-        for ff in (self.widgets[seq+1:] + self.widgets[seq-1::-1] if seq else self.widgets[seq+1:]):
-            if ff.is_collapsed or ff.is_hidden:
-                continue
-
-            ff.height = ff.height + delta
-            break
-
-    def _decrease_next(self, seq: int):
-        delta = self.height_ - self._actual_height()
-
-        for ff in (self.widgets[seq+1:] + self.widgets[seq-1::-1] if seq else self.widgets[seq+1:]):
-            if delta >= 0:
+    def increase_next(self, seq: int, delta: int):
+        szs = self.sizes()
+        szs[seq] -= delta
+        ff_cnt = len(self.ffs)
+        for k in range(ff_cnt-1, -1, -1):
+            ff = self.ffs[k]
+            if not (k == seq or ff.is_collapsed or ff.is_hidden):
+                szs[k] += delta
                 break
-            if ff.is_collapsed or ff.is_hidden:
-                continue
-            d2 = ff.height + delta
-            if d2 < MIN_HEIGHT:
-                delta = d2 - MIN_HEIGHT
-                ff.height = MIN_HEIGHT
-            else:
-                ff.height = d2
-                break
+        return szs
+
+    def decrease_next(self, seq: int, delta: int):
+        szs = self.sizes()
+        szs[seq] += delta
+        dd = delta
+        ff_cnt = len(self.ffs)
+        for k in range(ff_cnt-1, -1, -1):
+            ff = self.ffs[k]
+            if not (k == seq or ff.is_collapsed or ff.is_hidden):
+                if szs[k] - MIN_HEIGHT >= dd:
+                    szs[k] -= dd
+                    break
+                else:
+                    dd -= (szs[k] - MIN_HEIGHT)
+                    szs[k] = MIN_HEIGHT
         else:
-            self.widgets[seq].height += delta
-
-    def _get_seq(self, ff: Foldable) -> int:
-        return [i for i,gg in enumerate(self.widgets) if gg.wid is ff][0]
+            szs[seq] -= dd
+        return szs
 
     def restore_state(self, state: list):
         """
-        restore state of container:
-        0 - index of first visible widget
-        1 - height of container
-        2- for each widget in container:
-           0 - is_collapsed: bool
-           1 - is_hidden: bool
-           2 - height: int
+            restore state of container:
+            0 - sizes of widgets in splitter
+            1 - for each item in container:
+            0 - is_collapsed: bool
+            1 - is_hidden: bool
         """
-        if state[0] is None:
-            return
+        def set_hide_collapse():
+            for ff,st in zip(self.ffs, state[1]):
+                if st[0]:
+                    ff.is_hidden = True
+                if st[1]:
+                    ff.ui.toFold.setChecked(True)
 
-        if int(state[0]) < 0:
-            self.reset_first_visible(-1)
+        ht = self.ffs[0].ui.toFold.height()
+        if not state:
+            hgt = ag.app.sho_rect.height()- ag.app.ui.left_top.height() - ag.app.ui.status.height()
+            cnt = len(self.ffs)
+            ee = hgt // cnt
+            szs = [ee + hgt % cnt, *[ee] * (cnt-1)]
         else:
-            self.first_visible = int(state[0])
-        self.height_ = int(state[1])
-        st1 = state[2:]
+            szs = [0 if st[0] else ht if st[1] else hh for st,hh in zip(state[1], state[0])]
 
-        for i, ff in enumerate(self.widgets):
-            ff.height = st1[i][2]
-            if st1[i][1]:
-                ff.is_collapsed = True
-                ff.wid.ui.toFold.setChecked(True)
-                ff.wid.toggle_collapse()
-            if st1[i][0]:
-                ff.is_hidden = True
+        self.setUpdatesEnabled(False)
 
-        not_collapsed = self.shown_not_collapsed()
-        if not_collapsed <= 1:
-            self._expand_stretch(not_collapsed == 0)
+        self.setSizes([*szs, 0])
+        for ff,hh in zip(self.ffs, szs):
+            if not ff.is_hidden:
+                ff.height_inner = hh - ht
+                ff.setMinimumHeight(hh)
+
+        if state:
+            set_hide_collapse()
+
+        self.setUpdatesEnabled(True)
+
+        for ff in self.ffs:
+            ff.ui.toFold.toggled.connect(ff.on_click)
 
     def save_state(self) -> list:
         """
         function is used to collect data to save settings of state
-        0 - width of container, it restore in parrent of the widget
-        1 - first_visible - index of first wisible widget in container
-        2 - height - height of container, it also set in the resize event,
-            but this value need in the restore_state method which
-            is called before resize event
-        3 - states of each widget in container:
-            is_hidden, is_collapsed, and height
+        0 - width of container, it restore in parrent of FoldContainer instance
+        1 - sizes of widgets in splitter
+        2 - states of each widget in container: is_hidden, is_collapsed
         """
-        state = [self.width(), self.first_visible, self.height_]
-
-        for ff in self.widgets:
-            state.append(
-                (ff.is_hidden, ff.is_collapsed, ff.store_height())
-            )
-        return state
+        ht = self.ffs[0].ui.toFold.height()
+        szs = []
+        for ff in self.ffs:
+            szs.append(ff.height_inner + ht)
+        return [szs, [(ff.is_hidden, ff.is_collapsed) for ff in self.ffs]]
 
     @pyqtSlot(bool, int)
-    def set_hidden(self, to_show: bool, seq: int):
-        self.widgets[seq].is_hidden = not to_show
+    def set_hidden(self, state: bool, seq: int):
+        """   state:  True - hide, False - show   """
+        ff = self.ffs[seq]
+        ff.is_hidden = state
 
-        if self.shown_not_collapsed() == 0:
-            self._expand_stretch(True)
-            return
+        self.setUpdatesEnabled(False)
 
-        self.show_hide(to_show, seq)
-
-        if self._shown():
-            self.reset_first_visible(seq)
-
-    def show_hide(self, to_show: bool, seq: int):
-        if to_show:
-            if self.shown_not_collapsed() == 1:
-                self._expand_stretch(False)
-            else:
-                self._decrease_next(seq)
+        if self.spacer.height():
+            szs = self.sizes()
+            szs[seq] = ff.ui.toFold.height() if ff.is_collapsed else self.spacer.height()
         else:
-            self._increase_next(seq)
+            delta = self.ffs[seq].height_inner
+            delta = ff.ui.toFold.height()
+            if not ff.is_collapsed:
+                delta += ff.height_inner
+            szs = (self.decrease_next, self.increase_next)[state](seq, self.spacer.height() or delta)
 
-    def reset_first_visible(self, seq: int):
-        visibles = [i for i,ff in enumerate(self.widgets) if not ff.is_hidden]
+        self.set_min_heights(szs)
+        self.setSizes(szs)
 
-        if visibles:
-            self.first_visible = (seq if seq == visibles[0] else visibles[0] )
-
-    def _actual_height(self) -> int:
-        return reduce(add, ((ff.height for ff in self.widgets if not ff.is_hidden)), 0)
-
-    @pyqtSlot(QResizeEvent)
-    def resizeEvent(self, a0: QResizeEvent) -> None:
-        """
-        change all widgets' height
-        according the change of container height
-        """
-        hh = a0.size().height()
-
-        if self.shown_not_collapsed() == 0:
-            self.height_ = hh
-            self._expand_stretch(True)
-        else:
-            self.resize_widgets(hh - self._actual_height())
-
-        self.height_ = hh
-        return super().resizeEvent(a0)
-
-    def resize_widgets(self, delta: int):
-        """
-        recalculate each widgets' height by "the same" amount
-        according the change of container height
-        """
-        if delta == 0:
-            return
-        if delta > 0:
-            self.increase_widgets(delta)
-        else:
-            self.decrease_widgets(delta)
-
-    def decrease_widgets(self, delta: int):
-        nn = self.shown_not_collapsed()
-        dd = delta // nn
-        rr = 0
-
-        for ff in self.widgets:
-            if ff.is_hidden or ff.is_collapsed:
-                continue
-
-            hh = ff.height + dd
-            if hh < MIN_HEIGHT:
-                ff.height = MIN_HEIGHT
-                rr += hh - MIN_HEIGHT
-            else:
-                ff.height = hh
-
-        rr += delta % nn
-        if rr:   # -nn < rr < nn
-            self.add_remainder(rr)
-
-    def add_remainder(self, remainder: int):
-        """
-        abs value of remainder is always less then number of widgets
-        add 1 to each widget heigh until remainder runs out
-        """
-        if remainder == 0:
-            return
-
-        def increament() -> int:
-            nonlocal remainder
-            inc = 1 if remainder > 0 else -1
-            remainder -= inc
-            return inc
-
-        if remainder < 0:
-            remain = [ff for ff in self.widgets if not (
-                ff.is_collapsed or ff.is_hidden) and ff.height > MIN_HEIGHT]
-        else:
-            remain = [ff for ff in self.widgets if not (ff.is_collapsed or ff.is_hidden)]
-
-        for ff in remain:
-            ff.height += increament()
-            if remainder == 0:
-                break
-
-    def increase_widgets(self, delta: int):
-        nn = self.shown_not_collapsed()
-        dd = delta // nn
-
-        for ff in self.widgets:
-            if ff.is_hidden or ff.is_collapsed:
-                continue
-            ff.height += dd
-
-        if rr := delta % nn:  # rr alwais >= 0 because nn > 0
-            self.add_remainder(rr)
+        self.setUpdatesEnabled(True)
 
     @pyqtSlot(int, QPoint, int)
     def _resize_widget(self, e_type: int, pos: QPoint, seq: int):
-        self.cur_pos = self.mapFromGlobal(pos)
         {
-            QMouseEvent.Type.MouseMove: self._resize,
-            QMouseEvent.Type.MouseButtonPress: self._resize_start,
-            QMouseEvent.Type.MouseButtonRelease: self._resize_end,
-            QMouseEvent.Type.Enter: self._hover_start,
-            QMouseEvent.Type.Leave: self._hover_end,
-        }[e_type](self.cur_pos.y(), seq)
+            QMouseEvent.Type.MouseButtonPress: self.resize_start,
+            QMouseEvent.Type.MouseButtonRelease: self.resize_end,
+            QMouseEvent.Type.MouseMove: self.resize_wid,
+            QMouseEvent.Type.Enter: self.hover_start,
+        }[e_type](self.mapFromGlobal(pos).y(), seq)
 
-    def _resize_start(self, y: int, seq: int):
-        self.y0 = y
+    def resize_wid(self, y: int, seq: int):
+        def resize_items() -> int:
+            (incr_curr, decr_curr)[delta < 0]()
+            apply_sizes()
 
-    def _resize(self, y: int, seq: int):
-        first, last = self.first_last()
-        if (seq <= first) or (seq > last):
+        def apply_sizes():
+            self.ffs[below].setMinimumHeight(szs[below])
+            self.ffs[above].setMinimumHeight(szs[above])
+            self.setSizes(szs)
+
+        def decr_curr() -> int:
+            """  delta < 0, move mouse down  """
+            dd = MIN_HEIGHT - szs[below]
+            vv = max(dd, delta)
+            szs[below] += vv
+            szs[above] -= vv
+            if dd >= delta:
+                self.below = self.next_below(below)
+            if szs[above] >= self.sizes0[above]:
+                ss = szs[above] - self.sizes0[above]
+                szs[above] = self.sizes0[above]
+                szs[below] += ss
+                self.above = self.next_below(above)
+
+        def incr_curr() -> int:
+            """  delta > 0, move mouse up  """
+            dd = szs[above] - MIN_HEIGHT
+            vv = min(dd, delta)
+            szs[below] += vv
+            szs[above] -= vv
+            if dd <= delta:
+                self.above = self.next_above(above)
+            if szs[below] >= self.sizes0[below]:
+                ss = szs[below] - self.sizes0[below]
+                szs[below] = self.sizes0[below]
+                szs[above] += ss
+                self.below = self.next_above(below)
+
+        if not self.good_for_resize:
             return
+
+        delta = self.y0 - y
+        szs = self.sizes()
+        above, below = self.above, self.below
 
         self.setUpdatesEnabled(False)
-        self._resize_fold(seq, y)
+        resize_items()
         self.setUpdatesEnabled(True)
 
-    def _resize_end(self, y: int, seq: int):
-        if seq == self._first_uncollapsed():
-            return
-        self.unsetCursor()
+        self.y0 = self.ffs[seq].y()
 
-    def _resize_fold(self, seq: int, y: int):
-        if y > self.y0:
-            self._decrease_current(seq, y)
-        elif y < self.y0:
-            self._increase_current(seq, y)
+    def resize_start(self, y: int, seq: int):
+        if self.good_for_resize:
+            self.ffs[seq].ui.fold_head.setStyleSheet(tug.get_dyn_qss("left_pane_split_pressed"))
+            self.y0 = y
+            self.above = self.next_above(seq)
+            self.sizes0 = self.sizes()
+            # no height limit for these two items
+            self.sizes0[self.below] = self.sizes0[self.above] = 16777215
 
-    def _decrease_current(self, seq: int, y: int):
+    def pointer_below(self, seq: int) -> int:
+        return next((x.seqno for x in self.ffs[seq:] if not (x.is_hidden or x.is_collapsed)), 0)
+
+    def next_below(self, seq: int) -> int:
+        return next((x.seqno for x in self.ffs[seq+1:] if not (x.is_hidden or x.is_collapsed)), seq)
+
+    def next_above(self, seq: int) -> int:
+        """  if Ok result must be less than seq;  seq > 0  """
+        return next((x.seqno for x in self.ffs[seq-1::-1] if not (x.is_hidden or x.is_collapsed))) if seq else 0
+
+    def immediate_above(self, seq: int) -> bool:
         """
-        y > self.y0,
-        increase first uncollapsed widget above current one
-        -- decrease current widget and bellow current
+        returns True if immediate above item is not collapsed,
+        generator is used because immediate above item may be hidden,
+        next's default parameter (3) need if all above items is hidden
         """
-        above: foldGrip = self._find_above(seq)
-        if not above:
-            return self.y0
+        return next((not x.is_collapsed for x in self.ffs[seq-1::-1] if not x.is_hidden))
 
-        # y > self.y0
-        dd = delta = y - self.y0
-        for ff in self.widgets[seq:]:
-            dd = self._decrease_one(ff, dd)
-            if dd == 0:
-                break
+    def resize_end(self, y: int, seq: int):
+        if self.good_for_resize:
+            self.y0 = 0
+            self.unsetCursor()
+            self.ffs[seq].ui.fold_head.setStyleSheet(tug.get_dyn_qss("left_pane_split"))
 
-        above.height += delta - dd
-        self.y0 += delta - dd
-
-    def _find_above(self, seq: int) -> foldGrip:
-        for ff in self.widgets[seq-1::-1]:
-            if not (ff.is_collapsed or ff.is_hidden):
-                return ff
-        return None
-
-    def _increase_current(self, seq: int, y: int):
-        """
-        y < self.y0,
-        increase current widget
-           or first uncollapsed widget bellow current
-        -- decrease widgets above current one
-        """
-        to_increase: foldGrip = self._find_below(seq)
-        if not to_increase:
-            return self.y0
-
-        # y < self.y0
-        dd = delta = self.y0 - y
-        for ff in self.widgets[seq-1::-1]:   # always seq > 0
-            dd = self._decrease_one(ff, dd)
-            if dd == 0:
-                break
-
-        to_increase.height += delta - dd
-        self.y0 -= delta + dd
-
-    def _find_below(self, seq: int) -> foldGrip:
-        """
-        find first uncollapsed widget starting from seq-th
-        seq is a number of current widget
-        """
-        for ff in self.widgets[seq:]:
-            if not (ff.is_collapsed or ff.is_hidden):
-                return ff
-        return None
-
-    def _decrease_one(self, ff: foldGrip, delta: int) -> int:
-        """
-        decrease height of one widget
-        ff:    - FoldState object corresponds to current widget
-        delta: - how much to decrease
-        return:  remaining delta
-        """
-        if ff.is_collapsed or ff.is_hidden:
-            return delta
-        s = min(delta, ff.height - MIN_HEIGHT)
-        ff.height -= s
-
-        delta -= s
-        return delta
-
-    def _hover_start(self, y: int, seq: int):
-        first, last = self.first_last()
-
-        if (seq > first) and (seq <= last):
-            self.widgets[seq].wid.set_hovering(True)
-            self.setCursor(Qt.CursorShape.SizeVerCursor)
-
-    def first_last(self) -> tuple[int, int]:
-        first = self._first_uncollapsed()
-        return first, self._last_uncollapsed(first)
-
-    def _first_uncollapsed(self) -> int:
-        for i, ff in enumerate(self.widgets):
-            ff.wid.set_hovering(False)
-            if not (ff.is_collapsed or ff.is_hidden):
-                break
-        return i
-
-    def _last_uncollapsed(self, first: int) -> int:
-        seq = 0
-        for ff in self.widgets[:first:-1]:
-            if not (ff.is_collapsed or ff.is_hidden):
-                seq = self._get_seq(ff.wid)
-                break
-            ff.wid.set_hovering(False)
-        return seq
-
-    def _hover_end(self, y: int, seq: int):
-        self.unsetCursor()
+    def hover_start(self, y: int, seq: int):
+        """  seq > 0  --  always because of splitter  """
+        self.below = self.pointer_below(seq)
+        self.good_for_resize = (self.below >= seq) and self.immediate_above(seq)

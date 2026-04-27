@@ -10,8 +10,75 @@ $shapeBorder2~2px solid
 $bottomBorder~border-left: none; border-top: none; border-right: none; border-bottom:
 # ico file name without extension. PNG for Linux, ICO for Windows
 $ico_app~app
-$FileListFields~329,File Name,Added date,Open Date,rating,Open#,Modified,Pages,Size,Published,Date of last note,Created
-$ToolTips~,Added date,Last opening date,rating of file,How many times the file was opened,Last modified date,Number of pages(in book),Size of file,Publication date(book),Date of last note,File creation date
+$FileListFields~73,File Name,Added date,Open Date,rating,Open#,Modified,Pages,Size,Recent,Date of last note,Created
+$ToolTips~,Added date,Last opening date,rating of file,How many times the file was opened,Last modified date,Number of pages(in book),Size of file,last date of add to recent files,Date of last note,File creation date
 $FieldTypes~str,date,date,int,int,date,int,int,date,date,date
-$FieldFormats~,yyyy-MM-dd hh:mm,yyyy-MM-dd hh:mm,,,yyyy-MM-dd hh:mm,,,MMM yyyy,yyyy-MM-dd hh:mm,yyyy-MM-dd
-$EditableFields~0,filename,3,rating,6,pages,8,published
+$FieldFormats~,yyyy-MM-dd hh:mm,yyyy-MM-dd hh:mm,,,yyyy-MM-dd hh:mm,,,yyyy-MM-dd hh:mm,yyyy-MM-dd hh:mm,yyyy-MM-dd
+$EditableFields~0,filename,3,rating,6,pages
+@dbSettings~SEARCH_BY_NOTE
+@dbSettings~LAST_CHECK_FOR_CYCLES
+@dbSettings~AppVersion
+@dbSettings~FILTER_FILE_ID
+@dbSettings~LAST_SCAN_OPENED
+@dbSettings~RE_SEARCH_FILE
+@dbSettings~TAG_SEL_LIST
+@dbSettings~EXT_SEL_LIST
+@dbSettings~AUTHOR_SEL_LIST
+@dbSettings~SHOW_HIDDEN
+@dbSettings~DIR_HISTORY
+@dbSettings~SELECTED_DIRS
+@dbSettings~RECENT_FILES
+@dbSettings~APP_MODE
+@dbSettings~NOTE_EDIT_STATE
+@dbSettings~DIR_CHECK
+@dbSettings~SUB_DIR_CHECK
+@dbSettings~NO_FOLDER
+@dbSettings~USE_ADD_METHOD
+@dbSettings~TAG_CHECK
+@dbSettings~IS_ALL
+@dbSettings~HOW_ADDED
+@dbSettings~EXT_CHECK
+@dbSettings~AUTHOR_CHECK
+@dbSettings~OPEN_CHECK
+@dbSettings~OPEN_OP
+@dbSettings~OPEN_VAL
+@dbSettings~RATING_CHECK
+@dbSettings~RATING_OP
+@dbSettings~RATING_VAL
+@dbSettings~DATE_TYPE
+@dbSettings~NOTE_DATE_TYPE
+@dbSettings~NOT_OLDER
+@dbSettings~NOT_OLDER_NN
+@dbSettings~AGE_MEASURE
+@dbSettings~BETWEEN
+@dbSettings~DATE_AFTER
+@dbSettings~DATE_BEFORE
+@dbSettings~WITHOUT_NOTES
+@dbSettingsUpd~FileListFields
+@dbSettingsUpd~FieldTypes
+@dbSettingsUpd~FieldFormats
+@dbSettingsUpd~ToolTips
+@appSettings~CHECK_DUPLICATES
+@appSettings~CHECK_UPDATE
+@appSettings~CONTAINER_STATE
+@appSettings~CurrentTheme
+@appSettings~DB_List
+@appSettings~DB_NAME
+@appSettings~DEFAULT_DB_PATH
+@appSettings~DEFAULT_EXPORT_PATH
+@appSettings~DEFAULT_FILE_PATH
+@appSettings~DEFAULT_LOG_PATH
+@appSettings~DEFAULT_REPORT_PATH
+@appSettings~FILE_LIST_HEADER
+@appSettings~FOLDER_HISTORY_DEPTH
+@appSettings~FOLD_TITLES
+@appSettings~FONT_FAMILY
+@appSettings~FONT_SIZE
+@appSettings~MainWindowGeometry
+@appSettings~RECENT_FILE_LIST_LENGTH
+@appSettings~SPLITTER_H
+@appSettings~SPLITTER_V2
+@appSettings~USE_LOGGING
+@appSettings~filterDialogPosition
+@appSettings~maximizedWindow
+@appSettingsUpd~
