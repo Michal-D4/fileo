@@ -138,12 +138,8 @@ def show_main_menu():
     act_same.setEnabled(is_db_opened)
     menu.addAction(act_same)
     menu.addSeparator()
-    act_pref = QAction('Preferences', ag.app)
-    act_pref.setShortcut(QKeySequence("Ctrl+,"))
-    menu.addAction(act_pref)
-    act_theme = QAction('Color Themes', ag.app)
-    act_theme.setShortcut(QKeySequence("Ctrl+T"))
-    menu.addAction(act_theme)
+    menu.addAction('Preferences\tCtrl+,')
+    menu.addAction('Color Themes\tCtrl+T')
     act_font = QAction('Change font', ag.app)
     menu.addAction(act_font)
     menu.addSeparator()
@@ -155,7 +151,7 @@ def show_main_menu():
         if action.text() == 'Report duplicate files':
             check_duplicates(auto=False)
             return
-        ag.signals.user_signal.emit(f"MainMenu {action.text()}")
+        ag.signals.user_signal.emit(f"MainMenu {action.text().split('\t')[0]}")
 
 def resize_section_0():
     hdr = ag.file_list.header()
@@ -286,8 +282,8 @@ def dir_menu(pos):
     idx = ag.dir_list.indexAt(pos)
     menu = QMenu(ag.app)
     if idx.isValid():
-        menu.addAction("Create folder\tCtrl-W")
-        menu.addAction("Create folder as child\tCtrl-E")
+        menu.addAction("Create folder\tCtrl+W")
+        menu.addAction("Create folder as child\tCtrl+E")
         menu.addSeparator()
         menu.addAction("Toggle hidden state")
         menu.addSeparator()
@@ -299,7 +295,7 @@ def dir_menu(pos):
         menu.addSeparator()
         menu.addAction("Delete folder(s)\tDel")
     else:
-        menu.addAction("Create folder\tCtrl-W")
+        menu.addAction("Create folder\tCtrl+W")
 
     action = menu.exec(ag.dir_list.mapToGlobal(pos))
     if action:

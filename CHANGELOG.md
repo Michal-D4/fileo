@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.4.10 - 2026, 30 April
+* fixed display the preferences dialog with the shortcut "Ctrl+,".
+
 ## 1.4.09 - 2026, 24 April
 * Lots of slight refinements in code and UI.
 * The previously editable "published" field in the file list is now uneditable and has been renamed to "recent". It now displays the date the file was last added to the recent list.

@@ -1,6 +1,6 @@
 [project]
 name = "fileo"
-version = "1.4.09"
+version = "1.4.10"
 description = "Yet another file organizer"
 readme = "README.md"
 

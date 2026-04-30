@@ -286,10 +286,6 @@ QFrame#btns QToolButton {
 /* ------------------------- */
 QFrame#inner {
    border: none;
-   background-color: transparent;
-}
-QFrame#left_pane {
-   border: none;
    background-color: $leftPaneBG;
 }
 QFrame#inner QTextBrowser {
