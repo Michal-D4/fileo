@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.4.11 - 2026, 05 May
+* fixed an issue with the cancelation (Esc) of file name editing, including creation a new file.
+
 ## 1.4.10 - 2026, 30 April
 * fixed display the preferences dialog with the shortcut "Ctrl+,".
 

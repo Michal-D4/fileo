@@ -128,6 +128,8 @@ class fileModel(QAbstractTableModel):
         try:
             i0 = self.user_data.index(0)
             self.removeRows(i0, 1)
+        except ValueError:
+            pass
         finally:
             self.inserted_row = -1
 

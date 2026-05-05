@@ -15,7 +15,6 @@ class fileEditorDelegate(QStyledItemDelegate):
       - edited file name saving depends on the reason for closing editor
     """
     def __init__(self, parent = None) -> None:
-        self.curr_index = QModelIndex()
         super().__init__(parent)
 
     def eventFilter(self, editor, event):
@@ -32,7 +31,6 @@ class fileEditorDelegate(QStyledItemDelegate):
                 # important: closeEditor before cancel_edit
                 self.closeEditor.emit(editor, QStyledItemDelegate.EndEditHint.NoHint)
                 ag.signals.cancel_edit.emit()
-                ag.file_list.model().set_inserted_row(-1)
                 return True
         return super().eventFilter(editor, event)
 
@@ -46,7 +44,6 @@ class fileEditorDelegate(QStyledItemDelegate):
             except RuntimeError:
                 pass
 
-        self.curr_index = index
         editor.setText(index.data(Qt.ItemDataRole.EditRole))
         pos =  editor.text().rfind('.', 1)
         if pos > 0:
