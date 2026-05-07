@@ -83,10 +83,9 @@ class shoWindow(QMainWindow):
 
     def restore_settings(self, db_name: str):
         def restore_container():
-            bk_ut.set_menu_more()
-
             state = tug.get_app_setting("CONTAINER_STATE", None)
             logger.info(f'{state=}')
+            bk_ut.hide_foldable_menu(state)
             self.container.restore_state(state)
 
         def restore_geometry():

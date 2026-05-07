@@ -1,7 +1,7 @@
 # from loguru import logger
 
 from PyQt6.QtCore import Qt, pyqtSlot, QSize, QObject, QPoint, pyqtSignal
-from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtGui import QMouseEvent, QResizeEvent
 from PyQt6.QtWidgets import QWidget, QFrame, QSplitter, QSizePolicy
 
 from ..core import app_globals as ag
@@ -56,6 +56,33 @@ class FoldContainer(QSplitter):
 
         self._setup()
 
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        def resize_event_apply_sizes():
+            for i in to_be_resized:
+                self.ffs[i].setMinimumHeight(szs[i])
+            self.setSizes(szs)
+
+        old_h = a0.oldSize().height()
+        if old_h == -1:
+            return super().resizeEvent(a0)
+
+        delta_h = a0.size().height() - a0.oldSize().height()
+        to_be_resized = [x.seqno for x in self.ffs if not (
+            x.is_collapsed or x.is_hidden or 
+            (delta_h < 0 and x.height() < MIN_HEIGHT-delta_h//4))]
+
+        szs = self.sizes()
+        if to_be_resized:
+            dd = delta_h // len(to_be_resized)
+            for i in to_be_resized:
+                szs[i] += dd
+            szs[to_be_resized[0]] += delta_h % len(to_be_resized)
+        else:
+            szs[-1] += delta_h
+        resize_event_apply_sizes()
+
+        return super().resizeEvent(a0)
+
     def add_foldables(self):
         for i in range(4):
             ff = Foldable()
@@ -65,13 +92,13 @@ class FoldContainer(QSplitter):
             self.addWidget(ff)
             self.ffs.append(ff)
 
-        self.spacer = QWidget()
+        spacer = QWidget()
         s_policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
         s_policy.setHorizontalStretch(0)
         s_policy.setVerticalStretch(0)
-        self.spacer.setSizePolicy(s_policy)
-        self.spacer.setMinimumHeight(0)
-        self.addWidget(self.spacer)
+        spacer.setSizePolicy(s_policy)
+        spacer.setMinimumHeight(0)
+        self.addWidget(spacer)
 
     def visible_state(self):
         """   used in sho.py   """
@@ -103,43 +130,36 @@ class FoldContainer(QSplitter):
     @pyqtSlot(int, bool)
     def toggle_collapsed(self, seq: int, state: bool):
         """   state:  True - collapsing, False - expanding   """
-        ff = self.ffs[seq]
-
-        self.setUpdatesEnabled(False)
-        if self.spacer.height():
-            szs = self.sizes()
-            szs[seq] = self.spacer.height() + ff.ui.toFold.height()
+        szs = self.sizes()
+        if szs[-1]:         # spacer height > 0
+            szs[seq] = szs[-1] + self.ffs[seq].ui.toFold.height()
         else:
-            delta = ff.height_inner
-            szs = (self.decrease_next, self.increase_next)[state](seq, delta)
+            (self.decrease_next, self.increase_next)[state](seq, szs, self.ffs[seq].height_inner)
         self.set_min_heights(szs)
         self.setSizes(szs)
-        self.setUpdatesEnabled(True)
 
     def set_min_heights(self, sizes: list[int]):
         all_collapsed = True    # means that each item is collapsed or hidden
+        ht = self.ffs[0].ui.toFold.height()
         for ff,hh in zip(self.ffs, sizes):
             if not ff.is_hidden:
-                ff.setMinimumHeight(hh)
+                ff.setMinimumHeight(ht if ff.is_collapsed else hh)
                 all_collapsed &= ff.is_collapsed
-        if all_collapsed:
+        if all_collapsed:       # set spacer height
             sizes[-1] = self.height() - sum(sizes[:-1])
+        self.setSizes(sizes)
 
-    def increase_next(self, seq: int, delta: int):
-        szs = self.sizes()
-        szs[seq] -= delta
+    def increase_next(self, seq: int, szs: list, dd: int):
+        szs[seq] -= dd
         ff_cnt = len(self.ffs)
         for k in range(ff_cnt-1, -1, -1):
             ff = self.ffs[k]
             if not (k == seq or ff.is_collapsed or ff.is_hidden):
-                szs[k] += delta
+                szs[k] += dd
                 break
-        return szs
 
-    def decrease_next(self, seq: int, delta: int):
-        szs = self.sizes()
-        szs[seq] += delta
-        dd = delta
+    def decrease_next(self, seq: int, szs: list, dd: int):
+        szs[seq] += dd
         ff_cnt = len(self.ffs)
         for k in range(ff_cnt-1, -1, -1):
             ff = self.ffs[k]
@@ -152,43 +172,44 @@ class FoldContainer(QSplitter):
                     szs[k] = MIN_HEIGHT
         else:
             szs[seq] -= dd
-        return szs
 
     def restore_state(self, state: list):
         """
             restore state of container:
             0 - sizes of widgets in splitter
             1 - for each item in container:
-            0 - is_collapsed: bool
-            1 - is_hidden: bool
+                0 - is_hidden: bool
+                1 - is_collapsed: bool
         """
-        def set_hide_collapse():
-            for ff,st in zip(self.ffs, state[1]):
-                if st[0]:
-                    ff.is_hidden = True
-                if st[1]:
+        def restore_apply_sizes():
+            szr = []
+            all_collapsed = True
+            for ff, hh, st in zip(self.ffs, szs, stat):
+                hidden, collapsed = st
+                all_collapsed &= (hidden or collapsed)
+                ff.height_inner = hh - ht
+                hr = 0 if hidden else ht if collapsed else hh
+                ff.setMinimumHeight(hr)
+                szr.append(hr)
+                if collapsed:
+                    ff.toggle_collapse(True)
                     ff.ui.toFold.setChecked(True)
+                if hidden:
+                    ff.is_hidden = True
+            self.setSizes((*szr, hgt - sum(szr) if all_collapsed else 0))
 
         ht = self.ffs[0].ui.toFold.height()
+        hgt = ag.app.sho_rect.height()- ag.app.ui.left_top.height() - ag.app.ui.status.height()
         if not state:
-            hgt = ag.app.sho_rect.height()- ag.app.ui.left_top.height() - ag.app.ui.status.height()
             cnt = len(self.ffs)
             ee = hgt // cnt
             szs = [ee + hgt % cnt, *[ee] * (cnt-1)]
+            stat = ((False, False),) * cnt
         else:
-            szs = [0 if st[0] else ht if st[1] else hh for st,hh in zip(state[1], state[0])]
-
+            szs, stat = state
+            
         self.setUpdatesEnabled(False)
-
-        self.setSizes([*szs, 0])
-        for ff,hh in zip(self.ffs, szs):
-            if not ff.is_hidden:
-                ff.height_inner = hh - ht
-                ff.setMinimumHeight(hh)
-
-        if state:
-            set_hide_collapse()
-
+        restore_apply_sizes()
         self.setUpdatesEnabled(True)
 
         for ff in self.ffs:
@@ -202,9 +223,7 @@ class FoldContainer(QSplitter):
         2 - states of each widget in container: is_hidden, is_collapsed
         """
         ht = self.ffs[0].ui.toFold.height()
-        szs = []
-        for ff in self.ffs:
-            szs.append(ff.height_inner + ht)
+        szs = [ff.height_inner + ht for ff in self.ffs]
         return [szs, [(ff.is_hidden, ff.is_collapsed) for ff in self.ffs]]
 
     @pyqtSlot(bool, int)
@@ -213,22 +232,16 @@ class FoldContainer(QSplitter):
         ff = self.ffs[seq]
         ff.is_hidden = state
 
-        self.setUpdatesEnabled(False)
-
-        if self.spacer.height():
-            szs = self.sizes()
-            szs[seq] = ff.ui.toFold.height() if ff.is_collapsed else self.spacer.height()
+        szs = self.sizes()
+        if szs[-1]:    # spacer height > 0
+            szs[seq] = ff.ui.toFold.height() if ff.is_collapsed else szs[-1]
         else:
-            delta = self.ffs[seq].height_inner
             delta = ff.ui.toFold.height()
             if not ff.is_collapsed:
                 delta += ff.height_inner
-            szs = (self.decrease_next, self.increase_next)[state](seq, self.spacer.height() or delta)
+            (self.decrease_next, self.increase_next)[state](seq, szs, szs[-1] or delta)
 
         self.set_min_heights(szs)
-        self.setSizes(szs)
-
-        self.setUpdatesEnabled(True)
 
     @pyqtSlot(int, QPoint, int)
     def _resize_widget(self, e_type: int, pos: QPoint, seq: int):
@@ -242,9 +255,9 @@ class FoldContainer(QSplitter):
     def resize_wid(self, y: int, seq: int):
         def resize_items() -> int:
             (incr_curr, decr_curr)[delta < 0]()
-            apply_sizes()
+            splitter_apply_sizes()
 
-        def apply_sizes():
+        def splitter_apply_sizes():
             self.ffs[below].setMinimumHeight(szs[below])
             self.ffs[above].setMinimumHeight(szs[above])
             self.setSizes(szs)
@@ -284,9 +297,7 @@ class FoldContainer(QSplitter):
         szs = self.sizes()
         above, below = self.above, self.below
 
-        self.setUpdatesEnabled(False)
         resize_items()
-        self.setUpdatesEnabled(True)
 
         self.y0 = self.ffs[seq].y()
 
@@ -299,7 +310,7 @@ class FoldContainer(QSplitter):
             # no height limit for these two items
             self.sizes0[self.below] = self.sizes0[self.above] = 16777215
 
-    def pointer_below(self, seq: int) -> int:
+    def immediate_below(self, seq: int) -> int:
         return next((x.seqno for x in self.ffs[seq:] if not (x.is_hidden or x.is_collapsed)), 0)
 
     def next_below(self, seq: int) -> int:
@@ -325,5 +336,5 @@ class FoldContainer(QSplitter):
 
     def hover_start(self, y: int, seq: int):
         """  seq > 0  --  always because of splitter  """
-        self.below = self.pointer_below(seq)
+        self.below = self.immediate_below(seq)
         self.good_for_resize = (self.below >= seq) and self.immediate_above(seq)

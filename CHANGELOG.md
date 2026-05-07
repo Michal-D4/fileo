@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.12 - 2026, 07 May
+* upgrade to python 3.14
+* fixed resizing the left pane items issue
+
 ## 1.4.11 - 2026, 05 May
 * fixed an issue with the cancelation (Esc) of file name editing, including creation a new file.
 

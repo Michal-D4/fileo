@@ -60,14 +60,15 @@ def search_files():
     ff.show()
     ff.srch_pattern.setFocus()
 
-def set_menu_more():
+def hide_foldable_menu(state):
     ag.app.ui.more.setIcon(tug.get_icon("more"))
     ag.buttons[ag.app.ui.more.objectName()] = (ag.app.ui.more, "more")
     menu = QMenu(ag.app)
     ttls = tug.get_app_setting('FOLD_TITLES', tug.qss_params['$FoldTitles'])
+    is_hidden = [x[0] for x in state[1]] if state else (False,) * len(ttls)
     for i,item in enumerate(ttls):
         act = QAction(item.title(), ag.app, checkable=True)
-        act.setChecked(True)
+        act.setChecked(not is_hidden[i])
         act.triggered.connect(lambda state, it = i: ag.signals.hideSignal.emit(not state, it))
         menu.addAction(act)
 

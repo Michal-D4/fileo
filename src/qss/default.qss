@@ -288,6 +288,10 @@ QFrame#inner {
    border: none;
    background-color: $leftPaneBG;
 }
+QFrame#left_pane {
+   border: none;
+   background-color: $leftPaneBG;
+}
 QFrame#inner QTextBrowser {
    color: $textColor;
 }

@@ -170,11 +170,11 @@ def tune_new_version() -> bool:
     if cur_v != stored_v:
         clean_app_settings(cur_v)
 
-    stored_v = ag.get_db_setting("AppVersion", cur_v)
-    if isinstance(stored_v, str):
-        stored_v = int(stored_v.replace('.', ''))
-    logger.info(f'{cur_v=}, {stored_v=}')
-    if cur_v != stored_v:
+    db_stored_v = ag.get_db_setting("AppVersion", cur_v)
+    if isinstance(db_stored_v, str):
+        db_stored_v = int(db_stored_v.replace('.', ''))
+    logger.info(f'{cur_v=}, {db_stored_v=}')
+    if cur_v != db_stored_v:
         clean_db_settings(cur_v)
 
     conn = ag.db.conn

@@ -43,22 +43,24 @@ class Foldable(QWidget):
         ag.buttons[self.ui.toFold.objectName()] = (self.ui.toFold, "down", "right")
 
     def on_click(self, state: bool):
-        self.is_collapsed = state
+        self.toggle_collapse(state)
         ag.signals.collapseSignal.emit(self.seq, state)
-        self.setUpdatesEnabled(False)
+
+    def toggle_collapse(self, state: bool):
+        self.is_collapsed = state
         self.ui.inner.setVisible(not state)
         self._toggle_icon()
-        self.setUpdatesEnabled(True)
 
     def height(self):
-        """ super().height() for hidden returns height before hidden  """
+        """  0 for hidden, super().height() returns height before hidden  """
         return 0 if self.__is_hidden else super().height()
 
     def resizeEvent(self, a0):
         if not self.is_collapsed:
-            hh = a0.size().height()
-            self.setMinimumHeight(hh)
-            self.height_inner = hh - self.ui.toFold.height()
+            if a0.oldSize().height() > 0:
+                hh = a0.size().height()
+                self.setMinimumHeight(hh)
+                self.height_inner = hh - self.ui.toFold.height()
         return super().resizeEvent(a0)
 
     @property
@@ -67,8 +69,6 @@ class Foldable(QWidget):
 
     @is_hidden.setter
     def is_hidden(self, state: bool):
-        if not state:
-            self.setMinimumHeight(self.ui.toFold.height() + self.height_inner)
         self.__is_hidden = state
         self.setVisible(not state)
 
@@ -81,9 +81,7 @@ class Foldable(QWidget):
         self.seq = val
 
     def _toggle_icon(self):
-        self.ui.toFold.setIcon(
-           tug.get_icon("right" if self.ui.toFold.isChecked() else "down")
-        )
+        self.ui.toFold.setIcon(tug.get_icon("right" if self.is_collapsed else "down"))
 
     def set_title(self, title: str):
         self.ui.toFold.setText(title.upper())
